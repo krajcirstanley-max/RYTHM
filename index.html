@@ -8145,6 +8145,64 @@ document.getElementById('bottomNav').style.display = '';
 bootApp();
 
 // ========================================
+//  SWIPE-TO-GO-BACK (Safari-style edge swipe for full-page views)
+// ========================================
+(function initFullpageSwipe() {
+  const EDGE_ZONE = 30;   // px from left edge to start swipe
+  const THRESHOLD = 80;   // px to trigger close
+  let startX = 0, startY = 0, swiping = false, page = null;
+
+  document.addEventListener('touchstart', (e) => {
+    const t = e.touches[0];
+    if (t.clientX > EDGE_ZONE) return;
+    page = document.querySelector('.fullpage.open');
+    if (!page) return;
+    startX = t.clientX;
+    startY = t.clientY;
+    swiping = true;
+    page.style.transition = 'none';
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!swiping || !page) return;
+    const t = e.touches[0];
+    const dx = t.clientX - startX;
+    const dy = Math.abs(t.clientY - startY);
+    // If scrolling vertically, cancel swipe
+    if (dy > Math.abs(dx) && dx < 20) { swiping = false; page.style.transition = ''; page.style.transform = ''; return; }
+    if (dx > 0) {
+      page.style.transform = `translateX(${dx}px)`;
+      page.style.opacity = Math.max(0.3, 1 - dx / 400);
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchend', () => {
+    if (!swiping || !page) { swiping = false; return; }
+    const dx = parseFloat(page.style.transform.replace(/[^0-9.-]/g, '')) || 0;
+    page.style.transition = 'transform 0.3s cubic-bezier(.2,.7,.2,1), opacity 0.3s ease';
+    if (dx > THRESHOLD) {
+      // Close — slide fully off screen
+      page.style.transform = 'translateX(100%)';
+      page.style.opacity = '1';
+      setTimeout(() => {
+        page.classList.remove('open');
+        page.style.transform = '';
+        page.style.opacity = '';
+        page.style.transition = '';
+        document.body.style.overflow = '';
+      }, 300);
+    } else {
+      // Snap back
+      page.style.transform = 'translateX(0)';
+      page.style.opacity = '1';
+      setTimeout(() => { page.style.transition = ''; }, 300);
+    }
+    swiping = false;
+    page = null;
+  }, { passive: true });
+})();
+
+// ========================================
 //  SERVICE WORKER
 // ========================================
 let swRegistration = null;
