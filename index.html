@@ -1483,13 +1483,6 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .mood-btn .mood-val { font-size: 18px; font-weight: 800; color: #fff; line-height: 1; }
 .mood-btn .mood-label { font-size: 9px; color: var(--text-3); margin-top: 4px; font-weight: 600; }
 
-.energy-slider-wrap { margin-bottom: 24px; }
-.energy-slider-val {
-  text-align: center; margin-bottom: 8px;
-  font-family: 'DM Mono', monospace; font-size: 28px;
-  font-weight: 700; color: var(--energy);
-}
-
 .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 24px; }
 .tag-chip {
   padding: 7px 14px; border-radius: 100px;
@@ -2227,12 +2220,6 @@ section { padding: 0 16px; margin-bottom: 8px; }
 
     <div class="modal-section-label">Mood</div>
     <div class="mood-row" id="moodRow"></div>
-
-    <div class="modal-section-label">Energy Level</div>
-    <div class="energy-slider-wrap">
-      <div class="energy-slider-val" id="logEnergyVal">50</div>
-      <input type="range" id="logEnergySlider" min="0" max="100" value="50" oninput="document.getElementById('logEnergyVal').textContent=this.value">
-    </div>
 
     <div class="modal-section-label">When & Duration</div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
@@ -6913,7 +6900,6 @@ function openLog() { document.getElementById('logModal').classList.add('open'); 
 function closeLog() { document.getElementById('logModal').classList.remove('open'); }
 
 function submitLog() {
-  const energy = parseInt(document.getElementById('logEnergySlider').value);
   const timeInput = document.getElementById('logTimeInput').value;
   let ts = Date.now();
   let logDate = new Date().toISOString().slice(0,10);
@@ -6931,7 +6917,6 @@ function submitLog() {
     ts,
     date: logDate,
     mood: selectedMood,
-    energy,
     tags: [...selectedTags],
     durationMin, // null = instant, number = minutes
   };
