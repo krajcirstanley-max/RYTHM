@@ -446,8 +446,15 @@ Deno.serve(async (req) => {
       }
 
       // ---- WORKOUTS ----
-      else if (name.includes("workout") || name.includes("exercise")) {
+      // Match "workout" or "exercise" but NOT sub-metrics like "workout_route"
+      else if ((name === "workout" || name === "workouts" || name === "exercise" || name === "exercise_time" || name.includes("workout_type")) && !name.includes("route")) {
         for (const pt of dataPoints) {
+          // Skip entries that look like simple metric readings (have qty + source but no start/end)
+          // These are likely VO2Max or other metrics from workout context
+          if (pt.qty != null && pt.source && !pt.startDate && !pt.endDate && !pt.duration && !pt.name) {
+            continue;
+          }
+
           const wType = pt.name || pt.workoutActivityType || pt.type || "Workout";
 
           // Duration: try explicit field first (seconds → minutes), then compute from start/end
