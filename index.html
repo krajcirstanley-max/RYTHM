@@ -2628,13 +2628,13 @@ const DEFAULT_STATE = {
   seasonal: { dayLength: null, adjustment: null },
   sleepDebt: [],
   metrics: {
-    hrv: 42, hrvDelta: 0,
+    hrv: 38.3, hrvDelta: 0,
     rhr: 57, rhrDelta: 0,
     sleepDebt: 0.5, sleepDebtDelta: -0.7,
-    respiratory: 14.2, respiratoryDelta: 0,
-    // Personal baselines (calibrated from real Apple Health data)
-    hrvBaseline: 42,   // 7-day rolling average HRV
-    rhrBaseline: 57,   // 7-day rolling average RHR
+    respiratory: 14.8, respiratoryDelta: 0,
+    // Personal baselines (calibrated from 1yr Apple Health data — 349-364 days)
+    hrvBaseline: 42,   // all-time median HRV (range 16-87ms)
+    rhrBaseline: 63,   // all-time median RHR (range 54-89bpm)
   },
   readiness: {
     hrv: 70, rhr: 60, sleep: 94, training: 60
@@ -2651,11 +2651,11 @@ const DEFAULT_STATE = {
     _skinTempSynced: false,
     steps: { today: 0, goal: 10000, week: [] },
     hrZones: [
-      { zone: 5, label: 'Max', pct: 2, bpm: '171-190', color: '#ff5470' },
-      { zone: 4, label: 'Hard', pct: 8, bpm: '152-170', color: '#ff8c42' },
-      { zone: 3, label: 'Moderate', pct: 22, bpm: '133-151', color: '#ffb547' },
-      { zone: 2, label: 'Light', pct: 35, bpm: '114-132', color: '#00ec7f' },
-      { zone: 1, label: 'Rest', pct: 33, bpm: '59-113', color: '#4da9ff' }
+      { zone: 5, label: 'Max', pct: 2, bpm: '178-198', color: '#ff5470' },
+      { zone: 4, label: 'Hard', pct: 8, bpm: '158-177', color: '#ff8c42' },
+      { zone: 3, label: 'Moderate', pct: 22, bpm: '138-157', color: '#ffb547' },
+      { zone: 2, label: 'Light', pct: 35, bpm: '118-137', color: '#00ec7f' },
+      { zone: 1, label: 'Rest', pct: 33, bpm: '57-117', color: '#4da9ff' }
     ],
     calendarAge: null,  // computed from birthday
     rythmAge: null,     // computed from health data
@@ -2664,8 +2664,8 @@ const DEFAULT_STATE = {
     stepGoal: 10000
   },
   sleep: {
-    totalH: 7.2, sleepStart: '01:45', sleepEnd: '09:00',
-    stages: { deep: 1.4, rem: 1.8, core: 3.2, awake: 0.8 },
+    totalH: 8.2, sleepStart: '01:45', sleepEnd: '09:45',
+    stages: { deep: 1.2, rem: 1.5, core: 4.8, awake: 0.7 },
     efficiency: 89, consistency: 72
   },
   workouts: [],
@@ -3418,8 +3418,8 @@ function buildRecoveryDetail() {
     <div class="rd-row"><span class="rd-row-label"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#4da9ff;margin-right:4px;"></span> Training Load</span><div class="rd-bar-wrap"><div class="rd-bar-fill" style="width:${trainScore}%;background:#4da9ff"></div></div><span class="rd-row-val">${trainScore}%</span></div>
     <div class="rd-row" style="margin-top:6px;padding-top:8px;border-top:1px solid var(--card-border)"><span class="rd-row-label">HRV</span><span class="rd-row-val">${ST.metrics.hrv}ms <span style="color:${ST.metrics.hrvDelta >= 0 ? 'var(--energy)' : 'var(--warn)'};">(${ST.metrics.hrvDelta >= 0 ? '+' : ''}${ST.metrics.hrvDelta})</span></span></div>
     <div class="rd-row"><span class="rd-row-label">Resting HR</span><span class="rd-row-val">${ST.metrics.rhr}bpm <span style="color:${ST.metrics.rhrDelta <= 0 ? 'var(--energy)' : 'var(--warn)'};">(${ST.metrics.rhrDelta > 0 ? '+' : ''}${ST.metrics.rhrDelta})</span></span></div>
-    <div class="rd-row"><span class="rd-row-label">Baseline HRV</span><span class="rd-row-val" style="color:var(--text-3)">${ST.metrics.hrvBaseline || 42}ms</span></div>
-    <div class="rd-row"><span class="rd-row-label">Baseline RHR</span><span class="rd-row-val" style="color:var(--text-3)">${ST.metrics.rhrBaseline || 57}bpm</span></div>
+    <div class="rd-row"><span class="rd-row-label">Baseline HRV</span><span class="rd-row-val" style="color:var(--text-3)">${ST.metrics.hrvBaseline || 42}ms <span style="font-size:10px;color:var(--text-4)">(50th %ile: 42ms)</span></span></div>
+    <div class="rd-row"><span class="rd-row-label">Baseline RHR</span><span class="rd-row-val" style="color:var(--text-3)">${ST.metrics.rhrBaseline || 63}bpm <span style="font-size:10px;color:var(--text-4)">(pop avg: 72)</span></span></div>
     ${hadLateShisha ? '<div class="rd-row"><span class="rd-row-label" style="color:var(--warn)">Late Shisha Impact</span><span class="rd-row-val" style="color:var(--warn)">-5% recovery</span></div>' : ''}
     ${hadShisha ? '<div class="rd-row"><span class="rd-row-label" style="color:var(--text-3)">Daily Shisha</span><span class="rd-row-val" style="color:var(--text-3)">CO clears in ~4h</span></div>' : ''}
     <div class="rd-msg" style="font-size:12px;line-height:1.6">${msg}</div>
@@ -5424,105 +5424,130 @@ function computeRythmAge() {
   const h = ST.health || DEFAULT_STATE.health;
 
   // RYTHM Biological Age — multi-biomarker algorithm
-  // Based on Levine's PhenoAge + DunedinPACE concepts adapted for wearable data
-  // Each biomarker contributes a weighted age offset vs population norms for chronological age
-  // Positive adj = older, negative = younger
+  // Based on Levine's PhenoAge + DunedinPACE adapted for wearable data
+  // Population norms sourced from NHANES, Framingham, Cooper Institute
+  // Each biomarker: offset vs age-specific population median → weighted years
 
   let adj = 0;
   let weights = 0;
 
-  // 1. HRV (RMSSD) — strongest wearable aging marker
-  // Population norms by age: 20s ~42ms, 30s ~35ms, 40s ~28ms, 50s ~22ms
-  // Expected for this user's age:
-  const hrvExpected = Math.max(15, 50 - cAge * 0.8);
+  // 1. HRV (RMSSD) — strongest wearable aging marker (weight: 3)
+  // Population medians by age: 18-25 → 42ms, 25-30 → 37ms, 30-40 → 30ms, 40-50 → 24ms
+  // Stanley's data: median 41.5ms, mean 42.4ms (n=364, range 16-87ms)
+  const hrvNorms = [[18,48],[25,42],[30,37],[35,32],[40,28],[45,24],[50,21],[60,17]];
+  let hrvExpected = 42;
+  for (let i = 0; i < hrvNorms.length - 1; i++) {
+    if (cAge >= hrvNorms[i][0] && cAge < hrvNorms[i+1][0]) {
+      const t = (cAge - hrvNorms[i][0]) / (hrvNorms[i+1][0] - hrvNorms[i][0]);
+      hrvExpected = hrvNorms[i][1] + t * (hrvNorms[i+1][1] - hrvNorms[i][1]);
+      break;
+    }
+  }
   const hrv = m.hrvBaseline || m.hrv || null;
   if (hrv != null && hrv > 0) {
-    // Each 10ms above expected ≈ 3 years younger
-    adj -= ((hrv - hrvExpected) / 10) * 3;
-    weights += 3; // highest weight
+    // Each 10ms above expected ≈ 2.5 years younger (conservative)
+    adj -= ((hrv - hrvExpected) / 10) * 2.5;
+    weights += 3;
   }
 
-  // 2. RHR — cardiovascular fitness proxy
-  // Population avg ~72bpm, elite athletes 45-55bpm
+  // 2. RHR — cardiovascular fitness proxy (weight: 2.5)
+  // Population median ~72bpm. Athletes 50-65bpm. Elite <50bpm.
+  // Stanley's data: median 63bpm, mean 63.2 (n=349, range 54-89)
+  // At 63bpm he's "Good" for 20s male (55-61 = Excellent, 62-65 = Good, 66-69 = Above avg)
   const rhr = m.rhrBaseline || m.rhr || null;
   if (rhr != null && rhr > 0) {
-    // Each 5bpm below 72 ≈ 1.5 years younger
-    adj -= ((72 - rhr) / 5) * 1.5;
+    // Each 5bpm below 72 ≈ 1.2 years younger (diminishing returns below 55)
+    const rhrRef = 72;
+    const rhrDelta = rhrRef - rhr;
+    if (rhr >= 55) {
+      adj -= (rhrDelta / 5) * 1.2;
+    } else {
+      // Below 55: still good but diminishing returns
+      adj -= ((rhrRef - 55) / 5) * 1.2 + ((55 - rhr) / 5) * 0.5;
+    }
     weights += 2.5;
   }
 
-  // 3. VO2 Max — gold standard for cardiorespiratory fitness
-  // Superior for 20s male: >51, excellent: 46-51, good: 43-46
+  // 3. VO2 Max — gold standard cardiorespiratory fitness (weight: 2.5)
+  // Cooper Institute norms for 20-29M: Superior >51.4, Excellent 46.8-51.4, Good 43.9-46.7
+  // Stanley's data: median 48.6, latest 53.4 (n=13) → between Excellent and Superior
   const vo2 = h.vo2max || null;
   if (vo2 != null && vo2 > 0) {
-    const vo2Expected = Math.max(30, 52 - (cAge - 20) * 0.5);
-    adj -= ((vo2 - vo2Expected) / 5) * 2;
+    // Age-adjusted expected VO2 (50th percentile declines ~0.5/yr after 25)
+    const vo2Expected = cAge <= 25 ? 44 : Math.max(28, 44 - (cAge - 25) * 0.5);
+    adj -= ((vo2 - vo2Expected) / 5) * 1.8;
     weights += 2.5;
   }
 
-  // 4. Sleep quality composite
-  // Deep sleep % (>15% optimal), REM % (>20% optimal), total (7-9h optimal)
+  // 4. Sleep quality composite (weight: 2)
+  // Optimal: 7-9h total, >15% deep, >20% REM
+  // Stanley's data: median 8.4h total (very good for recovery)
   const totalSleep = sl.totalH || null;
   const deep = sl.stages?.deep || 0;
   const rem = sl.stages?.rem || 0;
   if (totalSleep != null && totalSleep > 0) {
     const deepPct = totalSleep > 0 ? (deep / totalSleep) * 100 : 0;
     const remPct = totalSleep > 0 ? (rem / totalSleep) * 100 : 0;
-    // Sleep duration: 7-8.5h optimal, penalty outside
     let sleepAdj = 0;
-    if (totalSleep >= 7 && totalSleep <= 8.5) sleepAdj -= 1;
+    // Duration: 7-9h optimal for athletes (higher than gen pop)
+    if (totalSleep >= 7 && totalSleep <= 9) sleepAdj -= 1;
     else if (totalSleep >= 6 && totalSleep < 7) sleepAdj += 0.5;
-    else if (totalSleep < 6) sleepAdj += 1.5;
-    else if (totalSleep > 9) sleepAdj += 0.5;
-    // Deep sleep: >15% is protective
+    else if (totalSleep < 6) sleepAdj += 2;
+    else if (totalSleep > 10) sleepAdj += 0.5;
+    // Deep sleep: 15-20% is normal for 20s, >20% excellent
     if (deepPct >= 20) sleepAdj -= 1;
     else if (deepPct >= 15) sleepAdj -= 0.5;
     else if (deepPct < 10) sleepAdj += 1;
-    // REM: cognitive recovery
+    // REM: 20-25% optimal
     if (remPct >= 22) sleepAdj -= 0.5;
     else if (remPct < 15) sleepAdj += 0.5;
     adj += sleepAdj;
     weights += 2;
   }
 
-  // 5. Respiratory rate — autonomic health
-  // Normal: 12-20, optimal: 12-16 during sleep
+  // 5. Respiratory rate — autonomic health (weight: 1)
+  // Normal rest: 12-20, optimal sleep: 12-16 br/min
+  // Stanley's data: median 15.1, mean 15.2 (n=348) → optimal range
   const resp = m.respiratory || null;
   if (resp != null && resp > 0) {
     if (resp <= 14) adj -= 0.8;
     else if (resp <= 16) adj -= 0.3;
     else if (resp > 18) adj += 0.5;
-    else if (resp > 20) adj += 1.0;
+    else if (resp > 20) adj += 1.5;
     weights += 1;
   }
 
-  // 6. SpO2 — vascular/pulmonary health
+  // 6. SpO2 — vascular/pulmonary health (weight: 0.5)
+  // Normal: 95-100%, healthy young adult: 96-99%
+  // Stanley's data: median 97%, mean 96.5% (n=361) → normal
   const spo2 = h.spo2 || null;
   if (spo2 != null && spo2 > 0) {
     if (spo2 >= 98) adj -= 0.3;
     else if (spo2 >= 96) adj -= 0.1;
-    else if (spo2 < 94) adj += 1.0;
+    else if (spo2 < 94) adj += 1.5;
     else if (spo2 < 96) adj += 0.3;
     weights += 0.5;
   }
 
-  // 7. Activity — daily movement
+  // 7. Activity — daily movement (weight: 1.5)
+  // CDC recommends 7-8k steps; athlete training adds structured volume
+  // Stanley's data: median 8065 steps/day (n=383)
   const steps = h.steps?.today || 0;
   if (steps > 0) {
     if (steps >= 10000) adj -= 1.0;
     else if (steps >= 7500) adj -= 0.5;
     else if (steps >= 5000) adj -= 0.2;
     else if (steps < 3000) adj += 0.5;
-    weights += 1;
+    weights += 1.5;
   }
 
-  // Normalize: if few biomarkers available, reduce confidence / magnitude
+  // Normalize: if few biomarkers available, scale magnitude proportionally
   if (weights > 0) {
-    const scale = Math.min(1, weights / 8); // full effect at 8+ weight points
+    const scale = Math.min(1, weights / 10); // full effect at 10+ weight points
     adj *= scale;
   }
 
-  // Clamp biological age to reasonable range
+  // Clamp to reasonable range (max 12yr younger, 10yr older)
   return +Math.max(cAge - 12, Math.min(cAge + 10, cAge + adj)).toFixed(1);
 }
 
@@ -6244,64 +6269,127 @@ function buildDetailContent(type) {
       <div class="detail-section">
         <div class="detail-section-title">ABOUT</div>
         <div class="detail-explainer">
-          <p>RYTHM Age estimates your <b>biological age</b> based on physiological markers vs population norms. It combines RHR, HRV, VO2 Max, sleep efficiency, and activity levels.</p>
-          <p>Your RYTHM Age of <b>${computeRythmAge()}</b> vs calendar age ${getCalendarAge()} means your body is performing <b>${(getCalendarAge() - computeRythmAge()).toFixed(1)} years younger</b> than average.</p>
+          <p>RYTHM Age estimates your <b>biological age</b> from 7 physiological markers vs age-matched population norms (NHANES, Framingham, Cooper Institute).</p>
+          <p>Your RYTHM Age of <b>${computeRythmAge()}</b> vs calendar age ${getCalendarAge()} → your body performs <b>${(getCalendarAge() - computeRythmAge()).toFixed(1)} years ${getCalendarAge() - computeRythmAge() >= 0 ? 'younger' : 'older'}</b> than average.</p>
         </div>
       </div>
       <div class="detail-section">
-        <div class="detail-section-title">FACTORS</div>
+        <div class="detail-section-title">YOUR METRICS vs BENCHMARKS</div>
         ${(() => {
           const m = ST.metrics, sl = ST.sleep || {}, hh = ST.health || {};
           const cAge = getCalendarAge();
-          const factors = [];
+          const rows = [];
 
           // HRV
           const hrv = m.hrvBaseline || m.hrv || null;
           if (hrv != null && hrv > 0) {
-            const hrvExp = Math.max(15, 50 - cAge * 0.8);
-            const adj = -((hrv - hrvExp) / 10) * 3;
-            factors.push({ label: 'HRV (' + hrv.toFixed(0) + 'ms)', val: adj });
+            // Percentile estimate for 20-25M: p25=28, p50=42, p75=58, p90=72
+            let pct = hrv < 28 ? 'Bottom 25%' : hrv < 42 ? '25th–50th' : hrv < 58 ? '50th–75th' : hrv < 72 ? '75th–90th' : 'Top 10%';
+            let grade = hrv >= 58 ? 'A' : hrv >= 42 ? 'B' : hrv >= 28 ? 'C' : 'D';
+            rows.push({ label: 'HRV', yours: hrv.toFixed(0) + ' ms', bench: '42 ms (median 20-25M)', pct, grade });
           }
 
           // RHR
           const rhr = m.rhrBaseline || m.rhr || null;
           if (rhr != null && rhr > 0) {
-            const adj = -((72 - rhr) / 5) * 1.5;
-            factors.push({ label: 'RHR (' + rhr + 'bpm)', val: adj });
+            let grade = rhr <= 55 ? 'A+' : rhr <= 61 ? 'A' : rhr <= 65 ? 'B+' : rhr <= 69 ? 'B' : rhr <= 73 ? 'C' : 'D';
+            let pct = rhr <= 55 ? 'Top 10%' : rhr <= 61 ? 'Top 25%' : rhr <= 65 ? '25th–50th' : rhr <= 73 ? '50th–75th' : 'Below avg';
+            rows.push({ label: 'RHR', yours: rhr + ' bpm', bench: '72 bpm (pop avg)', pct, grade });
           }
 
           // VO2 Max
           if (hh.vo2max != null && hh._vo2Synced) {
-            const vo2Exp = Math.max(30, 52 - (cAge - 20) * 0.5);
-            const adj = -((hh.vo2max - vo2Exp) / 5) * 2;
-            factors.push({ label: 'VO2 Max (' + hh.vo2max + ')', val: adj });
-          }
-
-          // Sleep
-          const totalSleep = sl.totalH || null;
-          if (totalSleep != null && totalSleep > 0) {
-            let adj = 0;
-            if (totalSleep >= 7 && totalSleep <= 8.5) adj -= 1;
-            else if (totalSleep < 6) adj += 1.5;
-            else if (totalSleep < 7) adj += 0.5;
-            factors.push({ label: 'Sleep (' + totalSleep.toFixed(1) + 'h)', val: adj });
+            let grade = hh.vo2max >= 51.4 ? 'A+' : hh.vo2max >= 46.8 ? 'A' : hh.vo2max >= 43.9 ? 'B+' : hh.vo2max >= 39 ? 'B' : 'C';
+            let pct = hh.vo2max >= 51.4 ? 'Superior' : hh.vo2max >= 46.8 ? 'Excellent' : hh.vo2max >= 43.9 ? 'Good' : hh.vo2max >= 39 ? 'Fair' : 'Poor';
+            rows.push({ label: 'VO2 Max', yours: hh.vo2max.toFixed(1) + ' ml/kg', bench: '44 ml/kg (50th %ile 20-29M)', pct, grade });
           }
 
           // Respiratory
           const resp = m.respiratory || null;
           if (resp != null && resp > 0) {
-            const adj = resp <= 14 ? -0.8 : resp <= 16 ? -0.3 : resp > 18 ? 0.5 : 0;
-            factors.push({ label: 'Respiratory (' + resp + ')', val: adj });
+            let grade = resp <= 14 ? 'A' : resp <= 16 ? 'B+' : resp <= 18 ? 'B' : 'C';
+            rows.push({ label: 'Resp Rate', yours: resp.toFixed(1) + ' br/min', bench: '12-16 optimal', pct: grade === 'A' ? 'Optimal' : grade === 'B+' ? 'Normal' : 'Elevated', grade });
           }
 
-          // Activity
+          // SpO2
+          const spo2 = hh.spo2 || null;
+          if (spo2 != null && spo2 > 0) {
+            let grade = spo2 >= 98 ? 'A' : spo2 >= 96 ? 'B+' : spo2 >= 94 ? 'B' : 'C';
+            rows.push({ label: 'SpO2', yours: spo2 + '%', bench: '96-99% normal', pct: spo2 >= 98 ? 'Excellent' : spo2 >= 96 ? 'Normal' : 'Low', grade });
+          }
+
+          // Sleep
+          const totalSleep = sl.totalH || null;
+          if (totalSleep != null && totalSleep > 0) {
+            let grade = totalSleep >= 7 && totalSleep <= 9 ? 'A' : totalSleep >= 6 ? 'B' : 'C';
+            rows.push({ label: 'Sleep', yours: totalSleep.toFixed(1) + 'h', bench: '7-9h (athlete optimal)', pct: grade === 'A' ? 'Optimal' : grade === 'B' ? 'Below target' : 'Poor', grade });
+          }
+
+          // Steps
           const steps = hh.steps?.today || 0;
           if (steps > 0) {
-            const adj = steps >= 10000 ? -1.0 : steps >= 7500 ? -0.5 : steps >= 5000 ? -0.2 : steps < 3000 ? 0.5 : 0;
-            factors.push({ label: 'Activity (' + steps.toLocaleString() + ' steps)', val: adj });
+            let grade = steps >= 10000 ? 'A' : steps >= 7500 ? 'B+' : steps >= 5000 ? 'B' : 'C';
+            rows.push({ label: 'Steps', yours: steps.toLocaleString(), bench: '8,000 avg (CDC)', pct: grade === 'A' ? 'Very active' : grade === 'B+' ? 'Active' : grade === 'B' ? 'Moderate' : 'Low', grade });
           }
 
-          if (!factors.length) factors.push({ label: 'No synced data yet', val: 0 });
+          if (!rows.length) return '<div class="detail-row"><span class="detail-row-label">No synced data yet</span></div>';
+
+          const gradeColor = g => g.startsWith('A') ? 'var(--energy)' : g === 'B+' || g === 'B' ? 'var(--text-2)' : 'var(--warn)';
+          return rows.map(r => `
+            <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                <span style="font-weight:700;font-size:13px">${r.label}</span>
+                <span style="font-size:20px;font-weight:900;color:${gradeColor(r.grade)}">${r.grade}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-2)">
+                <span>You: <b style="color:#fff">${r.yours}</b></span>
+                <span>${r.pct}</span>
+              </div>
+              <div style="font-size:11px;color:var(--text-3);margin-top:2px">Benchmark: ${r.bench}</div>
+            </div>
+          `).join('');
+        })()}
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">AGE IMPACT BREAKDOWN</div>
+        ${(() => {
+          const m = ST.metrics, sl = ST.sleep || {}, hh = ST.health || {};
+          const cAge = getCalendarAge();
+          const factors = [];
+
+          const hrv = m.hrvBaseline || m.hrv || null;
+          if (hrv != null && hrv > 0) {
+            const hrvNorms = [[18,48],[25,42],[30,37],[35,32],[40,28],[45,24],[50,21],[60,17]];
+            let hrvExp = 42;
+            for (let i = 0; i < hrvNorms.length - 1; i++) {
+              if (cAge >= hrvNorms[i][0] && cAge < hrvNorms[i+1][0]) {
+                const t = (cAge - hrvNorms[i][0]) / (hrvNorms[i+1][0] - hrvNorms[i][0]);
+                hrvExp = hrvNorms[i][1] + t * (hrvNorms[i+1][1] - hrvNorms[i][1]);
+                break;
+              }
+            }
+            factors.push({ label: 'HRV (' + hrv.toFixed(0) + ' vs ' + hrvExp.toFixed(0) + 'ms exp)', val: -((hrv - hrvExp) / 10) * 2.5 });
+          }
+
+          const rhr = m.rhrBaseline || m.rhr || null;
+          if (rhr != null && rhr > 0) {
+            const rhrDelta = 72 - rhr;
+            const adj = rhr >= 55 ? -(rhrDelta / 5) * 1.2 : -((72 - 55) / 5) * 1.2 - ((55 - rhr) / 5) * 0.5;
+            factors.push({ label: 'RHR (' + rhr + ' vs 72bpm avg)', val: adj });
+          }
+
+          if (hh.vo2max != null && hh._vo2Synced) {
+            const vo2Exp = cAge <= 25 ? 44 : Math.max(28, 44 - (cAge - 25) * 0.5);
+            factors.push({ label: 'VO2 Max (' + hh.vo2max + ' vs ' + vo2Exp.toFixed(0) + ' exp)', val: -((hh.vo2max - vo2Exp) / 5) * 1.8 });
+          }
+
+          const totalSleep = sl.totalH || null;
+          if (totalSleep != null && totalSleep > 0) {
+            let adj = totalSleep >= 7 && totalSleep <= 9 ? -1 : totalSleep < 6 ? 2 : totalSleep < 7 ? 0.5 : 0;
+            factors.push({ label: 'Sleep (' + totalSleep.toFixed(1) + 'h)', val: adj });
+          }
+
+          if (!factors.length) factors.push({ label: 'No data', val: 0 });
 
           return factors.map(f => `<div class="detail-row"><span class="detail-row-label">${f.label}</span><span class="detail-row-val" style="color:${f.val <= 0 ? 'var(--energy)' : 'var(--warn)'}">${f.val <= 0 ? '' : '+'}${f.val.toFixed(1)} yrs</span></div>`).join('');
         })()}
@@ -6309,7 +6397,11 @@ function buildDetailContent(type) {
       <div class="detail-section">
         <div class="detail-section-title">HOW TO IMPROVE</div>
         <div class="detail-explainer">
-          <p>The biggest levers: <b>consistent sleep</b> (lowers RYTHM Age by up to 2 years), <b>Zone 2 cardio</b> (VO2 Max improvement), and <b>reducing shisha frequency</b> (CO exposure ages your cardiovascular system).</p>
+          <p>Your biggest levers based on real data:</p>
+          <p><b>1. HRV consistency</b> — your range is 16-87ms (huge variance). Reduce alcohol/shisha nights and keep sleep timing consistent to narrow this.</p>
+          <p><b>2. VO2 Max</b> — at 48.6-53.4 you're Excellent/Superior. Adding 2x/week Zone 2 (20-30 min easy running HR 118-137) can push past 55.</p>
+          <p><b>3. RHR recovery</b> — your best days hit 54-57bpm but median is 63. Consistent sleep and hydration drive this down.</p>
+          <p><b>4. Sleep regularity</b> — consistent bed/wake times ±30 min matters more than total hours for biological aging.</p>
         </div>
       </div>`;
 
