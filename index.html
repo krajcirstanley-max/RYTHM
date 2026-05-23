@@ -7848,6 +7848,54 @@ function buildSleepDebt() {
 //  HISTORICAL DATA & TRENDS
 // ========================================
 
+function backfillDailyReadiness() {
+  // Compute past readiness scores from historical HRV, RHR, and sleep data
+  // so the "Readiness 7 Days" widget shows values even for days the app wasn't opened
+  if (!ST._history) return;
+  if (!ST._dailyReadiness) ST._dailyReadiness = {};
+
+  const hrvHist = ST._history.hrv || [];
+  const rhrHist = ST._history.rhr || [];
+  const sleepHist = ST._history.sleep || [];
+  const hrvBase = ST.metrics.hrvBaseline || 42;
+  const rhrBase = ST.metrics.rhrBaseline || 57;
+  const sleepTarget = ST.profile.sleepTarget || 8;
+
+  // Build lookup maps by date
+  const hrvByDate = {};
+  for (const h of hrvHist) hrvByDate[h.date] = h.value;
+  const rhrByDate = {};
+  for (const r of rhrHist) rhrByDate[r.date] = r.value;
+  const sleepByDate = {};
+  for (const s of sleepHist) sleepByDate[s.date] = s.value;
+
+  // Backfill last 14 days
+  for (let i = 1; i <= 14; i++) {
+    const d = new Date(Date.now() - i * 86400000);
+    const dk = d.toISOString().slice(0, 10);
+    if (ST._dailyReadiness[dk]) continue; // already have real data
+
+    const hrvVal = hrvByDate[dk];
+    const rhrVal = rhrByDate[dk];
+    const sleepVal = sleepByDate[dk];
+
+    // Need at least HRV or sleep to estimate
+    if (!hrvVal && !sleepVal) continue;
+
+    const hrvScore = hrvVal ? Math.min(100, Math.max(0, Math.round(70 + ((hrvVal / hrvBase) - 1) * 150))) : 50;
+    const rhrScore = rhrVal ? Math.min(100, Math.max(0, Math.round(65 + (rhrBase - rhrVal) * 5))) : 50;
+    const sleepScore = sleepVal ? Math.min(100, Math.max(0, Math.round((sleepVal / sleepTarget) * 100))) : 50;
+    const training = 60; // default mid-range for historical (no live strain data)
+
+    const score = Math.round(hrvScore * 0.35 + sleepScore * 0.3 + rhrScore * 0.2 + training * 0.15);
+    ST._dailyReadiness[dk] = Math.max(0, Math.min(100, score));
+  }
+  saveState();
+  // Rebuild week scores and re-render week strip
+  rebuildWeekScores();
+  renderWeekStrip();
+}
+
 async function fetchHistoryData() {
   try {
     const res = await fetch(HEALTH_SYNC_URL + '?history=true');
@@ -7866,6 +7914,7 @@ async function fetchHistoryData() {
       }
     }
     renderHistoryTrends();
+    backfillDailyReadiness();
     console.log('[RYTHM] History loaded:', Object.keys(ST._history).map(k => k + '(' + ST._history[k].length + ')').join(', '));
   } catch (e) {
     console.warn('[RYTHM] History fetch failed:', e);
