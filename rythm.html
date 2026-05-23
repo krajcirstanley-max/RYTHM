@@ -2851,17 +2851,37 @@ function energyAt(h) {
   return Math.max(5, Math.min(98, Math.round(energy)));
 }
 
-// Behavior energy modifier definitions
+// Behavior energy modifier definitions — time-decayed effects on energy curve
 const BEHAVIOR_ENERGY_MODS = {
-  cold_shower: (hSince) => hSince <= 3 ? 5 : 0,
-  caffeine:    (hSince) => hSince <= 4 ? 8 : hSince <= 10 ? -5 : 0,
-  workout:     (hSince) => hSince <= 2 ? 5 : hSince <= 6 ? -3 : 0,
-  meditation:  () => 3,
-  nap:         (hSince) => hSince <= 3 ? 10 : 0,
-  shisha:      () => -3,
-  alcohol:     () => -8,
-  sugar:       (hSince) => hSince <= 1 ? 5 : hSince <= 4 ? -5 : 0,
-  stress:      () => -5,
+  cold_shower:   (hSince) => hSince <= 0.5 ? 8 : hSince <= 3 ? 5 : hSince <= 6 ? 2 : 0,
+  cold_exposure: (hSince) => hSince <= 0.5 ? 8 : hSince <= 3 ? 5 : hSince <= 6 ? 2 : 0,
+  caffeine:      (hSince) => hSince <= 0.5 ? 3 : hSince <= 4 ? 8 : hSince <= 8 ? -3 : hSince <= 12 ? -5 : 0,
+  workout:       (hSince) => hSince <= 1 ? 8 : hSince <= 3 ? 3 : hSince <= 8 ? -4 : 0,
+  meditation:    (hSince) => hSince <= 4 ? 4 : 2,
+  nap:           (hSince) => hSince <= 0.5 ? -3 : hSince <= 3 ? 10 : hSince <= 6 ? 3 : 0,
+  shisha:        (hSince) => hSince <= 1 ? 2 : hSince <= 4 ? -3 : -5, // CO hangover effect
+  alcohol:       (hSince) => hSince <= 1 ? 3 : hSince <= 3 ? -4 : -8, // worse over time
+  sugar:         (hSince) => hSince <= 0.5 ? 5 : hSince <= 2 ? -3 : hSince <= 4 ? -5 : 0,
+  stress:        () => -6,
+  sauna:         (hSince) => hSince <= 1 ? -3 : hSince <= 4 ? 5 : 2, // post-sauna energy boost
+  stretching:    (hSince) => hSince <= 2 ? 3 : 1,
+  hydration:     () => 2,
+  late_meal:     (hSince) => hSince <= 3 ? -3 : -1,
+  creatine:      () => 1,
+  social:        (hSince) => hSince <= 2 ? 4 : 1,
+  nature:        (hSince) => hSince <= 3 ? 5 : 2,
+  sex:           (hSince) => hSince <= 1 ? -2 : hSince <= 4 ? 3 : 0,
+  supplements:   () => 1,
+  omega3:        () => 1,
+  vitamin_d:     () => 1,
+  magnesium:     () => 1,
+  weed:          (hSince) => hSince <= 1 ? 3 : hSince <= 4 ? -4 : -6,
+  nicotine:      (hSince) => hSince <= 0.5 ? 5 : hSince <= 2 ? -3 : -4,
+  blue_light:    () => -3,
+  screen_time:   () => -2,
+  fasting:       (hSince) => hSince <= 4 ? -2 : hSince <= 12 ? 3 : hSince <= 16 ? 5 : -3,
+  reading:       () => 2,
+  massage:       (hSince) => hSince <= 2 ? 4 : 2,
 };
 
 function getBehaviorEnergyMod(atHour) {
@@ -2974,8 +2994,29 @@ function computeReadiness() {
   const hrv = Math.max(0, Math.min(100, r.hrv || 0));
   const rhr = Math.max(0, Math.min(100, r.rhr || 0));
   const sleep = Math.max(0, Math.min(100, r.sleep || 0));
-  const training = Math.max(0, Math.min(100, r.training || 0));
-  return Math.max(0, Math.min(100, Math.round(hrv * 0.4 + rhr * 0.2 + sleep * 0.3 + training * 0.1)));
+  // Training load — compute from real workout/activity data
+  const tl = computeTrainingLoad();
+  const training = tl.readiness;
+  ST.readiness.training = training;
+  // Add respiratory rate component (bonus/penalty if available)
+  const resp = ST.metrics.respiratory || 0;
+  let respBonus = 0;
+  if (resp > 0) {
+    if (resp <= 14) respBonus = 3;
+    else if (resp <= 16) respBonus = 1;
+    else if (resp > 18) respBonus = -3;
+    else if (resp > 20) respBonus = -6;
+  }
+  // SpO2 component (penalty if low)
+  const spo2 = ST.health?.spo2 || 0;
+  let spo2Bonus = 0;
+  if (spo2 > 0) {
+    if (spo2 >= 98) spo2Bonus = 2;
+    else if (spo2 < 94) spo2Bonus = -5;
+    else if (spo2 < 96) spo2Bonus = -2;
+  }
+  const base = hrv * 0.35 + rhr * 0.2 + sleep * 0.3 + training * 0.15;
+  return Math.max(0, Math.min(100, Math.round(base + respBonus + spo2Bonus)));
 }
 
 function readinessInterpretation(score) {
@@ -3384,11 +3425,13 @@ function buildRecoveryDetail() {
   const hrvColor = hrvScore >= 60 ? 'var(--energy)' : hrvScore >= 40 ? 'var(--warn)' : 'var(--danger)';
   const rhrColor = rhrScore >= 60 ? 'var(--energy)' : rhrScore >= 40 ? 'var(--warn)' : 'var(--danger)';
 
-  // Weighted contribution to recovery
-  const hrvContrib = Math.round(hrvScore * 0.4);
+  // Weighted contribution to recovery (matches computeReadiness weights)
+  const hrvContrib = Math.round(hrvScore * 0.35);
   const rhrContrib = Math.round(rhrScore * 0.2);
   const sleepContrib = Math.round(sleepScore * 0.3);
-  const trainContrib = Math.round(trainScore * 0.1);
+  const trainContrib = Math.round(trainScore * 0.15);
+  const trainColor = trainScore >= 60 ? 'var(--energy)' : trainScore >= 40 ? 'var(--warn)' : 'var(--danger)';
+  const tl = computeTrainingLoad();
 
   let msg;
   if (score >= 75) {
@@ -3411,11 +3454,12 @@ function buildRecoveryDetail() {
       <div class="rd-title">Recovery Breakdown</div>
       <div class="rd-score" style="color:${interp.color}">${score}<span class="rd-unit">%</span></div>
     </div>
-    <div style="font-size:10px;color:var(--text-4);margin-bottom:10px;">RECOVERY = HRV (40%) + SLEEP (30%) + RHR (20%) + TRAINING LOAD (10%)</div>
+    <div style="font-size:10px;color:var(--text-4);margin-bottom:10px;">RECOVERY = HRV (35%) + SLEEP (30%) + RHR (20%) + TRAINING (15%) ± Resp/SpO2</div>
     <div class="rd-row"><span class="rd-row-label"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${hrvColor};margin-right:4px;"></span> HRV Score</span><div class="rd-bar-wrap"><div class="rd-bar-fill" style="width:${hrvScore}%;background:${hrvColor}"></div></div><span class="rd-row-val" style="color:${hrvColor}">${hrvScore}%</span></div>
     <div class="rd-row"><span class="rd-row-label"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${rhrColor};margin-right:4px;"></span> Resting HR</span><div class="rd-bar-wrap"><div class="rd-bar-fill" style="width:${rhrScore}%;background:${rhrColor}"></div></div><span class="rd-row-val" style="color:${rhrColor}">${rhrScore}%</span></div>
     <div class="rd-row"><span class="rd-row-label"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#93a1c4;margin-right:4px;"></span> Sleep Quality</span><div class="rd-bar-wrap"><div class="rd-bar-fill" style="width:${sleepScore}%;background:#93a1c4"></div></div><span class="rd-row-val">${sleepScore}%</span></div>
-    <div class="rd-row"><span class="rd-row-label"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#4da9ff;margin-right:4px;"></span> Training Load</span><div class="rd-bar-wrap"><div class="rd-bar-fill" style="width:${trainScore}%;background:#4da9ff"></div></div><span class="rd-row-val">${trainScore}%</span></div>
+    <div class="rd-row"><span class="rd-row-label"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${trainColor};margin-right:4px;"></span> Training Load</span><div class="rd-bar-wrap"><div class="rd-bar-fill" style="width:${trainScore}%;background:${trainColor}"></div></div><span class="rd-row-val" style="color:${trainColor}">${trainScore}%</span></div>
+    <div class="rd-row" style="padding-left:12px;"><span class="rd-row-label" style="font-size:11px;color:var(--text-4)">ACR (3d/7d)</span><span class="rd-row-val" style="font-size:11px;color:var(--text-4);font-family:'DM Mono',monospace">${tl.acr}x (${tl.avg3}/${tl.avg7} cal)</span></div>
     <div class="rd-row" style="margin-top:6px;padding-top:8px;border-top:1px solid var(--card-border)"><span class="rd-row-label">HRV</span><span class="rd-row-val">${ST.metrics.hrv}ms <span style="color:${ST.metrics.hrvDelta >= 0 ? 'var(--energy)' : 'var(--warn)'};">(${ST.metrics.hrvDelta >= 0 ? '+' : ''}${ST.metrics.hrvDelta})</span></span></div>
     <div class="rd-row"><span class="rd-row-label">Resting HR</span><span class="rd-row-val">${ST.metrics.rhr}bpm <span style="color:${ST.metrics.rhrDelta <= 0 ? 'var(--energy)' : 'var(--warn)'};">(${ST.metrics.rhrDelta > 0 ? '+' : ''}${ST.metrics.rhrDelta})</span></span></div>
     <div class="rd-row"><span class="rd-row-label">Baseline HRV</span><span class="rd-row-val" style="color:var(--text-3)">${ST.metrics.hrvBaseline || 42}ms <span style="font-size:10px;color:var(--text-4)">(50th %ile: 42ms)</span></span></div>
@@ -3426,9 +3470,11 @@ function buildRecoveryDetail() {
     <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--card-border);">
       <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-4);text-transform:uppercase;margin-bottom:6px;">What drives recovery</div>
       <div style="font-size:11px;color:var(--text-3);line-height:1.5;">
-        <b style="color:var(--text-2)">HRV</b> (40%) = parasympathetic tone. Higher = more recovered. Your baseline: ${ST.metrics.hrvBaseline || 42}ms.<br>
+        <b style="color:var(--text-2)">HRV</b> (35%) = parasympathetic tone. Higher = more recovered. Your baseline: ${ST.metrics.hrvBaseline || 42}ms.<br>
         <b style="color:var(--text-2)">Sleep</b> (30%) = quality + duration. Deep sleep releases HGH for tissue repair.<br>
         <b style="color:var(--text-2)">RHR</b> (20%) = cardiovascular recovery. Lower than baseline = good sign.<br>
+        <b style="color:var(--text-2)">Training Load</b> (15%) = Acute:Chronic ratio (3d vs 7d). Sweet spot: 0.8-1.3x.<br>
+        <b style="color:var(--text-2)">Resp/SpO2</b> = bonus modifiers. Low resp rate = good autonomic control.<br>
         <b style="color:var(--text-2)">Training</b> (10%) = recent strain. Heavy days suppress recovery for 24-48h.
       </div>
     </div>
@@ -3508,8 +3554,8 @@ function buildStrainDetail() {
 //  SLEEP HR CURVE (WHOOP-style)
 // ========================================
 function buildSleepHRCurve(stg, totalH) {
-  // Generate a simulated HR curve colored by sleep stage
-  // Real sleep: deep = low HR (40-55), REM = variable (55-75), light = moderate (50-65), awake = high (65-85)
+  // Generate an estimated HR curve colored by sleep stage (based on stage durations, not real HR data)
+  // Typical: deep = low HR (40-55), REM = variable (55-75), light = moderate (50-65), awake = high (65-85)
   const totalMin = Math.round(totalH * 60);
   if (totalMin < 30) return '';
 
@@ -3775,10 +3821,13 @@ function buildSleepFullPage() {
   const awakePct = Math.round(stg.awake / total * 100);
 
   const strain = computeStrain();
-  const healthyMin = 7.5;
-  const strainAdd = strain > 14 ? 1.0 : strain > 10 ? 0.5 : 0;
-  const debtAdd = debtH > 1 ? 0.5 : 0;
+  // Sleep need = baseline + strain surcharge + debt repayment
+  // WHOOP-style: high strain days need more sleep
+  const strainAdd = strain > 14 ? 1.0 : strain > 10 ? 0.5 : strain > 6 ? 0.25 : 0;
+  const debtAdd = Math.min(1.0, debtH > 0 ? debtH * 0.3 : 0); // repay 30% of debt
   const sleepNeeded = +(target + strainAdd + debtAdd).toFixed(1);
+  // Sleep performance = actual vs needed (Whoop's key metric)
+  const sleepPerf = Math.min(100, Math.round((sl.totalH / sleepNeeded) * 100));
   let idealBedMin = ST.profile.wakeMin - Math.round(sleepNeeded * 60) - 15;
   if (idealBedMin < 0) idealBedMin += 1440;
 
@@ -3845,12 +3894,12 @@ function buildSleepFullPage() {
         <svg viewBox="0 0 120 120">
           <circle cx="60" cy="60" r="52" fill="none" stroke="var(--bg-2)" stroke-width="8"/>
           <circle cx="60" cy="60" r="52" fill="none" stroke="${perfColor}" stroke-width="8"
-            stroke-dasharray="${2 * Math.PI * 52}" stroke-dashoffset="${2 * Math.PI * 52 * (1 - pct / 100)}"
+            stroke-dasharray="${2 * Math.PI * 52}" stroke-dashoffset="${2 * Math.PI * 52 * (1 - sleepPerf / 100)}"
             stroke-linecap="round"/>
         </svg>
         <div class="perf-val">
-          <div class="perf-num" style="color:${perfColor}">${pct}%</div>
-          <div class="perf-label">SLEEP PERF</div>
+          <div class="perf-num" style="color:${perfColor}">${sleepPerf}%</div>
+          <div class="perf-label">PERFORMANCE</div>
         </div>
       </div>
       <div style="flex:1;">
@@ -3907,7 +3956,7 @@ function buildSleepFullPage() {
     </div>
 
     <div class="fp-section">
-      <div class="fp-section-title">HOURS OF SLEEP</div>
+      <div class="fp-section-title">ESTIMATED HR DURING SLEEP <span style="font-size:9px;font-weight:500;letter-spacing:0;color:var(--text-4);text-transform:none;margin-left:6px;">(modeled from stages)</span></div>
       ${hrCurve}
       <div class="sleep-tl-time-row" style="margin-top:4px;"><span>${sl.sleepStart}</span><span>${sl.sleepEnd}</span></div>
       <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-4);">
@@ -3924,7 +3973,7 @@ function buildSleepFullPage() {
     </div>
 
     <div class="fp-section">
-      <div class="fp-section-title">SLEEP TIMELINE</div>
+      <div class="fp-section-title">SLEEP STAGES <span style="font-size:9px;font-weight:500;letter-spacing:0;color:var(--text-4);text-transform:none;margin-left:6px;">(estimated from totals)</span></div>
       <div class="sleep-timeline" id="sleepTimeline">${buildSleepTimeline(stg, sl.totalH)}</div>
       <div class="sleep-tl-legend" id="sleepTlLegend">
         <button class="sleep-tl-btn" style="color:#5e60ce" onclick="highlightSleepStage('deep')" data-stage="deep">Deep</button>
@@ -3941,7 +3990,7 @@ function buildSleepFullPage() {
       <div class="fp-row" style="margin-top:8px;"><span class="fp-row-label">Hours of Sleep</span><span class="fp-row-val" style="color:var(--sleep)">${fmtH(sl.totalH)}</span></div>
       <div class="fp-row"><span class="fp-row-label">Sleep Needed</span><span class="fp-row-val">${fmtH(sleepNeeded)}</span></div>
       <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
-        <div class="fp-row"><span class="fp-row-label" style="color:var(--text-4)">Healthy Minimum</span><span class="fp-row-val" style="color:var(--text-3)">${fmtH(healthyMin)}</span></div>
+        <div class="fp-row"><span class="fp-row-label" style="color:var(--text-4)">Base Need</span><span class="fp-row-val" style="color:var(--text-3)">${fmtH(target)}</span></div>
         ${strainAdd > 0 ? '<div class="fp-row"><span class="fp-row-label" style="color:var(--strain)">Recent Strain</span><span class="fp-row-val" style="color:var(--strain)">+' + fmtH(strainAdd) + '</span></div>' : ''}
         ${debtAdd > 0 ? '<div class="fp-row"><span class="fp-row-label" style="color:var(--text-4)">Sleep Debt</span><span class="fp-row-val" style="color:var(--text-3)">+' + fmtH(debtAdd) + '</span></div>' : ''}
       </div>
@@ -4093,7 +4142,7 @@ function buildRecoveryFullPage() {
 
     <div class="fp-section">
       <div class="fp-section-title">RECOVERY BREAKDOWN</div>
-      <div style="font-size:10px;color:var(--text-4);margin-bottom:12px;">RECOVERY = HRV (40%) + SLEEP (30%) + RHR (20%) + TRAINING (10%)</div>
+      <div style="font-size:10px;color:var(--text-4);margin-bottom:12px;">RECOVERY = HRV (35%) + SLEEP (30%) + RHR (20%) + TRAINING (15%) ± Resp/SpO2</div>
       <div class="fp-bar-row">
         <div class="fp-bar-label" style="color:${hrvColor}">HRV</div>
         <div class="fp-bar-wrap"><div class="fp-bar-fill" style="width:${hrvScore}%;background:${hrvColor}"></div></div>
@@ -4169,10 +4218,10 @@ function buildRecoveryFullPage() {
     <div class="fp-section">
       <div class="fp-section-title">WHAT DRIVES RECOVERY - FOR ATHLETES</div>
       <div style="font-size:12px;color:var(--text-3);line-height:1.6;padding:4px 0;">
-        <p style="margin-bottom:8px"><b style="color:var(--text-1)">HRV (40%)</b> - Heart rate variability measures parasympathetic (vagal) tone. Higher = more recovered. Your autonomic nervous system controls CNS excitability - when HRV is high, you can recruit more motor units faster = more explosive takeoffs.</p>
+        <p style="margin-bottom:8px"><b style="color:var(--text-1)">HRV (35%)</b> - Heart rate variability measures parasympathetic (vagal) tone. Higher = more recovered. Your autonomic nervous system controls CNS excitability - when HRV is high, you can recruit more motor units faster = more explosive takeoffs.</p>
         <p style="margin-bottom:8px"><b style="color:var(--text-1)">Sleep (30%)</b> - Quality + duration. Deep sleep = HGH for tissue repair. REM = motor memory consolidation. An athlete who sleeps 9h recovers faster than one who sleeps 7h, even with identical training.</p>
         <p style="margin-bottom:8px"><b style="color:var(--text-1)">RHR (20%)</b> - Resting heart rate reflects cardiovascular recovery. Lower than baseline = recovered. Elevated RHR often means inflammation, illness onset, or overtraining.</p>
-        <p><b style="color:var(--text-1)">Training Load (10%)</b> - Recent strain history. Heavy sessions suppress recovery for 24-48h. The body supercompensates if given enough recovery time - train too soon and you're training in a deficit.</p>
+        <p><b style="color:var(--text-1)">Training Load (15%)</b> - Acute:Chronic workload ratio (3d vs 7d active calories). The ACR sweet spot is 0.8-1.3x — progressive overload without injury risk. Above 1.5x = spike danger. Below 0.6x = detraining.</p>
       </div>
     </div>
   `;
@@ -4643,21 +4692,75 @@ function getNextPeakTime() {
   return minToTime(peak1Start * 60); // tomorrow
 }
 
-// Compute strain (0-21 scale like WHOOP) from today's workout data
+// Compute strain (0-21 scale like WHOOP) from today's active energy
 function computeStrain() {
   const today = new Date().toISOString().slice(0,10);
   const workouts = ST._workouts || [];
   let todayCal = 0;
   for (const w of workouts) {
-    if (w.date === today) { todayCal += (w.cal || 0); }
+    if (w.date === today) todayCal += (w.cal || 0);
   }
-  // Also use activeEnergy from health sync if available
-  if (todayCal === 0 && ST.health && ST.health.activeEnergy) {
+  // Use synced active calories (broader: steps + workouts + NEAT)
+  const syncedCal = (ST.activeCal && ST.activeCal.today) || 0;
+  if (syncedCal > todayCal) todayCal = syncedCal;
+  // Also check health.activeEnergy
+  if (ST.health && ST.health.activeEnergy && ST.health.activeEnergy > todayCal) {
     todayCal = ST.health.activeEnergy;
   }
   if (todayCal === 0) return 3; // baseline resting strain
   // Scale: ~200cal=5, ~500cal=8, ~1000cal=13, ~1500cal=17, ~2000cal=20
   return Math.min(21, Math.round(3 + Math.sqrt(todayCal) * 0.42));
+}
+
+// Compute rolling 3-day strain load for training readiness component
+function computeTrainingLoad() {
+  const workouts = ST._workouts || [];
+  const history = ST._history || {};
+  const activeCals = history.active_cal || [];
+
+  // Get last 3 days of active calories (most responsive window)
+  const days3 = [];
+  for (let i = 0; i < 3; i++) {
+    const d = new Date(Date.now() - i * 86400000).toISOString().slice(0,10);
+    // Check synced active_cal data
+    const synced = activeCals.find(x => x.date === d);
+    let cal = synced ? synced.value : 0;
+    // Also check workouts
+    const dayWorkouts = workouts.filter(w => w.date === d);
+    const wCal = dayWorkouts.reduce((s, w) => s + (w.cal || 0), 0);
+    if (wCal > cal) cal = wCal;
+    days3.push(cal);
+  }
+  // Also get 7-day for chronic load comparison
+  const days7 = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(Date.now() - i * 86400000).toISOString().slice(0,10);
+    const synced = activeCals.find(x => x.date === d);
+    let cal = synced ? synced.value : 0;
+    const dayWorkouts = workouts.filter(w => w.date === d);
+    const wCal = dayWorkouts.reduce((s, w) => s + (w.cal || 0), 0);
+    if (wCal > cal) cal = wCal;
+    days7.push(cal);
+  }
+
+  const avg3 = days3.length ? days3.reduce((a,b) => a+b, 0) / days3.length : 0;
+  const avg7 = days7.length ? days7.reduce((a,b) => a+b, 0) / days7.length : 0;
+
+  // Acute:Chronic ratio — 0.8-1.3 is optimal zone
+  // Below 0.6 = detraining, above 1.5 = injury risk
+  const acr = avg7 > 50 ? avg3 / avg7 : 1.0;
+
+  // Training readiness: 100 at sweet spot (ACR 0.8-1.3), drops outside
+  let readiness;
+  if (acr >= 0.8 && acr <= 1.3) {
+    readiness = 80 + (1 - Math.abs(acr - 1.05) / 0.25) * 20; // 80-100 in sweet spot
+  } else if (acr < 0.8) {
+    readiness = Math.max(40, 80 - (0.8 - acr) * 100); // detraining penalty
+  } else {
+    readiness = Math.max(20, 80 - (acr - 1.3) * 150); // overreaching penalty
+  }
+
+  return { readiness: Math.round(Math.min(100, Math.max(0, readiness))), acr: +acr.toFixed(2), avg3: Math.round(avg3), avg7: Math.round(avg7) };
 }
 
 // Training load modifier - reduces energy curve after heavy training days
@@ -5169,7 +5272,8 @@ function renderStreaks() {
     </div>`).join('');
 
   const total = s.wake + s.sleep + (s.winddown || 0);
-  document.getElementById('streakDisplay').innerHTML = total > 0 ? `${total}` : '';
+  const streakEl = document.getElementById('streakDisplay');
+  if (streakEl) streakEl.innerHTML = total > 0 ? `${total}` : '';
 }
 
 function renderSleepDebt() {
@@ -5257,28 +5361,69 @@ function renderImpact() {
 }
 
 function renderWeekInsights() {
-  const chronoName = { early: 'early bird', intermediate: 'intermediate', late: 'night owl', extreme_late: 'extreme night owl' }[ST.profile.chronotype] || 'night owl';
+  const insights = [];
+  const hist = ST._history || {};
   const WAKE = profileWakeHour();
-  const peak2Start = minToTime(((WAKE + 10) % 24) * 60);
-  const peak2End = minToTime(((WAKE + 12.5) % 24) * 60);
   const coffeeTime = minToTime(((WAKE + 6.5) % 24) * 60);
 
-  const insights = [
-    { cls: 'info', label: 'Chronotype', text: `You're an <b>${chronoName}</b>. Deep work window: <b>${peak2Start}-${peak2End}</b>.`, icon: '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor"/>' },
-    { cls: 'good', label: 'Training impact', text: 'After strain 15+: HRV drops ~18% next day. Plan lighter days after hard sessions.', icon: '<path d="M14 6l4 4-9 9H5v-4l9-9z" stroke="currentColor" stroke-width="2" fill="none"/>' },
-    { cls: 'warn', label: 'Shisha impact', text: (function(){ const sleepM = ST.profile.sleepMin >= 1440 ? ST.profile.sleepMin - 1440 : ST.profile.sleepMin; let cutoff = sleepM - 180; if(cutoff<0) cutoff+=1440; return `Daily shisha: CO reduces SpO2 for ~4h, HRV drops 15%. <b>Finish 3h before sleep</b> - late sessions cost 22% recovery. Best before <b>${minToTime(cutoff)}</b>.`; })(), icon: '<path d="M12 2C8 2 4 6 4 10c0 6 8 12 8 12s8-6 8-12c0-4-4-8-8-8z" stroke="currentColor" stroke-width="2" fill="none"/>' },
-    { cls: 'warn', label: 'Caffeine cut-off', text: `Coffee after ${coffeeTime} drops HRV by 12%. Cut-off: <b>${coffeeTime}</b>.`, icon: '<path d="M18 8h1a4 4 0 010 8h-1M3 8h15v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8zM5 1v3M11 1v3M17 1v3" stroke="currentColor" stroke-width="2" fill="none"/>' },
-    { cls: 'good', label: 'Alcohol pattern', text: 'After 2+ drinks: sleep efficiency -23%, HRV -19%. <b>Strongest single factor.</b>', icon: '<path d="M8 2h8l-1 9a3 3 0 01-3 3 3 3 0 01-3-3L8 2zM12 14v8M8 22h8" stroke="currentColor" stroke-width="2" fill="none"/>' },
-  ];
+  // 1. Weekly Performance Assessment (data-driven from real 7-day averages)
+  const hrvArr = hist.hrv ? hist.hrv.slice(-7) : [];
+  const rhrArr = hist.rhr ? hist.rhr.slice(-7) : [];
+  const sleepArr = hist.sleep ? hist.sleep.slice(-7) : [];
+  const stepsArr = hist.steps ? hist.steps.slice(-7) : [];
+
+  if (hrvArr.length >= 3) {
+    const avgHrv7 = +(hrvArr.reduce((s,d) => s+d.value, 0) / hrvArr.length).toFixed(1);
+    const baseline = ST.metrics.hrvBaseline || 42;
+    const pctVsBase = Math.round((avgHrv7 / baseline - 1) * 100);
+    const cls = pctVsBase >= 5 ? 'good' : pctVsBase <= -10 ? 'warn' : 'info';
+    insights.push({ cls, label: '7-Day HRV Trend', text: `Avg <b>${avgHrv7}ms</b> vs baseline ${baseline}ms (<b>${pctVsBase >= 0 ? '+' : ''}${pctVsBase}%</b>). ${pctVsBase >= 5 ? 'Trending up — your body is adapting well.' : pctVsBase <= -10 ? 'Below baseline — consider reducing training volume.' : 'Holding steady.'}` });
+  }
+
+  if (rhrArr.length >= 3) {
+    const avgRhr7 = Math.round(rhrArr.reduce((s,d) => s+d.value, 0) / rhrArr.length);
+    const baseline = ST.metrics.rhrBaseline || 63;
+    const diff = avgRhr7 - baseline;
+    const cls = diff <= -2 ? 'good' : diff >= 3 ? 'warn' : 'info';
+    insights.push({ cls, label: '7-Day RHR', text: `Avg <b>${avgRhr7}bpm</b> (baseline ${baseline}). ${diff <= -2 ? 'Lower than usual — good cardiovascular fitness signal.' : diff >= 3 ? 'Elevated — watch for overtraining or stress.' : 'Normal range.'}` });
+  }
+
+  if (sleepArr.length >= 3) {
+    const avgSleep = +(sleepArr.reduce((s,d) => s+d.value, 0) / sleepArr.length).toFixed(1);
+    const target = (ST.health && ST.health.sleepTarget) || 8;
+    const pctOfTarget = Math.round((avgSleep / target) * 100);
+    const cls = pctOfTarget >= 90 ? 'good' : pctOfTarget >= 75 ? 'info' : 'warn';
+    insights.push({ cls, label: '7-Day Sleep Avg', text: `<b>${avgSleep}h</b> of ${target}h target (<b>${pctOfTarget}%</b>). ${pctOfTarget >= 90 ? 'Meeting your sleep needs.' : 'Below target — sleep debt is accumulating.'}` });
+  }
+
+  // 2. Training load balance (Acute:Chronic ratio)
+  const tl = computeTrainingLoad();
+  if (tl.avg7 > 50) {
+    const cls = tl.acr >= 0.8 && tl.acr <= 1.3 ? 'good' : tl.acr > 1.5 ? 'warn' : 'info';
+    insights.push({ cls, label: 'Training Load Balance', text: `ACR: <b>${tl.acr}</b> (3d: ${tl.avg3} cal, 7d: ${tl.avg7} cal). ${tl.acr >= 0.8 && tl.acr <= 1.3 ? 'Sweet spot — progressive overload without injury risk.' : tl.acr > 1.5 ? 'Spike detected — high injury risk. Pull back.' : tl.acr < 0.8 ? 'Detraining zone — ramp up gradually.' : 'Monitor closely.'}` });
+  }
+
+  // 3. Strain-recovery balance
+  const weekScores = ST.weekScores || [];
+  const greenDays = weekScores.filter(d => d.score !== null && d.score >= 65).length;
+  const redDays = weekScores.filter(d => d.score !== null && d.score < 50).length;
+  if (weekScores.some(d => d.score !== null)) {
+    const cls = greenDays >= 5 ? 'good' : redDays >= 3 ? 'warn' : 'info';
+    insights.push({ cls, label: 'Recovery Distribution', text: `<b>${greenDays}</b> green days, <b>${redDays}</b> red days this week. ${greenDays >= 5 ? 'Strong recovery week — good capacity for hard sessions.' : redDays >= 3 ? 'Multiple low-recovery days — prioritize rest.' : 'Mixed week — balance strain with recovery days.'}` });
+  }
+
+  // 4. Caffeine cutoff (always useful)
+  insights.push({ cls: 'info', label: 'Caffeine cut-off', text: `Last coffee by <b>${coffeeTime}</b> to protect sleep. Caffeine half-life is ~6h — even at bedtime, 25% remains active.` });
+
+  const icoPath = '<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/><path d="M12 8v4l2 2" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>';
 
   document.getElementById('weekInsights').innerHTML = insights.map(i => `
     <div class="insight ${i.cls}">
-      <div class="insight-dot"><svg viewBox="0 0 24 24">${i.icon}</svg></div>
+      <div class="insight-dot"><svg viewBox="0 0 24 24">${icoPath}</svg></div>
       <div class="insight-body">
         <div class="insight-label">${i.label}</div>
         <div class="insight-text">${i.text}</div>
       </div>
-      <svg style="width:14px;height:14px;color:var(--text-4);margin-top:6px;" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
     </div>
   `).join('');
 }
@@ -5291,8 +5436,14 @@ function renderStrainCoach() {
   const recovery = computeReadiness();
   const today = new Date().toISOString().slice(0,10);
   const workouts = (ST._workouts || []).filter(w => w.date === today);
-  const activeCal = ST.health?.activeEnergy || 0;
+  // Use the best available active calorie source
+  const activeCal = Math.max(
+    (ST.activeCal && ST.activeCal.today) || 0,
+    ST.health?.activeEnergy || 0,
+    workouts.reduce((s, w) => s + (w.cal || 0), 0)
+  );
   const steps = ST.health?.steps?.today || 0;
+  const strain = computeStrain();
 
   // Daily capacity based on recovery (kcal your body can handle well)
   const maxCap = recovery >= 75 ? 900 : recovery >= 55 ? 600 : 350;
@@ -5327,6 +5478,7 @@ function renderStrainCoach() {
     </div>`).join('');
   }
 
+  const tl = computeTrainingLoad();
   document.getElementById('strainCoach').innerHTML = `
     <div class="strain-coach-top">
       <div class="strain-coach-label">Daily Strain</div>
@@ -5336,11 +5488,15 @@ function renderStrainCoach() {
       <div class="strain-bar-fill" style="width:${usedPct}%;background:${statusColor}"></div>
     </div>
     <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-4);margin-top:4px;font-family:'DM Mono',monospace;">
-      <span>${activeCal} cal burned</span>
+      <span>${activeCal} cal · ${strain}/21 strain</span>
       <span>${usedPct}% of capacity</span>
     </div>
     ${activityHtml ? '<div style="margin-top:10px;">' + activityHtml + '</div>' : ''}
-    <div class="strain-msg">${advice}</div>`;
+    <div class="strain-msg">${advice}</div>
+    <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:11px;">
+      <span style="color:var(--text-4)">Training load (ACR)</span>
+      <span style="color:${tl.acr >= 0.8 && tl.acr <= 1.3 ? 'var(--energy)' : tl.acr > 1.5 ? 'var(--danger)' : 'var(--warn)'}; font-weight:700; font-family:'DM Mono',monospace;">${tl.acr}x ${tl.acr >= 0.8 && tl.acr <= 1.3 ? 'optimal' : tl.acr > 1.5 ? 'spike!' : tl.acr < 0.8 ? 'low' : 'high'}</span>
+    </div>`;
 }
 
 // ========================================
@@ -6637,7 +6793,9 @@ function renderCorrelations() {
     return;
   }
 
-  // Compute average readiness and HRV with/without each behavior
+  // Compute average readiness, HRV, and sleep with/without each behavior
+  // Also compute NEXT-DAY recovery impact (the behavior's lagged effect)
+  const sorted = [...ST.journal].sort((a,b) => a.date.localeCompare(b.date));
   const corrs = JOURNAL_BEHAVIORS.map(b => {
     const withB = ST.journal.filter(j => j.behaviors.includes(b.id));
     const withoutB = ST.journal.filter(j => !j.behaviors.includes(b.id));
@@ -6645,6 +6803,7 @@ function renderCorrelations() {
     const avgWith = withB.reduce((s,j) => s + j.readiness, 0) / withB.length;
     const avgWithout = withoutB.reduce((s,j) => s + j.readiness, 0) / withoutB.length;
     const diff = +(avgWith - avgWithout).toFixed(1);
+
     // HRV correlation
     const hrvWith = withB.filter(j => j.hrv != null);
     const hrvWithout = withoutB.filter(j => j.hrv != null);
@@ -6654,7 +6813,36 @@ function renderCorrelations() {
       const avgHrvWithout = hrvWithout.reduce((s,j) => s + j.hrv, 0) / hrvWithout.length;
       hrvDiff = +(avgHrvWith - avgHrvWithout).toFixed(1);
     }
-    return { name: b.label, icon: b.icon, diff, hrvDiff, count: withB.length };
+
+    // Sleep quality correlation
+    const sleepWith = withB.filter(j => j.sleep != null && j.sleep > 0);
+    const sleepWithout = withoutB.filter(j => j.sleep != null && j.sleep > 0);
+    let sleepDiff = null;
+    if (sleepWith.length >= 2 && sleepWithout.length >= 2) {
+      const avgSleepWith = sleepWith.reduce((s,j) => s + j.sleep, 0) / sleepWith.length;
+      const avgSleepWithout = sleepWithout.reduce((s,j) => s + j.sleep, 0) / sleepWithout.length;
+      sleepDiff = +(avgSleepWith - avgSleepWithout).toFixed(1);
+    }
+
+    // Next-day recovery impact (lagged correlation)
+    let nextDayDiff = null;
+    const nextDayWith = [], nextDayWithout = [];
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const today = sorted[i], tomorrow = sorted[i + 1];
+      // Check if consecutive days
+      const d1 = new Date(today.date), d2 = new Date(tomorrow.date);
+      if ((d2 - d1) / 86400000 !== 1) continue;
+      if (tomorrow.readiness == null) continue;
+      if (today.behaviors.includes(b.id)) nextDayWith.push(tomorrow.readiness);
+      else nextDayWithout.push(tomorrow.readiness);
+    }
+    if (nextDayWith.length >= 2 && nextDayWithout.length >= 2) {
+      const avg1 = nextDayWith.reduce((a,b) => a+b,0) / nextDayWith.length;
+      const avg2 = nextDayWithout.reduce((a,b) => a+b,0) / nextDayWithout.length;
+      nextDayDiff = +(avg1 - avg2).toFixed(1);
+    }
+
+    return { name: b.label, icon: b.icon, diff, hrvDiff, sleepDiff, nextDayDiff, count: withB.length };
   }).filter(Boolean).sort((a,b) => Math.abs(b.diff) - Math.abs(a.diff));
 
   if (!corrs.length) {
@@ -6662,13 +6850,24 @@ function renderCorrelations() {
     return;
   }
 
-  el.innerHTML = corrs.map(c => {
+  el.innerHTML = `<div style="display:flex;justify-content:space-between;padding:0 2px 6px;font-size:9px;font-weight:700;letter-spacing:1px;color:var(--text-4);text-transform:uppercase;">
+    <span>BEHAVIOR</span><span>RECOVERY IMPACT</span>
+  </div>` + corrs.map(c => {
     const hrvTag = c.hrvDiff != null
-      ? `<span class="corr-hrv ${c.hrvDiff >= 0 ? 'good' : 'bad'}" style="font-size:10px;margin-left:6px;opacity:0.7">HRV ${c.hrvDiff >= 0 ? '+' : ''}${c.hrvDiff}ms</span>`
+      ? `<span style="font-size:10px;opacity:0.7;color:${c.hrvDiff >= 0 ? 'var(--energy)' : 'var(--warn)'}">HRV ${c.hrvDiff >= 0 ? '+' : ''}${c.hrvDiff}</span>`
+      : '';
+    const sleepTag = c.sleepDiff != null && Math.abs(c.sleepDiff) >= 0.2
+      ? `<span style="font-size:10px;opacity:0.7;color:${c.sleepDiff >= 0 ? 'var(--sleep)' : 'var(--warn)'}">Sleep ${c.sleepDiff >= 0 ? '+' : ''}${c.sleepDiff}h</span>`
+      : '';
+    const nextTag = c.nextDayDiff != null && Math.abs(c.nextDayDiff) >= 1
+      ? `<span style="font-size:10px;opacity:0.6;color:${c.nextDayDiff >= 0 ? 'var(--energy)' : 'var(--danger)'}">Next day ${c.nextDayDiff >= 0 ? '+' : ''}${c.nextDayDiff}%</span>`
       : '';
     return `<div class="corr-row">
-      <span class="corr-name">${c.icon} ${c.name}</span>
-      <span class="corr-val ${c.diff >= 0 ? 'good' : 'bad'}">${c.diff >= 0 ? '+' : ''}${c.diff}%${hrvTag}</span>
+      <span class="corr-name">${c.icon} ${c.name} <span style="font-size:10px;color:var(--text-4)">(${c.count}x)</span></span>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;">
+        <span class="corr-val ${c.diff >= 0 ? 'good' : 'bad'}">${c.diff >= 0 ? '+' : ''}${c.diff}%</span>
+        <div style="display:flex;gap:6px;">${hrvTag}${sleepTag}${nextTag}</div>
+      </div>
     </div>`;
   }).join('');
 }
@@ -7356,7 +7555,7 @@ function markOutOfBed() {
   const now = new Date();
   const today = now.toISOString().slice(0,10);
   ST.outOfBed = { date: today, time: now.toISOString() };
-  save();
+  saveState();
   renderOutOfBed();
 }
 
@@ -7528,7 +7727,12 @@ async function fetchHealthData() {
 
     // Heart rate (avg)
     if (data.hr && data.hr.value != null) {
-      // Can derive HR zones later - for now store avg HR
+      if (!ST.health) ST.health = JSON.parse(JSON.stringify(DEFAULT_STATE.health));
+      ST.health.hrAvg = Math.round(Number(data.hr.value));
+      if (data.hr.details) {
+        ST.health.hrMin = data.hr.details.min ? Math.round(Number(data.hr.details.min)) : null;
+        ST.health.hrMax = data.hr.details.max ? Math.round(Number(data.hr.details.max)) : null;
+      }
       changed = true;
     }
 
@@ -7617,6 +7821,9 @@ async function fetchHealthData() {
     // Rebuild week scores from real data
     rebuildWeekScores();
 
+    // Calculate sleep debt from real historical data
+    buildSleepDebt();
+
     if (changed) {
       saveState();
       renderReadiness();
@@ -7631,6 +7838,67 @@ async function fetchHealthData() {
   } catch (e) {
     console.warn('[RYTHM] Health sync failed:', e);
   }
+}
+
+// ========================================
+//  SLEEP CONSISTENCY INDEX (SCI)
+// ========================================
+function computeSleepConsistency() {
+  // Sleep Regularity Index: how consistent are sleep/wake times over last 7 days
+  // Uses historical sleep data (sleepStart/sleepEnd from details)
+  const hist = ST._history && ST._history.sleep ? ST._history.sleep : [];
+  if (hist.length < 3) return { score: ST.sleep?.consistency || 72, hasData: false };
+
+  const recent = hist.slice(-7);
+  const starts = [], ends = [], durations = [];
+
+  for (const d of recent) {
+    if (d.value) durations.push(d.value);
+    // We don't have sleepStart/sleepEnd in history entries directly,
+    // so estimate from total sleep + date
+    // Better: just measure duration consistency
+  }
+
+  if (durations.length < 3) return { score: 72, hasData: false };
+
+  // Duration consistency: std dev of sleep durations
+  const avgDur = durations.reduce((a,b) => a+b, 0) / durations.length;
+  const variance = durations.reduce((s,d) => s + Math.pow(d - avgDur, 2), 0) / durations.length;
+  const stdDev = Math.sqrt(variance);
+
+  // Score: 0h stddev = 100%, 1h = 75%, 2h = 50%, 3h+ = 25%
+  const score = Math.max(20, Math.min(100, Math.round(100 - stdDev * 25)));
+  return { score, stdDev: +stdDev.toFixed(1), avgDur: +avgDur.toFixed(1), hasData: true };
+}
+
+// ========================================
+//  SLEEP DEBT (rolling 14-day tracker)
+// ========================================
+function buildSleepDebt() {
+  const target = (ST.health && ST.health.sleepTarget) || 8;
+  const hist = ST._history && ST._history.sleep ? ST._history.sleep : ST._sleepHistory || [];
+  if (!hist.length) return;
+
+  // Get last 14 days
+  const days14 = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+    const entry = hist.find(h => h.date === d);
+    const slept = entry ? (entry.totalH || entry.value || 0) : 0;
+    const deficit = Math.max(0, target - slept);
+    days14.push({ date: d, sleptH: +slept.toFixed(1), deficitH: +deficit.toFixed(1) });
+  }
+
+  // Accumulate debt (decays 10% per day — body partially repays)
+  let debt = 0;
+  const debtArr = [];
+  for (const day of days14) {
+    debt = debt * 0.9 + day.deficitH; // 10% decay + new deficit
+    debtArr.push({ date: day.date, debtH: +debt.toFixed(1), sleptH: day.sleptH });
+  }
+
+  ST.sleepDebt = debtArr;
+  renderSleepDebt();
 }
 
 // ========================================
@@ -7920,7 +8188,17 @@ function bootApp() {
   checkNotifications();
   setInterval(checkNotifications, 30000);
 
-  // Health data pulled on manual refresh / pull-to-refresh only
+  // Auto-refresh health data every 5 minutes (Whoop-like live feel)
+  setInterval(() => {
+    if (document.hidden) return;
+    fetchHealthData();
+  }, 300000);
+
+  // Auto-refresh history data every 15 minutes
+  setInterval(() => {
+    if (document.hidden) return;
+    fetchHistoryData();
+  }, 900000);
 }
 
 // ========================================

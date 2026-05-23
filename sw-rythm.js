@@ -1,5 +1,5 @@
 // RYTHM Service Worker
-const CACHE_NAME = 'rythm-v8';
+const CACHE_NAME = 'rythm-v9';
 const PRECACHE = ['index.html', 'manifest.json', 'icon-192.png', 'icon-512.png', 'icon-180.png', 'icon.svg'];
 
 self.addEventListener('install', e => {
