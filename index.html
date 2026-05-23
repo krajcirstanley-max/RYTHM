@@ -7599,9 +7599,9 @@ async function fetchHealthData() {
       if (sd.deep != null) ST.sleep.stages.deep = +Number(sd.deep).toFixed(1);
       if (sd.rem != null) ST.sleep.stages.rem = +Number(sd.rem).toFixed(1);
       if (sd.core != null) ST.sleep.stages.core = +Number(sd.core).toFixed(1);
-      // Convert full timestamps to HH:MM format
-      if (sd.sleepStart) ST.sleep.sleepStart = fmtTime(sd.sleepStart);
-      if (sd.sleepEnd) ST.sleep.sleepEnd = fmtTime(sd.sleepEnd);
+      // Convert full timestamps to HH:MM format, but also keep raw for sleep HRV
+      if (sd.sleepStart) { ST.sleep.sleepStart = fmtTime(sd.sleepStart); ST.sleep._rawSleepStart = sd.sleepStart; }
+      if (sd.sleepEnd) { ST.sleep.sleepEnd = fmtTime(sd.sleepEnd); ST.sleep._rawSleepEnd = sd.sleepEnd; }
       if (sd.inBed != null && data.sleep.value != null && Number(sd.inBed) > 0) {
         ST.sleep.efficiency = Math.min(100, Math.round((data.sleep.value / Number(sd.inBed)) * 100));
       }
@@ -7663,6 +7663,7 @@ async function fetchHealthData() {
     // Update readiness components from real HRV/RHR using personal baselines
     // RECOVERY LOCK: like WHOOP, lock recovery once per day after first sync.
     // Later syncs update the displayed HRV/RHR values but do NOT change recovery.
+    const todayKey = new Date().toISOString().slice(0, 10);
     const recoveryLockedToday = ST._recoveryLockedDate === todayKey;
 
     if (data.hrv) {
@@ -7670,23 +7671,39 @@ async function fetchHealthData() {
       ST.metrics.hrvDelta = +(ST.metrics.hrv - hrvBase).toFixed(1);
     }
 
-    // Use SLEEP HRV for recovery (average across entire sleep window, not random daytime reading)
-    if (data.sleep_hrv && !recoveryLockedToday) {
-      const sleepHrvVal = +Number(data.sleep_hrv.value).toFixed(1);
-      ST.metrics.sleepHrv = sleepHrvVal;
-      if (data.sleep_hrv.details) {
-        ST.metrics.sleepHrvCount = data.sleep_hrv.details.count || 0;
-        ST.metrics.sleepHrvMin = data.sleep_hrv.details.min || 0;
-        ST.metrics.sleepHrvMax = data.sleep_hrv.details.max || 0;
+    // SLEEP HRV for recovery:
+    // Priority 1: server-computed sleep_hrv (edge function filters to actual sleep window)
+    // Priority 2: use today's HRV ONLY if sleep data confirms we slept (don't lock from pre-sleep readings)
+    // Recovery is locked once after sleep data + HRV are both available
+    if (!recoveryLockedToday) {
+      const hasSleepToday = data.sleep && data.sleep.date === todayKey && ST.sleep.totalH > 0;
+
+      if (data.sleep_hrv) {
+        // Best: server-side sleep-window HRV average
+        const sleepHrvVal = +Number(data.sleep_hrv.value).toFixed(1);
+        ST.metrics.sleepHrv = sleepHrvVal;
+        if (data.sleep_hrv.details) {
+          ST.metrics.sleepHrvCount = data.sleep_hrv.details.count || 0;
+          ST.metrics.sleepHrvMin = data.sleep_hrv.details.min || 0;
+          ST.metrics.sleepHrvMax = data.sleep_hrv.details.max || 0;
+        }
+        const hrvBase = ST.metrics.hrvBaseline || 42;
+        const hrvRatio = sleepHrvVal / hrvBase;
+        ST.readiness.hrv = Math.min(100, Math.max(0, Math.round(70 + (hrvRatio - 1) * 150)));
+      } else if (data.hrv && hasSleepToday) {
+        // Fallback: use daily HRV but ONLY after sleep data confirmed
+        // Apple Watch HRV is primarily measured during sleep, so the daily value
+        // is effectively the sleep HRV when sleep data is present
+        ST.metrics.sleepHrv = ST.metrics.hrv;
+        const hrvBase = ST.metrics.hrvBaseline || 42;
+        const hrvRatio = ST.metrics.hrv / hrvBase;
+        ST.readiness.hrv = Math.min(100, Math.max(0, Math.round(70 + (hrvRatio - 1) * 150)));
       }
-      const hrvBase = ST.metrics.hrvBaseline || 42;
-      const hrvRatio = sleepHrvVal / hrvBase;
-      ST.readiness.hrv = Math.min(100, Math.max(0, Math.round(70 + (hrvRatio - 1) * 150)));
-    } else if (data.hrv && !recoveryLockedToday && !data.sleep_hrv) {
-      // Fallback: if no sleep_hrv available yet, use regular HRV
-      const hrvBase = ST.metrics.hrvBaseline || 42;
-      const hrvRatio = ST.metrics.hrv / hrvBase;
-      ST.readiness.hrv = Math.min(100, Math.max(0, Math.round(70 + (hrvRatio - 1) * 150)));
+      // Only lock recovery when we have BOTH sleep + HRV
+      if ((data.sleep_hrv || (data.hrv && hasSleepToday)) && data.rhr) {
+        ST._recoveryLockedDate = todayKey;
+        ST._recoveryLockedScore = computeReadiness();
+      }
     }
 
     if (data.rhr) {
@@ -7698,17 +7715,10 @@ async function fetchHealthData() {
       }
     }
 
-    // Lock recovery for the rest of the day after first computation
-    if (!recoveryLockedToday) {
-      ST._recoveryLockedDate = todayKey;
-      ST._recoveryLockedScore = computeReadiness();
-    }
-
     // Auto-calibrate baselines from historical data
     // Track one HRV/RHR value per calendar day for true 14-day rolling baseline
     if (!ST._hrvHistory) ST._hrvHistory = [];
     if (!ST._rhrHistory) ST._rhrHistory = [];
-    const todayKey = new Date().toISOString().slice(0, 10);
     if (data.hrv && data.hrv.value != null) {
       const existIdx = ST._hrvHistory.findIndex(h => h.d === todayKey);
       if (existIdx >= 0) {
