@@ -864,17 +864,18 @@ section { padding: 0 16px; margin-bottom: 8px; }
   position: fixed; inset: 0; z-index: 200;
   background: var(--bg); overflow-y: auto; -webkit-overflow-scrolling: touch;
   transform: translateX(100%); transition: transform 0.3s cubic-bezier(.2,.7,.2,1);
-  padding-top: env(safe-area-inset-top, 0px);
 }
 .fullpage.open { transform: translateX(0); }
 .fullpage-inner { max-width: 440px; margin: 0 auto; padding: 0 16px 100px; }
 .fp-header {
   position: sticky; top: 0; z-index: 5; background: var(--bg);
-  display: flex; align-items: center; padding: 12px 0; gap: 10px;
+  display: flex; align-items: center; gap: 10px;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 0 12px;
 }
 .fp-back {
-  display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600;
-  color: var(--text-3); background: none; border: none; cursor: pointer; font-family: inherit; padding: 4px 0;
+  display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 600;
+  color: var(--text-3); background: none; border: none; cursor: pointer; font-family: inherit;
+  padding: 8px 4px; min-height: 44px;
 }
 .fp-back svg { width: 14px; height: 14px; }
 .fp-title-bar { flex: 1; font-size: 11px; font-weight: 800; letter-spacing: 2px; color: var(--text-3); text-transform: uppercase; text-align: center; }
