@@ -864,12 +864,13 @@ section { padding: 0 16px; margin-bottom: 8px; }
   position: fixed; inset: 0; z-index: 200;
   background: var(--bg); overflow-y: auto; -webkit-overflow-scrolling: touch;
   transform: translateX(100%); transition: transform 0.3s cubic-bezier(.2,.7,.2,1);
+  padding-top: env(safe-area-inset-top, 0px);
 }
 .fullpage.open { transform: translateX(0); }
 .fullpage-inner { max-width: 440px; margin: 0 auto; padding: 0 16px 100px; }
 .fp-header {
   position: sticky; top: 0; z-index: 5; background: var(--bg);
-  display: flex; align-items: center; padding: max(16px, env(safe-area-inset-top)) 0 12px; gap: 10px;
+  display: flex; align-items: center; padding: 12px 0; gap: 10px;
 }
 .fp-back {
   display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600;
@@ -3831,7 +3832,7 @@ function buildSleepFullPage() {
       <div class="fp-row"><span class="fp-row-label">Target duration</span><span class="fp-row-val">${fmtH(sleepNeeded)}</span></div>
       <div class="fp-row"><span class="fp-row-label">Room temp</span><span class="fp-row-val">18-19C</span></div>
       <div class="fp-row"><span class="fp-row-label">Shisha cutoff</span><span class="fp-row-val">${minToTime(idealBedMin - 180 < 0 ? idealBedMin - 180 + 1440 : idealBedMin - 180)}</span></div>
-      <div class="fp-row"><span class="fp-row-label">Caffeine cutoff</span><span class="fp-row-val">${minToTime(Math.round((ST.profile.wakeMin/60 + 6.5) % 24 * 60))}</span></div>
+      <div class="fp-row"><span class="fp-row-label">Energy Caps cutoff</span><span class="fp-row-val">${minToTime(Math.round((ST.profile.wakeMin/60 + 6.5) % 24 * 60))}</span></div>
     </div>
   `;
 }
@@ -4659,7 +4660,7 @@ function renderEnergy() {
   const msgEl = document.getElementById('energyMsg');
   const messages = {
     INERTIA: 'Sleep inertia phase. Avoid decisions. Get <b>bright light</b> and move your body. Peak focus comes in ~1 hour.',
-    'PEAK 1': 'Your <b>first cognitive peak</b>. Best for analytical work, coding, writing. Caffeine will amplify it. Deep work now.',
+    'PEAK 1': 'Your <b>first cognitive peak</b>. Best for analytical work, coding, writing. Energy Caps will amplify it. Deep work now.',
     DIP: 'Post-lunch dip is natural. Do <b>admin tasks, email, walks</b>. A 20-min nap here can boost the next peak by 34%.',
     RECOVERY: 'Energy is <b>rebuilding</b>. Good for creative tasks, brainstorming, lighter meetings. Peak 2 is coming.',
     'PEAK 2': 'Your <b>strongest window</b>. Physical performance peaks here. Best time for training, important presentations, or your hardest task.',
@@ -5051,7 +5052,7 @@ function renderSchedule() {
   // Built-in schedule items
   const builtIn = [
     { time: wakeTime, title: 'Wake up + 10 min sunlight', phase: 'INERTIA' },
-    { time: minToTime(((WAKE + 6.5) % 24) * 60), title: 'Caffeine cut-off', phase: 'CUTOFF' },
+    { time: minToTime(((WAKE + 6.5) % 24) * 60), title: 'Energy Caps cut-off', phase: 'CUTOFF' },
     { time: minToTime(((WAKE + 12.5) % 24) * 60), title: 'Wind-down - blue light off', phase: 'WIND-DOWN' },
     { time: sleepTime, title: 'Melatonin window - sleep', phase: 'SLEEP' },
   ];
@@ -5078,7 +5079,7 @@ function renderSchedule() {
   });
 
   const phaseBarMap = { INERTIA:'wind', 'PEAK 1':'peak', DIP:'dip', RECOVERY:'cal', 'PEAK 2':'peak', 'WIND-DOWN':'wind', NIGHT:'wind', SLEEP:'wind', CUTOFF:'wind' };
-  const phaseSubMap = { INERTIA:'INERTIA', 'PEAK 1':'PEAK 1 - FOCUS', DIP:'DIP - LOW ENERGY', RECOVERY:'RECOVERY', 'PEAK 2':'PEAK 2 - BEST WINDOW', 'WIND-DOWN':'WIND-DOWN', NIGHT:'NIGHT', SLEEP:'SLEEP', CUTOFF:'LAST CAFFEINE' };
+  const phaseSubMap = { INERTIA:'INERTIA', 'PEAK 1':'PEAK 1 - FOCUS', DIP:'DIP - LOW ENERGY', RECOVERY:'RECOVERY', 'PEAK 2':'PEAK 2 - BEST WINDOW', 'WIND-DOWN':'WIND-DOWN', NIGHT:'NIGHT', SLEEP:'SLEEP', CUTOFF:'ENERGY CAPS CUT-OFF' };
 
   document.getElementById('scheduleList').innerHTML = allItems.map(b => `
     <div class="day-block">
