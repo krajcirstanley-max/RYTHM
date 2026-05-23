@@ -1282,7 +1282,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
   border-radius: 3px 0 0 3px;
 }
 .live-act.shisha::before { background: var(--warn); }
-.live-act.caffeine::before { background: #8B4513; }
+.live-act.caffeine::before { background: #E8A317; }
 .live-act.workout::before { background: var(--strain); }
 .live-act.default::before { background: var(--purple); }
 .live-act-top {
@@ -2082,23 +2082,16 @@ section { padding: 0 16px; margin-bottom: 8px; }
             <div class="pace-bar-track">
               <div class="pace-bar-marker" id="paceMarker" style="left:20%"></div>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <div class="pace-bar-val" id="paceVal">0.8x</div>
-              <div class="pace-bar-val" id="paceLabel" style="opacity:0.6">--</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+              <div class="pace-bar-val" id="paceVal" style="white-space:nowrap">0.8x</div>
+              <div class="pace-bar-val" id="paceLabel" style="opacity:0.6;font-size:13px;white-space:nowrap">--</div>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section>
-      <div class="section-head"><div class="section-title">Health Monitor</div></div>
-      <div class="hm-list" id="healthMetricList"></div>
-    </section>
-
-    <section>
-      <div class="hrz-card" id="hrZonesCard" onclick="openDetail('hrzones')"></div>
-    </section>
+    <!-- Health Monitor and HR Zones removed -->
 
     <section>
       <div class="steps-card" id="stepsCard" onclick="openDetail('steps')"></div>
@@ -2246,10 +2239,14 @@ section { padding: 0 16px; margin-bottom: 8px; }
       <input type="range" id="logEnergySlider" min="0" max="100" value="50" oninput="document.getElementById('logEnergyVal').textContent=this.value">
     </div>
 
-    <div class="modal-section-label">Time</div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-      <input type="time" id="logTimeInput" style="background:var(--card);color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 10px;font-size:14px;font-family:inherit;">
-      <span style="color:var(--text-4);font-size:12px;">Leave empty = now</span>
+    <div class="modal-section-label">When & Duration</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+      <input type="time" id="logTimeInput" style="background:var(--card);color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 10px;font-size:14px;font-family:inherit;width:110px;" placeholder="Time">
+      <div style="display:flex;align-items:center;gap:4px;">
+        <input type="number" id="logDurationInput" min="1" max="480" placeholder="min" style="background:var(--card);color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 10px;font-size:14px;font-family:inherit;width:70px;">
+        <span style="color:var(--text-4);font-size:12px;">min</span>
+      </div>
+      <span style="color:var(--text-4);font-size:11px;width:100%;">Empty time = now · Empty duration = instant</span>
     </div>
 
     <div class="modal-section-label">Tags (optional)</div>
@@ -2308,7 +2305,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
         </div>
       </div>
       <div style="padding:6px 0 0;font-size:11px;color:var(--text-4);line-height:1.5;">
-        Wake recovery, peak alerts, caffeine cutoff, energy dip, wind-down, and bedtime reminders.
+        Wake recovery, peak alerts, Energy Caps cutoff, energy dip, wind-down, and bedtime reminders.
       </div>
     </div>
     <div class="settings-group">
@@ -2732,7 +2729,9 @@ function energyAt(h) {
 const BEHAVIOR_ENERGY_MODS = {
   cold_shower:   (hSince) => hSince <= 0.5 ? 8 : hSince <= 3 ? 5 : hSince <= 6 ? 2 : 0,
   cold_exposure: (hSince) => hSince <= 0.5 ? 8 : hSince <= 3 ? 5 : hSince <= 6 ? 2 : 0,
-  caffeine:      (hSince) => hSince <= 0.5 ? 3 : hSince <= 4 ? 8 : hSince <= 8 ? -3 : hSince <= 12 ? -5 : 0,
+  // Energy Caps: 200mg caffeine (green tea 20mg + guarana 60mg + anhydrous 120mg) + 100mg choline + 200mg ALCAR + B6/niacin
+  // Guarana releases slower than anhydrous → sustained curve; choline + ALCAR add focus boost
+  energy_caps:   (hSince) => hSince <= 0.25 ? 3 : hSince <= 0.75 ? 8 : hSince <= 3 ? 10 : hSince <= 6 ? 5 : hSince <= 8 ? -2 : hSince <= 12 ? -4 : 0,
   workout:       (hSince) => hSince <= 1 ? 8 : hSince <= 3 ? 3 : hSince <= 8 ? -4 : 0,
   meditation:    (hSince) => hSince <= 4 ? 4 : 2,
   nap:           (hSince) => hSince <= 0.5 ? -3 : hSince <= 3 ? 10 : hSince <= 6 ? 3 : 0,
@@ -2760,7 +2759,6 @@ const BEHAVIOR_ENERGY_MODS = {
   reading:       () => 2,
   massage:       (hSince) => hSince <= 2 ? 4 : 2,
   protein:       () => 1,  // minor positive — supports muscle recovery
-  energy_caps:   (hSince) => hSince <= 0.5 ? 5 : hSince <= 4 ? 8 : hSince <= 8 ? -2 : 0,  // similar to caffeine
 };
 
 function getBehaviorEnergyMod(atHour) {
@@ -2799,7 +2797,7 @@ function getActiveBehaviorMods() {
     for (const b of JOURNAL_BEHAVIORS) behaviorIcons[b.id] = b.icon;
   }
   // Also add log-specific tags
-  behaviorIcons.caffeine = '☕';
+  behaviorIcons.energy_caps = '⚡';
   behaviorIcons.shisha = '💨';
   behaviorIcons.workout = '🏋️';
   behaviorIcons.meditation = '🧘';
@@ -3844,7 +3842,7 @@ function buildRecoveryFullPage() {
   const hadLateShisha = yEntry && yEntry.behaviors.includes('shisha_late');
   const hadShisha = yEntry && yEntry.behaviors.includes('shisha');
   const hadAlcohol = yEntry && yEntry.behaviors.includes('alcohol');
-  const hadCaffeine = yEntry && yEntry.behaviors.includes('caffeine');
+  const hadCaffeine = yEntry && (yEntry.behaviors.includes('energy_caps') || yEntry.behaviors.includes('caffeine'));
 
   // CNS freshness - composite: HRV + deep sleep + strain
   const deepH = stg.deep;
@@ -4130,7 +4128,7 @@ function buildStressFullPage() {
   const yEntry = ST.journal && ST.journal.find(j => j.date === yesterday);
   if (yEntry && yEntry.behaviors.includes('shisha_late')) contributors.push({ label: 'Late shisha', detail: 'CO from charcoal suppresses vagal tone overnight', impact: 'moderate', color: 'var(--warn)' });
   if (yEntry && yEntry.behaviors.includes('alcohol')) contributors.push({ label: 'Alcohol', detail: 'Disrupts REM and raises overnight RHR', impact: 'moderate', color: 'var(--warn)' });
-  if (yEntry && yEntry.behaviors.includes('caffeine')) contributors.push({ label: 'Late caffeine', detail: 'Adenosine blocking reduces sleep quality', impact: 'low', color: 'var(--text-3)' });
+  if (yEntry && (yEntry.behaviors.includes('energy_caps') || yEntry.behaviors.includes('caffeine'))) contributors.push({ label: 'Late Energy Caps', detail: '200mg caffeine — adenosine blocking reduces sleep quality', impact: 'low', color: 'var(--text-3)' });
 
   if (contributors.length === 0) {
     contributors.push({ label: 'No stress flags', detail: 'All metrics within healthy ranges', impact: 'none', color: 'var(--energy)' });
@@ -4611,7 +4609,7 @@ function renderEnergy() {
     DIP: 'Post-lunch dip is natural. Do <b>admin tasks, email, walks</b>. A 20-min nap here can boost the next peak by 34%.',
     RECOVERY: 'Energy is <b>rebuilding</b>. Good for creative tasks, brainstorming, lighter meetings. Peak 2 is coming.',
     'PEAK 2': 'Your <b>strongest window</b>. Physical performance peaks here. Best time for training, important presentations, or your hardest task.',
-    'WIND-DOWN': 'Energy is declining. <b>No more caffeine.</b> Start dimming lights. Wrap up demanding tasks.',
+    'WIND-DOWN': 'Energy is declining. <b>No more Energy Caps.</b> Start dimming lights. Wrap up demanding tasks.',
     NIGHT: 'Melatonin is rising. <b>Minimize screens</b>, keep lights warm and low. Prepare for sleep.',
     SLEEP: 'You should be sleeping. Consistent sleep timing is the #1 recovery factor.',
   };
@@ -4700,7 +4698,7 @@ function buildEnergyFullPage() {
     },
     'WIND-DOWN': {
       desc: 'Energy is declining naturally. Melatonin production begins in dim light. Start reducing stimulation and screen brightness.',
-      tips: ['No caffeine', 'Dim lights', 'Wrap up work', 'Light reading'],
+      tips: ['No Energy Caps', 'Dim lights', 'Wrap up work', 'Light reading'],
       icon: '&#9683;'
     },
     NIGHT: {
@@ -4888,7 +4886,7 @@ function renderOutlook() {
 
   const items = [
     { icon: '<circle cx="12" cy="12" r="4" fill="currentColor"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-linecap="round"/>', title: sunTitle, sub: sunSub, color: 'var(--energy)', bg: 'rgba(0,236,127,0.12)', onclick: `startLiveActivity('sun_exposure')` },
-    { icon: '<path d="M18 8h1a4 4 0 010 8h-1M3 8h15v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8zM5 1v3M11 1v3M17 1v3" stroke-linecap="round"/>', title: `Last caffeine ${coffeeTime}`, sub: 'Late caffeine drops HRV by 12%', color: 'var(--warn)', bg: 'rgba(255,181,71,0.12)', onclick: `logBehavior('caffeine')` },
+    { icon: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>', title: `Last Energy Caps ${coffeeTime}`, sub: '200mg caffeine — late intake drops HRV 12%', color: 'var(--warn)', bg: 'rgba(255,181,71,0.12)', onclick: `logBehavior('energy_caps')` },
     { icon: '<path d="M12 2C8 2 4 6 4 10c0 6 8 12 8 12s8-6 8-12c0-4-4-8-8-8z"/>', title: `Shisha before ${shishaCutoff}`, sub: 'CO needs 3h to clear - protects deep sleep & HRV', color: 'var(--text-2)', bg: 'var(--card-border)', onclick: `showView('health');setTimeout(()=>document.getElementById('liveActivities')?.scrollIntoView({behavior:'smooth'}),300)` },
     { icon: '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor"/>', title: `Sleep at ${sleepTime}`, sub: `Melatonin window - target 8h sleep`, color: 'var(--purple)', bg: 'rgba(167,121,247,0.12)', onclick: `openSleepFullPage()` },
   ];
@@ -6426,14 +6424,13 @@ function buildDetailContent(type) {
 const JOURNAL_BEHAVIORS = [
   { id: 'shisha', icon: '💨', label: 'Shisha' },
   { id: 'shisha_late', icon: '🌙', label: 'Shisha Late', sub: 'after 23:00' },
-  { id: 'caffeine', icon: '☕', label: 'Caffeine' },
+  { id: 'energy_caps', icon: '⚡', label: 'Energy Caps', sub: '200mg caffeine + choline + ALCAR' },
   { id: 'alcohol', icon: '🍷', label: 'Alcohol' },
   { id: 'workout', icon: '🏋️', label: 'Workout' },
   { id: 'meditation', icon: '🧘', label: 'Meditate' },
   { id: 'screen_late', icon: '📱', label: 'Late Screen' },
   { id: 'sunlight', icon: '☀️', label: 'Sunlight' },
   { id: 'stress', icon: '😤', label: 'High Stress' },
-  { id: 'focus_supp', icon: '💊', label: 'Focus Supp', sub: '200mg caffeine' },
   { id: 'creatine', icon: '🧪', label: 'Creatine' },
   { id: 'cold_shower', icon: '🧊', label: 'Cold Shower' },
   { id: 'nap', icon: '😴', label: 'Nap' },
@@ -6456,7 +6453,6 @@ const JOURNAL_BEHAVIORS = [
   { id: 'skincare_am', icon: '🧴', label: 'Morning Skincare' },
   { id: 'skincare_pm', icon: '✨', label: 'Evening Skincare' },
   { id: 'protein', icon: '🥛', label: 'Protein Shake' },
-  { id: 'energy_caps', icon: '⚡', label: 'Energy Caps' },
   { id: 'sauna', icon: '🧖', label: 'Sauna' },
   { id: 'nature', icon: '🌿', label: 'Nature/Walk' },
   { id: 'social', icon: '🤝', label: 'Social' },
@@ -6570,7 +6566,7 @@ function toggleBehavior(id, el) {
     selectedBehaviors.add(id);
     el.classList.add('active');
     // Auto-start live activity for trackable behaviors
-    const trackable = ['shisha', 'shisha_late', 'caffeine', 'workout', 'meditation', 'alcohol'];
+    const trackable = ['shisha', 'shisha_late', 'energy_caps', 'workout', 'meditation', 'alcohol', 'sauna'];
     if (trackable.includes(id)) {
       startLiveActivity(id);
     }
@@ -6801,7 +6797,7 @@ const MOODS = [
   { val: 5, label: 'Great' },
 ];
 
-const TAGS = ['shisha','caffeine','workout','alcohol','stress','nap','meditation','sunlight','screen','cold_shower','sugar'];
+const TAGS = ['shisha','energy_caps','workout','sauna','alcohol','stress','nap','meditation','sunlight','screen','cold_shower','sugar'];
 
 let selectedMood = 3;
 let selectedTags = new Set();
@@ -6844,19 +6840,23 @@ function submitLog() {
     ts = d.getTime();
     logDate = d.toISOString().slice(0,10);
   }
+  const durInput = document.getElementById('logDurationInput').value;
+  const durationMin = durInput ? parseInt(durInput) : null;
+
   const log = {
     ts,
     date: logDate,
     mood: selectedMood,
     energy,
-    tags: [...selectedTags]
+    tags: [...selectedTags],
+    durationMin, // null = instant, number = minutes
   };
   ST.logs.push(log);
 
   // Start live activities for trackable tags
-  const trackable = ['shisha', 'caffeine', 'workout', 'meditation', 'alcohol'];
+  const trackable = ['shisha', 'energy_caps', 'workout', 'meditation', 'alcohol', 'sauna'];
   for (const tag of log.tags) {
-    if (trackable.includes(tag)) startLiveActivity(tag);
+    if (trackable.includes(tag)) startLiveActivity(tag, ts, durationMin);
   }
 
   // Update log streak
@@ -6883,6 +6883,7 @@ function submitLog() {
   document.getElementById('logEnergySlider').value = 50;
   document.getElementById('logEnergyVal').textContent = '50';
   document.getElementById('logTimeInput').value = '';
+  document.getElementById('logDurationInput').value = '';
 }
 
 // ========================================
@@ -7025,7 +7026,8 @@ document.querySelectorAll('[data-view]').forEach(el => {
 const LIVE_ACTIVITY_META = {
   shisha:       { icon: '💨', label: 'Shisha', cls: 'shisha', warnAtMin: null, targetMin: null },
   shisha_late:  { icon: '🌙', label: 'Shisha Late', cls: 'shisha', warnAtMin: null, targetMin: null },
-  caffeine:     { icon: '☕', label: 'Coffee', cls: 'caffeine', warnAtMin: null, targetMin: null },
+  energy_caps:  { icon: '⚡', label: 'Energy Caps', cls: 'caffeine', warnAtMin: null, targetMin: null },
+  sauna:        { icon: '🧖', label: 'Sauna', cls: 'default', warnAtMin: 30, targetMin: 15 },
   workout:      { icon: '🏋️', label: 'Workout', cls: 'workout', warnAtMin: 90, targetMin: 60 },
   meditation:   { icon: '🧘', label: 'Meditation', cls: 'default', warnAtMin: null, targetMin: 10 },
   alcohol:      { icon: '🍷', label: 'Alcohol', cls: 'shisha', warnAtMin: null, targetMin: null },
@@ -7286,10 +7288,10 @@ function renderSuggestions() {
     sugs.push({ icon: '🧘', title: 'Try a breathing session', sub: `HRV at ${m.hrv}ms - below baseline. Breathing can boost parasympathetic tone`, action: 'Breathe', cls: 'purple', onclick: `showView('health');setTimeout(()=>document.getElementById('breathingCard')?.scrollIntoView({behavior:'smooth'}),300)` });
   }
 
-  // Caffeine cutoff approaching
+  // Energy Caps cutoff approaching (200mg caffeine half-life ~6h)
   const coffeeCutH = (WAKE + 6.5) % 24;
   if (nowH >= coffeeCutH - 0.5 && nowH < coffeeCutH + 0.5) {
-    sugs.push({ icon: '☕', title: 'Last call for caffeine', sub: `Cut-off at ${minToTime(Math.round(coffeeCutH * 60))} - late caffeine drops HRV 12%`, action: 'Note', cls: 'blue', onclick: `logBehavior('caffeine')` });
+    sugs.push({ icon: '⚡', title: 'Last call for Energy Caps', sub: `Cut-off at ${minToTime(Math.round(coffeeCutH * 60))} — 200mg caffeine needs 6h+ to clear`, action: 'Note', cls: 'blue', onclick: `logBehavior('energy_caps')` });
   }
 
   // Wind-down suggestion
@@ -8409,10 +8411,10 @@ function getNotificationSchedule() {
       body: 'Your strongest peak starts in 10 min'
     },
     {
-      type: 'caffeine',
+      type: 'energy_caps',
       hour: (coffeeH - 30/60 + 24) % 24,
       title: 'RYTHM',
-      body: 'Last coffee in 30 min'
+      body: 'Last Energy Caps in 30 min'
     },
     {
       type: 'dip',
