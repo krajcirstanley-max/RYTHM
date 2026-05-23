@@ -61,10 +61,12 @@ Deno.serve(async (req) => {
         const types = ["hrv", "rhr", "spo2", "respiratory", "steps", "sleep", "active_cal", "skin_temp", "vo2max", "hr", "workout", "stand_hours", "flights", "weight"];
         const historyResult: Record<string, any[]> = {};
         for (const t of types) {
-          const { data } = await sb
+          let query = sb
             .from("rythm_health_data")
             .select("value,date,unit,details")
-            .eq("type", t)
+            .eq("type", t);
+          if (t === "workout") query = query.eq("unit", "min");
+          const { data } = await query
             .order("date", { ascending: true })
             .limit(1000);
           if (data?.length) historyResult[t] = data;
@@ -78,10 +80,13 @@ Deno.serve(async (req) => {
       for (const t of types) {
         // Order by DATE desc for all types — this ensures we always get the most recent
         // actual data, not a stale old entry that happened to re-sync last
-        const { data } = await sb
+        let query = sb
           .from("rythm_health_data")
           .select("*")
-          .eq("type", t)
+          .eq("type", t);
+        // Filter out bogus workout entries (misclassified metrics with unit=null)
+        if (t === "workout") query = query.eq("unit", "min");
+        const { data } = await query
           .order("date", { ascending: false })
           .limit(1)
           .maybeSingle();
