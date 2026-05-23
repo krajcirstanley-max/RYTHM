@@ -2438,6 +2438,12 @@ section { padding: 0 16px; margin-bottom: 8px; }
       <input type="range" id="logEnergySlider" min="0" max="100" value="50" oninput="document.getElementById('logEnergyVal').textContent=this.value">
     </div>
 
+    <div class="modal-section-label">Time</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+      <input type="time" id="logTimeInput" style="background:var(--card);color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 10px;font-size:14px;font-family:inherit;">
+      <span style="color:var(--text-4);font-size:12px;">Leave empty = now</span>
+    </div>
+
     <div class="modal-section-label">Tags (optional)</div>
     <div class="tag-row" id="tagRow"></div>
 
@@ -2936,6 +2942,8 @@ const BEHAVIOR_ENERGY_MODS = {
   fasting:       (hSince) => hSince <= 4 ? -2 : hSince <= 12 ? 3 : hSince <= 16 ? 5 : -3,
   reading:       () => 2,
   massage:       (hSince) => hSince <= 2 ? 4 : 2,
+  protein:       () => 1,  // minor positive — supports muscle recovery
+  energy_caps:   (hSince) => hSince <= 0.5 ? 5 : hSince <= 4 ? 8 : hSince <= 8 ? -2 : 0,  // similar to caffeine
 };
 
 function getBehaviorEnergyMod(atHour) {
@@ -6743,6 +6751,17 @@ const JOURNAL_BEHAVIORS = [
   { id: 'make_bed', icon: '🛏️', label: 'Make the Bed' },
   { id: 'skincare_am', icon: '🧴', label: 'Morning Skincare' },
   { id: 'skincare_pm', icon: '✨', label: 'Evening Skincare' },
+  { id: 'protein', icon: '🥛', label: 'Protein Shake' },
+  { id: 'energy_caps', icon: '⚡', label: 'Energy Caps' },
+  { id: 'sauna', icon: '🧖', label: 'Sauna' },
+  { id: 'nature', icon: '🌿', label: 'Nature/Walk' },
+  { id: 'social', icon: '🤝', label: 'Social' },
+  { id: 'massage', icon: '💆', label: 'Massage' },
+  { id: 'reading', icon: '📖', label: 'Reading' },
+  { id: 'weed', icon: '🌿', label: 'Weed' },
+  { id: 'nicotine', icon: '🚬', label: 'Nicotine' },
+  { id: 'late_meal', icon: '🍽️', label: 'Late Meal', sub: 'after 22:00' },
+  { id: 'fasting', icon: '⏳', label: 'Fasting' },
 ];
 
 let selectedBehaviors = new Set();
@@ -7111,9 +7130,19 @@ function closeLog() { document.getElementById('logModal').classList.remove('open
 
 function submitLog() {
   const energy = parseInt(document.getElementById('logEnergySlider').value);
+  const timeInput = document.getElementById('logTimeInput').value;
+  let ts = Date.now();
+  let logDate = new Date().toISOString().slice(0,10);
+  if (timeInput) {
+    const [hh, mm] = timeInput.split(':').map(Number);
+    const d = new Date();
+    d.setHours(hh, mm, 0, 0);
+    ts = d.getTime();
+    logDate = d.toISOString().slice(0,10);
+  }
   const log = {
-    ts: Date.now(),
-    date: new Date().toISOString().slice(0,10),
+    ts,
+    date: logDate,
     mood: selectedMood,
     energy,
     tags: [...selectedTags]
@@ -7149,6 +7178,7 @@ function submitLog() {
   document.querySelectorAll('.tag-chip').forEach(el => el.classList.remove('selected'));
   document.getElementById('logEnergySlider').value = 50;
   document.getElementById('logEnergyVal').textContent = '50';
+  document.getElementById('logTimeInput').value = '';
 }
 
 // ========================================
