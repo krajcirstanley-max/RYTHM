@@ -2744,6 +2744,7 @@ function rebuildWeekScores() {
 //  HELPERS
 // ========================================
 function minToTime(m) {
+  m = Math.round(m);
   const hh = Math.floor((m % 1440) / 60);
   const mm = m % 60;
   return String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0');
@@ -2773,29 +2774,47 @@ function fmtH(h) {
 }
 
 // ========================================
-//  CIRCADIAN MODEL - Piecewise Catmull-Rom
+//  CIRCADIAN MODEL - Proportional Catmull-Rom
 // ========================================
-// Control points: [hours-after-wake, energy%]
-// Based on Borbely two-process model shape + Dijk & Czeisler (1995)
-// Two peaks (cognitive AM, physical PM) with post-lunch dip
-const ENERGY_CURVE = [
-  [0,    15],   // wake - low (sleep inertia)
-  [0.75, 45],   // inertia clearing
-  [1.5,  72],   // PEAK 1 ramp
-  [3,    85],   // PEAK 1 max (cognitive)
-  [5,    78],   // PEAK 1 fade
-  [6,    55],   // DIP trough (post-lunch)
-  [7.5,  52],   // DIP bottom
-  [9,    65],   // RECOVERY ramp
-  [10,   80],   // PEAK 2 ramp
-  [11,   88],   // PEAK 2 max (physical)
-  [12,   78],   // PEAK 2 fade
-  [13,   55],   // WIND-DOWN
-  [14.5, 35],   // evening decline
-  [16,   15],   // NIGHT
-  [17,   8],    // deep night
-  [24,   15],   // wraps to next wake
+// Control points: [fraction of awake window, energy%]
+// All timings scale proportionally to the user's actual awake window.
+// Based on Borbely two-process model (Process S + Process C):
+//   - Cortisol Awakening Response: +30-45min post-wake (Fries et al. 2009)
+//   - Process C alerting peak: ~2-3.5h post-wake (Dijk & Czeisler 1995)
+//   - Post-prandial / Process C nadir: ~35-42% through waking day (Monk 2005)
+//   - Core body temperature peak: ~65-75% through waking day (Refinetti 2006)
+//   - DLMO (melatonin onset): ~75-80% through waking day (Duffy & Wright 2005)
+const ENERGY_CURVE_PCT = [
+  [0,     12],   // wake — sleep inertia (Tassi & Muzet 2000)
+  [0.03,  35],   // cortisol awakening response peak (~30min)
+  [0.08,  62],   // inertia clearing, Process S pressure dropping
+  [0.16,  82],   // PEAK 1 ramp — alerting signal rising
+  [0.23,  88],   // PEAK 1 max — cognitive peak (Dijk & Czeisler 1995)
+  [0.32,  72],   // post-prandial decline onset
+  [0.39,  48],   // DIP trough — Process C nadir (Monk 2005)
+  [0.45,  55],   // DIP exit — alerting signal recovering
+  [0.55,  68],   // RECOVERY ramp — second wind
+  [0.65,  82],   // PEAK 2 ramp — CBT rising
+  [0.71,  90],   // PEAK 2 max — core body temp peak (Refinetti 2006)
+  [0.77,  75],   // DLMO onset — melatonin begins (Duffy & Wright 2005)
+  [0.84,  50],   // wind-down — Process S pressure building
+  [0.91,  30],   // evening decline — melatonin rising
+  [0.97,  15],   // pre-sleep — high sleep pressure
+  [1.0,    8],   // bedtime
 ];
+
+// Compute awake window in hours from profile
+function awakeWindow() {
+  const wake = ST.profile.wakeMin;
+  const sleep = ST.profile.sleepMin;
+  return (sleep >= wake ? sleep - wake : sleep + 1440 - wake) / 60;
+}
+
+// Build absolute ENERGY_CURVE from proportions × current awake window
+function buildEnergyCurve() {
+  const aw = awakeWindow();
+  return ENERGY_CURVE_PCT.map(([pct, energy]) => [pct * aw, energy]);
+}
 
 // Catmull-Rom interpolation for smooth curve
 function catmullRom(p0, p1, p2, p3, t) {
@@ -2821,8 +2840,14 @@ function energyAt(h) {
 
   let hw = h - WAKE; if (hw < 0) hw += 24;
 
-  // Find the segment in ENERGY_CURVE
-  const pts = ENERGY_CURVE;
+  // Build curve dynamically from awake window proportions
+  const pts = buildEnergyCurve();
+
+  // Clamp hw to awake window (past bedtime → near-zero)
+  const aw = awakeWindow();
+  if (hw > aw) return 5;
+
+  // Find the segment
   let i = 0;
   for (; i < pts.length - 1; i++) {
     if (hw >= pts[i][0] && hw < pts[i+1][0]) break;
@@ -2844,6 +2869,12 @@ function energyAt(h) {
   const readiness = computeReadiness();
   const recoveryMod = (readiness - 50) / 50; // -1 to +1
   energy += recoveryMod * 8;
+
+  // Seasonal modifier (integrated — no monkey-patching)
+  if (ST.seasonal) {
+    if (ST.seasonal.adjustment === 'summer') energy *= 1.05;
+    else if (ST.seasonal.adjustment === 'winter') energy *= 0.95;
+  }
 
   // Behavior modifiers from today's logs
   energy += getBehaviorEnergyMod(h);
@@ -2948,15 +2979,32 @@ function getActiveBehaviorMods() {
   return active;
 }
 
-const PHASES = [
-  { name:'INERTIA', cls:'phase-inertia', barCls:'inertia', hwStart:0, hwEnd:1.5 },
-  { name:'PEAK 1', cls:'phase-peak', barCls:'peak', hwStart:1.5, hwEnd:5.5 },
-  { name:'DIP', cls:'phase-dip', barCls:'dip', hwStart:5.5, hwEnd:8 },
-  { name:'RECOVERY', cls:'phase-recovery', barCls:'recovery', hwStart:8, hwEnd:10 },
-  { name:'PEAK 2', cls:'phase-peak', barCls:'peak', hwStart:10, hwEnd:12.5 },
-  { name:'WIND-DOWN', cls:'phase-wind', barCls:'wind', hwStart:12.5, hwEnd:15 },
-  { name:'NIGHT', cls:'phase-night', barCls:'night', hwStart:15, hwEnd:24 },
+// Phase boundaries as proportions of awake window
+// Phases scale to any awake-window length (e.g., 14h early bird → 17h night owl)
+const PHASE_PCTS = [
+  { name:'INERTIA',   cls:'phase-inertia',  barCls:'inertia',  pctStart:0,    pctEnd:0.10 },
+  { name:'PEAK 1',    cls:'phase-peak',     barCls:'peak',     pctStart:0.10, pctEnd:0.33 },
+  { name:'DIP',       cls:'phase-dip',      barCls:'dip',      pctStart:0.33, pctEnd:0.48 },
+  { name:'RECOVERY',  cls:'phase-recovery', barCls:'recovery', pctStart:0.48, pctEnd:0.62 },
+  { name:'PEAK 2',    cls:'phase-peak',     barCls:'peak',     pctStart:0.62, pctEnd:0.78 },
+  { name:'WIND-DOWN', cls:'phase-wind',     barCls:'wind',     pctStart:0.78, pctEnd:0.93 },
+  { name:'NIGHT',     cls:'phase-night',    barCls:'night',    pctStart:0.93, pctEnd:1.0  },
 ];
+
+// Build absolute phase boundaries from proportions × awake window
+function buildPhases() {
+  const aw = awakeWindow();
+  // Winter: extend inertia +3% (melatonin lingers with less morning light)
+  const winterShift = (ST.seasonal && ST.seasonal.adjustment === 'winter') ? 0.03 : 0;
+  return PHASE_PCTS.map(p => ({
+    ...p,
+    hwStart: (p.pctStart + (p.name === 'INERTIA' ? 0 : winterShift)) * aw,
+    hwEnd:   (p.pctEnd + (p.name === 'INERTIA' ? winterShift : p.name === 'PEAK 1' ? winterShift : 0)) * aw,
+  }));
+}
+
+// Keep backward-compatible PHASES for any code that reads it
+const PHASES = PHASE_PCTS;
 
 function phaseAt(h) {
   const WAKE = profileWakeHour();
@@ -2969,7 +3017,8 @@ function phaseAt(h) {
   }
   let hw = h - WAKE; if (hw < 0) hw += 24;
   const e = Math.round(energyAt(h));
-  for (const p of PHASES) {
+  const phases = buildPhases();
+  for (const p of phases) {
     if (hw >= p.hwStart && hw < p.hwEnd) {
       let sub = e + '%';
       if (p.name === 'INERTIA') sub += ' - sleep inertia';
@@ -3148,15 +3197,19 @@ function drawCurve(id, withEvents) {
   const svg = document.getElementById(id);
   if (!svg) return;
   const WAKE = profileWakeHour();
+  const aw = awakeWindow();
   const W = 400, H = 100, PAD = 6;
   svg.innerHTML = '';
 
+  // Render only the awake window (more detail where it matters)
+  const NPTS = 96;
   const pts = [];
-  for (let i = 0; i <= 96; i++) {
-    const h = (WAKE + (i/96)*24) % 24;
-    const x = PAD + (i/96)*(W-PAD*2);
+  for (let i = 0; i <= NPTS; i++) {
+    const hw = (i / NPTS) * aw; // hours within awake window
+    const h = (WAKE + hw) % 24;
+    const x = PAD + (i / NPTS) * (W - PAD * 2);
     const e = energyAt(h);
-    const y = H - 10 - (e/100)*(H-22);
+    const y = H - 10 - (e / 100) * (H - 22);
     pts.push([x, y, h, e]);
   }
 
@@ -3196,7 +3249,8 @@ function drawCurve(id, withEvents) {
       const [hh, mm] = t.time.split(':').map(Number);
       const evH = hh + mm/60;
       let rel = evH - WAKE; if (rel < 0) rel += 24;
-      const x = PAD + (rel/24)*(W-PAD*2);
+      if (rel > aw) return; // event is during sleep — skip
+      const x = PAD + (rel/aw)*(W-PAD*2);
       const ph = phaseAt(evH);
       const color = ph.name === 'DIP' ? '#ffb547' : ph.name === 'INERTIA' ? '#ff5470' : '#4da9ff';
       const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
@@ -3214,11 +3268,12 @@ function drawCurve(id, withEvents) {
     });
   }
 
-  // Now dot
+  // Now dot — only show if currently awake
   const now = new Date();
   const nowH = now.getHours() + now.getMinutes()/60;
   let rel = nowH - WAKE; if (rel < 0) rel += 24;
-  const x = PAD + (rel/24)*(W-PAD*2);
+  const isAwake = rel <= aw;
+  const x = isAwake ? PAD + (rel/aw)*(W-PAD*2) : -100;
   const nowLine = document.createElementNS('http://www.w3.org/2000/svg','line');
   nowLine.setAttribute('x1', x); nowLine.setAttribute('x2', x);
   nowLine.setAttribute('y1', 0); nowLine.setAttribute('y2', H-12);
@@ -3245,10 +3300,11 @@ function updateCurveFoot(id) {
   const el = document.getElementById(id);
   if (!el) return;
   const WAKE = profileWakeHour();
+  const aw = awakeWindow();
   const labels = [];
-  // 5 labels at 0%, 25%, 50%, 75%, 100% of the 24h curve
+  // 5 labels spanning the awake window (wake → bedtime)
   for (let i = 0; i < 5; i++) {
-    const h = (WAKE + i * 6) % 24;
+    const h = (WAKE + (i / 4) * aw) % 24;
     labels.push(`<span>${minToTime(h * 60)}</span>`);
   }
   el.innerHTML = labels.join('');
@@ -4914,9 +4970,10 @@ function buildEnergyFullPage() {
 
   // Build phase cards
   let phaseCards = '';
-  const allPhases = [...PHASES, { name: 'SLEEP', cls: 'phase-wind', hwStart: -1, hwEnd: 0 }];
+  const builtPhases = buildPhases();
+  const allPhases = [...builtPhases, { name: 'SLEEP', cls: 'phase-wind', hwStart: -1, hwEnd: 0 }];
 
-  for (const p of PHASES) {
+  for (const p of builtPhases) {
     const startH = (WAKE + p.hwStart) % 24;
     const endH = (WAKE + p.hwEnd) % 24;
     const startTime = minToTime(startH * 60);
@@ -8489,66 +8546,8 @@ function updateSettingsLatitude() {
   }
 }
 
-// Patch energyAt to apply seasonal modifiers
-const _originalEnergyAt = energyAt;
-energyAt = function(h) {
-  let e = _originalEnergyAt(h);
-  if (ST.seasonal && ST.seasonal.adjustment === 'summer') {
-    // Check if not sleeping
-    const SLEEP_H = profileSleepHour();
-    const WAKE = profileWakeHour();
-    let isSleeping = false;
-    if (SLEEP_H < WAKE) { isSleeping = h >= SLEEP_H && h < WAKE; }
-    else { isSleeping = h >= SLEEP_H || h < WAKE; }
-    if (!isSleeping) {
-      e = Math.min(100, e * 1.05);
-    }
-  }
-  return e;
-};
-
-// Patch phaseAt for winter peak shift
-const _originalPhaseAt = phaseAt;
-phaseAt = function(h) {
-  // Winter shifts peak_1 30 min later in the display
-  if (ST.seasonal && ST.seasonal.adjustment === 'winter') {
-    const WAKE = profileWakeHour();
-    let hw = h - WAKE; if (hw < 0) hw += 24;
-    // Shift peak1 boundary: inertia extends 0.5h longer, peak1 starts 0.5h later
-    const SHIFTED_PHASES = [
-      { name:'INERTIA', cls:'phase-inertia', barCls:'inertia', hwStart:0, hwEnd:2.0 },
-      { name:'PEAK 1', cls:'phase-peak', barCls:'peak', hwStart:2.0, hwEnd:6.0 },
-      { name:'DIP', cls:'phase-dip', barCls:'dip', hwStart:6.0, hwEnd:8 },
-      { name:'RECOVERY', cls:'phase-recovery', barCls:'recovery', hwStart:8, hwEnd:10 },
-      { name:'PEAK 2', cls:'phase-peak', barCls:'peak', hwStart:10, hwEnd:12.5 },
-      { name:'WIND-DOWN', cls:'phase-wind', barCls:'wind', hwStart:12.5, hwEnd:15 },
-      { name:'NIGHT', cls:'phase-night', barCls:'night', hwStart:15, hwEnd:24 },
-    ];
-    // Still do sleep check from original
-    const SLEEP_H = profileSleepHour();
-    if (SLEEP_H < WAKE) {
-      if (h >= SLEEP_H && h < WAKE) return { name:'SLEEP', cls:'phase-wind', barCls:'wind', sub:'Sleep' };
-    } else {
-      if (h >= SLEEP_H || h < WAKE) return { name:'SLEEP', cls:'phase-wind', barCls:'wind', sub:'Sleep' };
-    }
-    const e = Math.round(energyAt(h));
-    for (const p of SHIFTED_PHASES) {
-      if (hw >= p.hwStart && hw < p.hwEnd) {
-        let sub = e + '%';
-        if (p.name === 'INERTIA') sub += ' - sleep inertia';
-        else if (p.name === 'PEAK 1') sub += ' - first peak';
-        else if (p.name === 'DIP') sub += ' - afternoon dip';
-        else if (p.name === 'RECOVERY') sub += ' - recovering';
-        else if (p.name === 'PEAK 2') sub += ' - best window';
-        else if (p.name === 'WIND-DOWN') sub += ' - winding down';
-        else if (p.name === 'NIGHT') sub += ' - chill mode';
-        return { ...p, sub };
-      }
-    }
-    return { name:'NIGHT', cls:'phase-night', barCls:'night', sub:e+'%' };
-  }
-  return _originalPhaseAt(h);
-};
+// Seasonal modifiers are now integrated directly into energyAt() and buildPhases()
+// — no monkey-patching needed. Summer: +5% amplitude. Winter: -5% amplitude + extended inertia.
 
 // ========================================
 //  WEB PUSH NOTIFICATIONS
