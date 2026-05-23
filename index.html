@@ -7668,12 +7668,27 @@ async function fetchHealthData() {
     if (data.hrv) {
       const hrvBase = ST.metrics.hrvBaseline || 42;
       ST.metrics.hrvDelta = +(ST.metrics.hrv - hrvBase).toFixed(1);
-      if (!recoveryLockedToday) {
-        // First sync of the day — use this HRV for recovery
-        const hrvRatio = ST.metrics.hrv / hrvBase;
-        ST.readiness.hrv = Math.min(100, Math.max(0, Math.round(70 + (hrvRatio - 1) * 150)));
-      }
     }
+
+    // Use SLEEP HRV for recovery (average across entire sleep window, not random daytime reading)
+    if (data.sleep_hrv && !recoveryLockedToday) {
+      const sleepHrvVal = +Number(data.sleep_hrv.value).toFixed(1);
+      ST.metrics.sleepHrv = sleepHrvVal;
+      if (data.sleep_hrv.details) {
+        ST.metrics.sleepHrvCount = data.sleep_hrv.details.count || 0;
+        ST.metrics.sleepHrvMin = data.sleep_hrv.details.min || 0;
+        ST.metrics.sleepHrvMax = data.sleep_hrv.details.max || 0;
+      }
+      const hrvBase = ST.metrics.hrvBaseline || 42;
+      const hrvRatio = sleepHrvVal / hrvBase;
+      ST.readiness.hrv = Math.min(100, Math.max(0, Math.round(70 + (hrvRatio - 1) * 150)));
+    } else if (data.hrv && !recoveryLockedToday && !data.sleep_hrv) {
+      // Fallback: if no sleep_hrv available yet, use regular HRV
+      const hrvBase = ST.metrics.hrvBaseline || 42;
+      const hrvRatio = ST.metrics.hrv / hrvBase;
+      ST.readiness.hrv = Math.min(100, Math.max(0, Math.round(70 + (hrvRatio - 1) * 150)));
+    }
+
     if (data.rhr) {
       const rhrBase = ST.metrics.rhrBaseline || 57;
       ST.metrics.rhrDelta = Math.round(ST.metrics.rhr - rhrBase);

@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
       const isHistory = url.searchParams.get("history") === "true";
 
       if (isHistory) {
-        const types = ["hrv", "rhr", "spo2", "respiratory", "steps", "sleep", "active_cal", "skin_temp", "vo2max", "hr", "workout", "stand_hours", "flights", "weight"];
+        const types = ["hrv", "sleep_hrv", "rhr", "spo2", "respiratory", "steps", "sleep", "active_cal", "skin_temp", "vo2max", "hr", "workout", "stand_hours", "flights", "weight"];
         const historyResult: Record<string, any[]> = {};
         for (const t of types) {
           let query = sb
@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
         return Response.json(historyResult, { headers: CORS });
       }
 
-      const types = ["hrv", "rhr", "spo2", "respiratory", "steps", "sleep", "active_cal", "skin_temp", "vo2max", "hr", "workout", "stand_hours", "flights", "weight"];
+      const types = ["hrv", "sleep_hrv", "rhr", "spo2", "respiratory", "steps", "sleep", "active_cal", "skin_temp", "vo2max", "hr", "workout", "stand_hours", "flights", "weight"];
       const result: Record<string, any> = {};
 
       for (const t of types) {
@@ -327,19 +327,59 @@ Deno.serve(async (req) => {
 
       // ---- POINT-IN-TIME METRICS: take latest per day ----
       else if (name.includes("heart_rate_variability") || name === "hrv") {
-        // Take latest HRV reading per day
+        // Store latest HRV per day for display
         const daily: Record<string, { value: number; date: string }> = {};
+        // Also collect ALL readings with timestamps for sleep-window averaging
+        const allReadings: { value: number; dateStr: string; epochMs: number }[] = [];
+
         for (const pt of dataPoints) {
           const v = extractValue(pt);
           if (v == null || v <= 0 || v > 300) continue;
           const dk = dateKey(pt.date);
-          // Keep the latest reading per day
-          if (!daily[dk] || parseDate(pt.date) > parseDate(daily[dk].date)) {
+          const epochMs = parseDate(pt.date);
+          allReadings.push({ value: v, dateStr: pt.date, epochMs });
+          if (!daily[dk] || epochMs > parseDate(daily[dk].date)) {
             daily[dk] = { value: v, date: pt.date };
           }
         }
         for (const [dk, d] of Object.entries(daily)) {
           processed.push({ type: "hrv", value: +d.value.toFixed(1), date: dk, unit: "ms" });
+        }
+
+        // Compute sleep-window HRV average per night
+        // Sleep window: 22:00 previous day to 10:00 current day
+        // Group readings by "night" (attribute to the date they'd wake up on)
+        const nightReadings: Record<string, number[]> = {};
+        for (const r of allReadings) {
+          const d = new Date(r.epochMs);
+          const hour = d.getHours();
+          // Readings 22:00-23:59 belong to the NEXT day's sleep
+          // Readings 00:00-09:59 belong to THIS day's sleep
+          let nightKey: string;
+          if (hour >= 22) {
+            const nextDay = new Date(r.epochMs + 86400000);
+            nightKey = nextDay.toISOString().slice(0, 10);
+          } else if (hour < 10) {
+            nightKey = d.toISOString().slice(0, 10);
+          } else {
+            continue; // Daytime reading — skip for sleep HRV
+          }
+          if (!nightReadings[nightKey]) nightReadings[nightKey] = [];
+          nightReadings[nightKey].push(r.value);
+        }
+
+        // Store sleep HRV averages
+        for (const [dk, readings] of Object.entries(nightReadings)) {
+          if (readings.length < 1) continue;
+          // Use rMSSD-style: average of all nocturnal readings
+          const avg = readings.reduce((s, v) => s + v, 0) / readings.length;
+          processed.push({
+            type: "sleep_hrv",
+            value: +avg.toFixed(1),
+            date: dk,
+            unit: "ms",
+            details: { count: readings.length, min: +Math.min(...readings).toFixed(1), max: +Math.max(...readings).toFixed(1) },
+          });
         }
       }
 
