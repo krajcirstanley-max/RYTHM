@@ -8165,8 +8165,13 @@ function buildTrendFullPage(key) {
 //  BOOT
 // ========================================
 function bootApp() {
-  // Avatar
-  // Avatar removed from topbar
+  // One-time migration: clear stale recovery lock so it recomputes with sleep-HRV logic (v30)
+  if (ST._recoveryMigration !== 'v30') {
+    ST._recoveryLockedDate = null;
+    ST._recoveryLockedScore = null;
+    ST._recoveryMigration = 'v30';
+    saveState();
+  }
 
   // Seasonal init (may be async for geolocation)
   initSeasonal();
