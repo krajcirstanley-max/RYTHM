@@ -58,134 +58,6 @@ body { padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0; min-he
 
 .app { max-width: 440px; margin: 0 auto; padding-bottom: 110px; }
 
-/* ========== ONBOARDING ========== */
-.onboarding-overlay {
-  position: fixed; inset: 0; z-index: 200;
-  background: #000;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 24px;
-}
-.onboarding-overlay.hidden { display: none; }
-
-.onboard-screen { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 380px; }
-.onboard-screen.active { display: flex; animation: rise .4s cubic-bezier(.2,.7,.2,1); }
-
-.onboard-logo {
-  font-size: 15px; font-weight: 900; letter-spacing: 6px; color: #fff;
-  margin-bottom: 32px;
-}
-.onboard-title {
-  font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: #fff;
-  text-align: center; margin-bottom: 10px; line-height: 1.3;
-}
-.onboard-subtitle {
-  font-size: 14px; color: var(--text-3); text-align: center;
-  line-height: 1.6; margin-bottom: 32px; max-width: 300px;
-}
-.onboard-btn {
-  width: 100%; padding: 16px; border: none; border-radius: var(--radius);
-  background: var(--energy); color: #000;
-  font-family: inherit; font-size: 15px; font-weight: 700;
-  cursor: pointer; letter-spacing: -0.2px;
-  margin-top: 16px;
-}
-.onboard-btn:active { opacity: 0.85; }
-.onboard-btn.secondary {
-  background: rgba(255,255,255,0.08); color: #fff;
-}
-.onboard-dots {
-  display: flex; gap: 8px; margin-top: 28px;
-}
-.onboard-dots .dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--text-4); transition: all 0.3s;
-}
-.onboard-dots .dot.active { background: var(--energy); width: 20px; border-radius: 3px; }
-
-/* Quiz */
-.quiz-q {
-  width: 100%; background: var(--card); border: 1px solid var(--card-border);
-  border-radius: var(--radius); padding: 16px 18px; margin-bottom: 8px;
-  display: flex; align-items: center; gap: 14px;
-  cursor: pointer; transition: border-color 0.2s;
-}
-.quiz-q.selected { border-color: var(--energy); }
-.quiz-q .radio {
-  width: 20px; height: 20px; border-radius: 50%;
-  border: 2px solid var(--text-4); flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s;
-}
-.quiz-q.selected .radio {
-  border-color: var(--energy);
-  background: var(--energy);
-}
-.quiz-q.selected .radio::after {
-  content: ''; width: 8px; height: 8px; border-radius: 50%; background: #000;
-}
-.quiz-q .q-text { font-size: 14px; font-weight: 500; color: #fff; }
-.quiz-q .q-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; }
-
-/* Slider controls */
-.slider-group { width: 100%; margin-bottom: 24px; }
-.slider-label {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 12px;
-}
-.slider-label .sl-name {
-  font-size: 12px; font-weight: 700; letter-spacing: 1.2px;
-  color: var(--text-3); text-transform: uppercase;
-}
-.slider-label .sl-val {
-  font-family: 'DM Mono', monospace; font-size: 18px;
-  font-weight: 700; color: #fff;
-}
-input[type="range"] {
-  -webkit-appearance: none; appearance: none;
-  width: 100%; height: 4px; border-radius: 2px;
-  background: var(--bg-3); outline: none;
-}
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none; appearance: none;
-  width: 24px; height: 24px; border-radius: 50%;
-  background: var(--energy); cursor: pointer;
-  border: 3px solid #000;
-  box-shadow: 0 0 10px rgba(0,236,127,0.4);
-}
-
-/* Goals multi-select */
-.goal-chip {
-  width: 100%; background: var(--card); border: 1px solid var(--card-border);
-  border-radius: var(--radius); padding: 14px 18px; margin-bottom: 8px;
-  display: flex; align-items: center; gap: 14px;
-  cursor: pointer; transition: border-color 0.2s;
-}
-.goal-chip.selected { border-color: var(--energy); }
-.goal-chip .check-box {
-  width: 20px; height: 20px; border-radius: 6px;
-  border: 2px solid var(--text-4); flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s;
-}
-.goal-chip.selected .check-box {
-  border-color: var(--energy); background: var(--energy);
-}
-.goal-chip.selected .check-box::after {
-  content: ''; width: 10px; height: 6px;
-  border-left: 2px solid #000; border-bottom: 2px solid #000;
-  transform: rotate(-45deg); margin-top: -2px;
-}
-.goal-chip .g-text { font-size: 14px; font-weight: 500; color: #fff; }
-
-/* Complete screen */
-.onboard-big-icon {
-  width: 80px; height: 80px; border-radius: 50%;
-  background: rgba(0,236,127,0.12);
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 24px;
-}
-.onboard-big-icon svg { width: 36px; height: 36px; color: var(--energy); }
-
 /* ========== TOP BAR ========== */
 .topbar {
   display: flex; justify-content: center; align-items: center;
@@ -1978,71 +1850,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
 <body>
 
 <!-- ========== ONBOARDING ========== -->
-<div class="onboarding-overlay" id="onboarding">
-
-  <!-- Screen 1: Welcome -->
-  <div class="onboard-screen active" data-step="0">
-    <div class="onboard-logo">R Y T H M</div>
-    <div class="onboard-title">Plan your day around your body, not your clock</div>
-    <div class="onboard-subtitle">RYTHM maps your circadian rhythm in real-time and tells you when to work, rest, train, and sleep.</div>
-    <button class="onboard-btn" onclick="nextOnboard()">Get Started</button>
-    <div class="onboard-dots"><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-  </div>
-
-  <!-- Screen 2: Chronotype Quiz -->
-  <div class="onboard-screen" data-step="1">
-    <div class="onboard-logo">R Y T H M</div>
-    <div class="onboard-title">What's your natural rhythm?</div>
-    <div class="onboard-subtitle">Pick the statement that fits you best.</div>
-    <div id="quizOptions" style="width:100%;"></div>
-    <button class="onboard-btn" onclick="nextOnboard()" id="quizNext" style="opacity:0.4;pointer-events:none;">Continue</button>
-    <div class="onboard-dots"><div class="dot"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-  </div>
-
-  <!-- Screen 3: Wake/Sleep sliders -->
-  <div class="onboard-screen" data-step="2">
-    <div class="onboard-logo">R Y T H M</div>
-    <div class="onboard-title">Your sleep window</div>
-    <div class="onboard-subtitle">When do you usually wake up and fall asleep?</div>
-    <div class="slider-group">
-      <div class="slider-label">
-        <span class="sl-name">Wake Time</span>
-        <span class="sl-val" id="wakeDisplay">10:00</span>
-      </div>
-      <input type="range" id="wakeSlider" min="300" max="780" step="15" value="600">
-    </div>
-    <div class="slider-group">
-      <div class="slider-label">
-        <span class="sl-name">Sleep Time</span>
-        <span class="sl-val" id="sleepDisplay">01:30</span>
-      </div>
-      <input type="range" id="sleepSlider" min="1200" max="1740" step="15" value="1530">
-    </div>
-    <button class="onboard-btn" onclick="nextOnboard()">Continue</button>
-    <div class="onboard-dots"><div class="dot"></div><div class="dot"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div></div>
-  </div>
-
-  <!-- Screen 4: Goals -->
-  <div class="onboard-screen" data-step="3">
-    <div class="onboard-logo">R Y T H M</div>
-    <div class="onboard-title">What are you optimizing for?</div>
-    <div class="onboard-subtitle">Select all that apply.</div>
-    <div id="goalOptions" style="width:100%;"></div>
-    <button class="onboard-btn" onclick="nextOnboard()">Continue</button>
-    <div class="onboard-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot active"></div><div class="dot"></div></div>
-  </div>
-
-  <!-- Screen 5: Complete -->
-  <div class="onboard-screen" data-step="4">
-    <div class="onboard-big-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
-    <div class="onboard-title">You're all set</div>
-    <div class="onboard-subtitle" id="completeMsg">Your circadian model is ready. RYTHM will now track your energy phases in real-time.</div>
-    <button class="onboard-btn" onclick="finishOnboard()">Enter RYTHM</button>
-    <div class="onboard-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot active"></div></div>
-  </div>
-</div>
+<!-- Onboarding removed — app boots directly -->
 
 <!-- ========== MAIN APP ========== -->
 <div class="app" id="mainApp" style="display:none;">
@@ -2613,7 +2421,7 @@ async function pushRemote(key, data) {
 const STORAGE_KEY = 'rythm_state';
 
 const DEFAULT_STATE = {
-  onboarded: false,
+  onboarded: true,
   profile: {
     name: 'S',
     wakeMin: 600,     // 10:00
@@ -3106,120 +2914,7 @@ function readinessInterpretation(score) {
   return { text: 'Low Recovery', color: 'var(--danger)' };
 }
 
-// ========================================
-//  ONBOARDING
-// ========================================
-let onboardStep = 0;
-
-const QUIZ_OPTIONS = [
-  { text: 'I wake up early naturally and feel best before noon', sub: 'Morning lark', type: 'early' },
-  { text: 'I\'m flexible but slightly prefer mornings', sub: 'Slightly early', type: 'intermediate' },
-  { text: 'I feel most alert in the afternoon and evening', sub: 'Evening type', type: 'late' },
-  { text: 'I\'m a night owl. My brain peaks after 10 PM', sub: 'Extreme night owl', type: 'extreme_late' },
-];
-
-const GOAL_OPTIONS = [
-  { id: 'sleep', text: 'Better sleep' },
-  { id: 'energy', text: 'More energy' },
-  { id: 'performance', text: 'Peak performance' },
-  { id: 'focus', text: 'Deep focus' },
-  { id: 'longevity', text: 'Longevity' },
-];
-
-function initOnboarding() {
-  // Quiz
-  const qEl = document.getElementById('quizOptions');
-  qEl.innerHTML = QUIZ_OPTIONS.map((q, i) => `
-    <div class="quiz-q" data-idx="${i}" onclick="selectQuiz(${i})">
-      <div class="radio"></div>
-      <div><div class="q-text">${q.text}</div><div class="q-sub">${q.sub}</div></div>
-    </div>
-  `).join('');
-
-  // Goals
-  const gEl = document.getElementById('goalOptions');
-  gEl.innerHTML = GOAL_OPTIONS.map(g => `
-    <div class="goal-chip" data-goal="${g.id}" onclick="toggleGoal('${g.id}', this)">
-      <div class="check-box"></div>
-      <div class="g-text">${g.text}</div>
-    </div>
-  `).join('');
-
-  // Sliders
-  setupSlider('wakeSlider', 'wakeDisplay');
-  setupSlider('sleepSlider', 'sleepDisplay');
-}
-
-function setupSlider(sliderId, displayId) {
-  const sl = document.getElementById(sliderId);
-  const disp = document.getElementById(displayId);
-  if (!sl || !disp) return;
-  sl.addEventListener('input', () => {
-    let m = parseInt(sl.value);
-    if (m >= 1440) m -= 1440;
-    disp.textContent = minToTime(m >= 1440 ? m - 1440 : m);
-  });
-}
-
-let selectedQuiz = -1;
-let selectedGoals = new Set();
-
-function selectQuiz(idx) {
-  selectedQuiz = idx;
-  document.querySelectorAll('.quiz-q').forEach((el, i) => el.classList.toggle('selected', i === idx));
-  const btn = document.getElementById('quizNext');
-  btn.style.opacity = '1';
-  btn.style.pointerEvents = 'auto';
-}
-
-function toggleGoal(id, el) {
-  if (selectedGoals.has(id)) { selectedGoals.delete(id); el.classList.remove('selected'); }
-  else { selectedGoals.add(id); el.classList.add('selected'); }
-}
-
-function nextOnboard() {
-  if (onboardStep === 1 && selectedQuiz === -1) return;
-  onboardStep++;
-  if (onboardStep === 2) {
-    // save chronotype
-    ST.profile.chronotype = QUIZ_OPTIONS[selectedQuiz].type;
-    // Set defaults based on chronotype
-    const defaults = { early: [360, 1320], intermediate: [420, 1380], late: [540, 1470], extreme_late: [600, 1530] };
-    const [w, s] = defaults[ST.profile.chronotype] || [600, 1530];
-    document.getElementById('wakeSlider').value = w;
-    document.getElementById('sleepSlider').value = s;
-    document.getElementById('wakeSlider').dispatchEvent(new Event('input'));
-    document.getElementById('sleepSlider').dispatchEvent(new Event('input'));
-  }
-  if (onboardStep === 4) {
-    // save values
-    ST.profile.wakeMin = parseInt(document.getElementById('wakeSlider').value);
-    ST.profile.sleepMin = parseInt(document.getElementById('sleepSlider').value);
-    ST.profile.goals = [...selectedGoals];
-    if (ST.profile.goals.length === 0) ST.profile.goals = ['energy'];
-
-    const chronoNames = { early:'Early Bird', intermediate:'Intermediate', late:'Night Owl', extreme_late:'Extreme Night Owl' };
-    document.getElementById('completeMsg').textContent =
-      `${chronoNames[ST.profile.chronotype]} profile loaded. Wake ${minToTime(ST.profile.wakeMin)}, sleep ${minToTime(ST.profile.sleepMin >= 1440 ? ST.profile.sleepMin - 1440 : ST.profile.sleepMin)}. Your energy model is live.`;
-  }
-  showOnboardScreen();
-}
-
-function showOnboardScreen() {
-  document.querySelectorAll('.onboard-screen').forEach((el, i) => {
-    el.classList.toggle('active', i === onboardStep);
-  });
-}
-
-function finishOnboard() {
-  ST.onboarded = true;
-  ST.streaks = { wake: 1, sleep: 1, log: 0, lastLogDate: null, lastWakeDate: new Date().toISOString().slice(0,10), lastSleepDate: new Date().toISOString().slice(0,10) };
-  saveState();
-  document.getElementById('onboarding').classList.add('hidden');
-  document.getElementById('mainApp').style.display = '';
-  document.getElementById('bottomNav').style.display = '';
-  bootApp();
-}
+// Onboarding removed — app boots directly with profile defaults
 
 // ========================================
 //  DRAWING
@@ -7256,11 +6951,7 @@ function saveGoals() {
   if (btn) { btn.textContent = 'Saved ✓'; setTimeout(() => { btn.textContent = 'Save Goals'; }, 1200); }
 }
 
-function rerunQuiz() {
-  ST.onboarded = false;
-  saveState();
-  location.reload();
-}
+// rerunQuiz removed — onboarding removed
 
 function resetData() {
   if (confirm('This will erase ALL your RYTHM data. Continue?')) {
@@ -8346,15 +8037,12 @@ function bootApp() {
 //  INIT
 // ========================================
 loadState();
-initOnboarding();
 initLogModal();
 
-if (ST.onboarded) {
-  document.getElementById('onboarding').classList.add('hidden');
-  document.getElementById('mainApp').style.display = '';
-  document.getElementById('bottomNav').style.display = '';
-  bootApp();
-}
+// Boot directly — no onboarding gate
+document.getElementById('mainApp').style.display = '';
+document.getElementById('bottomNav').style.display = '';
+bootApp();
 
 // ========================================
 //  SERVICE WORKER
