@@ -306,6 +306,48 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .section-add svg { width: 14px; height: 14px; }
 
 /* DAY BLOCKS */
+/* ── TIMELINE ── */
+.timeline { position: relative; padding-left: 28px; }
+.timeline::before {
+  content: ''; position: absolute; left: 10px; top: 8px; bottom: 8px;
+  width: 2px; background: var(--card-border); border-radius: 1px;
+}
+.tl-item { position: relative; padding: 0 0 16px; }
+.tl-item:last-child { padding-bottom: 0; }
+.tl-dot {
+  position: absolute; left: -22px; top: 6px;
+  width: 10px; height: 10px; border-radius: 50%;
+  border: 2px solid var(--text-4); background: var(--bg); z-index: 1;
+}
+.tl-dot.active { border-color: var(--energy); background: var(--energy); box-shadow: 0 0 8px rgba(0,236,127,0.4); }
+.tl-dot.past { border-color: var(--text-4); background: var(--text-4); }
+.tl-dot.sleep { border-color: var(--sleep); background: var(--sleep); }
+.tl-dot.warn { border-color: var(--warn); background: var(--warn); }
+.tl-dot.strain { border-color: var(--strain); background: var(--strain); }
+.tl-dot.shisha { border-color: #e74c3c; background: #e74c3c; }
+.tl-time {
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  color: var(--text-3); font-weight: 500; margin-bottom: 2px;
+}
+.tl-title { font-size: 14px; font-weight: 500; color: #fff; }
+.tl-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+.tl-item.current .tl-title { color: var(--energy); font-weight: 600; }
+.tl-item.past-item .tl-title { opacity: 0.5; }
+.tl-item.past-item .tl-time { opacity: 0.5; }
+.tl-task-check {
+  position: absolute; right: 0; top: 6px;
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid var(--text-4); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+}
+.tl-task-check.checked { border-color: var(--energy); background: var(--energy); }
+.tl-task-check.checked::after {
+  content: ''; width: 8px; height: 5px;
+  border-left: 2px solid #000; border-bottom: 2px solid #000;
+  transform: rotate(-45deg); margin-top: -1px;
+}
+
+/* Legacy support */
 .day-block {
   background: var(--card); border: 1px solid var(--card-border);
   border-radius: var(--radius); padding: 14px 16px; margin-bottom: 6px;
@@ -4957,32 +4999,115 @@ function renderOutlook() {
 }
 
 // ========================================
-//  TASKS (My Day)
+//  TASKS (My Day) — Vertical Timeline
 // ========================================
 function renderTasks() {
   const el = document.getElementById('dayTasks');
-  if (ST.tasks.length === 0) {
-    el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-4);font-size:13px;">No tasks yet. Tap + to add one.</div>`;
+  const today = new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const WAKE = profileWakeHour();
+
+  // Collect all timeline events
+  const events = [];
+
+  // 1. Wake up (from sleep data)
+  if (ST.sleep && ST.sleep.sleepEnd && ST.sleep._syncDate === today) {
+    events.push({ time: ST.sleep.sleepEnd, title: 'Woke up', sub: `${ST.sleep.totalH}h sleep`, icon: '☀️', dot: 'active', type: 'auto' });
+  } else {
+    const wakeTime = minToTime(WAKE * 60);
+    events.push({ time: wakeTime, title: 'Wake up', sub: '', icon: '☀️', dot: 'past', type: 'auto' });
+  }
+
+  // 2. Workouts from health sync
+  const workouts = (ST._workouts || []).filter(w => w.date === today);
+  for (const w of workouts) {
+    let time = null;
+    if (w.startDate) {
+      const d = new Date(w.startDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
+      if (!isNaN(d.getTime())) time = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    }
+    const durStr = w.durMin > 0 ? `${Math.round(w.durMin)}min` : '';
+    const calStr = w.cal > 0 ? `${w.cal} kcal` : '';
+    const sub = [durStr, calStr].filter(Boolean).join(' · ');
+    events.push({ time: time || minToTime((WAKE + 3) * 60 % 1440), title: w.type || 'Workout', sub, icon: '🏋️', dot: 'strain', type: 'workout' });
+  }
+
+  // 3. Logged activities (quick logs)
+  const todayLogs = (ST.logs || []).filter(l => l.date === today);
+  const tagIcons = { shisha: '💨', workout: '🏋️', sauna: '🧖', alcohol: '🍷', stress: '😤', nap: '😴', meditation: '🧘', sunlight: '☀️', screen: '📱', cold_shower: '🧊', sugar: '🍬' };
+  const tagDots = { shisha: 'shisha', workout: 'strain', sauna: 'warn', alcohol: 'warn', stress: 'warn', nap: 'sleep', meditation: 'active', sunlight: 'active', cold_shower: 'active' };
+  for (const log of todayLogs) {
+    const d = new Date(log.ts);
+    const time = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    const tags = log.tags || [];
+    const mainTag = tags[0] || 'log';
+    const title = tags.map(t => t.replace(/_/g, ' ')).join(', ');
+    const displayTitle = title.charAt(0).toUpperCase() + title.slice(1);
+    const icon = tagIcons[mainTag] || '📝';
+    const dot = tagDots[mainTag] || 'past';
+    const sub = log.durationMin ? `${log.durationMin}min` : '';
+    events.push({ time, title: displayTitle, sub, icon, dot, type: 'log' });
+  }
+
+  // 4. Manual tasks
+  for (let i = 0; i < ST.tasks.length; i++) {
+    const t = ST.tasks[i];
+    if (t._workout) continue; // Skip workout tasks, they're in section 2
+    events.push({ time: t.time || '23:59', title: t.title, sub: '', icon: '📌', dot: t.done ? 'past' : '', type: 'task', taskIdx: i, done: t.done });
+  }
+
+  // 5. Calendar events
+  const calEvents = ST.calendarEvents || [];
+  for (const ev of calEvents) {
+    const d = new Date(ev.start);
+    if (d.toISOString().slice(0, 10) !== today) continue;
+    const time = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    const end = ev.end ? new Date(ev.end) : null;
+    const durMin = end ? Math.round((end - d) / 60000) : null;
+    const sub = durMin ? (durMin >= 60 ? Math.floor(durMin/60) + 'h' + (durMin%60 ? durMin%60 + 'm' : '') : durMin + 'min') : '';
+    events.push({ time, title: ev.title, sub, icon: '📅', dot: 'strain', type: 'calendar' });
+  }
+
+  // 6. Wind down
+  const windDownH = WAKE + 14; // ~14h after wake
+  const windTime = minToTime((windDownH * 60) % 1440);
+  events.push({ time: windTime, title: 'Wind down', sub: 'Dim lights, no screens', icon: '🌙', dot: 'sleep', type: 'auto' });
+
+  // Sort by time
+  events.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+
+  if (events.length === 0) {
+    el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-4);font-size:13px;">No activity yet today.</div>`;
     return;
   }
 
-  el.innerHTML = ST.tasks.map((t, i) => {
-    const phase = t.time ? phaseAt(parseFloat(t.time.split(':')[0]) + parseFloat(t.time.split(':')[1])/60) : null;
-    const barCls = phase ? phase.barCls : 'wind';
-    const subCls = phase ? phase.barCls : '';
-    const subText = phase ? phase.name : '';
-    return `<div class="day-block ${t.done ? 'completed' : ''}" data-idx="${i}">
-      <div class="l-side">
-        ${t.time ? `<div class="db-time">${t.time}</div>` : ''}
-        <div class="db-bar ${barCls}"></div>
-        <div class="db-info">
-          <div class="ttl">${t.title}</div>
-          ${subText ? `<div class="sub ${subCls}">${subText}</div>` : ''}
-        </div>
-      </div>
-      <div class="task-done ${t.done ? 'checked' : ''}" onclick="toggleTask(${i})"></div>
+  // Find current event (last one whose time has passed)
+  let currentIdx = -1;
+  for (let i = 0; i < events.length; i++) {
+    if (events[i].time) {
+      const [h, m] = events[i].time.split(':').map(Number);
+      if (h * 60 + m <= nowMin) currentIdx = i;
+    }
+  }
+
+  el.innerHTML = `<div class="timeline">${events.map((ev, idx) => {
+    const isPast = idx < currentIdx;
+    const isCurrent = idx === currentIdx;
+    const timeMin = ev.time ? parseInt(ev.time.split(':')[0]) * 60 + parseInt(ev.time.split(':')[1]) : 0;
+    const isFuture = timeMin > nowMin;
+    const dotCls = isCurrent ? 'active' : (isPast ? 'past' : ev.dot || '');
+    const itemCls = isCurrent ? 'current' : (isPast ? 'past-item' : '');
+    const taskCheck = ev.type === 'task' ? `<div class="tl-task-check ${ev.done ? 'checked' : ''}" onclick="event.stopPropagation();toggleTask(${ev.taskIdx})"></div>` : '';
+
+    return `<div class="tl-item ${itemCls}">
+      <div class="tl-dot ${dotCls}"></div>
+      ${taskCheck}
+      <div class="tl-time">${ev.time || ''}</div>
+      <div class="tl-title">${ev.icon} ${ev.title}</div>
+      ${ev.sub ? `<div class="tl-sub">${ev.sub}</div>` : ''}
     </div>`;
-  }).join('');
+  }).join('')}</div>`;
 }
 
 function toggleTaskInput() {
