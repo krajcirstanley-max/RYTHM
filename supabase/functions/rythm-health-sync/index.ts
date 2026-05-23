@@ -76,14 +76,27 @@ Deno.serve(async (req) => {
       const result: Record<string, any> = {};
 
       for (const t of types) {
-        const { data } = await sb
-          .from("rythm_health_data")
-          .select("*")
-          .eq("type", t)
-          .order("synced_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (data) result[t] = data;
+        if (t === "sleep") {
+          // Sleep: get the most recent entry by DATE (not synced_at)
+          // so we always show last night's sleep, not a stale re-synced older night
+          const { data } = await sb
+            .from("rythm_health_data")
+            .select("*")
+            .eq("type", "sleep")
+            .order("date", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (data) result[t] = data;
+        } else {
+          const { data } = await sb
+            .from("rythm_health_data")
+            .select("*")
+            .eq("type", t)
+            .order("synced_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (data) result[t] = data;
+        }
       }
 
       // Also get 7-day step history (daily aggregated)

@@ -7496,6 +7496,7 @@ async function fetchHealthData() {
     if (data.sleep && data.sleep.details) {
       if (!ST.sleep) ST.sleep = JSON.parse(JSON.stringify(DEFAULT_STATE.sleep));
       ST.sleep._syncDate = new Date().toISOString().slice(0, 10);
+      ST.sleep._nightDate = data.sleep.date || null; // which night this data is for
       const sd = data.sleep.details;
       if (data.sleep.value != null) ST.sleep.totalH = +Number(data.sleep.value).toFixed(1);
       if (sd.deep != null) ST.sleep.stages.deep = +Number(sd.deep).toFixed(1);
