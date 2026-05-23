@@ -2664,9 +2664,9 @@ const DEFAULT_STATE = {
     stepGoal: 10000
   },
   sleep: {
-    totalH: 8.2, sleepStart: '01:45', sleepEnd: '09:45',
-    stages: { deep: 1.2, rem: 1.5, core: 4.8, awake: 0.7 },
-    efficiency: 89, consistency: 72
+    totalH: 0, sleepStart: null, sleepEnd: null,
+    stages: { deep: 0, rem: 0, core: 0, awake: 0 },
+    efficiency: 0, consistency: 0
   },
   workouts: [],
   activeCal: { today: 0, goal: 500, week: [] },
@@ -2758,9 +2758,32 @@ function parseTimeToMin(t) {
 }
 
 function profileWakeHour() {
+  // Use today's actual wake time from health sync or manual input, fall back to profile default
+  const today = new Date().toISOString().slice(0, 10);
+
+  // 1. Check manual "I woke up at X" button
+  if (ST._actualWakeTimes && ST._actualWakeTimes[today]) {
+    return ST._actualWakeTimes[today] / 60;
+  }
+
+  // 2. Check synced sleep end time from Apple Health (= actual wake time)
+  if (ST.sleep && ST.sleep.sleepEnd && ST.sleep._syncDate === today) {
+    const m = parseTimeToMin(ST.sleep.sleepEnd);
+    if (m != null) return m / 60;
+  }
+
+  // 3. Profile default
   return ST.profile.wakeMin / 60;
 }
 function profileSleepHour() {
+  // Use today's actual sleep start from health sync, fall back to profile default
+  const today = new Date().toISOString().slice(0, 10);
+
+  if (ST.sleep && ST.sleep.sleepStart && ST.sleep._syncDate === today) {
+    const m = parseTimeToMin(ST.sleep.sleepStart);
+    if (m != null) return m / 60;
+  }
+
   return (ST.profile.sleepMin >= 1440 ? (ST.profile.sleepMin - 1440) / 60 : ST.profile.sleepMin / 60);
 }
 
@@ -3069,10 +3092,10 @@ function computeReadiness() {
 }
 
 function readinessInterpretation(score) {
-  if (score >= 80) return { text: 'Optimal', color: 'var(--energy)' };
-  if (score >= 65) return { text: 'Good', color: 'var(--energy)' };
-  if (score >= 50) return { text: 'Moderate', color: 'var(--warn)' };
-  return { text: 'Low', color: 'var(--danger)' };
+  // Aligned with Whoop: Green ≥67%, Yellow 34-66%, Red <34%
+  if (score >= 67) return { text: 'Good Recovery', color: 'var(--energy)' };
+  if (score >= 34) return { text: 'Moderate Recovery', color: 'var(--warn)' };
+  return { text: 'Low Recovery', color: 'var(--danger)' };
 }
 
 // ========================================
@@ -3490,10 +3513,10 @@ function buildRecoveryDetail() {
   const tl = computeTrainingLoad();
 
   let msg;
-  if (score >= 75) {
+  if (score >= 67) {
     msg = `<b>Green day - your body is ready.</b> HRV ${ST.metrics.hrvDelta >= 0 ? 'above' : 'near'} baseline, parasympathetic nervous system is dominant. `;
     msg += `This is your window for max efforts - competition jumps, heavy squats, plyometrics. Your CNS can handle high-intensity output today.`;
-  } else if (score >= 60) {
+  } else if (score >= 34) {
     msg = `<b>Moderate recovery.</b> `;
     if (ST.metrics.hrvDelta < 0) msg += `HRV is ${Math.abs(ST.metrics.hrvDelta)}ms below baseline - your autonomic nervous system hasn't fully recovered. `;
     if (hadLateShisha) msg += `Late shisha last night likely suppressed deep sleep via CO binding to hemoglobin. `;
@@ -3861,7 +3884,7 @@ function closeSleepFullPage() {
 
 function buildSleepFullPage() {
   const sl = ST.sleep || DEFAULT_STATE.sleep;
-  const stg = sl.stages || { deep: 1.4, rem: 1.8, core: 3.2, awake: 0.8 };
+  const stg = sl.stages || { deep: 0, rem: 0, core: 0, awake: 0 };
   const total = (stg.deep + stg.rem + stg.core + stg.awake) || 1;
   const target = (ST.health && ST.health.sleepTarget) || 8;
   const pct = Math.min(100, Math.round((sl.totalH / target) * 100));
@@ -4093,7 +4116,7 @@ function buildRecoveryFullPage() {
   const interp = readinessInterpretation(score);
   const m = ST.metrics;
   const sl = ST.sleep || DEFAULT_STATE.sleep;
-  const stg = sl.stages || { deep: 1.4, rem: 1.8, core: 3.2, awake: 0.8 };
+  const stg = sl.stages || { deep: 0, rem: 0, core: 0, awake: 0 };
   const strain = computeStrain();
 
   // Component scores
@@ -4136,31 +4159,28 @@ function buildRecoveryFullPage() {
   const autoColor = autoScore >= 65 ? 'var(--energy)' : autoScore >= 40 ? 'var(--warn)' : 'var(--danger)';
   const autoLabel = autoScore >= 65 ? 'Parasympathetic dominant (recovery)' : autoScore >= 40 ? 'Mixed - shifting toward recovery' : 'Sympathetic dominant (stress/fatigue)';
 
-  // Training recommendation
+  // Training recommendation — aligned with Whoop green/yellow/red (67/34)
   let trainingRec, trainingColor, trainingIcon;
-  if (score >= 80) {
+  if (score >= 67) {
     trainingRec = 'Full send - max jumps, heavy squats, plyometrics. Your CNS and muscular systems are ready for peak output.';
     trainingColor = 'var(--energy)'; trainingIcon = '🟢';
-  } else if (score >= 65) {
+  } else if (score >= 34) {
     trainingRec = 'Moderate intensity - technique focus, sub-max approaches, light gym. Save max efforts for a green day.';
-    trainingColor = 'var(--energy)'; trainingIcon = '🟢';
-  } else if (score >= 50) {
-    trainingRec = 'Light work only - mobility, tempo runs, technical drills at 70-80%. No max jumps or heavy lifts.';
     trainingColor = 'var(--warn)'; trainingIcon = '🟡';
   } else {
     trainingRec = 'Rest day recommended. Active recovery (walk, stretch, swim). Training hard today risks injury and deepens recovery debt.';
     trainingColor = 'var(--danger)'; trainingIcon = '🔴';
   }
 
-  // Insight
+  // Insight — thresholds aligned with Whoop: Green ≥67%, Yellow 34-66%, Red <34%
   let insightClass = '', insightTitle = '', insightText = '';
-  if (score >= 75) {
+  if (score >= 67) {
     insightClass = '';
-    insightTitle = 'Green Day - Your Body is Ready';
+    insightTitle = '🟢 Green Day - Your Body is Ready';
     insightText = `HRV ${m.hrvDelta >= 0 ? 'above' : 'near'} baseline at ${m.hrv}ms. Parasympathetic nervous system is dominant - your CNS can handle explosive output. This is your window for <b>max efforts, competition jumps, and heavy strength work</b>.`;
-  } else if (score >= 55) {
+  } else if (score >= 34) {
     insightClass = 'warn';
-    insightTitle = 'Yellow Day - Moderate Recovery';
+    insightTitle = '🟡 Yellow Day - Moderate Recovery';
     let factors = [];
     if (m.hrvDelta < -3) factors.push(`HRV ${Math.abs(m.hrvDelta).toFixed(1)}ms below baseline`);
     if (hadLateShisha) factors.push('late shisha suppressed deep sleep');
@@ -4169,7 +4189,7 @@ function buildRecoveryFullPage() {
     insightText = factors.length ? `Contributing factors: ${factors.join(', ')}. <b>Avoid max efforts</b> - focus on technique and sub-maximal work.` : 'Your body is partially recovered. Moderate activity is fine but save the explosive work for a green day.';
   } else {
     insightClass = 'danger';
-    insightTitle = 'Red Day - Prioritize Recovery';
+    insightTitle = '🔴 Red Day - Prioritize Recovery';
     insightText = `Your sympathetic nervous system is dominant. Training hard today risks injury (1.7x higher risk) and will deepen recovery debt. <b>Rest, mobility, or light movement only.</b>`;
     if (hadLateShisha) insightText += ' Late shisha contributed - CO needs 3h to clear and suppresses HRV during deep sleep.';
   }
@@ -4348,7 +4368,7 @@ function buildStressFullPage() {
   const rhrBase = m.rhrBaseline || 57;
   const hrvRatio = m.hrv / hrvBase;
   const sl = ST.sleep || DEFAULT_STATE.sleep;
-  const stg = sl.stages || { deep: 1.4, rem: 1.8, core: 3.2, awake: 0.8 };
+  const stg = sl.stages || { deep: 0, rem: 0, core: 0, awake: 0 };
   const strain = computeStrain();
 
   // Overall stress score (0 = no stress, 100 = max stress) - inverse of recovery essentially
@@ -4658,11 +4678,11 @@ function renderDayBanner() {
   const interp = readinessInterpretation(score);
 
   let title, msg, checkColor;
-  if (score >= 75) {
+  if (score >= 67) {
     title = 'Optimal Health';
     checkColor = 'var(--energy)';
     msg = `Take advantage of your green Recovery by pushing training intensity. Your body is signaling it can take on significant exertion today.`;
-  } else if (score >= 55) {
+  } else if (score >= 34) {
     title = 'Moderate Recovery';
     checkColor = 'var(--warn)';
     msg = `Stick to technique work and sub-max intensity. Avoid stacking hard sessions back to back.`;
@@ -5321,7 +5341,7 @@ function renderSchedule() {
 function renderWeekStrip() {
   document.getElementById('weekStrip').innerHTML = ST.weekScores.map(d => {
     const hasScore = d.score !== null;
-    const color = hasScore ? (d.score >= 65 ? 'var(--energy)' : d.score >= 50 ? 'var(--warn)' : 'var(--danger)') : 'var(--text-4)';
+    const color = hasScore ? (d.score >= 67 ? 'var(--energy)' : d.score >= 34 ? 'var(--warn)' : 'var(--danger)') : 'var(--text-4)';
     return `<div class="day-cell ${d.today ? 'today' : ''}">
       <div class="day-letter">${d.label}</div>
       <div class="day-score" style="color:${color}">${hasScore ? d.score : '-'}</div>
@@ -5477,8 +5497,8 @@ function renderWeekInsights() {
 
   // 3. Strain-recovery balance
   const weekScores = ST.weekScores || [];
-  const greenDays = weekScores.filter(d => d.score !== null && d.score >= 65).length;
-  const redDays = weekScores.filter(d => d.score !== null && d.score < 50).length;
+  const greenDays = weekScores.filter(d => d.score !== null && d.score >= 67).length;
+  const redDays = weekScores.filter(d => d.score !== null && d.score < 34).length;
   if (weekScores.some(d => d.score !== null)) {
     const cls = greenDays >= 5 ? 'good' : redDays >= 3 ? 'warn' : 'info';
     insights.push({ cls, label: 'Recovery Distribution', text: `<b>${greenDays}</b> green days, <b>${redDays}</b> red days this week. ${greenDays >= 5 ? 'Strong recovery week — good capacity for hard sessions.' : redDays >= 3 ? 'Multiple low-recovery days — prioritize rest.' : 'Mixed week — balance strain with recovery days.'}` });
@@ -5578,14 +5598,14 @@ function renderSleepBreakdown() {
   const el = document.getElementById('sleepBreakdown');
   if (!el) return;
 
-  const sl = ST.sleep || { totalH: 7.2, sleepStart: '01:45', sleepEnd: '09:00', stages: { deep: 1.4, rem: 1.8, core: 3.2, awake: 0.8 }, efficiency: 89, consistency: 72 };
+  const sl = ST.sleep || { totalH: 0, sleepStart: null, sleepEnd: null, stages: { deep: 0, rem: 0, core: 0, awake: 0 }, efficiency: 0, consistency: 0 };
   const target = (ST.health && ST.health.sleepTarget) || 8;
   const pct = Math.min(100, Math.round((sl.totalH / target) * 100));
   const perfColor = pct >= 85 ? 'var(--energy)' : pct >= 70 ? 'var(--warn)' : 'var(--danger)';
   const perfTag = pct >= 85 ? 'Optimal' : pct >= 70 ? 'Adequate' : 'Low';
   const perfTagBg = pct >= 85 ? 'rgba(0,236,127,0.10)' : pct >= 70 ? 'rgba(255,181,71,0.10)' : 'rgba(255,84,112,0.10)';
 
-  const stg = sl.stages || { deep: 1.4, rem: 1.8, core: 3.2, awake: 0.8 };
+  const stg = sl.stages || { deep: 0, rem: 0, core: 0, awake: 0 };
   const total = stg.deep + stg.rem + stg.core + stg.awake || 1;
 
   // Sleep debt from today
@@ -6635,7 +6655,7 @@ function buildDetailContent(type) {
 
     case 'sleep': {
       const sl = ST.sleep || DEFAULT_STATE.sleep;
-      const stg = sl.stages || { deep: 1.4, rem: 1.8, core: 3.2, awake: 0.8 };
+      const stg = sl.stages || { deep: 0, rem: 0, core: 0, awake: 0 };
       const total = stg.deep + stg.rem + stg.core + stg.awake || 1;
       return back + `
       <div class="detail-hero-val" style="color:var(--sleep)">${fmtH(sl.totalH)}</div>
@@ -6733,7 +6753,7 @@ function renderJournalContext() {
 
   const recovery = computeReadiness();
   const strain = computeStrain();
-  const sl = ST.sleep || { totalH: 7.2 };
+  const sl = ST.sleep || { totalH: 0 };
   const interp = readinessInterpretation(recovery);
   const circ = 2 * Math.PI * 18;
   const offset = circ - (circ * recovery / 100);
@@ -7743,6 +7763,7 @@ async function fetchHealthData() {
     // Sleep data
     if (data.sleep && data.sleep.details) {
       if (!ST.sleep) ST.sleep = JSON.parse(JSON.stringify(DEFAULT_STATE.sleep));
+      ST.sleep._syncDate = new Date().toISOString().slice(0, 10);
       const sd = data.sleep.details;
       if (data.sleep.value != null) ST.sleep.totalH = +Number(data.sleep.value).toFixed(1);
       if (sd.deep != null) ST.sleep.stages.deep = +Number(sd.deep).toFixed(1);
