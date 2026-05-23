@@ -4763,6 +4763,21 @@ function computeStrain() {
   if (ST.health && ST.health.activeEnergy && ST.health.activeEnergy > todayCal) {
     todayCal = ST.health.activeEnergy;
   }
+
+  // HR zone-weighted strain (TRIMP-like) when zone data available
+  // Zones weighted by physiological cost: Z1×1, Z2×1.5, Z3×2.5, Z4×4, Z5×6
+  const zones = ST.health?.hrZones;
+  if (zones && (zones.z1 || zones.z2 || zones.z3 || zones.z4 || zones.z5)) {
+    const trimp = (zones.z1 || 0) * 1 + (zones.z2 || 0) * 1.5 +
+                  (zones.z3 || 0) * 2.5 + (zones.z4 || 0) * 4 + (zones.z5 || 0) * 6;
+    // Scale TRIMP minutes to 0-21: ~10min Z1 = 2, ~30min Z3 = 8, ~60min Z4 = 16
+    const zoneStrain = Math.min(21, Math.round(3 + Math.log2(1 + trimp) * 2.8));
+    // Use whichever method gives higher fidelity — prefer zone data
+    const calStrain = todayCal > 0 ? Math.min(21, Math.round(3 + Math.sqrt(todayCal) * 0.42)) : 3;
+    return Math.max(zoneStrain, calStrain);
+  }
+
+  // Fallback: calorie-based approximation
   if (todayCal === 0) return 3; // baseline resting strain
   // Scale: ~200cal=5, ~500cal=8, ~1000cal=13, ~1500cal=17, ~2000cal=20
   return Math.min(21, Math.round(3 + Math.sqrt(todayCal) * 0.42));
@@ -6041,7 +6056,7 @@ function renderActivity() {
   const card = document.getElementById('activityCard');
   if (!card) return;
 
-  const ac = ST.activeCal || { today: 420, goal: 500, week: [380,450,520,310,400,550,420] };
+  const ac = ST.activeCal || { today: 0, goal: 500, week: [0,0,0,0,0,0,0], noData: true };
   const goal = (ST.health && ST.health.stepGoal) ? 500 : ac.goal;
   const pct = Math.min(100, Math.round((ac.today / goal) * 100));
   const over = ac.today >= goal;
@@ -6061,10 +6076,10 @@ function renderActivity() {
   card.innerHTML = `
     <div class="activity-header">
       <div class="activity-title">Active Calories</div>
-      <div class="activity-cal-tag">${over ? '✓ Goal hit' : pct + '%'}</div>
+      <div class="activity-cal-tag">${ac.noData ? 'No data' : over ? '✓ Goal hit' : pct + '%'}</div>
     </div>
     <div class="activity-big-row">
-      <div><span class="activity-big-val">${ac.today}</span><span class="activity-big-unit"> kcal</span></div>
+      <div><span class="activity-big-val">${ac.noData ? '--' : ac.today}</span><span class="activity-big-unit"> kcal</span></div>
     </div>
     <div class="activity-progress">
       <div class="activity-progress-fill ${over ? 'over' : ''}" style="width:${pct}%"></div>
@@ -7694,9 +7709,16 @@ async function fetchHealthData() {
       changed = true;
     }
     if (data.skin_temp && data.skin_temp.value != null) {
-      const baseline = 33.1;
       ST.health.skinTemp = +Number(data.skin_temp.value).toFixed(1);
-      ST.health.skinTempDelta = +(ST.health.skinTemp - baseline).toFixed(1);
+      // Build rolling baseline from history (fallback 33.1 if no history)
+      if (!ST.health._skinTempHistory) ST.health._skinTempHistory = [];
+      ST.health._skinTempHistory.push(ST.health.skinTemp);
+      if (ST.health._skinTempHistory.length > 14) ST.health._skinTempHistory.shift();
+      const skinBaseline = ST.health._skinTempHistory.length >= 3
+        ? [...ST.health._skinTempHistory].sort((a,b) => a-b)[Math.floor(ST.health._skinTempHistory.length/2)]
+        : 33.1;
+      ST.health.skinTempBaseline = skinBaseline;
+      ST.health.skinTempDelta = +(ST.health.skinTemp - skinBaseline).toFixed(1);
       ST.health._skinTempSynced = true;
       changed = true;
     }
@@ -7812,21 +7834,32 @@ async function fetchHealthData() {
     }
 
     // Auto-calibrate baselines from historical data
-    // Track recent HRV/RHR values for rolling baseline
+    // Track one HRV/RHR value per calendar day for true 14-day rolling baseline
     if (!ST._hrvHistory) ST._hrvHistory = [];
     if (!ST._rhrHistory) ST._rhrHistory = [];
+    const todayKey = new Date().toISOString().slice(0, 10);
     if (data.hrv && data.hrv.value != null) {
-      ST._hrvHistory.push({ v: Number(data.hrv.value), t: Date.now() });
-      // Keep last 14 values
+      const existIdx = ST._hrvHistory.findIndex(h => h.d === todayKey);
+      if (existIdx >= 0) {
+        ST._hrvHistory[existIdx].v = Number(data.hrv.value); // update today's value
+      } else {
+        ST._hrvHistory.push({ v: Number(data.hrv.value), d: todayKey });
+      }
+      // Keep last 14 days
       if (ST._hrvHistory.length > 14) ST._hrvHistory = ST._hrvHistory.slice(-14);
-      // Update baseline as 7-day rolling median (more robust than mean)
+      // Update baseline as rolling median (more robust than mean)
       if (ST._hrvHistory.length >= 3) {
         const sorted = [...ST._hrvHistory].map(h => h.v).sort((a,b) => a-b);
         ST.metrics.hrvBaseline = +sorted[Math.floor(sorted.length / 2)].toFixed(1);
       }
     }
     if (data.rhr && data.rhr.value != null) {
-      ST._rhrHistory.push({ v: Number(data.rhr.value), t: Date.now() });
+      const existIdx = ST._rhrHistory.findIndex(h => h.d === todayKey);
+      if (existIdx >= 0) {
+        ST._rhrHistory[existIdx].v = Number(data.rhr.value);
+      } else {
+        ST._rhrHistory.push({ v: Number(data.rhr.value), d: todayKey });
+      }
       if (ST._rhrHistory.length > 14) ST._rhrHistory = ST._rhrHistory.slice(-14);
       if (ST._rhrHistory.length >= 3) {
         const sorted = [...ST._rhrHistory].map(h => h.v).sort((a,b) => a-b);
