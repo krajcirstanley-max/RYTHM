@@ -164,6 +164,58 @@ Deno.serve(async (req) => {
       } catch (_) { /* non-critical */ }
     }
 
+    // ── Pre-pass: extract actual sleep windows (sleepStart/sleepEnd) ──
+    // Used to filter HRV readings to REAL sleep time, not a fixed 22-10 window
+    const sleepWindows: Record<string, { startMs: number; endMs: number }> = {};
+
+    // 1) Check current payload for sleep data
+    for (const metric of metrics) {
+      const mn = normalize(metric.name || metric.type || "");
+      if (!mn.includes("sleep")) continue;
+      for (const pt of (metric.data || [])) {
+        const ss = pt.sleepStart || pt.startDate;
+        const se = pt.sleepEnd || pt.endDate;
+        if (!ss || !se) continue;
+        const sMs = parseDate(ss);
+        const eMs = parseDate(se);
+        if (eMs - sMs < 1800000 || eMs - sMs > 86400000) continue; // 30min-24h validity
+        // Attribute to the date the person wakes up on
+        const startDate = new Date(sMs);
+        let nightKey = new Date(sMs).toISOString().slice(0, 10);
+        if (startDate.getHours() < 18) {
+          nightKey = new Date(sMs - 86400000).toISOString().slice(0, 10);
+        }
+        const existing = sleepWindows[nightKey];
+        if (!existing) {
+          sleepWindows[nightKey] = { startMs: sMs, endMs: eMs };
+        } else {
+          if (sMs < existing.startMs) existing.startMs = sMs;
+          if (eMs > existing.endMs) existing.endMs = eMs;
+        }
+      }
+    }
+
+    // 2) If no sleep windows from payload, fetch recent sleep records from DB
+    if (Object.keys(sleepWindows).length === 0) {
+      try {
+        const { data: dbSleep } = await sb
+          .from("rythm_health_data")
+          .select("date,details")
+          .eq("type", "sleep")
+          .order("date", { ascending: false })
+          .limit(14);
+        for (const row of (dbSleep || [])) {
+          if (row.details?.sleepStart && row.details?.sleepEnd) {
+            const sMs = parseDate(row.details.sleepStart);
+            const eMs = parseDate(row.details.sleepEnd);
+            if (eMs > sMs && eMs - sMs < 86400000) {
+              sleepWindows[row.date] = { startMs: sMs, endMs: eMs };
+            }
+          }
+        }
+      } catch (_) { /* non-critical */ }
+    }
+
     for (const metric of metrics) {
       const rawName = metric.name || metric.type || "";
       const name = normalize(rawName);
@@ -346,39 +398,37 @@ Deno.serve(async (req) => {
           processed.push({ type: "hrv", value: +d.value.toFixed(1), date: dk, unit: "ms" });
         }
 
-        // Compute sleep-window HRV average per night
-        // Sleep window: 22:00 previous day to 10:00 current day
-        // Group readings by "night" (attribute to the date they'd wake up on)
+        // Compute sleep HRV using ACTUAL sleep windows (sleepStart/sleepEnd)
+        // Only include HRV readings that fall within real sleep time
         const nightReadings: Record<string, number[]> = {};
         for (const r of allReadings) {
-          const d = new Date(r.epochMs);
-          const hour = d.getHours();
-          // Readings 22:00-23:59 belong to the NEXT day's sleep
-          // Readings 00:00-09:59 belong to THIS day's sleep
-          let nightKey: string;
-          if (hour >= 22) {
-            const nextDay = new Date(r.epochMs + 86400000);
-            nightKey = nextDay.toISOString().slice(0, 10);
-          } else if (hour < 10) {
-            nightKey = d.toISOString().slice(0, 10);
-          } else {
-            continue; // Daytime reading — skip for sleep HRV
+          // Check each sleep window — does this reading fall inside it?
+          for (const [nightKey, win] of Object.entries(sleepWindows)) {
+            if (r.epochMs >= win.startMs && r.epochMs <= win.endMs) {
+              if (!nightReadings[nightKey]) nightReadings[nightKey] = [];
+              nightReadings[nightKey].push(r.value);
+              break; // Each reading belongs to at most one night
+            }
           }
-          if (!nightReadings[nightKey]) nightReadings[nightKey] = [];
-          nightReadings[nightKey].push(r.value);
         }
 
         // Store sleep HRV averages
         for (const [dk, readings] of Object.entries(nightReadings)) {
           if (readings.length < 1) continue;
-          // Use rMSSD-style: average of all nocturnal readings
           const avg = readings.reduce((s, v) => s + v, 0) / readings.length;
+          const win = sleepWindows[dk];
           processed.push({
             type: "sleep_hrv",
             value: +avg.toFixed(1),
             date: dk,
             unit: "ms",
-            details: { count: readings.length, min: +Math.min(...readings).toFixed(1), max: +Math.max(...readings).toFixed(1) },
+            details: {
+              count: readings.length,
+              min: +Math.min(...readings).toFixed(1),
+              max: +Math.max(...readings).toFixed(1),
+              sleepStart: win ? new Date(win.startMs).toISOString() : undefined,
+              sleepEnd: win ? new Date(win.endMs).toISOString() : undefined,
+            },
           });
         }
       }
