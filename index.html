@@ -5039,6 +5039,35 @@ function toggleTask(idx) {
   renderTasks();
 }
 
+function addWorkoutsToMyDay() {
+  const today = new Date().toISOString().slice(0, 10);
+  const workouts = (ST._workouts || []).filter(w => w.date === today);
+  for (const w of workouts) {
+    const durStr = w.durMin > 0 ? `${Math.floor(w.durMin / 60)}h ${w.durMin % 60}min` : '';
+    const calStr = w.cal > 0 ? `${w.cal} kcal` : '';
+    const detail = [durStr, calStr].filter(Boolean).join(' · ');
+    const title = `🏋️ ${w.type || 'Workout'}${detail ? ' — ' + detail : ''}`;
+    // Check if already added (by matching workout type for today)
+    const exists = ST.tasks.find(t => t._workout && t._workoutType === (w.type || 'Workout') && t._workoutDate === today);
+    if (!exists) {
+      // Extract time from workout startDate if available
+      let time = null;
+      if (w.startDate) {
+        const d = new Date(w.startDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
+        if (!isNaN(d.getTime())) time = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+      }
+      ST.tasks.push({ title, time, done: true, created: Date.now(), _workout: true, _workoutType: w.type || 'Workout', _workoutDate: today });
+      ST.tasks.sort((a, b) => {
+        if (!a.time && !b.time) return 0;
+        if (!a.time) return 1;
+        if (!b.time) return -1;
+        return a.time.localeCompare(b.time);
+      });
+    }
+  }
+  renderTasks();
+}
+
 // ========================================
 //  PLAN VIEW
 // ========================================
@@ -6852,7 +6881,7 @@ const MOODS = [
   { val: 5, label: 'Great' },
 ];
 
-const TAGS = ['shisha','energy_caps','workout','sauna','alcohol','stress','nap','meditation','sunlight','screen','cold_shower','sugar'];
+const TAGS = ['shisha','workout','sauna','alcohol','stress','nap','meditation','sunlight','screen','cold_shower','sugar'];
 
 let selectedMood = 3;
 let selectedTags = new Set();
@@ -7724,7 +7753,7 @@ async function fetchHealthData() {
       }
       const exists = ST._workouts.find(x => x.date === wDate && x.type === wd.type && x.durMin === durMin);
       if (!exists) {
-        ST._workouts.push({ date: wDate, type: wd.type || 'Workout', durMin, cal: wd.cal || 0 });
+        ST._workouts.push({ date: wDate, type: wd.type || 'Workout', durMin, cal: wd.cal || 0, startDate: wd.startDate || null });
       }
     }
     if (data.workouts && Array.isArray(data.workouts)) {
@@ -7738,6 +7767,9 @@ async function fetchHealthData() {
       const cutoff = new Date(Date.now() - 30*86400000).toISOString().slice(0,10);
       ST._workouts = ST._workouts.filter(w => w.date >= cutoff);
     }
+
+    // Auto-add today's synced workouts to My Day
+    addWorkoutsToMyDay();
 
     // Store active energy for strain calc
     if (data.activeEnergy) {
