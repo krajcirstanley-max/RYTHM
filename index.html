@@ -3099,11 +3099,9 @@ let activeRingDetail = null;
 function renderThreeRings() {
   const r = ST.readiness;
   const circ = 2 * Math.PI * 50;
-  // Strain as % of daily capacity
-  const recovery = computeReadiness();
-  const activeCal = ST.health?.activeEnergy || 0;
-  const maxCap = recovery >= 75 ? 900 : recovery >= 55 ? 600 : 350;
-  const strainPct = Math.min(100, Math.round((activeCal / maxCap) * 100));
+  // Strain as % of max (0-21 scale from computeStrain → 0-100%)
+  const strain = computeStrain();
+  const strainPct = Math.min(100, Math.round(((strain - 3) / 18) * 100)); // 3=baseline rest, 21=max
 
   const rings = [
     { key: 'sleep', val: Math.max(0, Math.min(100, r.sleep || 0)), label: 'SLEEP', color: '#93a1c4', unit: '%' },
@@ -4525,6 +4523,29 @@ function computeStrain() {
   // Also check health.activeEnergy
   if (ST.health && ST.health.activeEnergy && ST.health.activeEnergy > todayCal) {
     todayCal = ST.health.activeEnergy;
+  }
+
+  // Estimate strain from manually logged workouts (Quick Log tags with duration)
+  // This covers cases where HealthKit hasn't synced yet
+  let loggedWorkoutMin = 0;
+  const todayLogs = (ST.logs || []).filter(l => l.date === today);
+  for (const log of todayLogs) {
+    if (log.tags && log.tags.includes('workout') && log.durationMin) {
+      loggedWorkoutMin += log.durationMin;
+    }
+  }
+  // Estimate calories from logged duration: strength/power ~8-10 cal/min for 65kg athlete
+  if (loggedWorkoutMin > 0) {
+    const estCal = Math.round(loggedWorkoutMin * 9); // ~9 cal/min for strength & power
+    if (estCal > todayCal) todayCal = estCal;
+  }
+
+  // Also check live activities — if a workout is running or recently ended
+  const liveWorkout = (ST.liveActivities || []).find(a => a.type === 'workout');
+  if (liveWorkout) {
+    const elapsedMin = (Date.now() - liveWorkout.startedAt) / 60000;
+    const liveCal = Math.round(elapsedMin * 9);
+    if (liveCal > todayCal) todayCal = liveCal;
   }
 
   // HR zone-weighted strain (TRIMP-like) when zone data available
