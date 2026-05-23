@@ -2905,6 +2905,12 @@ function phaseAt(h) {
 //  READINESS
 // ========================================
 function computeReadiness() {
+  // Return locked score if recovery was already computed today
+  const today = new Date().toISOString().slice(0, 10);
+  if (ST._recoveryLockedDate === today && ST._recoveryLockedScore != null) {
+    return ST._recoveryLockedScore;
+  }
+
   const r = ST.readiness;
   // Clamp all components to 0-100
   const hrv = Math.max(0, Math.min(100, r.hrv || 0));
@@ -7655,21 +7661,32 @@ async function fetchHealthData() {
     }
 
     // Update readiness components from real HRV/RHR using personal baselines
+    // RECOVERY LOCK: like WHOOP, lock recovery once per day after first sync.
+    // Later syncs update the displayed HRV/RHR values but do NOT change recovery.
+    const recoveryLockedToday = ST._recoveryLockedDate === todayKey;
+
     if (data.hrv) {
       const hrvBase = ST.metrics.hrvBaseline || 42;
-      // HRV readiness: ratio to personal baseline. At baseline = 70%, +20% above = 100%, -30% below = 30%
-      const hrvRatio = ST.metrics.hrv / hrvBase;
-      ST.readiness.hrv = Math.min(100, Math.max(0, Math.round(70 + (hrvRatio - 1) * 150)));
-      // Update delta from baseline
       ST.metrics.hrvDelta = +(ST.metrics.hrv - hrvBase).toFixed(1);
+      if (!recoveryLockedToday) {
+        // First sync of the day — use this HRV for recovery
+        const hrvRatio = ST.metrics.hrv / hrvBase;
+        ST.readiness.hrv = Math.min(100, Math.max(0, Math.round(70 + (hrvRatio - 1) * 150)));
+      }
     }
     if (data.rhr) {
       const rhrBase = ST.metrics.rhrBaseline || 57;
-      // RHR readiness: lower than baseline = good. At baseline = 65%, -5bpm = 90%, +5bpm = 40%
-      const rhrDiff = rhrBase - ST.metrics.rhr;
-      ST.readiness.rhr = Math.min(100, Math.max(0, Math.round(65 + rhrDiff * 5)));
-      // Update delta from baseline
       ST.metrics.rhrDelta = Math.round(ST.metrics.rhr - rhrBase);
+      if (!recoveryLockedToday) {
+        const rhrDiff = rhrBase - ST.metrics.rhr;
+        ST.readiness.rhr = Math.min(100, Math.max(0, Math.round(65 + rhrDiff * 5)));
+      }
+    }
+
+    // Lock recovery for the rest of the day after first computation
+    if (!recoveryLockedToday) {
+      ST._recoveryLockedDate = todayKey;
+      ST._recoveryLockedScore = computeReadiness();
     }
 
     // Auto-calibrate baselines from historical data
