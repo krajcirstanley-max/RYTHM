@@ -76,27 +76,16 @@ Deno.serve(async (req) => {
       const result: Record<string, any> = {};
 
       for (const t of types) {
-        if (t === "sleep") {
-          // Sleep: get the most recent entry by DATE (not synced_at)
-          // so we always show last night's sleep, not a stale re-synced older night
-          const { data } = await sb
-            .from("rythm_health_data")
-            .select("*")
-            .eq("type", "sleep")
-            .order("date", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          if (data) result[t] = data;
-        } else {
-          const { data } = await sb
-            .from("rythm_health_data")
-            .select("*")
-            .eq("type", t)
-            .order("synced_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          if (data) result[t] = data;
-        }
+        // Order by DATE desc for all types — this ensures we always get the most recent
+        // actual data, not a stale old entry that happened to re-sync last
+        const { data } = await sb
+          .from("rythm_health_data")
+          .select("*")
+          .eq("type", t)
+          .order("date", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (data) result[t] = data;
       }
 
       // Also get 7-day step history (daily aggregated)
@@ -149,6 +138,26 @@ Deno.serve(async (req) => {
       metricNames: metrics.map((m: any) => m.name || m.type || "unknown"),
     };
     const processed: any[] = [];
+
+    // Log raw workout payloads for debugging (store last 5 workout data points)
+    const workoutMetrics = metrics.filter((m: any) => {
+      const n = normalize(m.name || m.type || "");
+      return n.includes("workout") || n.includes("exercise");
+    });
+    if (workoutMetrics.length > 0) {
+      try {
+        const samplePoints = workoutMetrics.flatMap((m: any) => (m.data || []).slice(0, 3));
+        await sb.from("rythm_health_data").upsert({
+          id: "debug-last-workout-payload",
+          type: "debug",
+          value: 0,
+          date: new Date().toISOString().slice(0, 10),
+          unit: "debug",
+          details: { raw_fields: samplePoints.map((p: any) => Object.keys(p)), sample: samplePoints.slice(0, 2) },
+          synced_at: new Date().toISOString(),
+        }, { onConflict: "id" });
+      } catch (_) { /* non-critical */ }
+    }
 
     for (const metric of metrics) {
       const rawName = metric.name || metric.type || "";
@@ -440,17 +449,32 @@ Deno.serve(async (req) => {
       else if (name.includes("workout") || name.includes("exercise")) {
         for (const pt of dataPoints) {
           const wType = pt.name || pt.workoutActivityType || pt.type || "Workout";
-          const dur = pt.duration ? Number(pt.duration) / 60 : null; // seconds to minutes
-          const cal = pt.activeEnergy ?? pt.totalEnergy ?? pt.qty ?? null;
+
+          // Duration: try explicit field first (seconds → minutes), then compute from start/end
+          let durMin: number | null = null;
+          if (pt.duration && Number(pt.duration) > 0) {
+            durMin = Number(pt.duration) / 60;
+          } else if (pt.totalDuration && Number(pt.totalDuration) > 0) {
+            durMin = Number(pt.totalDuration) / 60;
+          } else if (pt.startDate && pt.endDate) {
+            const startMs = parseDate(pt.startDate);
+            const endMs = parseDate(pt.endDate);
+            const calcMin = (endMs - startMs) / 60000;
+            if (calcMin > 0 && calcMin < 1440) durMin = calcMin; // sanity: < 24h
+          }
+
+          // Calories: check multiple possible field names from HAE
+          const cal = pt.activeEnergyBurned ?? pt.activeEnergy ?? pt.totalEnergyBurned ?? pt.totalEnergy ?? pt.energyBurned ?? pt.qty ?? null;
+
           const dk = dateKey(pt.startDate || pt.date || "");
           processed.push({
             type: "workout",
-            value: dur ?? 0,
+            value: durMin ?? 0,
             date: dk,
             unit: "min",
             details: {
               type: wType.replace(/HKWorkoutActivityType/i, ""),
-              durMin: dur ? Math.round(dur) : 0,
+              durMin: durMin ? Math.round(durMin) : 0,
               cal: cal ? Math.round(Number(cal)) : 0,
               startDate: pt.startDate,
               endDate: pt.endDate,

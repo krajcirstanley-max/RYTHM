@@ -7711,9 +7711,19 @@ async function fetchHealthData() {
       if (!ST._workouts) ST._workouts = [];
       const wd = data.workout.details;
       const wDate = data.workout.date || todayKey;
-      const exists = ST._workouts.find(x => x.date === wDate && x.type === wd.type && x.durMin === wd.durMin);
+      // Compute duration from startDate/endDate if durMin is 0
+      let durMin = wd.durMin || 0;
+      if (durMin === 0 && wd.startDate && wd.endDate) {
+        const s = new Date(wd.startDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
+        const e = new Date(wd.endDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
+        if (!isNaN(s.getTime()) && !isNaN(e.getTime())) {
+          const calc = (e - s) / 60000;
+          if (calc > 0 && calc < 1440) durMin = Math.round(calc);
+        }
+      }
+      const exists = ST._workouts.find(x => x.date === wDate && x.type === wd.type && x.durMin === durMin);
       if (!exists) {
-        ST._workouts.push({ date: wDate, type: wd.type || 'Workout', durMin: wd.durMin || 0, cal: wd.cal || 0 });
+        ST._workouts.push({ date: wDate, type: wd.type || 'Workout', durMin, cal: wd.cal || 0 });
       }
     }
     if (data.workouts && Array.isArray(data.workouts)) {
