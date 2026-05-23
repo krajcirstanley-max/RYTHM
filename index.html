@@ -862,20 +862,27 @@ section { padding: 0 16px; margin-bottom: 8px; }
 /* ========== FULL PAGE DETAIL VIEWS ========== */
 .fullpage {
   position: fixed; inset: 0; z-index: 200;
-  background: var(--bg); overflow-y: auto; -webkit-overflow-scrolling: touch;
+  background: var(--bg);
   transform: translateX(100%); transition: transform 0.3s cubic-bezier(.2,.7,.2,1);
+  display: flex; flex-direction: column;
 }
 .fullpage.open { transform: translateX(0); }
-.fullpage-inner { max-width: 440px; margin: 0 auto; padding: 0 16px 100px; }
-.fp-header {
-  position: sticky; top: 0; z-index: 5; background: var(--bg);
-  display: flex; align-items: center; gap: 10px;
-  padding: calc(12px + env(safe-area-inset-top, 0px)) 0 12px;
+.fp-header-wrap {
+  flex-shrink: 0; background: var(--bg); z-index: 5;
+  padding-top: env(safe-area-inset-top, 47px);
 }
+.fp-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px;
+}
+.fullpage-scroll {
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+.fullpage-inner { max-width: 440px; margin: 0 auto; padding: 0 16px 100px; }
 .fp-back {
-  display: flex; align-items: center; gap: 4px; font-size: 15px; font-weight: 600;
-  color: var(--text-3); background: none; border: none; cursor: pointer; font-family: inherit;
-  padding: 8px 4px; min-height: 44px;
+  display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 600;
+  color: var(--accent); background: none; border: none; cursor: pointer; font-family: inherit;
+  padding: 10px 6px; min-height: 44px;
 }
 .fp-back svg { width: 14px; height: 14px; }
 .fp-title-bar { flex: 1; font-size: 11px; font-weight: 800; letter-spacing: 2px; color: var(--text-3); text-transform: uppercase; text-align: center; }
@@ -2185,27 +2192,47 @@ section { padding: 0 16px; margin-bottom: 8px; }
 
 <!-- FULL PAGE: SLEEP -->
 <div class="fullpage" id="sleepFullPage">
-  <div class="fullpage-inner" id="sleepFullContent"></div>
+  <div class="fp-header-wrap"><div class="fp-header">
+    <button class="fp-back" onclick="closeSleepFullPage()"><svg viewBox="0 0 16 16" fill="none"><path d="M10 4l-4 4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Back</button>
+    <div class="fp-title-bar">SLEEP</div><div style="width:40px"></div>
+  </div></div>
+  <div class="fullpage-scroll"><div class="fullpage-inner" id="sleepFullContent"></div></div>
 </div>
 
 <!-- FULL PAGE: RECOVERY -->
 <div class="fullpage" id="recoveryFullPage">
-  <div class="fullpage-inner" id="recoveryFullContent"></div>
+  <div class="fp-header-wrap"><div class="fp-header">
+    <button class="fp-back" onclick="closeRecoveryFullPage()"><svg viewBox="0 0 16 16" fill="none"><path d="M10 4l-4 4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Back</button>
+    <div class="fp-title-bar">RECOVERY</div><div style="width:40px"></div>
+  </div></div>
+  <div class="fullpage-scroll"><div class="fullpage-inner" id="recoveryFullContent"></div></div>
 </div>
 
 <!-- FULL PAGE: STRESS -->
 <div class="fullpage" id="stressFullPage">
-  <div class="fullpage-inner" id="stressFullContent"></div>
+  <div class="fp-header-wrap"><div class="fp-header">
+    <button class="fp-back" onclick="closeStressFullPage()"><svg viewBox="0 0 16 16" fill="none"><path d="M10 4l-4 4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Back</button>
+    <div class="fp-title-bar">STRESS MONITOR</div><div style="width:40px"></div>
+  </div></div>
+  <div class="fullpage-scroll"><div class="fullpage-inner" id="stressFullContent"></div></div>
 </div>
 
 <!-- FULL PAGE: ENERGY -->
 <div class="fullpage" id="energyFullPage">
-  <div class="fullpage-inner" id="energyFullContent"></div>
+  <div class="fp-header-wrap"><div class="fp-header">
+    <button class="fp-back" onclick="closeEnergyFullPage()"><svg viewBox="0 0 16 16" fill="none"><path d="M10 4l-4 4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Back</button>
+    <div class="fp-title-bar">ENERGY</div><div style="width:40px"></div>
+  </div></div>
+  <div class="fullpage-scroll"><div class="fullpage-inner" id="energyFullContent"></div></div>
 </div>
 
 <!-- FULL PAGE: TREND DETAIL -->
 <div class="fullpage" id="trendFullPage">
-  <div class="fullpage-inner" id="trendFullContent"></div>
+  <div class="fp-header-wrap"><div class="fp-header">
+    <button class="fp-back" onclick="closeTrendDetail()"><svg viewBox="0 0 16 16" fill="none"><path d="M10 4l-4 4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Back</button>
+    <div class="fp-title-bar" id="trendFullTitle">TREND</div><div style="width:40px"></div>
+  </div></div>
+  <div class="fullpage-scroll"><div class="fullpage-inner" id="trendFullContent"></div></div>
 </div>
 
 <!-- DETAIL OVERLAY -->
@@ -3698,12 +3725,6 @@ function buildSleepFullPage() {
   }
 
   return `
-    <div class="fp-header">
-      <button class="fp-back" onclick="closeSleepFullPage()"><svg viewBox="0 0 16 16" fill="none"><path d="M10 4l-4 4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Back</button>
-      <div class="fp-title-bar">SLEEP</div>
-      <div style="width:40px"></div>
-    </div>
-
     <div style="display:flex;align-items:center;gap:20px;padding:16px 20px 8px;">
       <div class="sleep-perf-ring">
         <svg viewBox="0 0 120 120">
@@ -3931,12 +3952,6 @@ function buildRecoveryFullPage() {
   }
 
   return `
-    <div class="fp-header">
-      <button class="fp-back" onclick="closeRecoveryFullPage()"><svg viewBox="0 0 16 16" fill="none"><path d="M10 4l-4 4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Back</button>
-      <div class="fp-title-bar">RECOVERY</div>
-      <div style="width:40px"></div>
-    </div>
-
     <div class="fp-hero">
       <div class="fp-hero-val" style="color:${interp.color}">${score}<span style="font-size:24px">%</span></div>
       <div class="fp-hero-sub">${interp.text} Recovery</div>
@@ -4224,12 +4239,6 @@ function buildStressFullPage() {
   }
 
   return `
-    <div class="fp-header">
-      <button class="fp-back" onclick="closeStressFullPage()"><svg viewBox="0 0 16 16" fill="none"><path d="M10 4l-4 4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Back</button>
-      <div class="fp-title-bar">STRESS MONITOR</div>
-      <div style="width:40px"></div>
-    </div>
-
     <div class="fp-hero">
       <div class="fp-hero-val" style="color:${stressColor}">${overallStress}<span style="font-size:24px">%</span></div>
       <div class="fp-hero-sub">${stressLabel} Physiological Stress</div>
@@ -4800,15 +4809,6 @@ function buildEnergyFullPage() {
   }
 
   return `
-    <div class="fp-header">
-      <button class="fp-back" onclick="closeEnergyFullPage()">
-        <svg viewBox="0 0 16 16" fill="none"><path d="M10 4l-4 4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        Back
-      </button>
-      <div class="fp-title-bar">ENERGY</div>
-      <div style="width:50px"></div>
-    </div>
-
     <div class="efp-summary">
       <div class="efp-summary-card">
         <div class="efp-summary-val" style="color:${currentPhase.cls === 'phase-peak' ? 'var(--energy)' : currentPhase.cls === 'phase-dip' ? 'var(--warn)' : '#fff'}">${currentEnergy}%</div>
@@ -7672,6 +7672,16 @@ async function fetchHealthData() {
       ST.metrics.hrvDelta = +(ST.metrics.hrv - hrvBase).toFixed(1);
     }
 
+    // Update RHR readiness FIRST (before locking)
+    if (data.rhr) {
+      const rhrBase = ST.metrics.rhrBaseline || 57;
+      ST.metrics.rhrDelta = Math.round(ST.metrics.rhr - rhrBase);
+      if (!recoveryLockedToday) {
+        const rhrDiff = rhrBase - ST.metrics.rhr;
+        ST.readiness.rhr = Math.min(100, Math.max(0, Math.round(65 + rhrDiff * 5)));
+      }
+    }
+
     // SLEEP HRV for recovery:
     // Priority 1: server-computed sleep_hrv (edge function filters to actual sleep window)
     // Priority 2: use today's HRV ONLY if sleep data confirms we slept (don't lock from pre-sleep readings)
@@ -7680,7 +7690,6 @@ async function fetchHealthData() {
       const hasSleepToday = data.sleep && data.sleep.date === todayKey && ST.sleep.totalH > 0;
 
       if (data.sleep_hrv) {
-        // Best: server-side sleep-window HRV average
         const sleepHrvVal = +Number(data.sleep_hrv.value).toFixed(1);
         ST.metrics.sleepHrv = sleepHrvVal;
         if (data.sleep_hrv.details) {
@@ -7692,27 +7701,15 @@ async function fetchHealthData() {
         const hrvRatio = sleepHrvVal / hrvBase;
         ST.readiness.hrv = Math.min(100, Math.max(0, Math.round(70 + (hrvRatio - 1) * 150)));
       } else if (data.hrv && hasSleepToday) {
-        // Fallback: use daily HRV but ONLY after sleep data confirmed
-        // Apple Watch HRV is primarily measured during sleep, so the daily value
-        // is effectively the sleep HRV when sleep data is present
         ST.metrics.sleepHrv = ST.metrics.hrv;
         const hrvBase = ST.metrics.hrvBaseline || 42;
         const hrvRatio = ST.metrics.hrv / hrvBase;
         ST.readiness.hrv = Math.min(100, Math.max(0, Math.round(70 + (hrvRatio - 1) * 150)));
       }
-      // Only lock recovery when we have BOTH sleep + HRV
+      // Lock recovery when we have sleep + HRV + RHR (all components ready)
       if ((data.sleep_hrv || (data.hrv && hasSleepToday)) && data.rhr) {
         ST._recoveryLockedDate = todayKey;
         ST._recoveryLockedScore = computeReadiness();
-      }
-    }
-
-    if (data.rhr) {
-      const rhrBase = ST.metrics.rhrBaseline || 57;
-      ST.metrics.rhrDelta = Math.round(ST.metrics.rhr - rhrBase);
-      if (!recoveryLockedToday) {
-        const rhrDiff = rhrBase - ST.metrics.rhr;
-        ST.readiness.rhr = Math.min(100, Math.max(0, Math.round(65 + rhrDiff * 5)));
       }
     }
 
@@ -8115,12 +8112,11 @@ function buildTrendFullPage(key) {
 
   const chart = renderSparkline(arr, { width: 360, height: 180, color: m.color, type: m.type, points: arr.length, showDots: arr.length <= 60 });
 
-  return `<div class="fp-header">
-    <button class="fp-back" onclick="closeTrendDetail()"><svg viewBox="0 0 16 16" fill="none"><path d="M10 4l-4 4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg> Back</button>
-    <div class="fp-title-bar">${m.label}</div>
-    <div style="width:50px"></div>
-  </div>
-  <div class="fp-hero">
+  // Update the fixed header title
+  const titleEl = document.getElementById('trendFullTitle');
+  if (titleEl) titleEl.textContent = m.label;
+
+  return `<div class="fp-hero">
     <div class="fp-hero-val" style="color:${m.color}">${fmt(current)}</div>
     <div class="fp-hero-sub">${m.unit}</div>
     <div class="fp-hero-tag" style="background:${trendColor}20;color:${trendColor}">${trendLabel}</div>
