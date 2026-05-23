@@ -2571,6 +2571,15 @@ function parseTimeToMin(t) {
   return parseInt(parts[0]) * 60 + parseInt(parts[1]);
 }
 
+// Format any timestamp to HH:MM — handles raw "2026-05-22 00:43:25 +0200" and "00:43"
+function fmtTime(t) {
+  if (!t) return '--:--';
+  if (/^\d{2}:\d{2}$/.test(t)) return t; // already HH:MM
+  const d = new Date(t.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
+  if (!isNaN(d.getTime())) return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  return t; // fallback: return as-is
+}
+
 function profileWakeHour() {
   // Use today's actual wake time from health sync or manual input, fall back to profile default
   const today = new Date().toISOString().slice(0, 10);
@@ -3686,7 +3695,7 @@ function buildSleepFullPage() {
       </div>
       <div style="flex:1;">
         <div style="font-size:28px;font-weight:900;letter-spacing:-1px;color:var(--sleep)">${fmtH(sl.totalH)}</div>
-        <div style="font-size:11px;color:var(--text-3);margin-top:2px;">${sl.sleepStart} - ${sl.sleepEnd}</div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:2px;">${fmtTime(sl.sleepStart)} – ${fmtTime(sl.sleepEnd)}</div>
         <div style="display:flex;gap:16px;margin-top:10px;">
           <div>
             <div style="font-size:9px;color:var(--text-4);letter-spacing:0.5px;">NEEDED</div>
@@ -3740,7 +3749,7 @@ function buildSleepFullPage() {
     <div class="fp-section">
       <div class="fp-section-title">ESTIMATED HR DURING SLEEP <span style="font-size:9px;font-weight:500;letter-spacing:0;color:var(--text-4);text-transform:none;margin-left:6px;">(modeled from stages)</span></div>
       ${hrCurve}
-      <div class="sleep-tl-time-row" style="margin-top:4px;"><span>${sl.sleepStart}</span><span>${sl.sleepEnd}</span></div>
+      <div class="sleep-tl-time-row" style="margin-top:4px;"><span>${fmtTime(sl.sleepStart)}</span><span>${fmtTime(sl.sleepEnd)}</span></div>
       <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-4);">
         <span>TYPICAL RANGE</span>
         <span>DURATION ${fmtH(sl.totalH)}</span>
@@ -5327,7 +5336,7 @@ function renderSleepBreakdown() {
     <div class="sleep-bk-header">
       <div>
         <div class="sleep-bk-score" style="color:${perfColor}">${fmtH(sl.totalH)}</div>
-        <div class="sleep-bk-label">Last Night · ${sl.sleepStart} → ${sl.sleepEnd}</div>
+        <div class="sleep-bk-label">Last Night · ${fmtTime(sl.sleepStart)} → ${fmtTime(sl.sleepEnd)}</div>
       </div>
       <div class="sleep-bk-perf" style="background:${perfTagBg};color:${perfColor}">${perfTag} ${pct}%</div>
     </div>
@@ -7493,14 +7502,8 @@ async function fetchHealthData() {
       if (sd.rem != null) ST.sleep.stages.rem = +Number(sd.rem).toFixed(1);
       if (sd.core != null) ST.sleep.stages.core = +Number(sd.core).toFixed(1);
       // Convert full timestamps to HH:MM format
-      if (sd.sleepStart) {
-        const d = new Date(sd.sleepStart.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
-        ST.sleep.sleepStart = isNaN(d.getTime()) ? sd.sleepStart : String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-      }
-      if (sd.sleepEnd) {
-        const d = new Date(sd.sleepEnd.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
-        ST.sleep.sleepEnd = isNaN(d.getTime()) ? sd.sleepEnd : String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-      }
+      if (sd.sleepStart) ST.sleep.sleepStart = fmtTime(sd.sleepStart);
+      if (sd.sleepEnd) ST.sleep.sleepEnd = fmtTime(sd.sleepEnd);
       if (sd.inBed != null && data.sleep.value != null && Number(sd.inBed) > 0) {
         ST.sleep.efficiency = Math.min(100, Math.round((data.sleep.value / Number(sd.inBed)) * 100));
       }

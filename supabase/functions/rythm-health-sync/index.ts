@@ -265,6 +265,21 @@ Deno.serve(async (req) => {
           const totalSleep = +(n.deep + n.rem + n.core).toFixed(2);
           const inBed = n.inBed > 0 ? +n.inBed.toFixed(2) : +(totalSleep + n.awake).toFixed(2);
           if (totalSleep < 0.5) continue;
+
+          // Protect against partial re-syncs: if existing sleep data has MORE hours,
+          // keep the existing record (don't let a partial sync overwrite a full night)
+          const sleepId = `sleep-${nightDate}`;
+          const { data: existing } = await sb
+            .from("rythm_health_data")
+            .select("value")
+            .eq("id", sleepId)
+            .maybeSingle();
+
+          if (existing && existing.value > totalSleep) {
+            // Existing record has more sleep — skip this partial data
+            continue;
+          }
+
           processed.push({
             type: "sleep",
             value: totalSleep,
