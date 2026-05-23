@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "rythm",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["http-server", "/Users/stanley/Documents/Claude Code/RYTHM", "-p", "8766", "-c-1"],
+      "port": 8766
+    }
+  ]
+}

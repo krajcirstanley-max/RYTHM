@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="sk" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
+<title>RYTHM</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=DM+Mono:wght@300;400;500&display=swap');
+
+:root, html, body {
+  color-scheme: dark !important;
+}
+
+:root {
+  --bg: #000;
+  --bg-1: #0c0f14;
+  --bg-2: #141821;
+  --bg-3: #1c2230;
+  --border: rgba(255,255,255,0.07);
+  --border-2: rgba(255,255,255,0.12);
+  --text: #fff;
+  --text-2: #d4d8de;
+  --text-3: #7e8590;
+  --text-4: #4a525e;
+  --energy: #00ec7f;
+  --energy-dim: #0fb863;
+  --strain: #4da9ff;
+  --sleep: #93a1c4;
+  --warn: #ffb547;
+  --danger: #ff5470;
+  --purple: #a779f7;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+html, body {
+  background: #000 !important;
+  color: #fff !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  overscroll-behavior: none;
+  letter-spacing: -0.011em;
+  font-feature-settings: "cv11", "ss01";
+}
+body {
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
+  min-height: 100vh;
+}
+
+.app { max-width: 440px; margin: 0 auto; padding-bottom: 110px; }
+
+/* TOP BAR */
+.topbar {
+  display:flex; justify-content:space-between; align-items:center;
+  padding: 14px 18px 12px;
+}
+.avatar-wrap {
+  display:flex; align-items:center; gap: 6px;
+}
+.avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, #a779f7, #4da9ff);
+  display:flex; align-items:center; justify-content:center;
+  font-weight: 700; font-size: 13px; color: white;
+}
+.streak-num {
+  display: flex; align-items: center; gap: 3px;
+  font-size: 13px; font-weight: 700; color: var(--warn);
+}
+.day-nav {
+  display:flex; align-items:center; gap: 16px;
+  background: rgba(255,255,255,0.06);
+  padding: 7px 14px; border-radius: 100px;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.4px; color: #fff;
+}
+.day-nav .arrow { width: 12px; height: 12px; color: var(--text-2); cursor: pointer; }
+.battery {
+  display:flex; align-items:center; gap: 5px;
+  font-size: 12px; color: #fff; font-weight: 600;
+}
+.battery-icon {
+  width: 20px; height: 11px; border: 1.5px solid #fff;
+  border-radius: 2px; position: relative;
+}
+.battery-icon::after {
+  content:''; position:absolute; right:-3px; top:2px; width:2px; height:5px;
+  background: #fff; border-radius:0 1px 1px 0;
+}
+.battery-icon::before {
+  content:''; position:absolute; top:1.5px; left:1.5px; bottom:1.5px;
+  width: 65%; background: var(--energy); border-radius: 1px;
+}
+
+.brand {
+  text-align:center;
+  font-size: 13px; font-weight: 900; letter-spacing: 4px;
+  color: #fff; padding: 6px 0 22px;
+}
+
+section { padding: 0 14px; margin-bottom: 14px; }
+.view { display:none; }
+.view.active { display:block; animation: rise .4s cubic-bezier(.2,.7,.2,1); }
+@keyframes rise { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: none; } }
+
+/* THREE RINGS - ON BLACK directly */
+.rings-bar {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0; margin-bottom: 18px;
+  padding: 0 4px;
+}
+.ring-wrap {
+  display:flex; flex-direction:column; align-items:center;
+  cursor:pointer;
+}
+.ring-svg { width: 105px; height: 105px; }
+.ring-bg { fill:none; stroke: rgba(255,255,255,0.08); stroke-width: 4; }
+.ring-fg {
+  fill:none; stroke-width: 4; stroke-linecap: round;
+  transition: stroke-dashoffset 1.4s cubic-bezier(.2,.7,.2,1);
+}
+.ring-val-wrap {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+.ring-pct { font-size: 28px; font-weight: 800; letter-spacing: -1.2px; line-height:1; }
+.ring-pct .unit { font-size: 13px; font-weight: 700; margin-left: 0; }
+.ring-name-row {
+  margin-top: 4px;
+  display:flex; align-items:center; gap: 3px;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.2px;
+  color: #fff; text-transform: uppercase;
+}
+.ring-name-row .arrow { width:10px; height:10px; opacity: 0.6; }
+.ring-pos { position: relative; }
+
+/* PRIMARY INSIGHT - Whoop "Optimal Health" */
+.primary-card {
+  background: linear-gradient(180deg, #11161e 0%, #0a0d12 100%);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 16px 16px 18px;
+  margin-bottom: 10px;
+  display:flex; justify-content:space-between; align-items:flex-start;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.primary-card::before {
+  content:''; position:absolute; left:0; top:14px; bottom:14px;
+  width: 2px; background: var(--energy);
+  border-radius: 2px;
+  box-shadow: 0 0 10px var(--energy);
+}
+.primary-card.warn::before { background: var(--warn); box-shadow: 0 0 10px var(--warn); }
+.primary-body { flex:1; }
+.primary-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; color: #fff; }
+.primary-text { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+.primary-text b { color: #fff; font-weight: 700; }
+.primary-badge {
+  display:flex; flex-direction:column; align-items:center;
+  padding: 4px 8px; min-width: 42px;
+}
+.primary-badge .check { width: 18px; height: 18px; color: var(--energy); }
+.primary-badge .count { font-size: 22px; font-weight: 800; line-height: 1; margin-top: 4px; color: #fff; }
+
+/* TWO-UP MONITOR */
+.monitor-row { display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.monitor {
+  background: var(--bg-1); border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px 14px;
+  cursor: pointer;
+}
+.monitor-top {
+  display:flex; justify-content:space-between; align-items:center;
+  font-size: 10px; font-weight: 800; letter-spacing: 1.3px;
+  color: #fff; text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.monitor-top .arr { width: 11px; height: 11px; opacity: 0.6; }
+.monitor-val-row { display:flex; align-items:center; gap: 8px; }
+.monitor-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink:0; }
+.monitor-dot.green { background: var(--energy); }
+.monitor-dot.cyan { background: var(--strain); }
+.monitor-val-text {
+  display:flex; flex-direction: column;
+}
+.monitor-val { font-size: 12px; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.5px; }
+.monitor-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+
+/* ENERGY HERO */
+.energy-hero {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.energy-hero-top {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom: 12px;
+}
+.energy-hero-label {
+  font-size: 11px; font-weight: 800; letter-spacing: 1.5px;
+  color: #fff; text-transform: uppercase;
+}
+.energy-hero-time {
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  color: var(--text-3); font-weight: 500;
+}
+.energy-now-row { display:flex; align-items:baseline; gap: 10px; margin-bottom: 14px; }
+.energy-now-name {
+  font-size: 30px; font-weight: 800; letter-spacing: -1.5px; line-height: 1;
+}
+.energy-now-pct {
+  font-size: 13px; color: var(--text-3); font-weight: 500;
+}
+.curve-svg { width: 100%; height: 100px; display:block; }
+.curve-foot {
+  margin-top: 8px;
+  display:flex; justify-content:space-between;
+  font-size: 10px; color: var(--text-4); font-weight: 500;
+  font-family: 'DM Mono', monospace;
+}
+.energy-msg {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 13px; color: var(--text-2); line-height: 1.55;
+}
+.energy-msg b { color: #fff; font-weight: 700; }
+
+.phase-peak { color: var(--energy); }
+.phase-dip { color: var(--warn); }
+.phase-wind { color: var(--sleep); }
+.phase-inertia { color: var(--text-3); }
+
+/* MY DAY */
+.section-head {
+  display:flex; justify-content:space-between; align-items:center;
+  padding: 6px 4px 12px;
+}
+.section-title {
+  font-size: 13px; font-weight: 700; color: #fff; letter-spacing: -0.2px;
+}
+.section-add {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: rgba(255,255,255,0.08);
+  display:flex; align-items:center; justify-content:center;
+  cursor: pointer; color: #fff;
+}
+.section-add svg { width: 14px; height: 14px; }
+
+.day-block {
+  background: var(--bg-1); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px;
+  margin-bottom: 6px;
+  display:flex; justify-content:space-between; align-items:center;
+  cursor: pointer;
+}
+.day-block .l-side { display:flex; align-items:center; gap: 14px; flex:1; min-width:0; }
+.db-time {
+  font-family: 'DM Mono', monospace; font-size: 13px;
+  color: #fff; font-weight: 500;
+  min-width: 46px;
+}
+.db-bar { width: 3px; height: 32px; border-radius: 2px; }
+.db-bar.peak { background: var(--energy); }
+.db-bar.dip  { background: var(--warn); }
+.db-bar.wind { background: var(--sleep); }
+.db-bar.cal  { background: var(--strain); }
+.db-info { flex:1; min-width:0; }
+.db-info .ttl { font-size: 14px; font-weight: 500; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.db-info .sub {
+  font-size: 10px; letter-spacing: 1.2px; font-weight: 700;
+  color: var(--text-3); text-transform: uppercase; margin-top: 3px;
+}
+.db-info .sub.peak { color: var(--energy); }
+.db-info .sub.dip { color: var(--warn); }
+.db-info .sub.cal { color: var(--strain); }
+.db-info .sub.wind { color: var(--sleep); }
+.db-arrow { color: var(--text-4); width: 14px; height: 14px; flex-shrink:0; }
+
+/* METRIC CELLS */
+.metric-grid { display:grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+.metric-cell {
+  background: var(--bg-1); border:1px solid var(--border);
+  border-radius: 12px; padding: 13px 14px;
+}
+.metric-cell-top { display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px; }
+.metric-icon { width: 18px; height: 18px; color: var(--text-3); }
+.metric-delta {
+  font-size: 10px; font-weight: 700;
+  padding: 2px 7px; border-radius: 4px;
+  font-family: 'DM Mono', monospace;
+}
+.delta-up { background: rgba(0,236,127,0.12); color: var(--energy); }
+.delta-down { background: rgba(255,84,112,0.12); color: var(--danger); }
+.delta-flat { background: rgba(255,255,255,0.06); color: var(--text-3); }
+.metric-val { font-size: 26px; font-weight: 800; letter-spacing: -1px; line-height: 1; color: #fff; }
+.metric-val .u { font-size: 12px; color: var(--text-3); font-weight: 600; margin-left: 3px; letter-spacing: 0; }
+.metric-name { font-size: 10px; color: var(--text-3); letter-spacing: 1.3px; font-weight: 700; text-transform: uppercase; margin-top: 6px; }
+
+/* DAILY OUTLOOK */
+.outlook {
+  background: var(--bg-1); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px;
+  margin-bottom: 6px;
+  display:flex; justify-content:space-between; align-items:center;
+  cursor: pointer;
+}
+.outlook-l { display:flex; align-items:center; gap: 12px; flex:1; min-width:0; }
+.outlook-icon {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: rgba(0,236,127,0.12);
+  display:flex; align-items:center; justify-content:center;
+  color: var(--energy); flex-shrink: 0;
+}
+.outlook-icon svg { width: 16px; height: 16px; }
+.outlook-body { min-width: 0; }
+.outlook-text { font-size: 13px; font-weight: 600; color: #fff; }
+.outlook-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; line-height: 1.4; }
+
+/* WEEK */
+.week-strip { display:grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 14px; }
+.day-cell {
+  aspect-ratio: 0.78;
+  background: var(--bg-1); border: 1px solid var(--border);
+  border-radius: 10px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+.day-cell.today { border-color: var(--energy); }
+.day-letter { font-size: 9px; color: var(--text-3); letter-spacing: 1px; font-weight: 700; margin-bottom: 2px; }
+.day-score { font-size: 17px; font-weight: 800; letter-spacing: -.5px; line-height: 1; }
+.day-mini-bar {
+  width: 70%; height: 2px; border-radius: 1px;
+  background: rgba(255,255,255,0.06); margin-top: 6px;
+  overflow: hidden;
+}
+.day-mini-bar > div { height: 100%; border-radius: 1px; }
+
+/* HEALTHSPAN */
+.healthspan {
+  background: var(--bg-1); border:1px solid var(--border);
+  border-radius: 16px; padding: 18px;
+  display:flex; flex-direction:column; align-items:center;
+}
+.healthspan-row {
+  display:flex; justify-content:space-between; align-items:center;
+  width: 100%; margin-bottom: 4px;
+}
+.hs-l { font-size: 11px; color: #fff; letter-spacing: 1.5px; font-weight: 800; text-transform: uppercase; }
+.hs-r { font-size: 10px; color: var(--text-3); letter-spacing: 1px; }
+.globe {
+  width: 180px; height: 180px; border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(0,236,127,0.6), rgba(0,236,127,0.08) 55%, transparent 75%),
+    radial-gradient(circle at 70% 75%, rgba(15,184,99,0.35), transparent 60%);
+  position: relative; display:flex; align-items:center; justify-content:center;
+  margin: 14px 0;
+  box-shadow: inset 0 0 50px rgba(0,236,127,0.3), 0 0 60px rgba(0,236,127,0.15);
+}
+.globe::before, .globe::after {
+  content:''; position:absolute; inset:0; border-radius:50%;
+  background-image:
+    radial-gradient(2px 2px at 20% 30%, rgba(0,236,127,0.9) 100%, transparent),
+    radial-gradient(1.5px 1.5px at 70% 40%, rgba(0,236,127,0.7) 100%, transparent),
+    radial-gradient(1px 1px at 30% 70%, rgba(0,236,127,0.9) 100%, transparent),
+    radial-gradient(1.5px 1.5px at 80% 80%, rgba(0,236,127,0.6) 100%, transparent),
+    radial-gradient(1px 1px at 50% 20%, rgba(0,236,127,0.8) 100%, transparent),
+    radial-gradient(2px 2px at 60% 60%, rgba(0,236,127,0.7) 100%, transparent),
+    radial-gradient(1px 1px at 15% 50%, rgba(0,236,127,0.8) 100%, transparent),
+    radial-gradient(1px 1px at 90% 30%, rgba(0,236,127,0.6) 100%, transparent),
+    radial-gradient(1.5px 1.5px at 40% 90%, rgba(0,236,127,0.7) 100%, transparent),
+    radial-gradient(1px 1px at 85% 55%, rgba(0,236,127,0.8) 100%, transparent),
+    radial-gradient(2px 2px at 25% 85%, rgba(0,236,127,0.6) 100%, transparent),
+    radial-gradient(1px 1px at 55% 35%, rgba(0,236,127,0.9) 100%, transparent);
+}
+.globe::after { animation: spin 90s linear infinite; opacity: .5; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.globe-inner { position: relative; z-index: 1; text-align:center; }
+.globe-age { font-size: 42px; font-weight: 800; letter-spacing: -2px; line-height: 1; color: #fff; }
+.globe-label { font-size: 10px; letter-spacing: 1.5px; color: var(--text-3); font-weight: 700; text-transform: uppercase; margin-top: 4px; }
+.globe-sub { font-size: 12px; color: var(--energy); font-weight: 700; margin-top: 4px; }
+.pace-block { width: 100%; margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--border); }
+.pace-row { display:flex; justify-content:space-between; font-size: 10px; color: var(--text-3); font-weight: 700; letter-spacing: 1.3px; text-transform: uppercase; }
+.pace-val { font-size: 28px; font-weight: 800; letter-spacing: -1px; text-align: center; margin: 6px 0 4px; color: #fff; }
+.pace-bar { height: 4px; background: var(--bg-3); border-radius: 2px; position: relative; }
+.pace-bar-fill { position: absolute; top:0; left: 18%; width: 4px; height: 100%; background: var(--energy); border-radius: 2px; box-shadow: 0 0 6px var(--energy); }
+.pace-ticks { display:flex; justify-content:space-between; font-family:'DM Mono', monospace; font-size: 9px; color: var(--text-4); margin-top: 6px; }
+
+/* IMPACT */
+.impact-card { background: var(--bg-1); border:1px solid var(--border); border-radius: 14px; padding: 16px; }
+.impact-head { display:grid; grid-template-columns: 1fr 1.6fr 56px; gap: 10px; align-items:center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.impact-h-l { font-size: 10px; font-weight: 800; letter-spacing: 1.3px; color: var(--text-3); text-transform:uppercase; }
+.impact-h-l.warn-col { color: var(--warn); }
+.impact-h-l.good-col { color: var(--energy); text-align: right; }
+.impact-h-l.center { text-align: center; }
+.impact-row { display:grid; grid-template-columns: 1fr 1.6fr 56px; gap: 10px; align-items:center; padding: 8px 0; }
+.impact-name { font-size: 12px; font-weight: 600; color: #fff; }
+.impact-bar-wrap {
+  height: 8px; border-radius: 4px; position: relative;
+  background: repeating-linear-gradient(45deg, rgba(255,255,255,0.04), rgba(255,255,255,0.04) 3px, transparent 3px, transparent 6px);
+}
+.impact-bar-fill { position: absolute; top: 0; height: 100%; border-radius: 4px; }
+.impact-bar-fill.good { background: var(--energy); }
+.impact-bar-fill.bad { background: var(--warn); }
+.impact-pct { text-align: right; font-size: 13px; font-weight: 800; font-family:'DM Mono', monospace; }
+.impact-pct.good { color: var(--energy); }
+.impact-pct.bad { color: var(--warn); }
+
+/* COACH */
+.coach-card { background: var(--bg-1); border:1px solid var(--border); border-radius: 16px; padding: 16px; }
+.coach-head { display:flex; align-items:center; gap: 10px; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.coach-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(135deg, #4da9ff, #a779f7);
+  display:flex; align-items:center; justify-content:center;
+  font-weight: 800; font-size: 14px; color: #fff;
+}
+.coach-name { font-size: 14px; font-weight: 700; color: #fff; }
+.coach-name-sub { font-size: 10px; color: var(--text-3); letter-spacing: 1.2px; font-weight: 700; }
+.msg-row { margin: 10px 0; display:flex; }
+.msg-row.me { justify-content: flex-end; }
+.msg {
+  max-width: 82%; padding: 11px 14px; border-radius: 16px;
+  font-size: 13.5px; line-height: 1.5;
+}
+.msg.coach { background: var(--bg-2); color: var(--text-2); border-bottom-left-radius: 4px; }
+.msg.me { background: linear-gradient(135deg, #2a7fcf, #6a5dd9); color: white; border-bottom-right-radius: 4px; }
+.msg b { color: #fff; font-weight: 700; }
+.msg-input { display:flex; gap:8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); align-items: center; }
+.msg-input input {
+  flex: 1; background: var(--bg-2); border: 1px solid var(--border-2);
+  color: #fff; padding: 10px 14px; border-radius: 100px;
+  font-family: inherit; font-size: 13px; outline: none;
+}
+.msg-send {
+  background: var(--energy); border:none; width:38px; height:38px;
+  border-radius:50%; cursor:pointer; color:#000; font-weight:800; font-size: 16px;
+}
+
+/* STRESS */
+.stress-card { background: var(--bg-1); border:1px solid var(--border); border-radius: 14px; padding: 18px; }
+.stress-gauge-wrap { display:flex; justify-content:center; margin: 6px 0; }
+.stress-svg { width: 240px; height: 130px; }
+
+/* INSIGHTS */
+.insight {
+  background: var(--bg-1); border:1px solid var(--border);
+  border-radius: 12px; padding: 13px 14px;
+  margin-bottom: 6px; display:flex; gap:12px; align-items:flex-start;
+}
+.insight-dot {
+  width: 32px; height: 32px; border-radius: 9px;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+}
+.insight-dot svg { width:16px; height: 16px; }
+.insight.good .insight-dot { background: rgba(0,236,127,0.12); color: var(--energy); }
+.insight.info .insight-dot { background: rgba(77,169,255,0.12); color: var(--strain); }
+.insight.warn .insight-dot { background: rgba(255,181,71,0.12); color: var(--warn); }
+.insight.bad  .insight-dot { background: rgba(255,84,112,0.12); color: var(--danger); }
+.insight-body { flex:1; min-width:0; }
+.insight-label {
+  font-size: 10px; font-weight: 800; letter-spacing: 1.2px;
+  color: var(--text-3); text-transform: uppercase; margin-bottom: 3px;
+}
+.insight-text { font-size: 13px; line-height: 1.5; color: var(--text-2); }
+.insight-text b { color: #fff; font-weight: 700; }
+.insight-arrow { width: 14px; height: 14px; color: var(--text-4); margin-top: 6px; }
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,0.92);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-top: 1px solid var(--border);
+  padding: 6px 0 calc(8px + env(safe-area-inset-bottom));
+  display:flex; justify-content:space-around; align-items: center;
+  max-width: 440px; margin: 0 auto;
+  z-index: 50;
+}
+.nav-btn {
+  background: none; border: none; cursor: pointer;
+  display:flex; flex-direction:column; align-items:center; gap: 3px;
+  padding: 8px 10px; font-family: inherit;
+  color: var(--text-4);
+}
+.nav-btn.active { color: #fff; }
+.nav-icon { width: 22px; height: 22px; }
+.nav-label {
+  font-size: 9px; letter-spacing: 1.1px;
+  text-transform: uppercase; font-weight: 800;
+}
+.nav-center {
+  width: 54px; height: 54px; border-radius: 50%;
+  background: linear-gradient(135deg, #a779f7, #6a5dd9);
+  display:flex; align-items:center; justify-content:center;
+  margin-top: -18px;
+  box-shadow: 0 0 24px rgba(167,121,247,0.45), 0 4px 14px rgba(0,0,0,0.5);
+  cursor: pointer;
+  font-weight: 900; font-size: 20px; color: #fff;
+  border: 2px solid #000;
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="avatar-wrap">
+      <div class="avatar">S</div>
+      <div class="streak-num">🔥 12</div>
+    </div>
+    <div class="day-nav">
+      <svg class="arrow" viewBox="0 0 16 16" fill="none"><path d="M10 4l-4 4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      TODAY
+      <svg class="arrow" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </div>
+    <div class="battery">
+      <span>78%</span>
+      <div class="battery-icon"></div>
+    </div>
+  </div>
+
+  <div class="brand">R Y T H M</div>
+
+  <!-- ============ TODAY ============ -->
+  <div class="view active" id="view-today">
+
+    <section>
+      <div class="rings-bar">
+        <div class="ring-wrap">
+          <div class="ring-pos">
+            <svg class="ring-svg" viewBox="0 0 120 120">
+              <circle class="ring-bg" cx="60" cy="60" r="50"/>
+              <circle class="ring-fg" cx="60" cy="60" r="50"
+                stroke="#93a1c4"
+                stroke-dasharray="314" stroke-dashoffset="78"
+                transform="rotate(-90 60 60)"/>
+            </svg>
+            <div class="ring-val-wrap">
+              <div class="ring-pct">75<span class="unit">%</span></div>
+            </div>
+          </div>
+          <div class="ring-name-row">SLEEP
+            <svg class="arrow" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+
+        <div class="ring-wrap">
+          <div class="ring-pos">
+            <svg class="ring-svg" viewBox="0 0 120 120">
+              <circle class="ring-bg" cx="60" cy="60" r="50"/>
+              <circle class="ring-fg" cx="60" cy="60" r="50"
+                stroke="#00ec7f"
+                stroke-dasharray="314" stroke-dashoffset="60"
+                transform="rotate(-90 60 60)"/>
+            </svg>
+            <div class="ring-val-wrap">
+              <div class="ring-pct">85<span class="unit">%</span></div>
+            </div>
+          </div>
+          <div class="ring-name-row">RECOVERY
+            <svg class="arrow" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+
+        <div class="ring-wrap">
+          <div class="ring-pos">
+            <svg class="ring-svg" viewBox="0 0 120 120">
+              <circle class="ring-bg" cx="60" cy="60" r="50"/>
+              <circle class="ring-fg" cx="60" cy="60" r="50"
+                stroke="#4da9ff"
+                stroke-dasharray="314" stroke-dashoffset="220"
+                transform="rotate(-90 60 60)"/>
+            </svg>
+            <div class="ring-val-wrap">
+              <div class="ring-pct">8.2</div>
+            </div>
+          </div>
+          <div class="ring-name-row">STRAIN
+            <svg class="arrow" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="primary-card">
+        <div class="primary-body">
+          <div class="primary-title">Optimálny deň</div>
+          <div class="primary-text">Recovery <b>85%</b>, HRV <b>+8 ms</b> nad baseline. Telo je pripravené na tvrdý tréning aj deep work. Tvoj <b>najsilnejší peak</b> príde o 17:00.</div>
+        </div>
+        <div class="primary-badge">
+          <svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div class="count">2</div>
+        </div>
+      </div>
+
+      <div class="monitor-row">
+        <div class="monitor">
+          <div class="monitor-top">HEALTH MONITOR <svg class="arr" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+          <div class="monitor-val-row">
+            <div class="monitor-dot green"></div>
+            <div class="monitor-val-text">
+              <div class="monitor-val">WITHIN RANGE</div>
+              <div class="monitor-sub">5/5 Metrics</div>
+            </div>
+          </div>
+        </div>
+        <div class="monitor">
+          <div class="monitor-top">STRESS MONITOR <svg class="arr" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+          <div class="monitor-val-row">
+            <div class="monitor-dot cyan" style="background:var(--energy);"></div>
+            <div class="monitor-val-text">
+              <div class="monitor-val" style="color:var(--energy);">1.5 MEDIUM</div>
+              <div class="monitor-sub">14:31</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="energy-hero">
+        <div class="energy-hero-top">
+          <div class="energy-hero-label">ENERGY · LIVE</div>
+          <div class="energy-hero-time" id="phaseTime">14:32</div>
+        </div>
+        <div class="energy-now-row">
+          <div class="energy-now-name phase-peak" id="phaseName">PEAK 2</div>
+          <div class="energy-now-pct" id="phaseSub">87% · do 17:00</div>
+        </div>
+        <svg class="curve-svg" id="curveSvg" viewBox="0 0 400 100" preserveAspectRatio="none"></svg>
+        <div class="curve-foot">
+          <span>10:00</span><span>14:00</span><span>18:00</span><span>22:00</span><span>02:00</span>
+        </div>
+        <div class="energy-msg">
+          Tvoj <b>najsilnejší peak dňa</b>. Použiť na najťažšiu úlohu — kód, písanie, strategy. Po 16:30 už žiadna káva. <b>Druhé okno končí 17:00</b>, po ňom začne wind-down.
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div class="section-title">My Day</div>
+        <div class="section-add"><svg viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+      </div>
+      <div class="day-block">
+        <div class="l-side">
+          <div class="db-time">17:00</div>
+          <div class="db-bar peak"></div>
+          <div class="db-info">
+            <div class="ttl">Deep work · projekt</div>
+            <div class="sub peak">PEAK 2 · BEST WINDOW</div>
+          </div>
+        </div>
+        <svg class="db-arrow" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="day-block">
+        <div class="l-side">
+          <div class="db-time">15:30</div>
+          <div class="db-bar dip"></div>
+          <div class="db-info">
+            <div class="ttl">Review meeting ⚠</div>
+            <div class="sub dip">DIP · ZVÁŽIŤ PRESUNUTIE</div>
+          </div>
+        </div>
+        <svg class="db-arrow" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="day-block">
+        <div class="l-side">
+          <div class="db-time">19:00</div>
+          <div class="db-bar peak"></div>
+          <div class="db-info">
+            <div class="ttl">Tréning</div>
+            <div class="sub peak">PEAK 2 · OK</div>
+          </div>
+        </div>
+        <svg class="db-arrow" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div class="section-title">Today's Metrics</div>
+      </div>
+      <div class="metric-grid">
+        <div class="metric-cell">
+          <div class="metric-cell-top">
+            <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg>
+            <div class="metric-delta delta-up">+8 ms</div>
+          </div>
+          <div class="metric-val">62<span class="u">ms</span></div>
+          <div class="metric-name">HRV</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-cell-top">
+            <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+            <div class="metric-delta delta-down">−2</div>
+          </div>
+          <div class="metric-val">52<span class="u">bpm</span></div>
+          <div class="metric-name">Resting HR</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-cell-top">
+            <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" stroke-linecap="round"/></svg>
+            <div class="metric-delta delta-flat">−0.4h</div>
+          </div>
+          <div class="metric-val">3.2<span class="u">h</span></div>
+          <div class="metric-name">Sleep Debt</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-cell-top">
+            <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12c0-4.97 4.03-9 9-9 4.97 0 9 4.03 9 9 0 2.5-1 4.77-2.64 6.41"/></svg>
+            <div class="metric-delta delta-up">good</div>
+          </div>
+          <div class="metric-val">14.5<span class="u">br/m</span></div>
+          <div class="metric-name">Respiratory</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div class="section-title">Daily Outlook</div>
+      </div>
+      <div class="outlook">
+        <div class="outlook-l">
+          <div class="outlook-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4" fill="currentColor"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-linecap="round"/></svg>
+          </div>
+          <div class="outlook-body">
+            <div class="outlook-text">Ranné slnko</div>
+            <div class="outlook-sub">10 min do 30 min po vstávaní · sleep +20%</div>
+          </div>
+        </div>
+        <svg class="db-arrow" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="outlook">
+        <div class="outlook-l">
+          <div class="outlook-icon" style="background:rgba(255,181,71,0.12); color:var(--warn);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 010 8h-1M3 8h15v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8zM5 1v3M11 1v3M17 1v3" stroke-linecap="round"/></svg>
+          </div>
+          <div class="outlook-body">
+            <div class="outlook-text">Posledná káva 16:30</div>
+            <div class="outlook-sub">Cut-off · káva neskôr zníži HRV o 12%</div>
+          </div>
+        </div>
+        <svg class="db-arrow" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="outlook">
+        <div class="outlook-l">
+          <div class="outlook-icon" style="background:rgba(167,121,247,0.12); color:var(--purple);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor"/></svg>
+          </div>
+          <div class="outlook-body">
+            <div class="outlook-text">Spať o 01:00</div>
+            <div class="outlook-sub">Melatonin window · 8h spánku → debt 1.2h</div>
+          </div>
+        </div>
+        <svg class="db-arrow" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ============ PLAN ============ -->
+  <div class="view" id="view-plan">
+
+    <section>
+      <div class="primary-card">
+        <div class="primary-body">
+          <div class="primary-title">Tvoj plán dňa</div>
+          <div class="primary-text"><b>5 deep work blokov, 3 meetingy.</b> 1 padá do dipu — zvážiť presunutie. 2 sú v peaku ✓</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="energy-hero">
+        <div class="energy-hero-top">
+          <div class="energy-hero-label">ENERGY + CALENDAR</div>
+          <div class="energy-hero-time">3 events</div>
+        </div>
+        <svg class="curve-svg" id="curveOverlay" viewBox="0 0 400 100" preserveAspectRatio="none"></svg>
+        <div class="curve-foot">
+          <span>10:00</span><span>14:00</span><span>18:00</span><span>22:00</span><span>02:00</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div class="section-title">Časová os · podľa energie</div>
+        <div class="section-add"><svg viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+      </div>
+      <div id="scheduleList"></div>
+    </section>
+  </div>
+
+  <!-- ============ WEEK ============ -->
+  <div class="view" id="view-week">
+
+    <section>
+      <div class="primary-card">
+        <div class="primary-body">
+          <div class="primary-title">Týždeň · B+</div>
+          <div class="primary-text">Solídny týždeň. <b>Sleep debt klesol o 2.4h.</b> Najlepšie performance dni: pondelok a štvrtok — oba po 8+ hodinách spánku.</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head"><div class="section-title">Readiness · 7 dní</div></div>
+      <div class="week-strip">
+        <div class="day-cell"><div class="day-letter">PO</div><div class="day-score" style="color:var(--energy)">82</div><div class="day-mini-bar"><div style="width:82%; background:var(--energy);"></div></div></div>
+        <div class="day-cell"><div class="day-letter">UT</div><div class="day-score" style="color:var(--energy)">75</div><div class="day-mini-bar"><div style="width:75%; background:var(--energy);"></div></div></div>
+        <div class="day-cell"><div class="day-letter">ST</div><div class="day-score" style="color:var(--warn)">58</div><div class="day-mini-bar"><div style="width:58%; background:var(--warn);"></div></div></div>
+        <div class="day-cell today"><div class="day-letter">ŠT</div><div class="day-score" style="color:var(--energy)">78</div><div class="day-mini-bar"><div style="width:78%; background:var(--energy);"></div></div></div>
+        <div class="day-cell"><div class="day-letter">PI</div><div class="day-score" style="color:var(--text-4)">—</div></div>
+        <div class="day-cell"><div class="day-letter">SO</div><div class="day-score" style="color:var(--text-4)">—</div></div>
+        <div class="day-cell"><div class="day-letter">NE</div><div class="day-score" style="color:var(--text-4)">—</div></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head"><div class="section-title">Healthspan</div><div class="hs-r">Aug 19 — Aug 26</div></div>
+      <div class="healthspan">
+        <div class="healthspan-row">
+          <div class="hs-l">WHOOP AGE</div>
+          <svg style="width:14px;height:14px;color:var(--text-3);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01" stroke-linecap="round"/></svg>
+        </div>
+        <div class="globe">
+          <div class="globe-inner">
+            <div class="globe-age">29.9</div>
+            <div class="globe-label">Bio Age</div>
+            <div class="globe-sub">2.3 rokov mladší</div>
+          </div>
+        </div>
+        <div class="pace-block">
+          <div class="pace-row"><span>PACE OF AGING</span><span style="color:var(--energy)">STEADY & HEALTHY</span></div>
+          <div class="pace-val">0.8×</div>
+          <div class="pace-bar"><div class="pace-bar-fill"></div></div>
+          <div class="pace-ticks"><span>−1.0×</span><span>1.0×</span><span>3.0×</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head"><div class="section-title">Recovery Impact · 90d</div></div>
+      <div class="impact-card">
+        <div class="impact-head">
+          <div class="impact-h-l warn-col">▼ HURTS</div>
+          <div class="impact-h-l center">% IMPACT</div>
+          <div class="impact-h-l good-col">HELPS ▲</div>
+        </div>
+        <div class="impact-row">
+          <div class="impact-name">Hydratácia</div>
+          <div class="impact-bar-wrap"><div class="impact-bar-fill good" style="left:50%; width:24%;"></div></div>
+          <div class="impact-pct good">+24%</div>
+        </div>
+        <div class="impact-row">
+          <div class="impact-name">Sleep 85%+</div>
+          <div class="impact-bar-wrap"><div class="impact-bar-fill good" style="left:50%; width:21%;"></div></div>
+          <div class="impact-pct good">+21%</div>
+        </div>
+        <div class="impact-row">
+          <div class="impact-name">Ranné slnko</div>
+          <div class="impact-bar-wrap"><div class="impact-bar-fill good" style="left:50%; width:13%;"></div></div>
+          <div class="impact-pct good">+13%</div>
+        </div>
+        <div class="impact-row">
+          <div class="impact-name">Telefón v posteli</div>
+          <div class="impact-bar-wrap"><div class="impact-bar-fill bad" style="right:50%; width:6%;"></div></div>
+          <div class="impact-pct bad">−6%</div>
+        </div>
+        <div class="impact-row">
+          <div class="impact-name">Káva po 16:30</div>
+          <div class="impact-bar-wrap"><div class="impact-bar-fill bad" style="right:50%; width:12%;"></div></div>
+          <div class="impact-pct bad">−12%</div>
+        </div>
+        <div class="impact-row">
+          <div class="impact-name">Alkohol</div>
+          <div class="impact-bar-wrap"><div class="impact-bar-fill bad" style="right:50%; width:18%;"></div></div>
+          <div class="impact-pct bad">−18%</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head"><div class="section-title">Stress · Today</div></div>
+      <div class="stress-card">
+        <div class="stress-gauge-wrap">
+          <svg class="stress-svg" viewBox="0 0 240 130">
+            <defs>
+              <linearGradient id="g-stress" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#4da9ff"/>
+                <stop offset="35%" stop-color="#00ec7f"/>
+                <stop offset="65%" stop-color="#ffb547"/>
+                <stop offset="100%" stop-color="#ff5470"/>
+              </linearGradient>
+            </defs>
+            <path d="M 20 110 A 100 100 0 0 1 220 110" stroke="rgba(255,255,255,0.05)" stroke-width="12" fill="none" stroke-linecap="round"/>
+            <path d="M 20 110 A 100 100 0 0 1 220 110" stroke="url(#g-stress)" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="140"/>
+            <line x1="120" y1="110" x2="120" y2="20" stroke="white" stroke-width="2" stroke-linecap="round" transform="rotate(-30 120 110)"/>
+            <circle cx="120" cy="110" r="6" fill="white"/>
+            <text x="120" y="80" text-anchor="middle" fill="white" font-family="Inter" font-size="32" font-weight="800" letter-spacing="-1">1.5</text>
+            <text x="120" y="100" text-anchor="middle" fill="#00ec7f" font-family="Inter" font-size="11" font-weight="800" letter-spacing="1.5">MEDIUM</text>
+          </svg>
+        </div>
+        <div style="font-size: 13px; color: var(--text-2); line-height: 1.5; text-align: center; padding: 0 4px;">
+          Najviac času v <b>low stress zone</b>. Najdlhší high-stress: <b>14:30, 42 min</b> — pravdepodobne meeting v dipe.
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head"><div class="section-title">Pattern Insights</div></div>
+      <div id="weekInsights"></div>
+    </section>
+
+  </div>
+
+  <!-- ============ COACH ============ -->
+  <div class="view" id="view-coach">
+
+    <section>
+      <div class="primary-card">
+        <div class="primary-body">
+          <div class="primary-title">RYTHM Coach</div>
+          <div class="primary-text">Spýtaj sa <b>čokoľvek</b> o energii, spánku, výkone. Coach pozná tvoje dáta z 90 dní.</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="coach-card">
+        <div class="coach-head">
+          <div class="coach-avatar">R</div>
+          <div>
+            <div class="coach-name">RYTHM Coach</div>
+            <div class="coach-name-sub">BETA · TVOJ TRÉNER</div>
+          </div>
+        </div>
+
+        <div class="msg-row"><div class="msg coach">Hej Sova. Tvoja HRV je dnes <b>+8 ms nad baseline</b> — ideálny deň na deep work alebo tvrdý tréning. Čo riešime?</div></div>
+        <div class="msg-row me"><div class="msg me">Kedy mám trénovať aby som maximalizoval výkon?</div></div>
+        <div class="msg-row"><div class="msg coach">Pre teba ako nočnú sovu: <b>17:00–19:00</b>. Druhý peak je najsilnejší, sila + reakčný čas tam najvyššie. Z posledných 30 dní si mal o <b>18% lepšie tréningy</b> v tomto okne ako pred 16:00.</div></div>
+        <div class="msg-row me"><div class="msg me">A čo s tým meetingom v dipe?</div></div>
+        <div class="msg-row"><div class="msg coach">15:30 review padá do dipu. Možnosti:<br>• <b>Presunúť na 11:30</b> (peak 1)<br>• 30 min prechádzka + svetlo + kofeín pred ním — posunie dip o ~45 min<br>• Akceptovať a šetriť energiu</div></div>
+
+        <div class="msg-input">
+          <input type="text" placeholder="Spýtaj sa hocičo..."/>
+          <button class="msg-send">↑</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" data-view="today">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span class="nav-label">Now</span>
+  </button>
+  <button class="nav-btn" data-view="plan">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4" stroke-linecap="round"/></svg>
+    <span class="nav-label">Plán</span>
+  </button>
+  <div class="nav-center" data-view="coach">W</div>
+  <button class="nav-btn" data-view="week">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 8-8"/><path d="M14 8h7v7"/></svg>
+    <span class="nav-label">Týždeň</span>
+  </button>
+  <button class="nav-btn" data-view="coach">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-linecap="round"/></svg>
+    <span class="nav-label">Coach</span>
+  </button>
+</nav>
+
+<script>
+const WAKE = 10.0;
+const SLEEP = 1.5;
+
+function energyAt(h){
+  let hw = h - WAKE; if (hw < 0) hw += 24;
+  if (h < WAKE && h > SLEEP) return 8;
+  if (hw < 1.5) return 25 + (hw/1.5)*30;
+  if (hw < 4)   return 55 + ((hw-1.5)/2.5)*30;
+  if (hw < 5.5) return 85 - (hw-4)*3;
+  if (hw < 8)   return 80 - ((hw-5.5)/2.5)*30;
+  if (hw < 10)  return 50 + (hw-8)*10;
+  if (hw < 12.5)return 70 + ((hw-10)/2.5)*20;
+  if (hw < 15)  return 90 - ((hw-12.5)/2.5)*50;
+  if (hw < 17)  return 40 - (hw-15)*15;
+  return 10;
+}
+function phaseAt(h){
+  let hw = h - WAKE; if (hw < 0) hw += 24;
+  if (h < WAKE && h > SLEEP) return {name:'SLEEP', cls:'phase-wind', sub:'Spánok'};
+  if (hw < 1.5) return {name:'INERTIA', cls:'phase-inertia', sub:'sleep inertia · ' + Math.round(energyAt(h)) + '%'};
+  if (hw < 5.5) return {name:'PEAK 1', cls:'phase-peak', sub:Math.round(energyAt(h))+'% · prvý peak'};
+  if (hw < 8)   return {name:'DIP', cls:'phase-dip', sub:Math.round(energyAt(h))+'% · afternoon dip'};
+  if (hw < 12.5)return {name:'PEAK 2', cls:'phase-peak', sub:Math.round(energyAt(h))+'% · do 17:00'};
+  if (hw < 15)  return {name:'WIND-DOWN', cls:'phase-wind', sub:Math.round(energyAt(h))+'% · klesá'};
+  return {name:'NIGHT', cls:'phase-wind', sub:'chill mode'};
+}
+
+function drawCurve(id, withEvents){
+  const svg = document.getElementById(id);
+  if (!svg) return;
+  const W=400, H=100, PAD=6;
+  svg.innerHTML = '';
+
+  const pts = [];
+  for (let i=0; i<=96; i++){
+    const h = (WAKE + (i/96)*24) % 24;
+    const x = PAD + (i/96)*(W-PAD*2);
+    const e = energyAt(h);
+    const y = H - 10 - (e/100)*(H-22);
+    pts.push([x,y,h,e]);
+  }
+
+  const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+  defs.innerHTML = `
+    <linearGradient id="cf-${id}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#00ec7f" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#00ec7f" stop-opacity="0"/>
+    </linearGradient>
+  `;
+  svg.appendChild(defs);
+
+  let d = `M ${pts[0][0]} ${H-10} `;
+  pts.forEach(p => d += `L ${p[0]} ${p[1]} `);
+  d += `L ${pts[pts.length-1][0]} ${H-10} Z`;
+  const area = document.createElementNS('http://www.w3.org/2000/svg','path');
+  area.setAttribute('d', d);
+  area.setAttribute('fill', `url(#cf-${id})`);
+  svg.appendChild(area);
+
+  let ld = `M ${pts[0][0]} ${pts[0][1]} `;
+  pts.forEach(p => ld += `L ${p[0]} ${p[1]} `);
+  const line = document.createElementNS('http://www.w3.org/2000/svg','path');
+  line.setAttribute('d', ld);
+  line.setAttribute('fill','none');
+  line.setAttribute('stroke', '#00ec7f');
+  line.setAttribute('stroke-width', '2.5');
+  line.setAttribute('stroke-linecap','round');
+  line.setAttribute('stroke-linejoin','round');
+  svg.appendChild(line);
+
+  if (withEvents){
+    const events = [{h:11.5, label:'Standup'},{h:15.5, label:'Review ⚠'},{h:17.0, label:'1:1'}];
+    events.forEach(ev => {
+      let rel = ev.h - WAKE; if (rel < 0) rel += 24;
+      const x = PAD + (rel/24)*(W-PAD*2);
+      const ph = phaseAt(ev.h);
+      const color = ph.name === 'DIP' ? '#ffb547' : ph.name === 'INERTIA' ? '#ff5470' : '#4da9ff';
+      const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      rect.setAttribute('x', x-9); rect.setAttribute('y', 4);
+      rect.setAttribute('width', 18); rect.setAttribute('height', H-18);
+      rect.setAttribute('rx', 4);
+      rect.setAttribute('fill', color);
+      rect.setAttribute('opacity', '0.2');
+      svg.appendChild(rect);
+      const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+      lbl.setAttribute('x', x); lbl.setAttribute('y', 14);
+      lbl.setAttribute('fill', color);
+      lbl.setAttribute('font-size','8');
+      lbl.setAttribute('font-weight','700');
+      lbl.setAttribute('text-anchor','middle');
+      lbl.setAttribute('font-family','Inter');
+      lbl.textContent = ev.label;
+      svg.appendChild(lbl);
+    });
+  }
+
+  const now = new Date();
+  const nowH = now.getHours() + now.getMinutes()/60;
+  let rel = nowH - WAKE; if (rel < 0) rel += 24;
+  const x = PAD + (rel/24)*(W-PAD*2);
+  const nowLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+  nowLine.setAttribute('x1', x); nowLine.setAttribute('x2', x);
+  nowLine.setAttribute('y1', 0); nowLine.setAttribute('y2', H-12);
+  nowLine.setAttribute('stroke', 'rgba(255,255,255,0.3)');
+  nowLine.setAttribute('stroke-width', '1');
+  nowLine.setAttribute('stroke-dasharray', '2 3');
+  svg.appendChild(nowLine);
+
+  const y = H - 10 - (energyAt(nowH)/100)*(H-22);
+  const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  dot.setAttribute('cx', x); dot.setAttribute('cy', y);
+  dot.setAttribute('r', '5'); dot.setAttribute('fill', '#fff');
+  dot.setAttribute('stroke','#00ec7f'); dot.setAttribute('stroke-width','2');
+  svg.appendChild(dot);
+}
+
+function renderSchedule(){
+  const blocks = [
+    {time:'10:00', title:'Vstávanie · 10 min slnka', tag:'INERTIA', cls:'wind'},
+    {time:'11:30', title:'Standup · kalendár', tag:'PEAK 1 · OK', cls:'peak'},
+    {time:'12:00', title:'Deep work · zložitá úloha', tag:'PEAK 1 · 90 MIN', cls:'peak'},
+    {time:'14:00', title:'Obed + prechádzka', tag:'DIP', cls:'dip'},
+    {time:'15:00', title:'Admin · emaily', tag:'DIP · NÍZKA NÁROČNOSŤ', cls:'dip'},
+    {time:'15:30', title:'Review meeting ⚠', tag:'DIP · PRESUNÚŤ?', cls:'dip'},
+    {time:'16:30', title:'Káva cut-off', tag:'POSLEDNÁ KÁVA', cls:'wind'},
+    {time:'17:00', title:'Deep work · najdôležitejšia úloha', tag:'PEAK 2 · BEST WINDOW', cls:'peak'},
+    {time:'19:00', title:'Tréning', tag:'PEAK 2 · VÝKON HIGH', cls:'peak'},
+    {time:'22:00', title:'Wind-down · blue light off', tag:'WIND-DOWN', cls:'wind'},
+    {time:'01:00', title:'Melatonin window · spať', tag:'SLEEP', cls:'wind'},
+  ];
+  document.getElementById('scheduleList').innerHTML = blocks.map(b => `
+    <div class="day-block">
+      <div class="l-side">
+        <div class="db-time">${b.time}</div>
+        <div class="db-bar ${b.cls}"></div>
+        <div class="db-info">
+          <div class="ttl">${b.title}</div>
+          <div class="sub ${b.cls}">${b.tag}</div>
+        </div>
+      </div>
+      <svg class="db-arrow" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </div>
+  `).join('');
+}
+
+function renderWeekInsights(){
+  const w = [
+    {cls:'info', label:'Chronotype', text:'Si <b>nočná sova</b> (DLMO ~01:30). Skutočný deep work window: <b>14:00–17:00</b>.', icon:'<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor"/>'},
+    {cls:'good', label:'Tréning impact', text:'Po strain 15+: HRV nasledujúci deň padne o ~18%. Plánuj ľahšie dni po hard sessions.', icon:'<path d="M14 6l4 4-9 9H5v-4l9-9z" stroke="currentColor" stroke-width="2" fill="none"/>'},
+    {cls:'warn', label:'Caffeine cut-off', text:'Posledné 4 dni káva po 17:00 → HRV o 12% nižší. Cut-off: <b>16:30</b>.', icon:'<path d="M18 8h1a4 4 0 010 8h-1M3 8h15v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8zM5 1v3M11 1v3M17 1v3" stroke="currentColor" stroke-width="2" fill="none"/>'},
+    {cls:'good', label:'Alkohol pattern', text:'Po 2+ drinkoch: sleep efficiency −23%, HRV −19%. <b>Najsilnejší faktor.</b>', icon:'<path d="M8 2h8l-1 9a3 3 0 01-3 3 3 3 0 01-3-3L8 2zM12 14v8M8 22h8" stroke="currentColor" stroke-width="2" fill="none"/>'},
+  ];
+  document.getElementById('weekInsights').innerHTML = w.map(i => `
+    <div class="insight ${i.cls}">
+      <div class="insight-dot"><svg viewBox="0 0 24 24">${i.icon}</svg></div>
+      <div class="insight-body">
+        <div class="insight-label">${i.label}</div>
+        <div class="insight-text">${i.text}</div>
+      </div>
+      <svg class="insight-arrow" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </div>
+  `).join('');
+}
+
+function updateNow(){
+  const now = new Date();
+  const h = now.getHours() + now.getMinutes()/60;
+  const p = phaseAt(h);
+  const t = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  const tEl = document.getElementById('phaseTime'); if (tEl) tEl.textContent = t;
+  const nEl = document.getElementById('phaseName');
+  const sEl = document.getElementById('phaseSub');
+  if (nEl){ nEl.textContent = p.name; nEl.className = 'energy-now-name ' + p.cls; }
+  if (sEl){ sEl.textContent = p.sub; }
+}
+
+function showView(name){
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+  if (name === 'today') drawCurve('curveSvg', false);
+  if (name === 'plan')  drawCurve('curveOverlay', true);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+document.querySelectorAll('[data-view]').forEach(el => el.addEventListener('click', () => showView(el.dataset.view)));
+
+renderSchedule();
+renderWeekInsights();
+updateNow();
+drawCurve('curveSvg', false);
+drawCurve('curveOverlay', true);
+setInterval(updateNow, 60000);
+</script>
+</body>
+</html>
