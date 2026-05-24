@@ -1827,45 +1827,88 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .live-island {
   position: fixed; bottom: calc(60px + env(safe-area-inset-bottom, 0px)); left: 0; right: 0;
   z-index: 150;
-  padding: 0 12px 8px;
-  display: flex; flex-direction: column; gap: 6px;
+  padding: 0 10px 8px;
+  display: flex; flex-direction: column; gap: 8px;
   max-width: 440px; margin: 0 auto;
   pointer-events: none;
 }
 .live-island:empty { display: none; }
-.live-pill {
-  background: rgba(20,20,20,0.95); border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 20px; padding: 12px 16px;
-  display: flex; align-items: center; gap: 10px;
-  animation: slideUp 0.3s cubic-bezier(.2,.7,.2,1);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 0.5px rgba(255,255,255,0.05);
-  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-  cursor: pointer; pointer-events: auto;
+
+/* iOS Live Activity card style */
+.live-card {
+  background: #1c1c1e;
+  border-radius: 24px; padding: 16px 18px 14px;
+  animation: slideUp 0.35s cubic-bezier(.2,.7,.2,1);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.7), inset 0 0.5px 0 rgba(255,255,255,0.06);
+  pointer-events: auto; cursor: pointer;
 }
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
-.live-pill-icon { font-size: 18px; }
-.live-pill-name { font-size: 13px; font-weight: 700; color: #fff; }
-.live-pill-timer {
-  font-size: 16px; font-weight: 800; font-family: 'DM Mono', monospace;
-  color: #fff; margin-left: auto;
+
+.live-card-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
 }
-.live-pill-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--energy); animation: pulse-glow 2s infinite;
+.live-card-left {
+  display: flex; align-items: center; gap: 10px;
 }
-.live-pill-progress {
-  height: 4px; border-radius: 2px; background: rgba(255,255,255,0.08);
-  flex: 1; max-width: 80px; overflow: hidden;
+.live-card-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
 }
-.live-pill-progress-bar {
-  height: 100%; border-radius: 2px; transition: width 1s linear;
+.live-card-label { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.6); }
+.live-card-status {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600; color: var(--energy); text-transform: uppercase; letter-spacing: 0.5px;
 }
-.live-pill-stop {
-  padding: 5px 12px; border: none; border-radius: 100px;
-  background: rgba(255,84,112,0.2); color: var(--danger);
-  font-size: 10px; font-weight: 700; cursor: pointer; font-family: inherit;
-  letter-spacing: 0.3px; text-transform: uppercase;
+.live-card-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor; animation: pulse-glow 2s infinite;
 }
+.live-card-timer {
+  font-size: 34px; font-weight: 800; font-family: 'DM Mono', monospace;
+  color: #fff; letter-spacing: -1px; line-height: 1;
+}
+.live-card-mid {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.live-card-meta {
+  font-size: 12px; color: rgba(255,255,255,0.4); font-weight: 500;
+}
+.live-card-stop {
+  padding: 6px 16px; border: none; border-radius: 100px;
+  background: rgba(255,84,112,0.15); color: #ff5470;
+  font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+}
+.live-card-progress {
+  height: 5px; border-radius: 3px; background: rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+.live-card-progress-bar {
+  height: 100%; border-radius: 3px; transition: width 1s linear;
+}
+
+/* Activity-specific accent colors */
+.live-card[data-type="shisha"] .live-card-icon { background: rgba(231,76,60,0.15); }
+.live-card[data-type="shisha"] .live-card-status { color: #e74c3c; }
+.live-card[data-type="shisha"] .live-card-progress-bar { background: #e74c3c; }
+
+.live-card[data-type="workout"] .live-card-icon { background: rgba(0,236,127,0.12); }
+.live-card[data-type="workout"] .live-card-status { color: var(--energy); }
+.live-card[data-type="workout"] .live-card-progress-bar { background: var(--energy); }
+
+.live-card[data-type="sauna"] .live-card-icon { background: rgba(255,165,0,0.12); }
+.live-card[data-type="sauna"] .live-card-status { color: #ffa500; }
+.live-card[data-type="sauna"] .live-card-progress-bar { background: #ffa500; }
+
+.live-card[data-type="meditation"] .live-card-icon { background: rgba(147,112,219,0.12); }
+.live-card[data-type="meditation"] .live-card-status { color: #9370db; }
+.live-card[data-type="meditation"] .live-card-progress-bar { background: #9370db; }
+
+.live-card[data-type="alcohol"] .live-card-icon { background: rgba(255,165,0,0.12); }
+.live-card[data-type="alcohol"] .live-card-status { color: #ffa500; }
+.live-card[data-type="alcohol"] .live-card-progress-bar { background: #ffa500; }
 
 /* ========== TRENDS / SPARKLINES ========== */
 .trend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -7365,48 +7408,69 @@ function renderLiveActivities() {
 
   const now = Date.now();
 
-  // Check if pills already exist - if so, just update timers (no flicker)
+  // Check if cards already exist - if so, just update timers (no flicker)
   const existingIds = [...el.querySelectorAll('[data-live-id]')].map(e => e.dataset.liveId);
   const activeIds = active.map(a => a.id);
   const needsRebuild = existingIds.length !== activeIds.length || !activeIds.every(id => existingIds.includes(id));
 
   if (!needsRebuild) {
-    // Just update timers and progress bars - no innerHTML rebuild
     active.forEach(a => {
-      const pill = el.querySelector(`[data-live-id="${a.id}"]`);
-      if (!pill) return;
+      const card = el.querySelector(`[data-live-id="${a.id}"]`);
+      if (!card) return;
       const elapsed = now - new Date(a.startedAt).getTime();
-      const timerEl = pill.querySelector('.live-pill-timer');
+      const timerEl = card.querySelector('.live-card-timer');
       if (timerEl) timerEl.textContent = formatDuration(elapsed);
       const meta = LIVE_ACTIVITY_META[a.type] || {};
       if (meta.targetMin) {
         const pct = Math.min(100, Math.round((elapsed / 60000) / meta.targetMin * 100));
-        const bar = pill.querySelector('.live-pill-progress-bar');
-        if (bar) { bar.style.width = pct + '%'; bar.style.background = pct >= 100 ? 'var(--energy)' : 'var(--purple)'; }
+        const bar = card.querySelector('.live-card-progress-bar');
+        if (bar) bar.style.width = pct + '%';
+      }
+      // Update shisha cutoff warning
+      if (a.type === 'shisha') {
+        const warn = card.querySelector('.live-card-meta');
+        if (warn) { const w = getShishaCutoffWarning(); warn.textContent = w || ''; }
       }
     });
     return;
   }
 
-  // Full rebuild (only on start/stop)
+  // Full rebuild
   el.innerHTML = active.map(a => {
-    const meta = LIVE_ACTIVITY_META[a.type] || { icon: '⏱️', label: a.type, cls: 'default' };
+    const meta = LIVE_ACTIVITY_META[a.type] || { icon: '⏱️', label: a.type };
     const elapsed = now - new Date(a.startedAt).getTime();
     const dur = formatDuration(elapsed);
+    const startTime = new Date(a.startedAt);
+    const startStr = String(startTime.getHours()).padStart(2,'0') + ':' + String(startTime.getMinutes()).padStart(2,'0');
 
     let progressHtml = '';
     if (meta.targetMin) {
       const pct = Math.min(100, Math.round((elapsed / 60000) / meta.targetMin * 100));
-      progressHtml = `<div class="live-pill-progress"><div class="live-pill-progress-bar" style="width:${pct}%;background:${pct >= 100 ? 'var(--energy)' : 'var(--purple)'}"></div></div>`;
+      progressHtml = `<div class="live-card-progress"><div class="live-card-progress-bar" style="width:${pct}%"></div></div>`;
     }
 
-    return `<div class="live-pill" data-live-id="${a.id}">
-      <div class="live-pill-dot"></div>
-      <span class="live-pill-icon">${meta.icon}</span>
-      <span class="live-pill-name">${meta.label}</span>
+    let metaText = `Started ${startStr}`;
+    if (a.type === 'shisha') {
+      const w = getShishaCutoffWarning();
+      if (w) metaText = w;
+    }
+
+    return `<div class="live-card" data-live-id="${a.id}" data-type="${a.type}">
+      <div class="live-card-top">
+        <div class="live-card-left">
+          <div class="live-card-icon">${meta.icon}</div>
+          <div>
+            <div class="live-card-label">${meta.label}</div>
+            <div class="live-card-status"><span class="live-card-dot"></span> LIVE</div>
+          </div>
+        </div>
+        <button class="live-card-stop" onclick="event.stopPropagation();stopLiveActivity('${a.id}')">Stop</button>
+      </div>
+      <div class="live-card-mid">
+        <div class="live-card-timer">${dur}</div>
+        <div class="live-card-meta">${metaText}</div>
+      </div>
       ${progressHtml}
-      <span class="live-pill-timer">${dur}</span>
-      <button class="live-pill-stop" onclick="event.stopPropagation();stopLiveActivity('${a.id}')">STOP</button>
     </div>`;
   }).join('');
 }
