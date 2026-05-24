@@ -522,19 +522,22 @@ section { padding: 0 16px; margin-bottom: 8px; }
   color: var(--warn); font-weight: 700;
 }
 .debt-bars {
-  display: flex; gap: 4px; align-items: flex-end; height: 60px;
+  display: flex; gap: 3px; align-items: flex-end; height: 50px;
+  padding: 0 2px;
 }
 .debt-bar {
-  flex: 1; border-radius: 3px 3px 0 0; min-height: 4px;
+  flex: 1; border-radius: 2px 2px 0 0; min-height: 3px;
   transition: height 0.5s;
+  position: relative;
 }
+.debt-bar:last-child { opacity: 1 !important; }
 .debt-bar-labels {
-  display: flex; gap: 4px; margin-top: 6px;
+  display: flex; gap: 3px; margin-top: 4px; padding: 0 2px;
 }
 .debt-bar-labels span {
   flex: 1; text-align: center;
-  font-family: 'DM Mono', monospace; font-size: 8px;
-  color: var(--text-4);
+  font-family: 'DM Mono', monospace; font-size: 7px;
+  color: var(--text-4); letter-spacing: -0.3px;
 }
 
 /* STREAKS */
@@ -752,10 +755,22 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .trend-label { font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--text-3); text-transform: uppercase; }
 .trend-val { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
 .trend-sub { font-size: 11px; color: var(--text-4); margin-bottom: 12px; }
-.trend-svg { width: 100%; height: 56px; }
+.trend-svg { width: 100%; height: 56px; touch-action: none; }
 .trend-line { fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .trend-area { opacity: 0.08; }
 .trend-dot { r: 2.5; }
+.trend-card { position: relative; }
+.trend-scrub-tooltip {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(0,0,0,0.85); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px; padding: 4px 10px;
+  font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 700;
+  color: #fff; pointer-events: none; z-index: 5;
+  backdrop-filter: blur(8px); white-space: nowrap;
+}
+.trend-scrub-tooltip .scrub-date {
+  font-size: 9px; font-weight: 600; color: var(--text-4); letter-spacing: 0.5px;
+}
 
 /* ========== GUIDED BREATHING ========== */
 .breathing-card {
@@ -1500,7 +1515,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
   background: linear-gradient(145deg, rgba(26,26,32,0.8), rgba(18,18,22,0.85));
   border: 1px solid var(--card-border);
   border-radius: var(--radius); padding: 14px 16px;
-  margin-bottom: 6px; display: flex; align-items: center; gap: 14px;
+  margin-bottom: 6px; display: flex; align-items: flex-start; gap: 14px;
   cursor: pointer; transition: all 0.15s;
   backdrop-filter: blur(24px) saturate(1.6);
   -webkit-backdrop-filter: blur(24px) saturate(1.6);
@@ -1510,17 +1525,17 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .sug-icon {
   width: 40px; height: 40px; border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; font-size: 18px;
+  flex-shrink: 0; font-size: 18px; margin-top: 2px;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
 }
-.sug-body { flex: 1; }
+.sug-body { flex: 1; min-width: 0; }
 .sug-title { font-size: 13px; font-weight: 600; color: #fff; }
-.sug-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; line-height: 1.3; }
+.sug-sub { font-size: 10.5px; color: var(--text-4); margin-top: 3px; line-height: 1.4; font-style: italic; }
 .sug-action {
   font-size: 10px; font-weight: 800; letter-spacing: 0.6px;
   padding: 6px 14px; border-radius: 100px;
   border: none; cursor: pointer; font-family: inherit;
-  text-transform: uppercase; flex-shrink: 0;
+  text-transform: uppercase; flex-shrink: 0; margin-top: 2px;
   transition: all 0.15s;
 }
 .sug-action:active { transform: scale(0.95); }
@@ -3291,7 +3306,7 @@ function phaseAt(h) {
 }
 
 // ========================================
-//  READINESS
+//  READINESS (nighttime-based recovery)
 // ========================================
 function computeReadiness() {
   // Return locked score if recovery was already computed today
@@ -3301,33 +3316,161 @@ function computeReadiness() {
   }
 
   const r = ST.readiness;
-  // Clamp all components to 0-100
-  const hrv = Math.max(0, Math.min(100, r.hrv || 0));
-  const rhr = Math.max(0, Math.min(100, r.rhr || 0));
-  const sleep = Math.max(0, Math.min(100, r.sleep || 0));
-  // Training load — compute from real workout/activity data
+  const sl = ST.sleep || DEFAULT_STATE.sleep;
+  const m = ST.metrics;
+
+  // === HRV Component (35%) — most important recovery indicator ===
+  // Score HRV relative to personal baseline (from Apple Health calibration)
+  const hrvBase = m.hrvBaseline || 42;
+  const hrvNow = m.hrv || 0;
+  let hrvScore;
+  if (hrvNow <= 0) {
+    hrvScore = r.hrv || 50; // fallback to manual input
+  } else {
+    // Score: 100 at 120%+ of baseline, 50 at baseline, 0 at 50% of baseline
+    const ratio = hrvNow / hrvBase;
+    if (ratio >= 1.2) hrvScore = 100;
+    else if (ratio >= 1.0) hrvScore = 50 + (ratio - 1.0) * 250; // 50-100 range
+    else if (ratio >= 0.5) hrvScore = Math.max(0, ratio * 100); // 0-50 range
+    else hrvScore = 0;
+  }
+  hrvScore = Math.max(0, Math.min(100, hrvScore));
+
+  // === RHR Component (15%) — lower is better for athletes ===
+  const rhrBase = m.rhrBaseline || 63;
+  const rhrNow = m.rhr || 0;
+  let rhrScore;
+  if (rhrNow <= 0) {
+    rhrScore = r.rhr || 50;
+  } else {
+    // Score: 100 when RHR is 10%+ below baseline, 50 at baseline, 0 when 20%+ above
+    const ratio = rhrNow / rhrBase;
+    if (ratio <= 0.9) rhrScore = 100;
+    else if (ratio <= 1.0) rhrScore = 50 + (1.0 - ratio) * 500; // 50-100
+    else if (ratio <= 1.2) rhrScore = Math.max(0, 50 - (ratio - 1.0) * 250); // 0-50
+    else rhrScore = 0;
+  }
+  rhrScore = Math.max(0, Math.min(100, rhrScore));
+
+  // === Sleep Component (30%) — multi-factor nighttime score ===
+  let sleepScore = r.sleep || 0;
+  if (sl.totalH > 0) {
+    const target = ST.health?.sleepTarget || 8;
+    // Duration score: % of target, capped at 100
+    const durationPct = Math.min(100, Math.round(sl.totalH / target * 100));
+
+    // Sleep stage quality bonus (deep + REM should be ~40% of total)
+    let stageBonus = 0;
+    if (sl.stages) {
+      const totalMin = sl.totalH * 60;
+      const deepMin = sl.stages.deep || 0;
+      const remMin = sl.stages.rem || 0;
+      if (totalMin > 0) {
+        const qualityPct = (deepMin + remMin) / totalMin;
+        if (qualityPct >= 0.40) stageBonus = 10;
+        else if (qualityPct >= 0.30) stageBonus = 5;
+        else if (qualityPct < 0.20) stageBonus = -10;
+      }
+    }
+
+    // Sleep efficiency bonus
+    let effBonus = 0;
+    if (sl.efficiency > 0) {
+      if (sl.efficiency >= 90) effBonus = 5;
+      else if (sl.efficiency >= 85) effBonus = 2;
+      else if (sl.efficiency < 75) effBonus = -5;
+    }
+
+    // Consistency bonus (did you go to bed on time?)
+    let consistBonus = 0;
+    if (sl.consistency > 0) {
+      if (sl.consistency >= 80) consistBonus = 3;
+      else if (sl.consistency < 50) consistBonus = -3;
+    }
+
+    // Sleep debt penalty (from accumulated debt)
+    let debtPenalty = 0;
+    const debt = m.sleepDebt || 0;
+    if (debt > 3) debtPenalty = -8;
+    else if (debt > 1.5) debtPenalty = -4;
+    else if (debt > 0.5) debtPenalty = -2;
+
+    sleepScore = Math.max(0, Math.min(100, durationPct + stageBonus + effBonus + consistBonus + debtPenalty));
+  }
+
+  // === Training Load Component (10%) ===
   const tl = computeTrainingLoad();
   const training = tl.readiness;
   ST.readiness.training = training;
-  // Add respiratory rate component (bonus/penalty if available)
-  const resp = ST.metrics.respiratory || 0;
+
+  // === Nighttime Biometrics Modifiers ===
+  // Respiratory rate (bonus/penalty)
+  const resp = m.respiratory || 0;
   let respBonus = 0;
   if (resp > 0) {
-    if (resp <= 14) respBonus = 3;
-    else if (resp <= 16) respBonus = 1;
-    else if (resp > 18) respBonus = -3;
-    else if (resp > 20) respBonus = -6;
+    if (resp <= 14) respBonus = 4;
+    else if (resp <= 15) respBonus = 2;
+    else if (resp > 18) respBonus = -4;
+    else if (resp > 20) respBonus = -8;
   }
-  // SpO2 component (penalty if low)
+
+  // SpO2 (penalty if low — indicates altitude, illness, or breathing issues)
   const spo2 = ST.health?.spo2 || 0;
   let spo2Bonus = 0;
   if (spo2 > 0) {
     if (spo2 >= 98) spo2Bonus = 2;
-    else if (spo2 < 94) spo2Bonus = -5;
-    else if (spo2 < 96) spo2Bonus = -2;
+    else if (spo2 < 94) spo2Bonus = -6;
+    else if (spo2 < 96) spo2Bonus = -3;
   }
-  const base = hrv * 0.35 + rhr * 0.2 + sleep * 0.3 + training * 0.15;
-  return Math.max(0, Math.min(100, Math.round(base + respBonus + spo2Bonus)));
+
+  // Skin temperature deviation (if available from Apple Watch)
+  const skinTemp = ST.health?.skinTemp || null;
+  let skinTempBonus = 0;
+  if (skinTemp != null && skinTemp !== 0) {
+    // Deviation from baseline — elevated skin temp = inflammation/illness
+    if (Math.abs(skinTemp) < 0.3) skinTempBonus = 2;
+    else if (skinTemp > 0.8) skinTempBonus = -5;
+    else if (skinTemp > 0.5) skinTempBonus = -2;
+  }
+
+  // === Previous-day behavior modifiers ===
+  let behaviorMod = 0;
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+  const yesterdayEntry = ST.journal.find(j => j.date === yesterday);
+  if (yesterdayEntry) {
+    const yb = yesterdayEntry.behaviors || [];
+    // Late shisha hammers recovery
+    if (yb.includes('shisha_late')) behaviorMod -= 5;
+    else if (yb.includes('shisha')) behaviorMod -= 2;
+    // Alcohol significantly impacts sleep architecture
+    if (yb.includes('alcohol')) behaviorMod -= 6;
+    // Weed reduces REM
+    if (yb.includes('weed')) behaviorMod -= 3;
+    // Late screen delays melatonin
+    if (yb.includes('screen_late')) behaviorMod -= 2;
+    // Late meal raises core temp
+    if (yb.includes('late_meal')) behaviorMod -= 2;
+    // Positive behaviors
+    if (yb.includes('meditation')) behaviorMod += 2;
+    if (yb.includes('stretching') || yb.includes('mobility')) behaviorMod += 1;
+    if (yb.includes('magnesium')) behaviorMod += 2;
+    if (yb.includes('blue_light_glasses')) behaviorMod += 1;
+  }
+
+  // Weighted combination — heavier on HRV and sleep (nighttime data)
+  // HRV 35% + Sleep 30% + RHR 15% + Training 10% + modifiers
+  const base = hrvScore * 0.35 + sleepScore * 0.30 + rhrScore * 0.15 + training * 0.10;
+  const modifiers = respBonus + spo2Bonus + skinTempBonus + behaviorMod;
+  const final = Math.max(0, Math.min(100, Math.round(base + modifiers)));
+
+  // Cache breakdown for display
+  ST._readinessBreakdown = {
+    hrv: Math.round(hrvScore), rhr: Math.round(rhrScore),
+    sleep: Math.round(sleepScore), training: Math.round(training),
+    modifiers: Math.round(modifiers)
+  };
+
+  return final;
 }
 
 function readinessInterpretation(score) {
@@ -3362,28 +3505,17 @@ function drawCurve(id, withEvents) {
     pts.push([x, y, h, e]);
   }
 
-  // Phase-based gradient colors for the curve
-  const phaseStrokeColors = { INERTIA:'#7e8590', 'PEAK 1':'#00ec7f', DIP:'#ffb547', RECOVERY:'#4da9ff', 'PEAK 2':'#00ec7f', 'WIND-DOWN':'#93a1c4', NIGHT:'#a779f7' };
-  const phases = buildPhases();
-
-  // Build horizontal gradient stops matching phase boundaries
-  let strokeStops = '', fillStops = '';
-  phases.forEach(p => {
-    const c = phaseStrokeColors[p.name] || '#00ec7f';
-    const startPct = (p.pctStart * 100).toFixed(1);
-    const endPct = (p.pctEnd * 100).toFixed(1);
-    strokeStops += `<stop offset="${startPct}%" stop-color="${c}"/><stop offset="${endPct}%" stop-color="${c}"/>`;
-    fillStops += `<stop offset="${startPct}%" stop-color="${c}" stop-opacity="0.35"/><stop offset="${endPct}%" stop-color="${c}" stop-opacity="0.35"/>`;
-  });
+  // Current phase determines ENTIRE curve color
+  const phaseStrokeColors = { INERTIA:'#7e8590', 'PEAK 1':'#00ec7f', DIP:'#ffb547', RECOVERY:'#4da9ff', 'PEAK 2':'#00ec7f', 'WIND-DOWN':'#93a1c4', NIGHT:'#a779f7', SLEEP:'#93a1c4' };
+  const nowH_curve = new Date().getHours() + new Date().getMinutes()/60;
+  const curPhase = phaseAt(nowH_curve);
+  const curveColor = phaseStrokeColors[curPhase.name] || '#00ec7f';
 
   const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
-  defs.innerHTML = `
-    <linearGradient id="cfs-${id}" x1="0" y1="0" x2="1" y2="0">${strokeStops}</linearGradient>
-    <linearGradient id="cff-${id}" x1="0" y1="0" x2="1" y2="0">${fillStops}</linearGradient>
-    <linearGradient id="cfm-fade-${id}" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="white" stop-opacity="1"/><stop offset="100%" stop-color="white" stop-opacity="0"/>
-    </linearGradient>
-    <mask id="cfm-${id}"><rect width="${W}" height="${H}" fill="url(#cfm-fade-${id})"/></mask>`;
+  defs.innerHTML = `<linearGradient id="cf-${id}" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="${curveColor}" stop-opacity="0.4"/>
+    <stop offset="100%" stop-color="${curveColor}" stop-opacity="0"/>
+  </linearGradient>`;
   svg.appendChild(defs);
 
   let d = `M ${pts[0][0]} ${H-10} `;
@@ -3391,8 +3523,7 @@ function drawCurve(id, withEvents) {
   d += `L ${pts[pts.length-1][0]} ${H-10} Z`;
   const area = document.createElementNS('http://www.w3.org/2000/svg','path');
   area.setAttribute('d', d);
-  area.setAttribute('fill', `url(#cff-${id})`);
-  area.setAttribute('mask', `url(#cfm-${id})`);
+  area.setAttribute('fill', `url(#cf-${id})`);
   svg.appendChild(area);
 
   let ld = `M ${pts[0][0]} ${pts[0][1]} `;
@@ -3400,7 +3531,7 @@ function drawCurve(id, withEvents) {
   const line = document.createElementNS('http://www.w3.org/2000/svg','path');
   line.setAttribute('d', ld);
   line.setAttribute('fill','none');
-  line.setAttribute('stroke', `url(#cfs-${id})`);
+  line.setAttribute('stroke', curveColor);
   line.setAttribute('stroke-width','2.5');
   line.setAttribute('stroke-linecap','round');
   line.setAttribute('stroke-linejoin','round');
@@ -3450,8 +3581,7 @@ function drawCurve(id, withEvents) {
   svg.appendChild(nowLine);
 
   const y = H - 10 - (energyAt(nowH)/100)*(H-22);
-  const currentPhase = phaseAt(nowH);
-  const dotColor = phaseStrokeColors[currentPhase.name] || '#00ec7f';
+  const dotColor = curveColor;
   const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
   dot.setAttribute('cx', x); dot.setAttribute('cy', y);
   dot.setAttribute('r','5'); dot.setAttribute('fill','#fff');
@@ -4257,8 +4387,10 @@ function buildRecoveryFullPage() {
   const stg = sl.stages || { deep: 0, rem: 0, core: 0, awake: 0 };
   const strain = computeStrain();
 
-  // Component scores
-  const hrvScore = r.hrv, rhrScore = r.rhr, sleepScore = r.sleep, trainScore = r.training;
+  // Component scores from enhanced breakdown
+  const bd = ST._readinessBreakdown || { hrv: r.hrv || 0, rhr: r.rhr || 0, sleep: r.sleep || 0, training: r.training || 0, modifiers: 0 };
+  const hrvScore = bd.hrv, rhrScore = bd.rhr, sleepScore = bd.sleep, trainScore = bd.training;
+  const modifiers = bd.modifiers || 0;
   const hrvColor = hrvScore >= 60 ? 'var(--energy)' : hrvScore >= 40 ? 'var(--warn)' : 'var(--danger)';
   const rhrColor = rhrScore >= 60 ? 'var(--energy)' : rhrScore >= 40 ? 'var(--warn)' : 'var(--danger)';
   const sleepColor = sleepScore >= 80 ? 'var(--energy)' : sleepScore >= 60 ? 'var(--warn)' : 'var(--danger)';
@@ -4350,7 +4482,7 @@ function buildRecoveryFullPage() {
 
     <div class="fp-section">
       <div class="fp-section-title">RECOVERY BREAKDOWN</div>
-      <div style="font-size:10px;color:var(--text-4);margin-bottom:12px;">RECOVERY = HRV (35%) + SLEEP (30%) + RHR (20%) + TRAINING (15%) ± Resp/SpO2</div>
+      <div style="font-size:10px;color:var(--text-4);margin-bottom:12px;">RECOVERY = HRV (35%) + SLEEP (30%) + RHR (15%) + TRAINING (10%) ± nighttime biometrics ± behavior</div>
       <div class="fp-bar-row">
         <div class="fp-bar-label" style="color:${hrvColor}">HRV</div>
         <div class="fp-bar-wrap"><div class="fp-bar-fill" style="width:${hrvScore}%;background:${hrvColor}"></div></div>
@@ -4371,6 +4503,13 @@ function buildRecoveryFullPage() {
         <div class="fp-bar-wrap"><div class="fp-bar-fill" style="width:${trainScore}%;background:${trainColor}"></div></div>
         <div class="fp-bar-val" style="color:${trainColor}">${trainScore}%</div>
       </div>
+      ${modifiers !== 0 ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+        <div class="fp-bar-row">
+          <div class="fp-bar-label" style="color:${modifiers >= 0 ? 'var(--energy)' : 'var(--danger)'}">Modifiers</div>
+          <div style="flex:1;font-size:11px;color:var(--text-3);">Resp · SpO₂ · Skin temp · Behaviors</div>
+          <div class="fp-bar-val" style="color:${modifiers >= 0 ? 'var(--energy)' : 'var(--danger)'}; font-weight:800">${modifiers >= 0 ? '+' : ''}${modifiers}</div>
+        </div>
+      </div>` : ''}
     </div>
 
     <div class="fp-section">
@@ -5643,8 +5782,11 @@ function renderSleepDebt() {
   document.getElementById('debtBars').innerHTML = debts.map((d, i) => {
     const h = (d.debtH / maxDebt) * 100;
     const isLast = i === debts.length - 1;
-    const color = d.debtH > 4 ? 'var(--danger)' : d.debtH > 2.5 ? 'var(--warn)' : 'var(--energy)';
-    return `<div class="debt-bar" style="height:${Math.max(h, 8)}%;background:${color};${isLast ? 'opacity:1;' : 'opacity:0.6;'}"></div>`;
+    const isRecent = i >= debts.length - 3;
+    const opacity = isLast ? 1 : isRecent ? 0.7 : 0.4;
+    // Gradient from warm to danger based on severity
+    const color = d.debtH > 4 ? '#ff5470' : d.debtH > 2.5 ? '#ff9f43' : d.debtH > 1 ? '#fbbf24' : '#4da9ff';
+    return `<div class="debt-bar" style="height:${Math.max(h, 6)}%;background:${color};opacity:${opacity};"></div>`;
   }).join('');
 
   document.getElementById('debtLabels').innerHTML = debts.map((d, i) => {
@@ -7192,6 +7334,23 @@ function saveJournal() {
   else ST.journal.push(entry);
   // Keep last 90 days
   if (ST.journal.length > 90) ST.journal = ST.journal.slice(-90);
+  // Auto-log behaviors to My Day timeline if not already logged today
+  if (!ST.logs) ST.logs = [];
+  const todayLogs = ST.logs.filter(l => l.date === today);
+  for (const bId of entry.behaviors) {
+    const alreadyLogged = todayLogs.some(l => l.tags && l.tags.includes(bId));
+    // Also check if there's an active/ended live activity for this
+    const hasLiveActivity = (ST.liveActivities || []).some(a => a.type === bId && a.startedAt && a.startedAt.startsWith(today));
+    if (!alreadyLogged && !hasLiveActivity) {
+      ST.logs.push({
+        date: today,
+        ts: new Date().toISOString(),
+        tags: [bId],
+        durationMin: null,
+        mood: null
+      });
+    }
+  }
   saveState();
   const saveBtn = document.getElementById('journalSaveBtn');
   saveBtn.textContent = 'Saved ✓';
@@ -7200,6 +7359,7 @@ function saveJournal() {
   renderJournalStreak();
   renderCorrelations();
   renderJournalHistory();
+  renderTasks(); // Update My Day with logged behaviors
 }
 
 function renderCorrelations() {
@@ -7362,7 +7522,12 @@ function renderTrends() {
     const trend = vals[vals.length-1] - vals[0];
     const trendStr = trend >= 0 ? '+' + trend.toFixed(1) : trend.toFixed(1);
 
-    return `<div class="trend-card">
+    // Build data attributes for scrubbing
+    const dataStr = data.map(d => d.v).join(',');
+    const dateStr = data.map(d => d.d).join(',');
+    const ptsStr = points.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(';');
+
+    return `<div class="trend-card" data-scrub-vals="${dataStr}" data-scrub-dates="${dateStr}" data-scrub-pts="${ptsStr}" data-scrub-color="${color}" data-scrub-unit="${unit}" data-scrub-label="${label}" data-scrub-default="${avgVal}${unit}">
       <div class="trend-top">
         <div class="trend-label">${label}</div>
         <div class="trend-val" style="color:${color}">${avgVal}${unit}</div>
@@ -7372,7 +7537,10 @@ function renderTrends() {
         <path d="${area}" fill="${color}" class="trend-area"/>
         <path d="${line}" stroke="${color}" class="trend-line"/>
         <circle cx="${lastPt.x}" cy="${lastPt.y}" fill="${color}" class="trend-dot"/>
+        <line class="scrub-line" x1="0" y1="0" x2="0" y2="${h}" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-dasharray="2 2" style="display:none"/>
+        <circle class="scrub-dot" cx="0" cy="0" r="4" fill="#fff" stroke="${color}" stroke-width="2" style="display:none"/>
       </svg>
+      <div class="trend-scrub-tooltip" style="display:none;"></div>
     </div>`;
   }
 
@@ -7390,6 +7558,92 @@ function renderTrends() {
     el.innerHTML = html;
   }
 }
+
+// ========================================
+//  CHART SCRUBBING (touch/hover to see values)
+// ========================================
+(function initChartScrub() {
+  function handleScrub(card, clientX) {
+    const svg = card.querySelector('.trend-svg');
+    if (!svg) return;
+    const vals = card.dataset.scrubVals?.split(',').map(Number);
+    const dates = card.dataset.scrubDates?.split(',');
+    const ptsRaw = card.dataset.scrubPts?.split(';').map(s => s.split(',').map(Number));
+    if (!vals || !ptsRaw || vals.length < 2) return;
+
+    const rect = svg.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const idx = Math.round(pct * (vals.length - 1));
+    const val = vals[idx];
+    const date = dates?.[idx] || '';
+    const pt = ptsRaw[idx];
+    const unit = card.dataset.scrubUnit || '';
+    const color = card.dataset.scrubColor || '#fff';
+
+    // Update scrub line + dot
+    const scrubLine = svg.querySelector('.scrub-line');
+    const scrubDot = svg.querySelector('.scrub-dot');
+    if (scrubLine) { scrubLine.setAttribute('x1', pt[0]); scrubLine.setAttribute('x2', pt[0]); scrubLine.style.display = ''; }
+    if (scrubDot) { scrubDot.setAttribute('cx', pt[0]); scrubDot.setAttribute('cy', pt[1]); scrubDot.style.display = ''; }
+
+    // Update tooltip
+    const tooltip = card.querySelector('.trend-scrub-tooltip');
+    if (tooltip) {
+      tooltip.innerHTML = `<span class="scrub-date">${date}</span> <span style="color:${color}">${val}${unit}</span>`;
+      tooltip.style.display = '';
+    }
+
+    // Update the main value display
+    const valEl = card.querySelector('.trend-val');
+    if (valEl) { valEl.textContent = val + unit; valEl.style.color = color; }
+  }
+
+  function endScrub(card) {
+    const svg = card.querySelector('.trend-svg');
+    if (!svg) return;
+    const scrubLine = svg.querySelector('.scrub-line');
+    const scrubDot = svg.querySelector('.scrub-dot');
+    if (scrubLine) scrubLine.style.display = 'none';
+    if (scrubDot) scrubDot.style.display = 'none';
+    const tooltip = card.querySelector('.trend-scrub-tooltip');
+    if (tooltip) tooltip.style.display = 'none';
+    // Restore default value
+    const valEl = card.querySelector('.trend-val');
+    const defaultVal = card.dataset.scrubDefault;
+    const color = card.dataset.scrubColor;
+    if (valEl && defaultVal) { valEl.textContent = defaultVal; if (color) valEl.style.color = color; }
+  }
+
+  document.addEventListener('touchstart', e => {
+    const card = e.target.closest('.trend-card[data-scrub-vals]');
+    if (!card) return;
+    handleScrub(card, e.touches[0].clientX);
+  }, { passive: true });
+
+  document.addEventListener('touchmove', e => {
+    const card = e.target.closest('.trend-card[data-scrub-vals]');
+    if (!card) return;
+    e.preventDefault();
+    handleScrub(card, e.touches[0].clientX);
+  }, { passive: false });
+
+  document.addEventListener('touchend', e => {
+    document.querySelectorAll('.trend-card[data-scrub-vals]').forEach(c => endScrub(c));
+  }, { passive: true });
+
+  // Mouse scrub for desktop
+  document.addEventListener('mousemove', e => {
+    const card = e.target.closest('.trend-card[data-scrub-vals]');
+    if (card && e.buttons === 0) {
+      const svg = card.querySelector('.trend-svg');
+      if (svg && svg.matches(':hover')) handleScrub(card, e.clientX);
+    }
+  });
+  document.addEventListener('mouseleave', e => {
+    const card = e.target.closest?.('.trend-card[data-scrub-vals]');
+    if (card) endScrub(card);
+  }, true);
+})();
 
 // ========================================
 //  QUICK LOG
@@ -8262,8 +8516,106 @@ function startLiveActivityTimer() {
 }
 
 // ========================================
-//  SMART SUGGESTIONS
+//  SMART SUGGESTIONS (habit-aware + science)
 // ========================================
+
+// Analyze recent journal for habit patterns
+function getHabitPatterns() {
+  const last14 = ST.journal.filter(j => {
+    const d = new Date(j.date);
+    return (Date.now() - d.getTime()) < 14 * 86400000;
+  });
+  const last7 = last14.filter(j => {
+    const d = new Date(j.date);
+    return (Date.now() - d.getTime()) < 7 * 86400000;
+  });
+  const today = new Date().toISOString().slice(0,10);
+  const todayEntry = ST.journal.find(j => j.date === today);
+  const todayBehaviors = todayEntry ? todayEntry.behaviors : [];
+
+  // Count occurrences in last 14 days
+  const freq = {};
+  for (const j of last14) {
+    for (const b of (j.behaviors || [])) {
+      freq[b] = (freq[b] || 0) + 1;
+    }
+  }
+
+  // Identify habits (done 5+ of last 14 days) and gaps (usually done but not today)
+  const habits = Object.entries(freq).filter(([_,c]) => c >= 5).map(([id]) => id);
+  const missedToday = habits.filter(h => !todayBehaviors.includes(h));
+
+  // Identify negative patterns (substances used 3+ times in 7 days)
+  const negatives = ['shisha', 'shisha_late', 'alcohol', 'weed', 'nicotine', 'sugar', 'screen_late', 'late_meal'];
+  const freq7 = {};
+  for (const j of last7) {
+    for (const b of (j.behaviors || [])) {
+      if (negatives.includes(b)) freq7[b] = (freq7[b] || 0) + 1;
+    }
+  }
+  const overused = Object.entries(freq7).filter(([_,c]) => c >= 3).map(([id, count]) => ({ id, count }));
+
+  // Identify positive habits rarely done (logged <2 times in 14 days)
+  const positives = ['meditation', 'cold_shower', 'stretching', 'mobility', 'sunlight', 'creatine', 'hydration', 'reading', 'nature'];
+  const underused = positives.filter(p => (freq[p] || 0) < 2 && !todayBehaviors.includes(p));
+
+  // Streak detection — consecutive days doing a behavior
+  const sorted = [...ST.journal].sort((a,b) => a.date.localeCompare(b.date));
+  const streaks = {};
+  for (const h of habits) {
+    let streak = 0;
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      if (sorted[i].behaviors.includes(h)) streak++;
+      else break;
+    }
+    if (streak >= 3) streaks[h] = streak;
+  }
+
+  return { habits, missedToday, overused, underused, freq, freq7, todayBehaviors, streaks };
+}
+
+// Science-backed reason database
+const HABIT_SCIENCE = {
+  sunlight: 'Morning light sets your master clock — 2-10min triggers cortisol + suppresses melatonin onset by 14-16h (Huberman Lab, 2021)',
+  meditation: 'Just 13min/day for 8 weeks improved attention & working memory in college athletes (Basso et al., 2019)',
+  cold_shower: '11min/week of deliberate cold exposure increases baseline dopamine by 250% for 2-3h (Šrámek et al., 2000)',
+  stretching: 'Static stretching post-training reduces next-day DOMS by ~20% and accelerates fascial remodeling (Afonso et al., 2021)',
+  mobility: 'Joint-specific mobility work improves force output at end-range — critical for long jump take-off angles',
+  creatine: '5g/day increases phosphocreatine stores by 20-40%, improving power output & cognitive function (Kreider et al., 2017)',
+  hydration: '2% dehydration impairs reaction time, jump performance & decision-making — drink 35ml/kg/day (Nuccio et al., 2017)',
+  workout: 'Structured periodization with recovery monitoring prevents overreaching — keep strain within your capacity',
+  sauna: '4x/week sauna (80°C+, 20min) increases growth hormone 200-300% & improves cardiovascular fitness (Laukkanen et al., 2018)',
+  reading: 'Reading before bed reduces stress by 68% — more than music or walking (University of Sussex, 2009)',
+  nature: '20min in nature lowers cortisol by 21% — even without exercise (Hunter et al., 2019)',
+  protein: '1.6-2.2g/kg protein optimizes muscle protein synthesis; distribute across 4+ meals (Morton et al., 2018)',
+  magnesium: 'Mg glycinate improves deep sleep stage duration by 15-20% and reduces sleep-onset latency (Abbasi et al., 2012)',
+  supplements: 'Consistent timing of supplements optimizes absorption — fat-soluble vitamins with meals, minerals at night',
+  blue_light_glasses: 'Blue-light filtering after sunset preserves melatonin onset — 58% higher melatonin vs no filter (Shechter et al., 2018)',
+  fasting: '14-16h fasting window enhances autophagy and metabolic flexibility — pair with training periodization',
+  deep_work: 'Peak cognitive performance lasts ~90min per ultradian cycle — match deep work to your circadian peaks',
+  jetboots: 'Blood flow restriction at 40-80% venous occlusion accelerates tendon collagen synthesis (Centner et al., 2019)',
+  make_bed: 'Environmental order reduces decision fatigue — small wins compound into discipline (Duhigg, 2012)',
+  no_phone_morning: 'Delaying phone use 30-60min post-wake preserves natural cortisol spike needed for alertness',
+  sex: 'Oxytocin release improves sleep quality and reduces cortisol — beneficial for recovery on non-competition days',
+  nap: '20-26min naps improve alertness by 54% and performance by 34% without sleep inertia (NASA, Rosekind 1995)',
+  skincare_am: 'SPF + antioxidant serum in AM prevents 80% of UV-induced skin aging — consistency beats product quality',
+  skincare_pm: 'Nighttime retinoid application works with natural skin repair cycle — collagen synthesis peaks during sleep',
+  social: 'Strong social ties lower cortisol and improve immune function — isolation is as harmful as 15 cigs/day (Holt-Lunstad, 2010)',
+  massage: 'Post-exercise massage reduces inflammatory markers IL-6 by 30% and increases mitochondrial biogenesis (Crane et al., 2012)',
+  // Negative behavior science
+  shisha: 'One shisha session = inhaling 100-200x the smoke volume of a cigarette — CO levels stay elevated for 4-6h',
+  shisha_late: 'Late-night shisha raises RHR by 8-15bpm during sleep — directly reduces deep sleep and HRV',
+  alcohol: 'Even 1-2 drinks suppress REM sleep by 20-35% and reduce HRV for 4+ days (Ebrahim et al., 2013)',
+  weed: 'THC reduces REM sleep duration by 10-30% — dream suppression impairs memory consolidation',
+  nicotine: 'Nicotine has a 2h half-life but its metabolites disrupt sleep architecture for 8-10h',
+  sugar: 'High glycemic load meals increase inflammatory markers IL-6, TNF-α — impairs next-day recovery scores',
+  screen_late: 'Blue light from screens after 10pm delays melatonin onset by 90min and reduces deep sleep by 20%',
+  late_meal: 'Eating within 3h of sleep raises core temp 0.5°C — the body needs to cool 1-2°C to initiate deep sleep',
+  wake_before_930: 'Consistent wake times ±30min strengthen circadian entrainment — the single biggest lever for sleep quality',
+  sleep_8h30: 'Athletes need 8-10h for optimal performance — <7h reduces reaction time by 300% (Mah et al., 2011)',
+  sleep_before_2: 'Growth hormone secretion peaks in first 2h of sleep — earlier bedtime captures more of this window',
+};
+
 function renderSuggestions() {
   const el = document.getElementById('suggestions');
   if (!el) return;
@@ -8278,71 +8630,153 @@ function renderSuggestions() {
   const sl = ST.sleep || DEFAULT_STATE.sleep;
   const active = (ST.liveActivities || []).filter(a => !a.endedAt);
   const activeSessions = active.map(a => a.type);
+  const hwake = (nowH - WAKE + 24) % 24;
+  const currentPhase = phaseAt(nowH);
+  const patterns = getHabitPatterns();
 
   const sugs = [];
 
-  // Time-based suggestions
-  const hwake = (nowH - WAKE + 24) % 24; // hours since wake
-
-  // Morning: sunlight (weather-aware)
-  if (hwake < 1.5) {
-    const sa = sunlightAdvice(weatherCache);
-    const sunSugSub = sa.tip || 'Anchors your circadian clock - within 30min of waking';
-    sugs.push({ icon: '☀️', title: `Get ${sa.duration} morning sunlight`, sub: sunSugSub, action: 'Now', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('sun_exposure')` });
-  }
+  // === PRIORITY 1: Active warnings ===
 
   // Active shisha - warn about cutoff
   if (activeSessions.includes('shisha') || activeSessions.includes('shisha_late')) {
     const warn = getShishaCutoffWarning();
-    if (warn) sugs.push({ icon: '💨', title: 'Consider wrapping up shisha', sub: warn, action: 'Stop', cls: 'green', bg: 'rgba(255,107,107,0.1)', onclick: `stopLiveActivity('${active.find(a=>a.type.includes('shisha'))?.id}')` });
+    if (warn) sugs.push({ icon: '💨', title: 'Consider wrapping up shisha', sub: warn, action: 'Stop', cls: 'green', bg: 'rgba(255,107,107,0.1)', onclick: `stopLiveActivity('${active.find(a=>a.type.includes('shisha'))?.id}')`, pri: 0 });
   }
 
-  // Low steps
-  if (h.steps.today < h.steps.goal * 0.5 && nowH > 14) {
-    sugs.push({ icon: '🚶', title: 'Go for a walk', sub: `Only ${h.steps.today.toLocaleString()} steps - ${Math.round(h.steps.today/h.steps.goal*100)}% of goal`, action: 'Track', cls: 'blue', bg: 'rgba(52,211,153,0.1)', onclick: `startLiveActivity('walk')` });
+  // === PRIORITY 2: Time-critical ===
+
+  // Morning: sunlight (weather-aware)
+  if (hwake < 1.5 && !patterns.todayBehaviors.includes('sunlight')) {
+    const sa = sunlightAdvice(weatherCache);
+    sugs.push({ icon: '☀️', title: `Get ${sa.duration} morning sunlight`, sub: HABIT_SCIENCE.sunlight, action: 'Now', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('sun_exposure')`, pri: 1 });
   }
 
-  // Strain low + recovery high = push harder (only during active phases, not wind-down/night)
-  const currentPhase = phaseAt(nowH);
-  const noWorkoutPhases = ['WIND-DOWN', 'NIGHT', 'SLEEP', 'INERTIA'];
-  if (recovery >= 67 && strain < 8 && hwake > 2 && !noWorkoutPhases.includes(currentPhase.name)) {
-    sugs.push({ icon: '🏋️', title: 'Your body can handle a hard session', sub: `Recovery ${recovery}% - plenty of capacity left today`, action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('workout')` });
-  }
-
-  // HRV low = recover
-  if (m.hrv < 35 && !activeSessions.includes('meditation')) {
-    sugs.push({ icon: '🧘', title: 'Try a breathing session', sub: `HRV at ${m.hrv}ms - below baseline. Breathing can boost parasympathetic tone`, action: 'Breathe', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `showView('health');setTimeout(()=>document.getElementById('breathingCard')?.scrollIntoView({behavior:'smooth'}),300)` });
-  }
-
-  // Deep work in peak zones
-  const peakPhases = ['PEAK 1', 'PEAK 2'];
-  if (peakPhases.includes(currentPhase.name) && !activeSessions.includes('deep_work') && !activeSessions.includes('workout')) {
-    sugs.push({ icon: '🎯', title: 'Peak zone — start deep work', sub: `You're in ${currentPhase.name} — optimal focus window`, action: 'Focus', cls: 'blue', bg: 'rgba(91,154,255,0.1)', onclick: `startLiveActivity('deep_work')` });
-  }
-
-  // Energy Caps cutoff approaching (200mg caffeine half-life ~6h)
+  // Energy Caps cutoff approaching
   const coffeeCutH = (WAKE + 6.5) % 24;
   if (nowH >= coffeeCutH - 0.5 && nowH < coffeeCutH + 0.5) {
-    sugs.push({ icon: '⚡', title: 'Last call for Energy Caps', sub: `Cut-off at ${minToTime(Math.round(coffeeCutH * 60))} — 200mg caffeine needs 6h+ to clear`, action: 'Note', cls: 'blue', bg: 'rgba(255,181,71,0.1)', onclick: `logBehavior('energy_caps')` });
+    sugs.push({ icon: '⚡', title: 'Last call for Energy Caps', sub: `Cut-off at ${minToTime(Math.round(coffeeCutH * 60))} — caffeine half-life is 5-6h, quarter-life 10-12h`, action: 'Note', cls: 'blue', bg: 'rgba(255,181,71,0.1)', onclick: `logBehavior('energy_caps')`, pri: 1 });
   }
 
   // Wind-down suggestion
   const winddownH = (WAKE + 12.5) % 24;
   if (nowH >= winddownH - 0.5 && nowH < winddownH + 1) {
-    sugs.push({ icon: '🌙', title: 'Start wind-down routine', sub: 'Blue light off, lower brightness, no shisha after cutoff', action: 'Start', cls: 'purple', bg: 'rgba(139,156,199,0.1)', onclick: `openWindDown()` });
+    sugs.push({ icon: '🌙', title: 'Start wind-down routine', sub: 'Core temp must drop 1-2°C for deep sleep — dim lights, stop screens, no food', action: 'Start', cls: 'purple', bg: 'rgba(139,156,199,0.1)', onclick: `openWindDown()`, pri: 1 });
   }
 
-  // Poor sleep last night
-  if (sl.totalH < 6.5) {
-    sugs.push({ icon: '😴', title: 'Prioritize sleep tonight', sub: `Only ${fmtH(sl.totalH)} last night - aim for ${(ST.health?.sleepTarget || 8)}h+`, action: 'Plan', cls: 'purple', bg: 'rgba(139,156,199,0.1)', onclick: `openSleepFullPage()` });
+  // === PRIORITY 3: Recovery-based ===
+
+  // Poor sleep — urgent
+  if (sl.totalH > 0 && sl.totalH < 6.5) {
+    sugs.push({ icon: '😴', title: 'Prioritize sleep tonight', sub: `Only ${fmtH(sl.totalH)} last night. ${HABIT_SCIENCE.sleep_8h30}`, action: 'Plan', cls: 'purple', bg: 'rgba(139,156,199,0.1)', onclick: `openSleepFullPage()`, pri: 2 });
   }
 
-  // Limit to top 3
-  const top = sugs.slice(0, 3);
+  // Low recovery — nap suggestion
+  if (recovery < 50 && hwake > 3 && hwake < 8 && !activeSessions.includes('nap')) {
+    sugs.push({ icon: '💤', title: 'Take a 20-min power nap', sub: HABIT_SCIENCE.nap, action: 'Nap', cls: 'purple', bg: 'rgba(139,156,199,0.1)', onclick: `startLiveActivity('nap')`, pri: 2 });
+  }
+
+  // HRV below baseline — breathwork
+  const hrvBase = m.hrvBaseline || 42;
+  if (m.hrv < hrvBase * 0.8 && !activeSessions.includes('meditation')) {
+    sugs.push({ icon: '🧘', title: 'Breathing session recommended', sub: `HRV ${m.hrv}ms — ${Math.round((1 - m.hrv/hrvBase)*100)}% below your baseline. Slow breathing (6/min) activates vagal tone in 5-10min`, action: 'Breathe', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `showView('health');setTimeout(()=>document.getElementById('breathingCard')?.scrollIntoView({behavior:'smooth'}),300)`, pri: 2 });
+  }
+
+  // Strain + recovery mismatch
+  const noWorkoutPhases = ['WIND-DOWN', 'NIGHT', 'SLEEP', 'INERTIA'];
+  if (recovery >= 67 && strain < 8 && hwake > 2 && !noWorkoutPhases.includes(currentPhase.name) && !activeSessions.includes('workout')) {
+    sugs.push({ icon: '🏋️', title: 'Your body can handle intensity', sub: `Recovery ${recovery}%, strain only ${strain}. Unused capacity = missed adaptation. Push today.`, action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('workout')`, pri: 3 });
+  } else if (recovery < 34 && strain > 12) {
+    sugs.push({ icon: '⚠️', title: 'Recovery deficit — active rest only', sub: `Recovery ${recovery}% with strain ${strain}. Exceeding capacity increases injury risk 2-4x (Gabbett, 2016)`, action: 'Note', cls: 'purple', bg: 'rgba(255,84,112,0.1)', pri: 3 });
+  }
+
+  // === PRIORITY 4: Circadian-aware ===
+
+  // Deep work in peak zones
+  const peakPhases = ['PEAK 1', 'PEAK 2'];
+  if (peakPhases.includes(currentPhase.name) && !activeSessions.includes('deep_work') && !activeSessions.includes('workout')) {
+    sugs.push({ icon: '🎯', title: 'Peak zone — optimal focus window', sub: HABIT_SCIENCE.deep_work, action: 'Focus', cls: 'blue', bg: 'rgba(91,154,255,0.1)', onclick: `startLiveActivity('deep_work')`, pri: 4 });
+  }
+
+  // Low steps (afternoon+)
+  if (h.steps.today < h.steps.goal * 0.5 && nowH > 14) {
+    sugs.push({ icon: '🚶', title: `${h.steps.today.toLocaleString()} steps — go walk`, sub: `${Math.round(h.steps.today/h.steps.goal*100)}% of goal. A brisk 20-min walk improves blood flow to hippocampus and prefrontal cortex`, action: 'Track', cls: 'blue', bg: 'rgba(52,211,153,0.1)', onclick: `startLiveActivity('walk')`, pri: 4 });
+  }
+
+  // === PRIORITY 5: Habit-based (personalized) ===
+
+  // Missed positive habits they usually do
+  const missedSugs = {
+    creatine: { icon: '🧪', title: "Don't forget creatine today", action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('creatine')` },
+    hydration: { icon: '💧', title: 'Track your hydration', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('hydration')` },
+    supplements: { icon: '💊', title: 'Take your supplements', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('supplements')` },
+    magnesium: { icon: '💊', title: 'Magnesium before bed', action: 'Log', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `logBehavior('magnesium')` },
+    protein: { icon: '🥛', title: 'Hit your protein target', action: 'Log', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `logBehavior('protein')` },
+    stretching: { icon: '🧘‍♂️', title: 'Stretch session', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('stretching')` },
+    mobility: { icon: '🤸', title: 'Mobility work', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('mobility')` },
+    meditation: { icon: '🧘', title: '13-min meditation', action: 'Start', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `startLiveActivity('meditation')` },
+    make_bed: { icon: '🛏️', title: 'Make the bed', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('make_bed')` },
+    skincare_am: { icon: '🧴', title: 'Morning skincare', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('skincare_am')` },
+    skincare_pm: { icon: '✨', title: 'Evening skincare', action: 'Log', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `logBehavior('skincare_pm')` },
+    jetboots: { icon: '🦶', title: 'Jetboots rehab session', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('jetboots')` },
+    no_phone_morning: { icon: '🚫', title: 'No phone first 30 min', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('no_phone_morning')` },
+  };
+
+  // Time-filter missed habits
+  const morningOnly = ['make_bed', 'skincare_am', 'no_phone_morning'];
+  const eveningOnly = ['skincare_pm', 'magnesium'];
+  for (const missed of patterns.missedToday) {
+    if (missedSugs[missed]) {
+      // Time-appropriate filtering
+      if (morningOnly.includes(missed) && hwake > 3) continue;
+      if (eveningOnly.includes(missed) && hwake < 10) continue;
+      const s = missedSugs[missed];
+      const streak = patterns.streaks[missed];
+      const streakText = streak ? ` ${streak}-day streak at risk!` : '';
+      sugs.push({ ...s, sub: (HABIT_SCIENCE[missed] || '') + streakText, pri: 5 });
+    }
+  }
+
+  // === PRIORITY 6: Habit discovery (things they rarely do but should) ===
+  const discoverySugs = {
+    cold_shower: { icon: '🧊', title: 'Try a cold shower', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('cold_shower')` },
+    sauna: { icon: '🧖', title: 'Sauna session', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('sauna')` },
+    nature: { icon: '🌿', title: 'Get into nature', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('nature')` },
+    reading: { icon: '📖', title: 'Read before bed', action: 'Start', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `startLiveActivity('reading')` },
+    fasting: { icon: '⏳', title: 'Try intermittent fasting', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('fasting')` },
+  };
+  // Only suggest 1 discovery item, and only if we have room
+  if (sugs.length < 4) {
+    for (const und of patterns.underused) {
+      if (discoverySugs[und]) {
+        const s = discoverySugs[und];
+        sugs.push({ ...s, sub: HABIT_SCIENCE[und] || '', pri: 6 });
+        break;
+      }
+    }
+  }
+
+  // === PRIORITY 7: Negative pattern warnings ===
+  for (const ov of patterns.overused) {
+    const sciReason = HABIT_SCIENCE[ov.id] || '';
+    const beh = JOURNAL_BEHAVIORS.find(b => b.id === ov.id);
+    if (!beh) continue;
+    sugs.push({
+      icon: '⚠️',
+      title: `${beh.label} — ${ov.count}x this week`,
+      sub: sciReason || `High frequency impacts recovery. Consider cutting back.`,
+      action: 'Note', cls: 'purple', bg: 'rgba(255,84,112,0.08)',
+      pri: 7
+    });
+  }
+
+  // Sort by priority, take top 4
+  sugs.sort((a,b) => (a.pri || 99) - (b.pri || 99));
+  const top = sugs.slice(0, 4);
   if (!top.length) { el.innerHTML = ''; el.closest('section').style.display = 'none'; return; }
   el.closest('section').style.display = '';
 
-  el.innerHTML = `<div class="section-head"><div class="section-title">Suggestions</div></div>` +
+  el.innerHTML = `<div class="section-head"><div class="section-title">For You</div></div>` +
     top.map(s => `
     <div class="suggestion" ${s.onclick ? 'onclick="' + s.onclick + '"' : ''}>
       <div class="sug-icon" style="background:${s.bg || 'rgba(255,255,255,0.04)'}">${s.icon}</div>
@@ -8350,7 +8784,7 @@ function renderSuggestions() {
         <div class="sug-title">${s.title}</div>
         <div class="sug-sub">${s.sub}</div>
       </div>
-      <button class="sug-action ${s.cls}">${s.action}</button>
+      ${s.action ? `<button class="sug-action ${s.cls}">${s.action}</button>` : ''}
     </div>`).join('');
 }
 
