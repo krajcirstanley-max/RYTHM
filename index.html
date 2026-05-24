@@ -3362,11 +3362,28 @@ function drawCurve(id, withEvents) {
     pts.push([x, y, h, e]);
   }
 
+  // Phase-based gradient colors for the curve
+  const phaseStrokeColors = { INERTIA:'#7e8590', 'PEAK 1':'#00ec7f', DIP:'#ffb547', RECOVERY:'#4da9ff', 'PEAK 2':'#00ec7f', 'WIND-DOWN':'#93a1c4', NIGHT:'#a779f7' };
+  const phases = buildPhases();
+
+  // Build horizontal gradient stops matching phase boundaries
+  let strokeStops = '', fillStops = '';
+  phases.forEach(p => {
+    const c = phaseStrokeColors[p.name] || '#00ec7f';
+    const startPct = (p.pctStart * 100).toFixed(1);
+    const endPct = (p.pctEnd * 100).toFixed(1);
+    strokeStops += `<stop offset="${startPct}%" stop-color="${c}"/><stop offset="${endPct}%" stop-color="${c}"/>`;
+    fillStops += `<stop offset="${startPct}%" stop-color="${c}" stop-opacity="0.35"/><stop offset="${endPct}%" stop-color="${c}" stop-opacity="0.35"/>`;
+  });
+
   const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
-  defs.innerHTML = `<linearGradient id="cf-${id}" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#00ec7f" stop-opacity="0.4"/>
-    <stop offset="100%" stop-color="#00ec7f" stop-opacity="0"/>
-  </linearGradient>`;
+  defs.innerHTML = `
+    <linearGradient id="cfs-${id}" x1="0" y1="0" x2="1" y2="0">${strokeStops}</linearGradient>
+    <linearGradient id="cff-${id}" x1="0" y1="0" x2="1" y2="0">${fillStops}</linearGradient>
+    <linearGradient id="cfm-fade-${id}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="white" stop-opacity="1"/><stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+    <mask id="cfm-${id}"><rect width="${W}" height="${H}" fill="url(#cfm-fade-${id})"/></mask>`;
   svg.appendChild(defs);
 
   let d = `M ${pts[0][0]} ${H-10} `;
@@ -3374,7 +3391,8 @@ function drawCurve(id, withEvents) {
   d += `L ${pts[pts.length-1][0]} ${H-10} Z`;
   const area = document.createElementNS('http://www.w3.org/2000/svg','path');
   area.setAttribute('d', d);
-  area.setAttribute('fill', `url(#cf-${id})`);
+  area.setAttribute('fill', `url(#cff-${id})`);
+  area.setAttribute('mask', `url(#cfm-${id})`);
   svg.appendChild(area);
 
   let ld = `M ${pts[0][0]} ${pts[0][1]} `;
@@ -3382,7 +3400,7 @@ function drawCurve(id, withEvents) {
   const line = document.createElementNS('http://www.w3.org/2000/svg','path');
   line.setAttribute('d', ld);
   line.setAttribute('fill','none');
-  line.setAttribute('stroke','#00ec7f');
+  line.setAttribute('stroke', `url(#cfs-${id})`);
   line.setAttribute('stroke-width','2.5');
   line.setAttribute('stroke-linecap','round');
   line.setAttribute('stroke-linejoin','round');
@@ -3432,16 +3450,18 @@ function drawCurve(id, withEvents) {
   svg.appendChild(nowLine);
 
   const y = H - 10 - (energyAt(nowH)/100)*(H-22);
+  const currentPhase = phaseAt(nowH);
+  const dotColor = phaseStrokeColors[currentPhase.name] || '#00ec7f';
   const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
   dot.setAttribute('cx', x); dot.setAttribute('cy', y);
   dot.setAttribute('r','5'); dot.setAttribute('fill','#fff');
-  dot.setAttribute('stroke','#00ec7f'); dot.setAttribute('stroke-width','2');
+  dot.setAttribute('stroke', dotColor); dot.setAttribute('stroke-width','2');
   svg.appendChild(dot);
 
-  // Static glow (no SVG animation - saves battery)
+  // Static glow matching current phase (no SVG animation - saves battery)
   const glow = document.createElementNS('http://www.w3.org/2000/svg','circle');
   glow.setAttribute('cx', x); glow.setAttribute('cy', y);
-  glow.setAttribute('r','10'); glow.setAttribute('fill','rgba(0,236,127,0.15)');
+  glow.setAttribute('r','10'); glow.setAttribute('fill', dotColor); glow.setAttribute('opacity', '0.15');
   svg.insertBefore(glow, dot);
 }
 
