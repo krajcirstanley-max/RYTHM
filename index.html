@@ -8791,7 +8791,29 @@ let swRegistration = null;
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw-rythm.js').then(reg => {
     swRegistration = reg;
+    // Check for updates every 30s
+    setInterval(() => reg.update(), 30000);
+    // If a new SW is already waiting, reload immediately
+    if (reg.waiting) { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); }
+    // Listen for new SW installing
+    reg.addEventListener('updatefound', () => {
+      const nw = reg.installing;
+      if (!nw) return;
+      nw.addEventListener('statechange', () => {
+        if (nw.state === 'activated') {
+          // New version active — reload to get fresh assets
+          window.location.reload();
+        }
+      });
+    });
   }).catch(() => {});
+  // Reload when a new SW takes control (covers activate + clients.claim)
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
 }
 
 // ========================================
