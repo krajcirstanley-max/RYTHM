@@ -20,31 +20,31 @@
 
 :root {
   --bg: #000;
-  --bg-1: #0c0d10;
-  --bg-2: #131418;
-  --bg-3: #1a1b22;
-  --card: rgba(18,19,24,0.75);
-  --card-solid: #121318;
-  --card-border: rgba(255,255,255,0.07);
-  --card-glow: rgba(255,255,255,0.03);
-  --border: rgba(255,255,255,0.06);
-  --border-2: rgba(255,255,255,0.10);
-  --text: #fff;
-  --text-2: #c8ccd4;
-  --text-3: #6b7280;
-  --text-4: #3d4450;
-  --energy: #00ec7f;
-  --energy-dim: #0fb863;
+  --bg-1: #0a0a0e;
+  --bg-2: #111116;
+  --bg-3: #18181e;
+  --card: rgba(22,22,28,0.8);
+  --card-solid: #16161c;
+  --card-border: rgba(255,255,255,0.06);
+  --card-glow: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.05);
+  --border-2: rgba(255,255,255,0.09);
+  --text: #f5f5f7;
+  --text-2: #b0b4bc;
+  --text-3: #5e636e;
+  --text-4: #363a44;
+  --energy: #30d98a;
+  --energy-dim: #28b872;
   --strain: #ff5470;
   --sleep: #8b9cc7;
   --warn: #ffb547;
   --danger: #ff5470;
-  --purple: #a779f7;
-  --radius: 20px;
-  --radius-sm: 14px;
-  --glass: rgba(255,255,255,0.04);
-  --glass-border: rgba(255,255,255,0.08);
-  --glass-highlight: rgba(255,255,255,0.12);
+  --purple: #a78bfa;
+  --radius: 18px;
+  --radius-sm: 12px;
+  --glass: rgba(255,255,255,0.03);
+  --glass-border: rgba(255,255,255,0.07);
+  --glass-highlight: rgba(255,255,255,0.1);
 }
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
@@ -71,13 +71,13 @@ body { padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0; min-he
 }
 .day-nav {
   display: flex; align-items: center; gap: 16px;
-  background: rgba(255,255,255,0.06);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  padding: 7px 16px; border-radius: 100px;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(30px) saturate(1.5);
+  -webkit-backdrop-filter: blur(30px) saturate(1.5);
+  padding: 7px 18px; border-radius: 100px;
   font-size: 11px; font-weight: 700; letter-spacing: 1.4px; color: #fff;
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.07);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 .day-nav .arrow { width: 12px; height: 12px; color: var(--text-2); cursor: pointer; }
 .battery {
@@ -125,7 +125,10 @@ section { padding: 0 16px; margin-bottom: 8px; }
   display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
 .readiness-score {
-  font-size: 52px; font-weight: 900; letter-spacing: -3px; line-height: 1;
+  font-size: 56px; font-weight: 900; letter-spacing: -3px; line-height: 1;
+  background: linear-gradient(180deg, #fff 30%, rgba(255,255,255,0.6) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 .readiness-label {
   font-size: 9px; font-weight: 800; letter-spacing: 2px;
@@ -178,11 +181,12 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .ring-detail.open { max-height: 600px; opacity: 1; }
 .ring-detail.hidden { display: block; max-height: 0; opacity: 0; }
 .rd-panel {
-  background: var(--card); border: 1px solid var(--card-border);
+  background: linear-gradient(145deg, rgba(26,26,32,0.88), rgba(16,16,20,0.92));
+  border: 1px solid var(--card-border);
   border-radius: var(--radius); padding: 18px; margin-top: 12px;
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.25), inset 0 1px 0 var(--card-glow);
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
 }
 .rd-header {
   display: flex; justify-content: space-between; align-items: baseline;
@@ -214,14 +218,14 @@ section { padding: 0 16px; margin-bottom: 8px; }
 
 /* PRIMARY CARD */
 .primary-card {
-  background: var(--card);
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
   border: 1px solid var(--card-border); border-radius: var(--radius);
   padding: 16px 18px; margin-bottom: 6px;
   display: flex; justify-content: space-between; align-items: flex-start;
   gap: 12px; position: relative; overflow: hidden;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 var(--card-glow);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 .primary-card::before {
   content: ''; position: absolute; left: 0; top: 12px; bottom: 12px;
@@ -245,12 +249,13 @@ section { padding: 0 16px; margin-bottom: 8px; }
 /* MONITOR ROW */
 .monitor-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
 .monitor {
-  background: var(--card); border: 1px solid var(--card-border);
+  background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
+  border: 1px solid var(--card-border);
   border-radius: var(--radius); padding: 14px 16px; cursor: pointer;
   transition: background 0.15s;
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.25), inset 0 1px 0 var(--card-glow);
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.04);
 }
 .monitor:active { background: rgba(255,255,255,0.06); }
 .monitor-top {
@@ -271,11 +276,12 @@ section { padding: 0 16px; margin-bottom: 8px; }
 
 /* ENERGY HERO */
 .energy-hero {
-  background: var(--card); border: 1px solid var(--card-border);
+  background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
+  border: 1px solid var(--card-border);
   border-radius: var(--radius); padding: 16px; margin-bottom: 6px; overflow: hidden;
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.25), inset 0 1px 0 var(--card-glow);
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.04);
 }
 .energy-hero-top {
   display: flex; justify-content: space-between; align-items: center;
@@ -317,7 +323,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
   display: flex; justify-content: space-between; align-items: center;
   padding: 6px 2px 10px;
 }
-.section-title { font-size: 10px; font-weight: 800; color: var(--text-4); letter-spacing: 1.5px; text-transform: uppercase; }
+.section-title { font-size: 11px; font-weight: 700; color: var(--text-3); letter-spacing: 1.2px; text-transform: uppercase; }
 .section-add {
   width: 28px; height: 28px; border-radius: 8px;
   background: rgba(255,255,255,0.08);
@@ -1428,13 +1434,14 @@ section { padding: 0 16px; margin-bottom: 8px; }
 /* Suggestions */
 .suggestions { margin-bottom: 4px; }
 .suggestion {
-  background: var(--card); border: 1px solid var(--card-border);
+  background: linear-gradient(145deg, rgba(26,26,32,0.8), rgba(18,18,22,0.85));
+  border: 1px solid var(--card-border);
   border-radius: var(--radius); padding: 14px 16px;
   margin-bottom: 6px; display: flex; align-items: center; gap: 14px;
-  cursor: pointer; transition: background 0.15s;
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  box-shadow: 0 2px 16px rgba(0,0,0,0.2), inset 0 1px 0 var(--card-glow);
+  cursor: pointer; transition: all 0.15s;
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
 }
 .suggestion:active { background: rgba(255,255,255,0.06); }
 .sug-icon {
@@ -1502,14 +1509,14 @@ section { padding: 0 16px; margin-bottom: 8px; }
 /* ========== BOTTOM NAV ========== */
 .bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0;
-  background: rgba(10,10,12,0.82);
-  backdrop-filter: blur(40px) saturate(200%);
-  -webkit-backdrop-filter: blur(40px) saturate(200%);
-  border-top: 1px solid rgba(255,255,255,0.06);
+  background: rgba(8,8,10,0.88);
+  backdrop-filter: blur(50px) saturate(200%);
+  -webkit-backdrop-filter: blur(50px) saturate(200%);
+  border-top: 1px solid rgba(255,255,255,0.05);
   padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
   display: flex; justify-content: space-around; align-items: center;
   max-width: 440px; margin: 0 auto; z-index: 50;
-  box-shadow: 0 -8px 32px rgba(0,0,0,0.4);
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.5);
 }
 .nav-btn {
   background: none; border: none; cursor: pointer;
@@ -1882,199 +1889,158 @@ section { padding: 0 16px; margin-bottom: 8px; }
 }
 .live-island:empty { display: none; }
 
-/* ── Liquid Glass Live Activity Cards ── */
+/* ── Compact Live Activity Cards (iOS Dynamic Island style) ── */
 .live-card {
   position: relative; overflow: hidden;
-  border-radius: 28px; padding: 20px;
-  animation: liveSlideUp 0.45s cubic-bezier(.2,.7,.2,1);
+  border-radius: 22px; padding: 14px 16px;
+  margin-bottom: 6px;
+  animation: liveSlideUp 0.4s cubic-bezier(.2,.7,.2,1);
   pointer-events: auto; cursor: pointer;
-  /* Liquid glass base */
-  background: linear-gradient(135deg, rgba(40,40,44,0.72), rgba(28,28,30,0.85));
-  backdrop-filter: blur(40px) saturate(1.8);
-  -webkit-backdrop-filter: blur(40px) saturate(1.8);
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 12px 48px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.3),
-              inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.2);
+  background: rgba(28,28,30,0.92);
+  backdrop-filter: blur(50px) saturate(1.8) brightness(1.1);
+  -webkit-backdrop-filter: blur(50px) saturate(1.8) brightness(1.1);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 1px 4px rgba(0,0,0,0.3),
+              inset 0 1px 0 rgba(255,255,255,0.15);
 }
 .live-card::before {
-  content: ''; position: absolute; inset: 0; border-radius: 28px;
-  background: radial-gradient(ellipse at 30% 0%, var(--la-glow, rgba(255,255,255,0.06)) 0%, transparent 60%);
+  content: ''; position: absolute; inset: 0; border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 50%);
   pointer-events: none;
 }
-@keyframes liveSlideUp { from { opacity: 0; transform: translateY(24px) scale(0.97); } to { opacity: 1; transform: none; } }
+.live-card::after {
+  content: ''; position: absolute; top: -40%; right: -20%; width: 60%; height: 80%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--la-glow, rgba(255,255,255,0.04)) 0%, transparent 70%);
+  pointer-events: none; filter: blur(20px);
+}
+@keyframes liveSlideUp { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: none; } }
 
-/* Card header row */
-.la-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-.la-badge {
-  display: flex; align-items: center; gap: 10px;
-}
+/* Compact header */
+.la-header { display: flex; align-items: center; justify-content: space-between; }
+.la-badge { display: flex; align-items: center; gap: 8px; }
 .la-icon {
-  width: 40px; height: 40px; border-radius: 12px;
+  width: 32px; height: 32px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 20px; position: relative;
-  background: var(--la-icon-bg, rgba(255,255,255,0.08));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 8px rgba(0,0,0,0.3);
+  font-size: 16px; position: relative;
+  background: var(--la-icon-bg, rgba(255,255,255,0.06));
 }
-.la-title { font-size: 15px; font-weight: 700; color: #fff; }
+.la-title { font-size: 13px; font-weight: 700; color: #fff; }
 .la-live {
-  display: flex; align-items: center; gap: 5px;
-  font-size: 10px; font-weight: 700; color: var(--la-accent, #00ec7f);
-  text-transform: uppercase; letter-spacing: 0.8px;
+  display: flex; align-items: center; gap: 4px;
+  font-size: 9px; font-weight: 700; color: var(--la-accent, #00ec7f);
+  text-transform: uppercase; letter-spacing: 0.6px;
 }
 .la-live-dot {
-  width: 6px; height: 6px; border-radius: 50%;
+  width: 5px; height: 5px; border-radius: 50%;
   background: var(--la-accent, #00ec7f);
-  box-shadow: 0 0 8px var(--la-accent, #00ec7f);
+  box-shadow: 0 0 6px var(--la-accent, #00ec7f);
   animation: la-pulse 2s ease-in-out infinite;
 }
-@keyframes la-pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
+@keyframes la-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 .la-stop {
-  padding: 7px 18px; border: none; border-radius: 100px;
-  background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7);
-  font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
-  backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.06);
-  transition: all 0.2s;
+  padding: 5px 14px; border: none; border-radius: 100px;
+  background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5);
+  font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit;
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: all 0.15s;
 }
-.la-stop:active { background: rgba(255,84,112,0.25); color: #ff5470; transform: scale(0.95); }
+.la-stop:active { background: rgba(255,84,112,0.2); color: #ff5470; transform: scale(0.95); }
 
-/* Timer — big centerpiece */
+/* Timer — compact */
 .la-timer {
-  font-size: 48px; font-weight: 800; font-family: 'DM Mono', monospace;
-  color: #fff; letter-spacing: -2px; line-height: 1;
-  text-shadow: 0 2px 20px rgba(0,0,0,0.4);
+  font-size: 32px; font-weight: 800; font-family: 'DM Mono', monospace;
+  color: #fff; letter-spacing: -1.5px; line-height: 1;
 }
 
-/* Progress track */
+/* Progress track — thin */
 .la-progress {
-  height: 6px; border-radius: 3px;
+  height: 3px; border-radius: 2px;
   background: rgba(255,255,255,0.06);
-  overflow: hidden; margin-top: 14px;
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+  overflow: hidden; margin-top: 10px;
 }
 .la-progress-fill {
-  height: 100%; border-radius: 3px;
-  background: var(--la-accent, #00ec7f);
-  box-shadow: 0 0 10px var(--la-accent, #00ec7f);
+  height: 100%; border-radius: 2px;
+  background: linear-gradient(90deg, var(--la-accent, #00ec7f), var(--la-glow, rgba(255,255,255,0.2)));
   transition: width 1s linear;
 }
 
 /* Meta row */
 .la-meta {
   display: flex; justify-content: space-between; align-items: center;
-  margin-top: 10px;
+  margin-top: 8px;
 }
-.la-meta-text { font-size: 12px; color: rgba(255,255,255,0.35); font-weight: 500; }
+.la-meta-text { font-size: 11px; color: rgba(255,255,255,0.3); font-weight: 500; }
 .la-meta-accent { color: var(--la-accent, #00ec7f); font-weight: 600; }
 
-/* ── Per-activity themes ── */
-/* Shisha — warm ember glow */
+/* ── Per-activity themes — subtle accent tints ── */
 .live-card[data-type="shisha"] {
-  --la-accent: #e74c3c; --la-glow: rgba(231,76,60,0.12);
-  --la-icon-bg: rgba(231,76,60,0.15);
-  background: linear-gradient(135deg, rgba(60,24,20,0.75), rgba(28,28,30,0.88));
-  border-color: rgba(231,76,60,0.12);
+  --la-accent: #ff6b6b; --la-glow: rgba(255,107,107,0.15);
+  --la-icon-bg: rgba(255,107,107,0.12);
+  border-color: rgba(255,107,107,0.15);
 }
-.live-card[data-type="shisha"]::after {
-  content: ''; position: absolute; bottom: -30px; right: -20px;
-  width: 140px; height: 140px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(231,76,60,0.08), transparent 70%);
-  pointer-events: none;
-}
-
-/* Workout — electric green */
 .live-card[data-type="workout"] {
-  --la-accent: #00ec7f; --la-glow: rgba(0,236,127,0.1);
-  --la-icon-bg: rgba(0,236,127,0.12);
-  background: linear-gradient(135deg, rgba(10,50,35,0.75), rgba(28,28,30,0.88));
-  border-color: rgba(0,236,127,0.1);
+  --la-accent: #00ec7f; --la-glow: rgba(0,236,127,0.12);
+  --la-icon-bg: rgba(0,236,127,0.1);
+  border-color: rgba(0,236,127,0.12);
 }
-
-/* Sauna — amber heat */
 .live-card[data-type="sauna"] {
-  --la-accent: #ff8c00; --la-glow: rgba(255,140,0,0.1);
-  --la-icon-bg: rgba(255,140,0,0.12);
-  background: linear-gradient(135deg, rgba(60,40,10,0.75), rgba(28,28,30,0.88));
-  border-color: rgba(255,140,0,0.1);
+  --la-accent: #ff9f43; --la-glow: rgba(255,159,67,0.12);
+  --la-icon-bg: rgba(255,159,67,0.1);
+  border-color: rgba(255,159,67,0.12);
 }
-
-/* Deep Work — focused blue */
 .live-card[data-type="deep_work"] {
-  --la-accent: #3b82f6; --la-glow: rgba(59,130,246,0.1);
-  --la-icon-bg: rgba(59,130,246,0.12);
-  background: linear-gradient(135deg, rgba(15,25,55,0.75), rgba(28,28,30,0.88));
-  border-color: rgba(59,130,246,0.1);
+  --la-accent: #5b9aff; --la-glow: rgba(91,154,255,0.12);
+  --la-icon-bg: rgba(91,154,255,0.1);
+  border-color: rgba(91,154,255,0.12);
 }
-
-/* Meditation — soft purple */
 .live-card[data-type="meditation"] {
-  --la-accent: #a78bfa; --la-glow: rgba(167,139,250,0.1);
-  --la-icon-bg: rgba(167,139,250,0.12);
-  background: linear-gradient(135deg, rgba(40,20,60,0.75), rgba(28,28,30,0.88));
-  border-color: rgba(167,139,250,0.1);
+  --la-accent: #a78bfa; --la-glow: rgba(167,139,250,0.12);
+  --la-icon-bg: rgba(167,139,250,0.1);
+  border-color: rgba(167,139,250,0.12);
 }
-
-/* Alcohol — amber warning */
 .live-card[data-type="alcohol"] {
-  --la-accent: #f59e0b; --la-glow: rgba(245,158,11,0.1);
-  --la-icon-bg: rgba(245,158,11,0.12);
-  background: linear-gradient(135deg, rgba(50,38,10,0.75), rgba(28,28,30,0.88));
-  border-color: rgba(245,158,11,0.1);
+  --la-accent: #fbbf24; --la-glow: rgba(251,191,36,0.12);
+  --la-icon-bg: rgba(251,191,36,0.1);
+  border-color: rgba(251,191,36,0.12);
 }
-
-/* Walk — fresh green */
 .live-card[data-type="walk"] {
-  --la-accent: #22c55e; --la-glow: rgba(34,197,94,0.1);
-  --la-icon-bg: rgba(34,197,94,0.12);
-  background: linear-gradient(135deg, rgba(10,45,25,0.75), rgba(28,28,30,0.88));
-  border-color: rgba(34,197,94,0.1);
+  --la-accent: #34d399; --la-glow: rgba(52,211,153,0.12);
+  --la-icon-bg: rgba(52,211,153,0.1);
+  border-color: rgba(52,211,153,0.12);
 }
-
-/* Sun Exposure — golden warm */
 .live-card[data-type="sun_exposure"] {
-  --la-accent: #facc15; --la-glow: rgba(250,204,21,0.1);
-  --la-icon-bg: rgba(250,204,21,0.12);
-  background: linear-gradient(135deg, rgba(55,48,10,0.75), rgba(28,28,30,0.88));
-  border-color: rgba(250,204,21,0.1);
+  --la-accent: #fbbf24; --la-glow: rgba(251,191,36,0.12);
+  --la-icon-bg: rgba(251,191,36,0.1);
+  border-color: rgba(251,191,36,0.12);
 }
-
-/* Energy Caps — electric */
 .live-card[data-type="energy_caps"] {
-  --la-accent: #ffb547; --la-glow: rgba(255,181,71,0.1);
-  --la-icon-bg: rgba(255,181,71,0.12);
-  background: linear-gradient(135deg, rgba(50,36,10,0.75), rgba(28,28,30,0.88));
-  border-color: rgba(255,181,71,0.1);
+  --la-accent: #ffb547; --la-glow: rgba(255,181,71,0.12);
+  --la-icon-bg: rgba(255,181,71,0.1);
+  border-color: rgba(255,181,71,0.12);
 }
 
-/* Shisha-specific: ring countdown */
-.la-ring-wrap {
-  position: relative; width: 56px; height: 56px; flex-shrink: 0;
+/* Stat chips — compact */
+.la-stats { display: flex; gap: 6px; margin-top: 8px; }
+.la-stat {
+  flex: 1; background: rgba(255,255,255,0.04); border-radius: 8px; padding: 6px 8px;
+  text-align: center;
 }
+.la-stat-label { font-size: 8px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: rgba(255,255,255,0.25); }
+.la-stat-val { font-size: 14px; font-weight: 800; color: #fff; margin-top: 1px; }
+
+/* Deep Work: segments */
+.la-segments { display: flex; gap: 2px; margin-top: 8px; }
+.la-seg { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.06); }
+.la-seg.filled { background: var(--la-accent); }
+
+/* Ring wrap for sauna */
+.la-ring-wrap { position: relative; width: 44px; height: 44px; flex-shrink: 0; }
 .la-ring-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
 .la-ring-val {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  font-size: 14px; font-weight: 800; color: #fff; font-family: 'DM Mono', monospace;
+  font-size: 12px; font-weight: 800; color: #fff; font-family: 'DM Mono', monospace;
 }
-
-/* Workout-specific: stat chips */
-.la-stats {
-  display: flex; gap: 8px; margin-top: 12px;
-}
-.la-stat {
-  flex: 1; background: rgba(255,255,255,0.04); border-radius: 10px; padding: 8px 10px;
-  border: 1px solid rgba(255,255,255,0.04);
-}
-.la-stat-label { font-size: 9px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: rgba(255,255,255,0.3); }
-.la-stat-val { font-size: 16px; font-weight: 800; color: #fff; margin-top: 2px; }
-
-/* Deep Work: focus segments */
-.la-segments {
-  display: flex; gap: 3px; margin-top: 12px;
-}
-.la-seg {
-  flex: 1; height: 4px; border-radius: 2px;
-  background: rgba(255,255,255,0.06);
-}
-.la-seg.filled { background: var(--la-accent); box-shadow: 0 0 6px var(--la-accent); }
 
 /* ========== TRENDS / SPARKLINES ========== */
 .trend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -2352,6 +2318,11 @@ section { padding: 0 16px; margin-bottom: 8px; }
     <!-- Health Monitor, HR Zones, Steps, Active Calories removed -->
 
     <section>
+      <div class="section-head"><div class="section-title">Trends</div></div>
+      <div class="trend-grid" id="trendGrid"></div>
+    </section>
+
+    <section>
       <div class="section-head"><div class="section-title">Guided Breathing</div></div>
       <div class="breathing-card" id="breathingCard">
         <div class="breathing-orb-wrap">
@@ -2393,11 +2364,6 @@ section { padding: 0 16px; margin-bottom: 8px; }
         <div class="breathing-rounds" id="breathingRounds">3 rounds ~ 2 min</div>
         <div class="breathing-desc" id="breathingDesc">Activates your parasympathetic nervous system. The extended exhale (8s) triggers the vagus nerve, lowering heart rate and boosting HRV. Best before sleep or after high-strain sessions.</div>
       </div>
-    </section>
-
-    <section>
-      <div class="section-head"><div class="section-title">Trends</div></div>
-      <div class="trend-grid" id="trendGrid"></div>
     </section>
 
     <section>
@@ -7637,7 +7603,7 @@ function renderLiveActivities() {
 
     const stopBtn = `<button class="la-stop" onclick="event.stopPropagation();stopLiveActivity('${a.id}')">Stop</button>`;
 
-    // ── Shisha: ember card with cutoff warning ring ──
+    // ── Shisha: compact with cutoff warning ──
     if (a.type === 'shisha' || a.type === 'shisha_late') {
       const w = getShishaCutoffWarning();
       return `<div class="live-card" data-live-id="${a.id}" data-type="${a.type}">
@@ -7649,17 +7615,16 @@ function renderLiveActivities() {
               <div class="la-live"><span class="la-live-dot"></span> LIVE</div>
             </div>
           </div>
-          ${stopBtn}
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="la-timer">${dur}</div>
+            ${stopBtn}
+          </div>
         </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div class="la-timer">${dur}</div>
-          <div class="la-meta-text" style="text-align:right;">Started ${startStr}</div>
-        </div>
-        ${w ? `<div class="la-warn" style="margin-top:10px;padding:8px 12px;border-radius:10px;background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.15);font-size:12px;font-weight:600;color:#e74c3c;">⚠️ ${w}</div>` : '<div class="la-warn" style="display:none;"></div>'}
+        ${w ? `<div class="la-warn" style="margin-top:8px;padding:6px 10px;border-radius:8px;background:rgba(255,107,107,0.08);font-size:11px;font-weight:600;color:#ff6b6b;">⚠️ ${w}</div>` : '<div class="la-warn" style="display:none;"></div>'}
       </div>`;
     }
 
-    // ── Workout: stats chips ──
+    // ── Workout: compact with progress ──
     if (a.type === 'workout') {
       const pct = meta.targetMin ? Math.min(100, Math.round(elapsedMin / meta.targetMin * 100)) : 0;
       return `<div class="live-card" data-live-id="${a.id}" data-type="workout">
@@ -7671,34 +7636,25 @@ function renderLiveActivities() {
               <div class="la-live"><span class="la-live-dot"></span> ACTIVE</div>
             </div>
           </div>
-          ${stopBtn}
-        </div>
-        <div class="la-timer">${dur}</div>
-        <div class="la-stats">
-          <div class="la-stat">
-            <div class="la-stat-label">Duration</div>
-            <div class="la-stat-val"><span class="la-elapsed-min">${elapsedMin}</span><span style="font-size:11px;color:var(--text-3);"> min</span></div>
-          </div>
-          <div class="la-stat">
-            <div class="la-stat-label">Target</div>
-            <div class="la-stat-val">${meta.targetMin}<span style="font-size:11px;color:var(--text-3);"> min</span></div>
-          </div>
-          <div class="la-stat">
-            <div class="la-stat-label">Progress</div>
-            <div class="la-stat-val" style="color:var(--la-accent)">${pct}%</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="la-timer">${dur}</div>
+            ${stopBtn}
           </div>
         </div>
         <div class="la-progress"><div class="la-progress-fill" style="width:${pct}%"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;">
+          <span class="la-meta-text"><span class="la-elapsed-min">${elapsedMin}</span>/${meta.targetMin} min</span>
+          <span class="la-meta-text" style="color:var(--la-accent);font-weight:700;">${pct}%</span>
+        </div>
       </div>`;
     }
 
-    // ── Deep Work: pomodoro segments ──
+    // ── Deep Work: compact with pomodoro segments ──
     if (a.type === 'deep_work') {
       const pomoCount = Math.floor(elapsedMin / 25);
-      const segments = [0,1,2,3,4,5].map(i =>
+      const segments = [0,1,2,3].map(i =>
         `<div class="la-seg ${elapsedMin >= (i + 1) * 25 ? 'filled' : ''}"></div>`
       ).join('');
-      const pct = meta.targetMin ? Math.min(100, Math.round(elapsedMin / meta.targetMin * 100)) : 0;
       return `<div class="live-card" data-live-id="${a.id}" data-type="deep_work">
         <div class="la-header">
           <div class="la-badge">
@@ -7708,24 +7664,23 @@ function renderLiveActivities() {
               <div class="la-live"><span class="la-live-dot"></span> FOCUSED</div>
             </div>
           </div>
-          ${stopBtn}
-        </div>
-        <div style="display:flex;align-items:flex-end;justify-content:space-between;">
-          <div class="la-timer">${dur}</div>
-          <div style="text-align:right;">
-            <div style="font-size:28px;font-weight:800;color:var(--la-accent);line-height:1;" class="la-pomo-count">${pomoCount}</div>
-            <div style="font-size:9px;font-weight:600;color:rgba(255,255,255,0.3);letter-spacing:0.5px;">POMODOROS</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="la-timer">${dur}</div>
+            ${stopBtn}
           </div>
         </div>
         <div class="la-segments">${segments}</div>
-        <div class="la-progress" style="margin-top:8px;"><div class="la-progress-fill" style="width:${pct}%"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:5px;">
+          <span class="la-meta-text"><span class="la-pomo-count">${pomoCount}</span> pomodoros</span>
+          <span class="la-meta-text">${startStr}</span>
+        </div>
       </div>`;
     }
 
-    // ── Sauna: heat timer with target ring ──
+    // ── Sauna: compact with ring ──
     if (a.type === 'sauna') {
       const pct = meta.targetMin ? Math.min(100, Math.round(elapsedMin / meta.targetMin * 100)) : 0;
-      const circumf = 2 * Math.PI * 22;
+      const circumf = 2 * Math.PI * 18;
       return `<div class="live-card" data-live-id="${a.id}" data-type="sauna">
         <div class="la-header">
           <div class="la-badge">
@@ -7735,27 +7690,20 @@ function renderLiveActivities() {
               <div class="la-live"><span class="la-live-dot"></span> HEAT</div>
             </div>
           </div>
-          ${stopBtn}
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div class="la-timer">${dur}</div>
-          <div class="la-ring-wrap">
-            <svg viewBox="0 0 52 52">
-              <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"/>
-              <circle class="la-ring-fill" cx="26" cy="26" r="22" fill="none" stroke="var(--la-accent)" stroke-width="4"
-                stroke-dasharray="${circumf}" stroke-dashoffset="${circumf * (1 - pct / 100)}" stroke-linecap="round"/>
-            </svg>
-            <div class="la-ring-val">${pct}%</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="la-timer">${dur}</div>
+            ${stopBtn}
           </div>
         </div>
-        <div class="la-meta" style="margin-top:8px;">
-          <span class="la-meta-text">Target ${meta.targetMin}min</span>
-          <span class="la-meta-text">${elapsedMin > meta.targetMin ? `<span class="la-meta-accent">+${elapsedMin - meta.targetMin}min over</span>` : `${meta.targetMin - elapsedMin}min left`}</span>
+        <div class="la-progress"><div class="la-progress-fill" style="width:${pct}%"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:5px;">
+          <span class="la-meta-text">${elapsedMin}/${meta.targetMin} min</span>
+          <span class="la-meta-text" style="color:var(--la-accent)">${pct}%</span>
         </div>
       </div>`;
     }
 
-    // ── Meditation: minimal zen card ──
+    // ── Meditation: compact zen ──
     if (a.type === 'meditation') {
       const pct = meta.targetMin ? Math.min(100, Math.round(elapsedMin / meta.targetMin * 100)) : 0;
       return `<div class="live-card" data-live-id="${a.id}" data-type="meditation">
@@ -7767,17 +7715,16 @@ function renderLiveActivities() {
               <div class="la-live"><span class="la-live-dot"></span> CALM</div>
             </div>
           </div>
-          ${stopBtn}
-        </div>
-        <div style="text-align:center;padding:8px 0;">
-          <div class="la-timer" style="font-size:56px;letter-spacing:-3px;">${dur}</div>
-          <div class="la-meta-text" style="margin-top:6px;">Breathe · ${meta.targetMin}min session</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="la-timer">${dur}</div>
+            ${stopBtn}
+          </div>
         </div>
         <div class="la-progress"><div class="la-progress-fill" style="width:${pct}%"></div></div>
       </div>`;
     }
 
-    // ── Default: generic with progress ──
+    // ── Default: compact generic ──
     const pct = meta.targetMin ? Math.min(100, Math.round(elapsedMin / meta.targetMin * 100)) : 0;
     return `<div class="live-card" data-live-id="${a.id}" data-type="${a.type}">
       <div class="la-header">
@@ -7788,14 +7735,12 @@ function renderLiveActivities() {
             <div class="la-live"><span class="la-live-dot"></span> LIVE</div>
           </div>
         </div>
-        ${stopBtn}
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="la-timer">${dur}</div>
+          ${stopBtn}
+        </div>
       </div>
-      <div style="display:flex;align-items:flex-end;justify-content:space-between;">
-        <div class="la-timer">${dur}</div>
-        <div class="la-meta-text">Started ${startStr}</div>
-      </div>
-      ${meta.targetMin ? `<div class="la-progress" style="margin-top:12px;"><div class="la-progress-fill" style="width:${pct}%"></div></div>
-      <div class="la-meta"><span class="la-meta-text">${elapsedMin}/${meta.targetMin} min</span><span class="la-meta-text la-meta-accent">${pct}%</span></div>` : ''}
+      ${meta.targetMin ? `<div class="la-progress"><div class="la-progress-fill" style="width:${pct}%"></div></div>` : ''}
     </div>`;
   }).join('');
 }
@@ -7832,8 +7777,12 @@ document.addEventListener('visibilitychange', () => {
 
 function startLiveActivityTimer() {
   if (liveActivityInterval) return;
-  requestWakeLock();
+  // Only request wake lock for workout/sauna (need screen on), not for passive tracking
+  const active = (ST.liveActivities || []).filter(a => !a.endedAt);
+  const needsWakeLock = active.some(a => ['workout', 'sauna'].includes(a.type));
+  if (needsWakeLock) requestWakeLock();
   liveActivityInterval = setInterval(() => {
+    if (document.hidden) return; // Save battery when app is in background
     const active = (ST.liveActivities || []).filter(a => !a.endedAt);
     if (active.length) {
       renderLiveActivities();
@@ -7872,7 +7821,7 @@ function renderSuggestions() {
   if (hwake < 1.5) {
     const sa = sunlightAdvice(weatherCache);
     const sunSugSub = sa.tip || 'Anchors your circadian clock - within 30min of waking';
-    sugs.push({ icon: '☀️', title: `Get ${sa.duration} morning sunlight`, sub: sunSugSub, action: 'Now', cls: 'green', onclick: `startLiveActivity('sun_exposure')` });
+    sugs.push({ icon: '☀️', title: `Get ${sa.duration} morning sunlight`, sub: sunSugSub, action: 'Now', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('sun_exposure')` });
   }
 
   // Active shisha - warn about cutoff
@@ -7896,6 +7845,12 @@ function renderSuggestions() {
   // HRV low = recover
   if (m.hrv < 35 && !activeSessions.includes('meditation')) {
     sugs.push({ icon: '🧘', title: 'Try a breathing session', sub: `HRV at ${m.hrv}ms - below baseline. Breathing can boost parasympathetic tone`, action: 'Breathe', cls: 'purple', onclick: `showView('health');setTimeout(()=>document.getElementById('breathingCard')?.scrollIntoView({behavior:'smooth'}),300)` });
+  }
+
+  // Deep work in peak zones
+  const peakPhases = ['PEAK 1', 'PEAK 2'];
+  if (peakPhases.includes(currentPhase.name) && !activeSessions.includes('deep_work') && !activeSessions.includes('workout')) {
+    sugs.push({ icon: '🎯', title: 'Peak zone — start deep work', sub: `You're in ${currentPhase.name} — optimal focus window`, action: 'Focus', cls: 'blue', bg: 'rgba(91,154,255,0.1)', onclick: `startLiveActivity('deep_work')` });
   }
 
   // Energy Caps cutoff approaching (200mg caffeine half-life ~6h)
@@ -7922,7 +7877,7 @@ function renderSuggestions() {
   el.innerHTML = `<div class="section-head"><div class="section-title">Suggestions</div></div>` +
     top.map(s => `
     <div class="suggestion" ${s.onclick ? 'onclick="' + s.onclick + '"' : ''}>
-      <div class="sug-icon" style="background:rgba(255,255,255,0.04)">${s.icon}</div>
+      <div class="sug-icon" style="background:${s.bg || 'rgba(255,255,255,0.04)'}">${s.icon}</div>
       <div class="sug-body">
         <div class="sug-title">${s.title}</div>
         <div class="sug-sub">${s.sub}</div>
@@ -8114,6 +8069,14 @@ async function fetchHealthData() {
       if (sd.deep != null) ST.sleep.stages.deep = +Number(sd.deep).toFixed(1);
       if (sd.rem != null) ST.sleep.stages.rem = +Number(sd.rem).toFixed(1);
       if (sd.core != null) ST.sleep.stages.core = +Number(sd.core).toFixed(1);
+      // Compute awake time: inBed - (deep + rem + core), or from sd.awake if provided
+      if (sd.awake != null) {
+        ST.sleep.stages.awake = +Number(sd.awake).toFixed(1);
+      } else if (sd.inBed != null && data.sleep.value != null) {
+        const inBedH = Number(sd.inBed);
+        const asleepH = Number(data.sleep.value);
+        ST.sleep.stages.awake = +Math.max(0, inBedH - asleepH).toFixed(1);
+      }
       // Convert full timestamps to HH:MM format, but also keep raw for sleep HRV
       if (sd.sleepStart) { ST.sleep.sleepStart = fmtTime(sd.sleepStart); ST.sleep._rawSleepStart = sd.sleepStart; }
       if (sd.sleepEnd) { ST.sleep.sleepEnd = fmtTime(sd.sleepEnd); ST.sleep._rawSleepEnd = sd.sleepEnd; }
@@ -8742,17 +8705,18 @@ function bootApp() {
     if (el) el.textContent = String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
   }, 30000);
 
-  // Full re-render every minute
+  // Full re-render every minute (only when visible)
   setInterval(() => {
+    if (document.hidden) return;
     renderEnergy();
     drawCurve('curveSvg', false);
     renderWinddown();
     renderSuggestions();
   }, 60000);
 
-  // Notification check every 30 seconds
+  // Notification check every 2 minutes
   checkNotifications();
-  setInterval(checkNotifications, 30000);
+  setInterval(() => { if (!document.hidden) checkNotifications(); }, 120000);
 
   // Auto-refresh health data every 5 minutes (Whoop-like live feel)
   setInterval(() => {
@@ -8844,7 +8808,7 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw-rythm.js').then(reg => {
     swRegistration = reg;
     // Check for updates every 30s
-    setInterval(() => reg.update(), 30000);
+    setInterval(() => { if (!document.hidden) reg.update(); }, 300000);
     // If a new SW is already waiting, reload immediately
     if (reg.waiting) { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); }
     // Listen for new SW installing
