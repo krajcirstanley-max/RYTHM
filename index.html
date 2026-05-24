@@ -2029,7 +2029,30 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .la-stat-label { font-size: 8px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: rgba(255,255,255,0.25); }
 .la-stat-val { font-size: 14px; font-weight: 800; color: #fff; margin-top: 1px; }
 
-/* Deep Work: segments */
+/* Deep Work: arc visualization */
+.la-arc-wrap { position: relative; width: 100%; height: 52px; margin: 6px 0 2px; }
+.la-arc-wrap svg { width: 100%; height: 100%; }
+.la-arc-bg { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 4; stroke-linecap: round; }
+.la-arc-fill { fill: none; stroke: var(--la-accent); stroke-width: 4; stroke-linecap: round;
+  filter: drop-shadow(0 0 4px var(--la-accent)); transition: stroke-dashoffset 1s linear; }
+.la-arc-dot { fill: #fff; filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 3px var(--la-accent)); }
+.la-arc-labels { display: flex; justify-content: space-between; padding: 0 8px;
+  font-size: 9px; font-weight: 600; color: rgba(255,255,255,0.25); letter-spacing: 0.3px; }
+.la-arc-optimal { position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+  font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.3); letter-spacing: 0.5px; text-transform: uppercase; }
+
+/* Shisha: meter ring */
+.la-meter { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+.la-meter-ring { position: relative; width: 36px; height: 36px; flex-shrink: 0; }
+.la-meter-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.la-meter-bg { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 3; }
+.la-meter-fill { fill: none; stroke-width: 3; stroke-linecap: round;
+  transition: stroke-dashoffset 1s linear; }
+.la-meter-info { flex: 1; }
+.la-meter-label { font-size: 10px; color: rgba(255,255,255,0.35); font-weight: 500; }
+.la-meter-val { font-size: 15px; font-weight: 800; color: #fff; font-family: 'DM Mono', monospace; letter-spacing: -0.5px; }
+
+/* Segments fallback */
 .la-segments { display: flex; gap: 2px; margin-top: 8px; }
 .la-seg { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.06); }
 .la-seg.filled { background: var(--la-accent); }
@@ -7569,19 +7592,43 @@ function renderLiveActivities() {
           ringFill.setAttribute('stroke-dashoffset', String(circumf * (1 - pct / 100)));
         }
       }
-      // Deep work segments
+      // Deep work arc update
       if (a.type === 'deep_work') {
         const mins = Math.floor(elapsed / 60000);
-        card.querySelectorAll('.la-seg').forEach((s, i) => {
-          s.classList.toggle('filled', mins >= (i + 1) * 25);
-        });
+        const target = meta.targetMin || 90;
+        const maxDisplay = target * 1.5;
+        const arcPct = Math.min(100, (mins / maxDisplay) * 100);
+        const r = 72, cx = 140, cy = 64;
+        const arcLength = Math.PI * r;
+        const arcFill = card.querySelector('.la-arc-fill');
+        if (arcFill) arcFill.setAttribute('stroke-dashoffset', (arcLength * (1 - arcPct / 100)).toFixed(1));
+        const arcDot = card.querySelector('.la-arc-dot');
+        if (arcDot) {
+          const dotAngle = Math.PI - (arcPct / 100) * Math.PI;
+          arcDot.setAttribute('cx', (cx + r * Math.cos(dotAngle)).toFixed(1));
+          arcDot.setAttribute('cy', (cy + r * Math.sin(dotAngle)).toFixed(1));
+        }
         const pomoEl = card.querySelector('.la-pomo-count');
         if (pomoEl) pomoEl.textContent = Math.floor(mins / 25);
       }
-      // Update shisha cutoff warning
+      // Shisha meter update
       if (a.type === 'shisha' || a.type === 'shisha_late') {
+        const sleepMin = ST.profile.sleepMin >= 1440 ? ST.profile.sleepMin - 1440 : ST.profile.sleepMin;
+        let cutMin = sleepMin - 180; if (cutMin < 0) cutMin += 1440;
+        const nd = new Date(), nm = nd.getHours() * 60 + nd.getMinutes();
+        let untilCut = cutMin - nm; if (untilCut < 0) untilCut += 1440;
+        const pastCut = untilCut > 960 ? false : untilCut <= 0;
+        const rPct = pastCut ? 0 : Math.min(100, (untilCut / 180) * 100);
+        const circ = 2 * Math.PI * 14;
+        const meterFill = card.querySelector('.la-meter-fill');
+        if (meterFill) meterFill.setAttribute('stroke-dashoffset', (circ * (1 - rPct / 100)).toFixed(1));
+        const meterVal = card.querySelector('.la-meter-val');
+        if (meterVal) {
+          const rH = Math.floor(untilCut / 60), rM = untilCut % 60;
+          meterVal.textContent = pastCut ? '0:00' : (rH > 0 ? rH + ':' + String(rM).padStart(2,'0') : rM + 'm');
+        }
         const warn = card.querySelector('.la-warn');
-        if (warn) { const w = getShishaCutoffWarning(); warn.textContent = w || ''; warn.style.display = w ? '' : 'none'; }
+        if (warn) { warn.style.display = pastCut ? '' : 'none'; }
       }
       // Workout elapsed stats
       if (a.type === 'workout') {
@@ -7603,24 +7650,51 @@ function renderLiveActivities() {
 
     const stopBtn = `<button class="la-stop" onclick="event.stopPropagation();stopLiveActivity('${a.id}')">Stop</button>`;
 
-    // ── Shisha: compact with cutoff warning ──
+    // ── Shisha: parking meter style — ring + time remaining to cutoff ──
     if (a.type === 'shisha' || a.type === 'shisha_late') {
       const w = getShishaCutoffWarning();
+      // Compute time remaining to cutoff
+      const sleepMin = ST.profile.sleepMin >= 1440 ? ST.profile.sleepMin - 1440 : ST.profile.sleepMin;
+      let cutoffMin = sleepMin - 180;
+      if (cutoffMin < 0) cutoffMin += 1440;
+      const nowDate = new Date();
+      const nowMin = nowDate.getHours() * 60 + nowDate.getMinutes();
+      let untilCutoff = cutoffMin - nowMin;
+      if (untilCutoff < 0) untilCutoff += 1440;
+      if (untilCutoff > 960) untilCutoff = 960; // cap for display
+      const pastCutoff = untilCutoff <= 0 || (w && w.includes('Past cutoff'));
+      // Ring: 3h window (180min), show how much time is left
+      const totalWindow = 180; // 3h before cutoff is the "safe zone"
+      const ringPct = pastCutoff ? 0 : Math.min(100, (untilCutoff / totalWindow) * 100);
+      const circumf = 2 * Math.PI * 14;
+      const ringOffset = circumf * (1 - ringPct / 100);
+      const cutoffTimeStr = minToTime(cutoffMin);
+      const remainH = Math.floor(untilCutoff / 60);
+      const remainM = untilCutoff % 60;
+      const remainStr = pastCutoff ? '0:00' : (remainH > 0 ? remainH + ':' + String(remainM).padStart(2,'0') : remainM + 'm');
+      const meterColor = pastCutoff ? '#ff6b6b' : untilCutoff < 30 ? '#ffb547' : 'var(--la-accent)';
+
       return `<div class="live-card" data-live-id="${a.id}" data-type="${a.type}">
-        <div class="la-header">
-          <div class="la-badge">
-            <div class="la-icon">${meta.icon}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="la-meter-ring">
+              <svg viewBox="0 0 36 36">
+                <circle class="la-meter-bg" cx="18" cy="18" r="14"/>
+                <circle class="la-meter-fill" cx="18" cy="18" r="14" stroke="${meterColor}"
+                  stroke-dasharray="${circumf.toFixed(1)}" stroke-dashoffset="${ringOffset.toFixed(1)}"/>
+              </svg>
+            </div>
             <div>
-              <div class="la-title">${meta.label}</div>
-              <div class="la-live"><span class="la-live-dot"></span> LIVE</div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.4);font-weight:500;">${pastCutoff ? 'Past Cutoff' : 'Meter Remaining'}</div>
+              <div class="la-meter-val">${remainStr}</div>
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;">
-            <div class="la-timer">${dur}</div>
+            <div class="la-timer" style="font-size:22px;letter-spacing:-1px;">${dur}</div>
             ${stopBtn}
           </div>
         </div>
-        ${w ? `<div class="la-warn" style="margin-top:8px;padding:6px 10px;border-radius:8px;background:rgba(255,107,107,0.08);font-size:11px;font-weight:600;color:#ff6b6b;">⚠️ ${w}</div>` : '<div class="la-warn" style="display:none;"></div>'}
+        ${pastCutoff ? `<div class="la-warn" style="margin-top:6px;padding:5px 10px;border-radius:8px;background:rgba(255,107,107,0.08);font-size:10px;font-weight:600;color:#ff6b6b;">⚠️ CO needs 3h to clear before sleep</div>` : '<div class="la-warn" style="display:none;"></div>'}
       </div>`;
     }
 
@@ -7649,12 +7723,27 @@ function renderLiveActivities() {
       </div>`;
     }
 
-    // ── Deep Work: compact with pomodoro segments ──
+    // ── Deep Work: ISS-style arc showing progress to optimal session ──
     if (a.type === 'deep_work') {
+      const target = meta.targetMin || 90;
+      const maxDisplay = target * 1.5; // arc goes to 135min
+      const pct = Math.min(100, (elapsedMin / maxDisplay) * 100);
+      // Arc math: 180° arc from left to right
+      const W = 280, H = 52, cx = W/2, cy = H + 12, r = 72;
+      const startAngle = Math.PI, endAngle = 0;
+      const arcLength = Math.PI * r;
+      const dashOffset = arcLength * (1 - pct / 100);
+      // Dot position along arc
+      const dotAngle = startAngle - (pct / 100) * Math.PI;
+      const dotX = cx + r * Math.cos(dotAngle);
+      const dotY = cy + r * Math.sin(dotAngle);
+      // Optimal marker at target position
+      const optPct = (target / maxDisplay) * 100;
+      const optAngle = startAngle - (optPct / 100) * Math.PI;
+      const optX = cx + r * Math.cos(optAngle);
+      const optY = cy + r * Math.sin(optAngle);
       const pomoCount = Math.floor(elapsedMin / 25);
-      const segments = [0,1,2,3].map(i =>
-        `<div class="la-seg ${elapsedMin >= (i + 1) * 25 ? 'filled' : ''}"></div>`
-      ).join('');
+
       return `<div class="live-card" data-live-id="${a.id}" data-type="deep_work">
         <div class="la-header">
           <div class="la-badge">
@@ -7664,16 +7753,26 @@ function renderLiveActivities() {
               <div class="la-live"><span class="la-live-dot"></span> FOCUSED</div>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div class="la-timer">${dur}</div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="text-align:right;">
+              <div class="la-timer" style="font-size:24px;letter-spacing:-1px;">${dur}</div>
+              <div style="font-size:9px;color:rgba(255,255,255,0.3);font-weight:600;margin-top:1px;"><span class="la-pomo-count">${pomoCount}</span> pomodoros</div>
+            </div>
             ${stopBtn}
           </div>
         </div>
-        <div class="la-segments">${segments}</div>
-        <div style="display:flex;justify-content:space-between;margin-top:5px;">
-          <span class="la-meta-text"><span class="la-pomo-count">${pomoCount}</span> pomodoros</span>
-          <span class="la-meta-text">${startStr}</span>
+        <div class="la-arc-wrap">
+          <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
+            <path class="la-arc-bg" d="M ${cx - r},${cy} A ${r},${r} 0 0,1 ${cx + r},${cy}" />
+            <path class="la-arc-fill" d="M ${cx - r},${cy} A ${r},${r} 0 0,1 ${cx + r},${cy}"
+              stroke-dasharray="${arcLength.toFixed(1)}" stroke-dashoffset="${dashOffset.toFixed(1)}" />
+            <circle cx="${optX.toFixed(1)}" cy="${optY.toFixed(1)}" r="2" fill="rgba(255,255,255,0.2)"/>
+            <text x="${optX.toFixed(1)}" y="${optY.toFixed(1) - 6}" text-anchor="middle"
+              fill="rgba(255,255,255,0.25)" font-size="7" font-weight="600">${target}m</text>
+            <circle class="la-arc-dot" cx="${dotX.toFixed(1)}" cy="${dotY.toFixed(1)}" r="4"/>
+          </svg>
         </div>
+        <div class="la-arc-labels"><span>0m</span><span style="color:var(--la-accent);font-weight:700;">optimal ${target}m</span><span>${maxDisplay}m</span></div>
       </div>`;
     }
 
