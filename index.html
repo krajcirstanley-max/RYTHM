@@ -120,7 +120,6 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .readiness-ring .ring-fg {
   fill: none; stroke-width: 5; stroke-linecap: round;
   transition: stroke-dashoffset 1.4s cubic-bezier(.2,.7,.2,1);
-  filter: drop-shadow(0 0 6px currentColor);
 }
 .readiness-center {
   position: absolute; inset: 0;
@@ -157,7 +156,6 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .ring-fg {
   fill: none; stroke-width: 4; stroke-linecap: round;
   transition: stroke-dashoffset 1.4s cubic-bezier(.2,.7,.2,1);
-  filter: drop-shadow(0 0 4px currentColor);
 }
 .ring-val-wrap {
   position: absolute; inset: 0;
@@ -994,7 +992,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .fullpage-inner { max-width: 440px; margin: 0 auto; padding: 0 16px 100px; }
 .fp-back {
   display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 600;
-  color: var(--accent); background: none; border: none; cursor: pointer; font-family: inherit;
+  color: #fff; background: none; border: none; cursor: pointer; font-family: inherit;
   padding: 10px 6px; min-height: 44px;
 }
 .fp-back svg { width: 14px; height: 14px; }
@@ -4976,6 +4974,13 @@ function renderEnergy() {
   nEl.className = 'energy-now-name ' + phase.cls;
   document.getElementById('phaseSub').textContent = phase.sub;
 
+  // Tint the energy card border based on current phase
+  const heroEl = document.querySelector('.energy-hero');
+  if (heroEl) {
+    const phaseTints = { INERTIA:'rgba(126,133,144,0.15)', 'PEAK 1':'rgba(0,236,127,0.15)', DIP:'rgba(255,181,71,0.15)', RECOVERY:'rgba(77,169,255,0.15)', 'PEAK 2':'rgba(0,236,127,0.15)', 'WIND-DOWN':'rgba(147,161,196,0.15)', NIGHT:'rgba(167,121,247,0.15)', SLEEP:'rgba(147,161,196,0.10)' };
+    heroEl.style.borderColor = phaseTints[phase.name] || 'var(--card-border)';
+  }
+
   // Energy message
   const msgEl = document.getElementById('energyMsg');
   const messages = {
@@ -7470,6 +7475,96 @@ function changeDay(dir) {
   } else {
     label.textContent = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase();
   }
+
+  // Re-render with the selected day's data
+  if (viewDayOffset !== 0) {
+    loadHistoricalDay(d.toISOString().slice(0, 10));
+  } else {
+    renderAll();
+  }
+}
+
+function loadHistoricalDay(dateStr) {
+  const hist = ST._history || {};
+
+  // Update readiness ring from week readiness if available
+  const weekData = ST._weekReadiness || {};
+  const histReadiness = weekData[dateStr];
+  if (histReadiness != null) {
+    const ring = document.querySelector('.readiness-ring .ring-fg');
+    const scoreEl = document.querySelector('.readiness-score');
+    const interpEl = document.querySelector('.readiness-interp');
+    if (ring && scoreEl) {
+      const circ = 2 * Math.PI * 80;
+      ring.setAttribute('stroke-dasharray', circ);
+      ring.setAttribute('stroke-dashoffset', circ * (1 - histReadiness / 100));
+      const interp = readinessInterpretation(histReadiness);
+      ring.setAttribute('stroke', interp.color);
+      scoreEl.textContent = histReadiness;
+      if (interpEl) { interpEl.textContent = interp.text; interpEl.style.color = interp.color; }
+    }
+  }
+
+  // Update metric values from history
+  const hrvEntry = hist.hrv ? hist.hrv.find(d => d.date === dateStr) : null;
+  const rhrEntry = hist.rhr ? hist.rhr.find(d => d.date === dateStr) : null;
+  const sleepEntry = hist.sleep ? hist.sleep.find(d => d.date === dateStr) : null;
+  const stepsEntry = hist.steps ? hist.steps.find(d => d.date === dateStr) : null;
+
+  // Update three rings with historical data
+  const sleepScore = sleepEntry ? Math.min(100, Math.round(sleepEntry.value / 8 * 100)) : null;
+  if (sleepScore != null) updateRingValue('sleep', sleepScore);
+  if (histReadiness != null) updateRingValue('recovery', histReadiness);
+
+  // Update My Day timeline to show that day's logs
+  const el = document.getElementById('dayTasks');
+  if (el) {
+    const dayLogs = (ST.logs || []).filter(l => l.date === dateStr);
+    const dayEntry = (ST.journalEntries || []).find(e => e.date === dateStr);
+    if (dayLogs.length || dayEntry) {
+      const tagIcons = { shisha: '💨', workout: '🏋️', sauna: '🧖', alcohol: '🍷', stress: '😤', nap: '😴', meditation: '🧘', sunlight: '☀️', screen: '📱', cold_shower: '🧊', sugar: '🍬', deep_work: '📊', walk: '🚶', shisha_late: '🌙' };
+      let html = '<div class="timeline">';
+      for (const log of dayLogs) {
+        const d = new Date(log.ts);
+        const time = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+        const mainTag = (log.tags || [])[0] || 'log';
+        const title = (log.tags || []).map(t => t.replace(/_/g, ' ')).join(', ');
+        const icon = tagIcons[mainTag] || '📝';
+        const sub = log.durationMin ? `${log.durationMin}min` : '';
+        html += `<div class="timeline-item"><div class="tl-dot past"></div><div class="tl-content"><div class="tl-time">${time}</div><div class="tl-title">${icon} ${title.charAt(0).toUpperCase() + title.slice(1)}</div>${sub ? `<div class="tl-sub">${sub}</div>` : ''}</div></div>`;
+      }
+      if (dayEntry && dayEntry.mood) {
+        html += `<div class="timeline-item"><div class="tl-dot past"></div><div class="tl-content"><div class="tl-title">Mood: ${dayEntry.mood}/5</div></div></div>`;
+      }
+      html += '</div>';
+      el.innerHTML = html;
+    } else {
+      el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-4);font-size:13px;">No data for this day.</div>';
+    }
+  }
+
+  // Update the day banner
+  const bannerEl = document.getElementById('dayBanner');
+  if (bannerEl && histReadiness != null) {
+    const interp = readinessInterpretation(histReadiness);
+    bannerEl.querySelector('.day-banner-title').textContent = interp.text;
+  }
+}
+
+function updateRingValue(key, value) {
+  // Visually update a ring without full re-render
+  const rings = document.querySelectorAll('.ring-wrap');
+  // The rings are sleep, recovery, strain in order
+  const idx = key === 'sleep' ? 0 : key === 'recovery' ? 1 : 2;
+  const ring = rings[idx];
+  if (!ring) return;
+  const fg = ring.querySelector('.ring-fg');
+  const pct = ring.querySelector('.ring-pct');
+  if (fg && pct) {
+    const circ = 2 * Math.PI * 38;
+    fg.setAttribute('stroke-dashoffset', circ * (1 - value / 100));
+    pct.innerHTML = value + '<span class="unit">%</span>';
+  }
 }
 
 // ========================================
@@ -7583,8 +7678,20 @@ function stopLiveActivity(id) {
   const act = ST.liveActivities.find(a => a.id === id);
   if (act) {
     act.endedAt = new Date().toISOString();
+    // Log the completed activity to ST.logs so it shows in My Day
+    const durationMs = new Date(act.endedAt) - new Date(act.startedAt);
+    const durationMin = Math.round(durationMs / 60000);
+    if (!ST.logs) ST.logs = [];
+    ST.logs.push({
+      date: new Date(act.startedAt).toISOString().slice(0, 10),
+      ts: act.startedAt,
+      tags: [act.type],
+      durationMin: durationMin,
+      mood: null
+    });
     saveState();
     renderLiveActivities();
+    renderTasks(); // Re-render My Day to show the logged activity
     // Release wake lock if no more active activities
     const remaining = ST.liveActivities.filter(a => !a.endedAt);
     if (!remaining.length) releaseWakeLock();
@@ -8045,7 +8152,8 @@ function renderSuggestions() {
 
   // Limit to top 3
   const top = sugs.slice(0, 3);
-  if (!top.length) { el.innerHTML = ''; return; }
+  if (!top.length) { el.innerHTML = ''; el.closest('section').style.display = 'none'; return; }
+  el.closest('section').style.display = '';
 
   el.innerHTML = `<div class="section-head"><div class="section-title">Suggestions</div></div>` +
     top.map(s => `
@@ -8691,7 +8799,7 @@ const TREND_METRICS = [
   { key: 'respiratory', label: 'Resp Rate', unit: 'br/m', color: '#ffb547', type: 'line', betterDir: 'down' },
   { key: 'weight', label: 'Weight', unit: 'kg', color: '#a779f7', type: 'line', betterDir: 'down' },
   { key: 'vo2max', label: 'VO2 Max', unit: 'ml/kg', color: '#00c86a', type: 'line', betterDir: 'up' },
-  { key: 'active_cal', label: 'Active Cal', unit: 'kcal', color: '#ff5470', type: 'bar', betterDir: 'up' },
+  { key: 'active_cal', label: 'Calories', unit: 'kcal', color: '#ff5470', type: 'bar', betterDir: 'up' },
 ];
 
 function renderHistoryTrends() {
