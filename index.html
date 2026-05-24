@@ -1739,6 +1739,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
   border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
   position: relative; overflow: hidden;
 }
+.winddown-card:empty { display: none; }
 .winddown-card::before {
   content: ''; position: absolute; left: 0; top: 14px; bottom: 14px;
   width: 2px; background: var(--sleep); border-radius: 2px;
@@ -5315,8 +5316,8 @@ function renderTasks() {
 
   // 3. Logged activities (quick logs)
   const todayLogs = (ST.logs || []).filter(l => l.date === today);
-  const tagIcons = { shisha: '💨', workout: '🏋️', sauna: '🧖', alcohol: '🍷', stress: '😤', nap: '😴', meditation: '🧘', sunlight: '☀️', screen: '📱', cold_shower: '🧊', sugar: '🍬' };
-  const tagDots = { shisha: 'shisha', workout: 'strain', sauna: 'warn', alcohol: 'warn', stress: 'warn', nap: 'sleep', meditation: 'active', sunlight: 'active', cold_shower: 'active' };
+  const tagIcons = { shisha: '💨', shisha_late: '🌙', workout: '🏋️', sauna: '🧖', alcohol: '🍷', stress: '😤', nap: '😴', meditation: '🧘', sunlight: '☀️', screen: '📱', cold_shower: '🧊', sugar: '🍬', deep_work: '📊', walk: '🚶', sun_exposure: '☀️', energy_caps: '⚡', creatine: '🧪' };
+  const tagDots = { shisha: 'shisha', shisha_late: 'shisha', workout: 'strain', sauna: 'warn', alcohol: 'warn', stress: 'warn', nap: 'sleep', meditation: 'active', sunlight: 'active', cold_shower: 'active', deep_work: 'active', walk: 'active', sun_exposure: 'active' };
   for (const log of todayLogs) {
     const d = new Date(log.ts);
     const time = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
