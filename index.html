@@ -23,10 +23,10 @@
   --bg-1: #0a0a0e;
   --bg-2: #111116;
   --bg-3: #18181e;
-  --card: rgba(22,22,28,0.8);
+  --card: rgba(22,22,28,0.85);
   --card-solid: #16161c;
-  --card-border: rgba(255,255,255,0.06);
-  --card-glow: rgba(255,255,255,0.04);
+  --card-border: rgba(255,255,255,0.07);
+  --card-glow: rgba(255,255,255,0.05);
   --border: rgba(255,255,255,0.05);
   --border-2: rgba(255,255,255,0.09);
   --text: #f5f5f7;
@@ -449,10 +449,12 @@ section { padding: 0 16px; margin-bottom: 8px; }
 
 /* OUTLOOK */
 .outlook {
-  background: var(--card); border: 1px solid var(--card-border);
+  background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
+  border: 1px solid var(--card-border);
   border-radius: var(--radius); padding: 14px 16px; margin-bottom: 6px;
   display: flex; justify-content: space-between; align-items: center;
   cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.04);
 }
 .outlook-l { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
 .outlook-icon {
@@ -571,11 +573,12 @@ section { padding: 0 16px; margin-bottom: 8px; }
 
 /* INSIGHT */
 .insight {
-  background: var(--card); border: 1px solid var(--card-border);
+  background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
+  border: 1px solid var(--card-border);
   border-radius: var(--radius); padding: 14px 16px; margin-bottom: 6px;
   display: flex; gap: 12px; align-items: flex-start;
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 2px 16px rgba(0,0,0,0.2), inset 0 1px 0 var(--card-glow);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
 }
 .insight-dot {
   width: 32px; height: 32px; border-radius: 9px;
@@ -641,12 +644,12 @@ section { padding: 0 16px; margin-bottom: 8px; }
 
 /* JOURNAL */
 .journal-card {
-  background: var(--card);
+  background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
   border: 1px solid var(--card-border);
   border-radius: var(--radius); padding: 18px; margin-bottom: 8px;
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.2), inset 0 1px 0 var(--card-glow);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
 }
 .journal-date {
   font-size: 10px; font-weight: 800; letter-spacing: 2px;
@@ -654,10 +657,12 @@ section { padding: 0 16px; margin-bottom: 8px; }
 }
 .journal-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; }
 .journal-item {
-  background: var(--card); border: 1px solid var(--card-border);
+  background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
+  border: 1px solid var(--card-border);
   border-radius: 12px; padding: 14px 10px; text-align: center;
   cursor: pointer; transition: all 0.25s ease;
   -webkit-tap-highlight-color: transparent;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
 }
 .journal-item:active { transform: scale(0.97); }
 .journal-item.active {
@@ -678,8 +683,10 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .journal-save:active { opacity: 0.85; }
 .journal-history { margin-top: 8px; }
 .jh-entry {
-  background: var(--card); border: 1px solid var(--card-border);
+  background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
+  border: 1px solid var(--card-border);
   border-radius: var(--radius); padding: 14px 16px; margin-bottom: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.04);
 }
 .jh-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .jh-date { font-size: 10px; font-weight: 800; letter-spacing: 1.5px; color: var(--text-3); }
