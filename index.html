@@ -650,45 +650,53 @@ section { padding: 0 16px; margin-bottom: 8px; }
 }
 .sleep-bar-fg { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
 
-/* JOURNAL */
+/* JOURNAL — redesigned */
 .journal-card {
   background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
   border: 1px solid var(--card-border);
-  border-radius: var(--radius); padding: 18px; margin-bottom: 8px;
+  border-radius: var(--radius); padding: 20px 16px 16px; margin-bottom: 8px;
   backdrop-filter: blur(20px) saturate(1.6);
   -webkit-backdrop-filter: blur(20px) saturate(1.6);
   box-shadow: 0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
 }
 .journal-date {
   font-size: 10px; font-weight: 800; letter-spacing: 2px;
-  color: var(--text-3); text-transform: uppercase; margin-bottom: 16px;
+  color: var(--text-3); text-transform: uppercase; margin-bottom: 14px;
 }
-.journal-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; }
+/* Category headers inside journal */
+.journal-cat {
+  font-size: 10px; font-weight: 800; letter-spacing: 1.5px;
+  color: var(--text-4); text-transform: uppercase; margin: 14px 0 8px;
+  padding-left: 2px;
+}
+.journal-cat:first-child { margin-top: 0; }
+.journal-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
 .journal-item {
-  background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
-  border: 1px solid var(--card-border);
-  border-radius: 12px; padding: 14px 10px; text-align: center;
-  cursor: pointer; transition: all 0.25s ease;
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 100px; padding: 8px 14px 8px 10px;
+  cursor: pointer; transition: all 0.2s ease;
   -webkit-tap-highlight-color: transparent;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
 }
-.journal-item:active { transform: scale(0.97); }
+.journal-item:active { transform: scale(0.96); }
 .journal-item.active {
-  border-color: rgba(0,236,127,0.4);
+  border-color: rgba(0,236,127,0.35);
   background: rgba(0,236,127,0.08);
-  box-shadow: 0 0 20px rgba(0,236,127,0.06);
 }
-.journal-item .ji-icon { font-size: 22px; margin-bottom: 6px; }
-.journal-item .ji-label { font-size: 11px; font-weight: 700; color: var(--text-2); letter-spacing: 0.3px; }
+.journal-item .ji-icon { font-size: 16px; line-height: 1; flex-shrink: 0; }
+.journal-item .ji-label { font-size: 12px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
+.journal-item.active .ji-label { color: #fff; }
 .journal-save {
-  width: 100%; padding: 14px; border: none; border-radius: 100px;
-  background: linear-gradient(135deg, #00ec7f, #00c96b);
-  color: #000; font-weight: 800;
-  font-size: 14px; cursor: pointer; font-family: inherit;
-  letter-spacing: 0.5px; margin-top: 4px;
-  transition: opacity 0.2s;
+  width: 100%; padding: 13px; border: none; border-radius: 100px;
+  background: rgba(255,255,255,0.06); color: #fff; font-weight: 700;
+  font-size: 13px; cursor: pointer; font-family: inherit;
+  letter-spacing: 0.3px; margin-top: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: all 0.2s;
 }
-.journal-save:active { opacity: 0.85; }
+.journal-save:active { background: rgba(0,236,127,0.15); border-color: rgba(0,236,127,0.3); }
+.journal-save.saved { background: rgba(0,236,127,0.12); border-color: rgba(0,236,127,0.3); color: #00ec7f; }
 .journal-history { margin-top: 8px; }
 .jh-entry {
   background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
@@ -704,6 +712,21 @@ section { padding: 0 16px; margin-bottom: 8px; }
   font-size: 10px; padding: 4px 10px; border-radius: 100px;
   background: rgba(255,255,255,0.04); color: var(--text-2);
   font-weight: 600; letter-spacing: 0.2px;
+}
+/* Journal streak row */
+.journal-streak {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; margin-bottom: 8px;
+  background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
+  border: 1px solid var(--card-border); border-radius: var(--radius);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.journal-streak-label { font-size: 11px; font-weight: 600; color: var(--text-3); }
+.journal-streak-val { font-size: 18px; font-weight: 800; font-family: 'DM Mono', monospace; color: #00ec7f; }
+/* Journal selected count */
+.journal-sel-count {
+  font-size: 11px; font-weight: 600; color: var(--text-4);
+  text-align: right; padding: 4px 0 0;
 }
 .correlation-card {
   background: var(--card); border: 1px solid var(--card-border);
@@ -1386,20 +1409,20 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .journal-context {
   background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
   border: 1px solid var(--card-border);
-  border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px;
+  border-radius: var(--radius); padding: 16px; margin-bottom: 8px;
   display: flex; gap: 14px; align-items: center;
   box-shadow: 0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
 }
-.jctx-ring { position: relative; width: 48px; height: 48px; flex-shrink: 0; }
-.jctx-ring svg { width: 48px; height: 48px; }
+.jctx-ring { position: relative; width: 44px; height: 44px; flex-shrink: 0; }
+.jctx-ring svg { width: 44px; height: 44px; }
 .jctx-ring-center {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  font-size: 14px; font-weight: 800;
+  font-size: 13px; font-weight: 800; font-family: 'DM Mono', monospace;
 }
 .jctx-info { flex: 1; }
 .jctx-label { font-size: 10px; font-weight: 800; letter-spacing: 1.2px; color: var(--text-4); text-transform: uppercase; }
-.jctx-val { font-size: 14px; font-weight: 600; color: #fff; margin-top: 2px; }
-.jctx-sub { font-size: 11px; color: var(--text-4); font-family: 'DM Mono', monospace; margin-top: 1px; }
+.jctx-val { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); margin-top: 2px; line-height: 1.35; }
+.jctx-sub { font-size: 11px; color: var(--text-4); font-family: 'DM Mono', monospace; margin-top: 3px; }
 
 /* Mood trend mini sparkline */
 .mood-trend { margin-top: 16px; }
@@ -2017,6 +2040,23 @@ section { padding: 0 16px; margin-bottom: 8px; }
   transition: all 0.15s;
 }
 .la-stop:active { background: rgba(255,84,112,0.2); color: #ff5470; transform: scale(0.95); }
+.la-pause {
+  padding: 5px 14px; border: none; border-radius: 100px;
+  background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5);
+  font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit;
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: all 0.15s;
+}
+.la-pause:active { background: rgba(91,154,255,0.2); color: #5b9aff; transform: scale(0.95); }
+.la-paused-badge {
+  font-size: 9px; font-weight: 700; color: #fbbf24;
+  letter-spacing: 0.8px; display: flex; align-items: center; gap: 4px;
+}
+.la-paused-badge::before {
+  content: ''; display: inline-block; width: 5px; height: 5px; border-radius: 50%;
+  background: #fbbf24; animation: blink 1.5s ease infinite;
+}
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 
 /* Timer — compact */
 .la-timer {
@@ -2479,20 +2519,25 @@ section { padding: 0 16px; margin-bottom: 8px; }
     </section>
 
     <section>
+      <div class="journal-streak" id="journalStreak"></div>
+    </section>
+
+    <section>
       <div class="journal-card">
         <div class="journal-date" id="journalDate">TODAY</div>
-        <div class="journal-grid" id="journalGrid"></div>
+        <div id="journalGrid"></div>
+        <div class="journal-sel-count" id="journalSelCount"></div>
         <button class="journal-save" id="journalSaveBtn" onclick="saveJournal()">Save Entry</button>
       </div>
     </section>
 
     <section>
-      <div class="section-head"><div class="section-title">Correlations</div></div>
-      <div class="correlation-card" id="correlations"></div>
+      <div class="mood-trend" id="moodTrend"></div>
     </section>
 
     <section>
-      <div class="mood-trend" id="moodTrend"></div>
+      <div class="section-head"><div class="section-title">Correlations</div></div>
+      <div class="correlation-card" id="correlations"></div>
     </section>
 
     <section>
@@ -7020,6 +7065,16 @@ function renderMoodTrend() {
     </svg>`;
 }
 
+// Categorized behavior groups for cleaner journal layout
+const JOURNAL_CATEGORIES = [
+  { label: 'Substances', ids: ['shisha', 'shisha_late', 'energy_caps', 'alcohol', 'weed', 'nicotine', 'sugar'] },
+  { label: 'Training', ids: ['workout', 'sauna', 'cold_shower', 'stretching', 'mobility', 'jetboots'] },
+  { label: 'Recovery', ids: ['meditation', 'nap', 'nature', 'massage', 'reading', 'social'] },
+  { label: 'Habits', ids: ['sunlight', 'hydration', 'creatine', 'magnesium', 'supplements', 'protein', 'fasting'] },
+  { label: 'Sleep', ids: ['screen_late', 'late_meal', 'blue_light_glasses', 'sleep_8h30', 'sleep_before_2'] },
+  { label: 'Routine', ids: ['wake_before_930', 'no_phone_morning', 'make_bed', 'skincare_am', 'skincare_pm', 'deep_work', 'linkedin_30', 'sex'] },
+];
+
 function initJournal() {
   const today = new Date().toISOString().slice(0,10);
   const existing = ST.journal.find(j => j.date === today);
@@ -7027,19 +7082,61 @@ function initJournal() {
   else selectedBehaviors = new Set();
 
   document.getElementById('journalDate').textContent = new Date().toLocaleDateString('en', { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase();
-  document.getElementById('journalGrid').innerHTML = JOURNAL_BEHAVIORS.map(b => `
-    <div class="journal-item ${selectedBehaviors.has(b.id) ? 'active' : ''}" data-id="${b.id}" onclick="toggleBehavior('${b.id}', this)">
-      <div class="ji-icon">${b.icon}</div>
-      <div class="ji-label">${b.label}</div>
-    </div>`).join('');
+
+  // Render categorized grid
+  const gridEl = document.getElementById('journalGrid');
+  const behaviorMap = {};
+  for (const b of JOURNAL_BEHAVIORS) behaviorMap[b.id] = b;
+
+  gridEl.innerHTML = JOURNAL_CATEGORIES.map(cat => {
+    const items = cat.ids
+      .filter(id => behaviorMap[id])
+      .map(id => {
+        const b = behaviorMap[id];
+        return `<div class="journal-item ${selectedBehaviors.has(b.id) ? 'active' : ''}" data-id="${b.id}" onclick="toggleBehavior('${b.id}', this)">
+          <div class="ji-icon">${b.icon}</div>
+          <div class="ji-label">${b.label}</div>
+        </div>`;
+      }).join('');
+    return `<div class="journal-cat">${cat.label}</div><div class="journal-grid">${items}</div>`;
+  }).join('');
+
+  updateJournalSelCount();
 
   const btn = document.getElementById('journalSaveBtn');
   btn.textContent = existing ? 'Update Entry' : 'Save Entry';
+  btn.classList.remove('saved');
 
+  renderJournalStreak();
   renderJournalContext();
   renderCorrelations();
   renderMoodTrend();
   renderJournalHistory();
+}
+
+function updateJournalSelCount() {
+  const el = document.getElementById('journalSelCount');
+  if (el) el.textContent = selectedBehaviors.size ? selectedBehaviors.size + ' selected' : '';
+}
+
+function renderJournalStreak() {
+  const el = document.getElementById('journalStreak');
+  if (!el) return;
+  // Calculate consecutive days logged
+  const sorted = [...ST.journal].sort((a,b) => b.date.localeCompare(a.date));
+  let streak = 0;
+  const today = new Date();
+  for (let i = 0; i < sorted.length; i++) {
+    const expected = new Date(today);
+    expected.setDate(expected.getDate() - i);
+    const expectedStr = expected.toISOString().slice(0,10);
+    if (sorted.find(j => j.date === expectedStr)) streak++;
+    else break;
+  }
+  el.innerHTML = `
+    <div class="journal-streak-label">🔥 Logging Streak</div>
+    <div class="journal-streak-val">${streak} day${streak !== 1 ? 's' : ''}</div>
+  `;
 }
 
 function toggleBehavior(id, el) {
@@ -7055,6 +7152,7 @@ function toggleBehavior(id, el) {
       startLiveActivity(id);
     }
   }
+  updateJournalSelCount();
 }
 
 function saveJournal() {
@@ -7075,8 +7173,11 @@ function saveJournal() {
   // Keep last 90 days
   if (ST.journal.length > 90) ST.journal = ST.journal.slice(-90);
   saveState();
-  document.getElementById('journalSaveBtn').textContent = 'Saved ✓';
-  setTimeout(() => { document.getElementById('journalSaveBtn').textContent = 'Update Entry'; }, 1500);
+  const saveBtn = document.getElementById('journalSaveBtn');
+  saveBtn.textContent = 'Saved ✓';
+  saveBtn.classList.add('saved');
+  setTimeout(() => { saveBtn.textContent = 'Update Entry'; saveBtn.classList.remove('saved'); }, 1500);
+  renderJournalStreak();
   renderCorrelations();
   renderJournalHistory();
 }
@@ -7663,15 +7764,49 @@ function openWindDown() {
 
 function startLiveActivity(type) {
   if (!ST.liveActivities) ST.liveActivities = [];
-  // Don't duplicate
-  if (ST.liveActivities.find(a => a.type === type && !a.endedAt)) return;
+  // Allow multiple concurrent activities (even same type)
   ST.liveActivities.push({
     id: Date.now().toString(36),
-    type, startedAt: new Date().toISOString(), endedAt: null
+    type, startedAt: new Date().toISOString(), endedAt: null,
+    pausedAt: null, totalPausedMs: 0
   });
   saveState();
   renderLiveActivities();
   startLiveActivityTimer();
+}
+
+function pauseLiveActivity(id) {
+  if (!ST.liveActivities) return;
+  const act = ST.liveActivities.find(a => a.id === id);
+  if (act && !act.pausedAt && !act.endedAt) {
+    act.pausedAt = new Date().toISOString();
+    saveState();
+    renderLiveActivities();
+  }
+}
+
+function resumeLiveActivity(id) {
+  if (!ST.liveActivities) return;
+  const act = ST.liveActivities.find(a => a.id === id);
+  if (act && act.pausedAt && !act.endedAt) {
+    const pausedMs = Date.now() - new Date(act.pausedAt).getTime();
+    act.totalPausedMs = (act.totalPausedMs || 0) + pausedMs;
+    act.pausedAt = null;
+    saveState();
+    renderLiveActivities();
+    startLiveActivityTimer();
+  }
+}
+
+function getActiveElapsed(act) {
+  const now = Date.now();
+  const start = new Date(act.startedAt).getTime();
+  const paused = act.totalPausedMs || 0;
+  if (act.pausedAt) {
+    // Currently paused — elapsed = pausedAt - start - totalPaused
+    return new Date(act.pausedAt).getTime() - start - paused;
+  }
+  return now - start - paused;
 }
 
 function stopLiveActivity(id) {
@@ -7679,8 +7814,13 @@ function stopLiveActivity(id) {
   const act = ST.liveActivities.find(a => a.id === id);
   if (act) {
     act.endedAt = new Date().toISOString();
+    // If paused, finalize the pause
+    if (act.pausedAt) {
+      act.totalPausedMs = (act.totalPausedMs || 0) + (Date.now() - new Date(act.pausedAt).getTime());
+      act.pausedAt = null;
+    }
     // Log the completed activity to ST.logs so it shows in My Day
-    const durationMs = new Date(act.endedAt) - new Date(act.startedAt);
+    const durationMs = new Date(act.endedAt) - new Date(act.startedAt) - (act.totalPausedMs || 0);
     const durationMin = Math.round(durationMs / 60000);
     if (!ST.logs) ST.logs = [];
     ST.logs.push({
@@ -7759,15 +7899,31 @@ function renderLiveActivities() {
     active.forEach(a => {
       const card = el.querySelector(`[data-live-id="${a.id}"]`);
       if (!card) return;
-      const elapsed = now - new Date(a.startedAt).getTime();
+      const elapsed = getActiveElapsed(a);
+      const isPaused = !!a.pausedAt;
       const timerEl = card.querySelector('.la-timer');
-      if (timerEl) timerEl.textContent = formatDuration(elapsed);
+      if (timerEl) {
+        timerEl.textContent = formatDuration(elapsed);
+        timerEl.style.opacity = isPaused ? '0.4' : '1';
+      }
+      // Update pause/resume button state
+      const pauseBtn = card.querySelector('.la-pause');
+      if (pauseBtn) {
+        pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
+        pauseBtn.onclick = isPaused
+          ? function(e) { e.stopPropagation(); resumeLiveActivity(a.id); }
+          : function(e) { e.stopPropagation(); pauseLiveActivity(a.id); };
+      }
+      // Update status badge
+      const liveLabel = card.querySelector('.la-live');
+      if (liveLabel && isPaused) {
+        liveLabel.innerHTML = '<span class="la-paused-badge">PAUSED</span>';
+      }
       const meta = LIVE_ACTIVITY_META[a.type] || {};
       if (meta.targetMin) {
         const pct = Math.min(100, Math.round((elapsed / 60000) / meta.targetMin * 100));
         const bar = card.querySelector('.la-progress-fill');
         if (bar) bar.style.width = pct + '%';
-        // Ring countdown for shisha
         const ringFill = card.querySelector('.la-ring-fill');
         if (ringFill) {
           const circumf = 2 * Math.PI * 22;
@@ -7824,13 +7980,17 @@ function renderLiveActivities() {
   // Full rebuild — unique layout per activity type
   el.innerHTML = active.map(a => {
     const meta = LIVE_ACTIVITY_META[a.type] || { icon: '⏱️', label: a.type };
-    const elapsed = now - new Date(a.startedAt).getTime();
+    const elapsed = getActiveElapsed(a);
+    const isPaused = !!a.pausedAt;
     const dur = formatDuration(elapsed);
     const startTime = new Date(a.startedAt);
     const startStr = String(startTime.getHours()).padStart(2,'0') + ':' + String(startTime.getMinutes()).padStart(2,'0');
     const elapsedMin = Math.floor(elapsed / 60000);
 
+    const pauseBtn = `<button class="la-pause" onclick="event.stopPropagation();${isPaused ? 'resumeLiveActivity' : 'pauseLiveActivity'}('${a.id}')">${isPaused ? 'Resume' : 'Pause'}</button>`;
     const stopBtn = `<button class="la-stop" onclick="event.stopPropagation();stopLiveActivity('${a.id}')">Stop</button>`;
+    const statusLabel = isPaused ? '<span class="la-paused-badge">PAUSED</span>' : '<span class="la-live-dot"></span> ACTIVE';
+    const timerStyle = isPaused ? 'opacity:0.4;' : '';
 
     // ── Shisha: parking meter style — ring + time remaining to cutoff ──
     if (a.type === 'shisha' || a.type === 'shisha_late') {
@@ -7867,13 +8027,13 @@ function renderLiveActivities() {
               </svg>
             </div>
             <div>
-              <div style="font-size:11px;color:rgba(255,255,255,0.4);font-weight:500;">${pastCutoff ? 'Past Cutoff' : 'Meter Remaining'}</div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.4);font-weight:500;">${pastCutoff ? 'Past Cutoff' : 'Meter Remaining'}${isPaused ? ' · <span style="color:#fbbf24">PAUSED</span>' : ''}</div>
               <div class="la-meter-val">${remainStr}</div>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div class="la-timer" style="font-size:22px;letter-spacing:-1px;">${dur}</div>
-            ${stopBtn}
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="la-timer" style="font-size:22px;letter-spacing:-1px;${timerStyle}">${dur}</div>
+            ${pauseBtn}${stopBtn}
           </div>
         </div>
         ${pastCutoff ? `<div class="la-warn" style="margin-top:6px;padding:5px 10px;border-radius:8px;background:rgba(255,107,107,0.08);font-size:10px;font-weight:600;color:#ff6b6b;">⚠️ CO needs 3h to clear before sleep</div>` : '<div class="la-warn" style="display:none;"></div>'}
@@ -7889,12 +8049,12 @@ function renderLiveActivities() {
             <div class="la-icon">${meta.icon}</div>
             <div>
               <div class="la-title">Workout</div>
-              <div class="la-live"><span class="la-live-dot"></span> ACTIVE</div>
+              <div class="la-live">${statusLabel}</div>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div class="la-timer">${dur}</div>
-            ${stopBtn}
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="la-timer" style="${timerStyle}">${dur}</div>
+            ${pauseBtn}${stopBtn}
           </div>
         </div>
         <div class="la-progress"><div class="la-progress-fill" style="width:${pct}%"></div></div>
@@ -7925,6 +8085,7 @@ function renderLiveActivities() {
       const optX = cx + r * Math.cos(optAngle);
       const optY = cy + r * Math.sin(optAngle);
       const pomoCount = Math.floor(elapsedMin / 25);
+      const dwStatusLabel = isPaused ? '<span class="la-paused-badge">PAUSED</span>' : '<span class="la-live-dot"></span> FOCUSED';
 
       return `<div class="live-card" data-live-id="${a.id}" data-type="deep_work">
         <div class="la-header">
@@ -7932,15 +8093,15 @@ function renderLiveActivities() {
             <div class="la-icon">${meta.icon}</div>
             <div>
               <div class="la-title">Deep Work</div>
-              <div class="la-live"><span class="la-live-dot"></span> FOCUSED</div>
+              <div class="la-live">${dwStatusLabel}</div>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:12px;">
+          <div style="display:flex;align-items:center;gap:8px;">
             <div style="text-align:right;">
-              <div class="la-timer" style="font-size:24px;letter-spacing:-1px;">${dur}</div>
+              <div class="la-timer" style="font-size:24px;letter-spacing:-1px;${timerStyle}">${dur}</div>
               <div style="font-size:9px;color:rgba(255,255,255,0.3);font-weight:600;margin-top:1px;"><span class="la-pomo-count">${pomoCount}</span> pomodoros</div>
             </div>
-            ${stopBtn}
+            ${pauseBtn}${stopBtn}
           </div>
         </div>
         <div class="la-arc-wrap">
@@ -7962,18 +8123,19 @@ function renderLiveActivities() {
     if (a.type === 'sauna') {
       const pct = meta.targetMin ? Math.min(100, Math.round(elapsedMin / meta.targetMin * 100)) : 0;
       const circumf = 2 * Math.PI * 18;
+      const saunaStatus = isPaused ? '<span class="la-paused-badge">PAUSED</span>' : '<span class="la-live-dot"></span> HEAT';
       return `<div class="live-card" data-live-id="${a.id}" data-type="sauna">
         <div class="la-header">
           <div class="la-badge">
             <div class="la-icon">${meta.icon}</div>
             <div>
               <div class="la-title">Sauna</div>
-              <div class="la-live"><span class="la-live-dot"></span> HEAT</div>
+              <div class="la-live">${saunaStatus}</div>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div class="la-timer">${dur}</div>
-            ${stopBtn}
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="la-timer" style="${timerStyle}">${dur}</div>
+            ${pauseBtn}${stopBtn}
           </div>
         </div>
         <div class="la-progress"><div class="la-progress-fill" style="width:${pct}%"></div></div>
@@ -7987,18 +8149,19 @@ function renderLiveActivities() {
     // ── Meditation: compact zen ──
     if (a.type === 'meditation') {
       const pct = meta.targetMin ? Math.min(100, Math.round(elapsedMin / meta.targetMin * 100)) : 0;
+      const medStatus = isPaused ? '<span class="la-paused-badge">PAUSED</span>' : '<span class="la-live-dot"></span> CALM';
       return `<div class="live-card" data-live-id="${a.id}" data-type="meditation">
         <div class="la-header">
           <div class="la-badge">
             <div class="la-icon">${meta.icon}</div>
             <div>
               <div class="la-title">Meditation</div>
-              <div class="la-live"><span class="la-live-dot"></span> CALM</div>
+              <div class="la-live">${medStatus}</div>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div class="la-timer">${dur}</div>
-            ${stopBtn}
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="la-timer" style="${timerStyle}">${dur}</div>
+            ${pauseBtn}${stopBtn}
           </div>
         </div>
         <div class="la-progress"><div class="la-progress-fill" style="width:${pct}%"></div></div>
@@ -8013,12 +8176,12 @@ function renderLiveActivities() {
           <div class="la-icon">${meta.icon}</div>
           <div>
             <div class="la-title">${meta.label}</div>
-            <div class="la-live"><span class="la-live-dot"></span> LIVE</div>
+            <div class="la-live">${statusLabel}</div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div class="la-timer">${dur}</div>
-          ${stopBtn}
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="la-timer" style="${timerStyle}">${dur}</div>
+          ${pauseBtn}${stopBtn}
         </div>
       </div>
       ${meta.targetMin ? `<div class="la-progress"><div class="la-progress-fill" style="width:${pct}%"></div></div>` : ''}
@@ -8067,6 +8230,9 @@ function startLiveActivityTimer() {
     const active = (ST.liveActivities || []).filter(a => !a.endedAt);
     if (active.length) {
       renderLiveActivities();
+      // If all are paused, no need for wake lock
+      const anyRunning = active.some(a => !a.pausedAt);
+      if (!anyRunning) releaseWakeLock();
     } else {
       clearInterval(liveActivityInterval);
       liveActivityInterval = null;
@@ -8925,6 +9091,15 @@ function buildTrendFullPage(key) {
 // ========================================
 //  BOOT
 // ========================================
+// Moved before bootApp to avoid TDZ — const needs to be initialized before renderWinddown runs
+const WINDDOWN_STEPS = [
+  { label: 'Blue light off', detail: 'Put on blue-light glasses or enable screen filter' },
+  { label: 'No more food', detail: 'Last meal should be 2-3h before sleep' },
+  { label: 'Phone outside bedroom', detail: 'Charge it in another room' },
+  { label: '4-7-8 breathing', detail: '4s inhale, 7s hold, 8s exhale × 3 rounds' },
+  { label: 'Dim lights / darken room', detail: 'Prepare your sleep environment' },
+];
+
 function bootApp() {
   // One-time migration: clear stale recovery lock so it recomputes with sleep-HRV logic (v30)
   if (ST._recoveryMigration !== 'v30') {
@@ -9030,8 +9205,8 @@ bootApp();
 //  SWIPE-TO-GO-BACK (Safari-style edge swipe for full-page views)
 // ========================================
 (function initFullpageSwipe() {
-  const EDGE_ZONE = 30;   // px from left edge to start swipe
-  const THRESHOLD = 80;   // px to trigger close
+  const EDGE_ZONE = 50;   // px from left edge to start swipe (wider for iOS)
+  const THRESHOLD = 70;   // px to trigger close
   let startX = 0, startY = 0, swiping = false, page = null;
 
   document.addEventListener('touchstart', (e) => {
@@ -9117,16 +9292,8 @@ if ('serviceWorker' in navigator) {
 }
 
 // ========================================
-//  WIND-DOWN SEQUENCE
+//  WIND-DOWN SEQUENCE (WINDDOWN_STEPS moved before bootApp)
 // ========================================
-const WINDDOWN_STEPS = [
-  { label: 'Blue light off', detail: 'Put on blue-light glasses or enable screen filter' },
-  { label: 'No more food', detail: 'Last meal should be 2-3h before sleep' },
-  { label: 'Phone outside bedroom', detail: 'Charge it in another room' },
-  { label: '4-7-8 breathing', detail: '4s inhale, 7s hold, 8s exhale × 3 rounds' },
-  { label: 'Dim lights / darken room', detail: 'Prepare your sleep environment' },
-];
-
 function getWinddownStartHour() {
   const sleepH = profileSleepHour();
   let adj = 0;
