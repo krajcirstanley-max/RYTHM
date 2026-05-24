@@ -1834,93 +1834,199 @@ section { padding: 0 16px; margin-bottom: 8px; }
 }
 .live-island:empty { display: none; }
 
-/* iOS Live Activity card style */
+/* ── Liquid Glass Live Activity Cards ── */
 .live-card {
-  background: #1c1c1e;
-  border-radius: 24px; padding: 16px 18px 14px;
-  animation: slideUp 0.35s cubic-bezier(.2,.7,.2,1);
-  box-shadow: 0 8px 40px rgba(0,0,0,0.7), inset 0 0.5px 0 rgba(255,255,255,0.06);
+  position: relative; overflow: hidden;
+  border-radius: 28px; padding: 20px;
+  animation: liveSlideUp 0.45s cubic-bezier(.2,.7,.2,1);
   pointer-events: auto; cursor: pointer;
+  /* Liquid glass base */
+  background: linear-gradient(135deg, rgba(40,40,44,0.72), rgba(28,28,30,0.85));
+  backdrop-filter: blur(40px) saturate(1.8);
+  -webkit-backdrop-filter: blur(40px) saturate(1.8);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 12px 48px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.3),
+              inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.2);
 }
-@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+.live-card::before {
+  content: ''; position: absolute; inset: 0; border-radius: 28px;
+  background: radial-gradient(ellipse at 30% 0%, var(--la-glow, rgba(255,255,255,0.06)) 0%, transparent 60%);
+  pointer-events: none;
+}
+@keyframes liveSlideUp { from { opacity: 0; transform: translateY(24px) scale(0.97); } to { opacity: 1; transform: none; } }
 
-.live-card-top {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 12px;
-}
-.live-card-left {
+/* Card header row */
+.la-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.la-badge {
   display: flex; align-items: center; gap: 10px;
 }
-.live-card-icon {
-  width: 36px; height: 36px; border-radius: 10px;
+.la-icon {
+  width: 40px; height: 40px; border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 18px;
+  font-size: 20px; position: relative;
+  background: var(--la-icon-bg, rgba(255,255,255,0.08));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 8px rgba(0,0,0,0.3);
 }
-.live-card-label { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.6); }
-.live-card-status {
+.la-title { font-size: 15px; font-weight: 700; color: #fff; }
+.la-live {
   display: flex; align-items: center; gap: 5px;
-  font-size: 11px; font-weight: 600; color: var(--energy); text-transform: uppercase; letter-spacing: 0.5px;
+  font-size: 10px; font-weight: 700; color: var(--la-accent, #00ec7f);
+  text-transform: uppercase; letter-spacing: 0.8px;
 }
-.live-card-dot {
+.la-live-dot {
   width: 6px; height: 6px; border-radius: 50%;
-  background: currentColor; animation: pulse-glow 2s infinite;
+  background: var(--la-accent, #00ec7f);
+  box-shadow: 0 0 8px var(--la-accent, #00ec7f);
+  animation: la-pulse 2s ease-in-out infinite;
 }
-.live-card-timer {
-  font-size: 34px; font-weight: 800; font-family: 'DM Mono', monospace;
-  color: #fff; letter-spacing: -1px; line-height: 1;
-}
-.live-card-mid {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  margin-bottom: 12px;
-}
-.live-card-meta {
-  font-size: 12px; color: rgba(255,255,255,0.4); font-weight: 500;
-}
-.live-card-stop {
-  padding: 6px 16px; border: none; border-radius: 100px;
-  background: rgba(255,84,112,0.15); color: #ff5470;
+@keyframes la-pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
+.la-stop {
+  padding: 7px 18px; border: none; border-radius: 100px;
+  background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7);
   font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+  backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.06);
+  transition: all 0.2s;
 }
-.live-card-progress {
-  height: 5px; border-radius: 3px; background: rgba(255,255,255,0.06);
-  overflow: hidden;
+.la-stop:active { background: rgba(255,84,112,0.25); color: #ff5470; transform: scale(0.95); }
+
+/* Timer — big centerpiece */
+.la-timer {
+  font-size: 48px; font-weight: 800; font-family: 'DM Mono', monospace;
+  color: #fff; letter-spacing: -2px; line-height: 1;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.4);
 }
-.live-card-progress-bar {
-  height: 100%; border-radius: 3px; transition: width 1s linear;
+
+/* Progress track */
+.la-progress {
+  height: 6px; border-radius: 3px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden; margin-top: 14px;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+}
+.la-progress-fill {
+  height: 100%; border-radius: 3px;
+  background: var(--la-accent, #00ec7f);
+  box-shadow: 0 0 10px var(--la-accent, #00ec7f);
+  transition: width 1s linear;
 }
 
-/* Activity-specific accent colors */
-.live-card[data-type="shisha"] .live-card-icon { background: rgba(231,76,60,0.15); }
-.live-card[data-type="shisha"] .live-card-status { color: #e74c3c; }
-.live-card[data-type="shisha"] .live-card-progress-bar { background: #e74c3c; }
+/* Meta row */
+.la-meta {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 10px;
+}
+.la-meta-text { font-size: 12px; color: rgba(255,255,255,0.35); font-weight: 500; }
+.la-meta-accent { color: var(--la-accent, #00ec7f); font-weight: 600; }
 
-.live-card[data-type="workout"] .live-card-icon { background: rgba(0,236,127,0.12); }
-.live-card[data-type="workout"] .live-card-status { color: var(--energy); }
-.live-card[data-type="workout"] .live-card-progress-bar { background: var(--energy); }
+/* ── Per-activity themes ── */
+/* Shisha — warm ember glow */
+.live-card[data-type="shisha"] {
+  --la-accent: #e74c3c; --la-glow: rgba(231,76,60,0.12);
+  --la-icon-bg: rgba(231,76,60,0.15);
+  background: linear-gradient(135deg, rgba(60,24,20,0.75), rgba(28,28,30,0.88));
+  border-color: rgba(231,76,60,0.12);
+}
+.live-card[data-type="shisha"]::after {
+  content: ''; position: absolute; bottom: -30px; right: -20px;
+  width: 140px; height: 140px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(231,76,60,0.08), transparent 70%);
+  pointer-events: none;
+}
 
-.live-card[data-type="sauna"] .live-card-icon { background: rgba(255,165,0,0.12); }
-.live-card[data-type="sauna"] .live-card-status { color: #ffa500; }
-.live-card[data-type="sauna"] .live-card-progress-bar { background: #ffa500; }
+/* Workout — electric green */
+.live-card[data-type="workout"] {
+  --la-accent: #00ec7f; --la-glow: rgba(0,236,127,0.1);
+  --la-icon-bg: rgba(0,236,127,0.12);
+  background: linear-gradient(135deg, rgba(10,50,35,0.75), rgba(28,28,30,0.88));
+  border-color: rgba(0,236,127,0.1);
+}
 
-.live-card[data-type="meditation"] .live-card-icon { background: rgba(147,112,219,0.12); }
-.live-card[data-type="meditation"] .live-card-status { color: #9370db; }
-.live-card[data-type="meditation"] .live-card-progress-bar { background: #9370db; }
+/* Sauna — amber heat */
+.live-card[data-type="sauna"] {
+  --la-accent: #ff8c00; --la-glow: rgba(255,140,0,0.1);
+  --la-icon-bg: rgba(255,140,0,0.12);
+  background: linear-gradient(135deg, rgba(60,40,10,0.75), rgba(28,28,30,0.88));
+  border-color: rgba(255,140,0,0.1);
+}
 
-.live-card[data-type="alcohol"] .live-card-icon { background: rgba(255,165,0,0.12); }
-.live-card[data-type="alcohol"] .live-card-status { color: #ffa500; }
-.live-card[data-type="alcohol"] .live-card-progress-bar { background: #ffa500; }
+/* Deep Work — focused blue */
+.live-card[data-type="deep_work"] {
+  --la-accent: #3b82f6; --la-glow: rgba(59,130,246,0.1);
+  --la-icon-bg: rgba(59,130,246,0.12);
+  background: linear-gradient(135deg, rgba(15,25,55,0.75), rgba(28,28,30,0.88));
+  border-color: rgba(59,130,246,0.1);
+}
 
-.live-card[data-type="deep_work"] .live-card-icon { background: rgba(59,130,246,0.12); }
-.live-card[data-type="deep_work"] .live-card-status { color: #3b82f6; }
-.live-card[data-type="deep_work"] .live-card-progress-bar { background: #3b82f6; }
+/* Meditation — soft purple */
+.live-card[data-type="meditation"] {
+  --la-accent: #a78bfa; --la-glow: rgba(167,139,250,0.1);
+  --la-icon-bg: rgba(167,139,250,0.12);
+  background: linear-gradient(135deg, rgba(40,20,60,0.75), rgba(28,28,30,0.88));
+  border-color: rgba(167,139,250,0.1);
+}
 
-.live-card[data-type="walk"] .live-card-icon { background: rgba(34,197,94,0.12); }
-.live-card[data-type="walk"] .live-card-status { color: #22c55e; }
-.live-card[data-type="walk"] .live-card-progress-bar { background: #22c55e; }
+/* Alcohol — amber warning */
+.live-card[data-type="alcohol"] {
+  --la-accent: #f59e0b; --la-glow: rgba(245,158,11,0.1);
+  --la-icon-bg: rgba(245,158,11,0.12);
+  background: linear-gradient(135deg, rgba(50,38,10,0.75), rgba(28,28,30,0.88));
+  border-color: rgba(245,158,11,0.1);
+}
 
-.live-card[data-type="sun_exposure"] .live-card-icon { background: rgba(250,204,21,0.12); }
-.live-card[data-type="sun_exposure"] .live-card-status { color: #facc15; }
-.live-card[data-type="sun_exposure"] .live-card-progress-bar { background: #facc15; }
+/* Walk — fresh green */
+.live-card[data-type="walk"] {
+  --la-accent: #22c55e; --la-glow: rgba(34,197,94,0.1);
+  --la-icon-bg: rgba(34,197,94,0.12);
+  background: linear-gradient(135deg, rgba(10,45,25,0.75), rgba(28,28,30,0.88));
+  border-color: rgba(34,197,94,0.1);
+}
+
+/* Sun Exposure — golden warm */
+.live-card[data-type="sun_exposure"] {
+  --la-accent: #facc15; --la-glow: rgba(250,204,21,0.1);
+  --la-icon-bg: rgba(250,204,21,0.12);
+  background: linear-gradient(135deg, rgba(55,48,10,0.75), rgba(28,28,30,0.88));
+  border-color: rgba(250,204,21,0.1);
+}
+
+/* Energy Caps — electric */
+.live-card[data-type="energy_caps"] {
+  --la-accent: #ffb547; --la-glow: rgba(255,181,71,0.1);
+  --la-icon-bg: rgba(255,181,71,0.12);
+  background: linear-gradient(135deg, rgba(50,36,10,0.75), rgba(28,28,30,0.88));
+  border-color: rgba(255,181,71,0.1);
+}
+
+/* Shisha-specific: ring countdown */
+.la-ring-wrap {
+  position: relative; width: 56px; height: 56px; flex-shrink: 0;
+}
+.la-ring-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.la-ring-val {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 800; color: #fff; font-family: 'DM Mono', monospace;
+}
+
+/* Workout-specific: stat chips */
+.la-stats {
+  display: flex; gap: 8px; margin-top: 12px;
+}
+.la-stat {
+  flex: 1; background: rgba(255,255,255,0.04); border-radius: 10px; padding: 8px 10px;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.la-stat-label { font-size: 9px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: rgba(255,255,255,0.3); }
+.la-stat-val { font-size: 16px; font-weight: 800; color: #fff; margin-top: 2px; }
+
+/* Deep Work: focus segments */
+.la-segments {
+  display: flex; gap: 3px; margin-top: 12px;
+}
+.la-seg {
+  flex: 1; height: 4px; border-radius: 2px;
+  background: rgba(255,255,255,0.06);
+}
+.la-seg.filled { background: var(--la-accent); box-shadow: 0 0 6px var(--la-accent); }
 
 /* ========== TRENDS / SPARKLINES ========== */
 .trend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -7421,7 +7527,7 @@ function renderLiveActivities() {
 
   const now = Date.now();
 
-  // Check if cards already exist - if so, just update timers (no flicker)
+  // Check if cards already exist — update in-place (no flicker)
   const existingIds = [...el.querySelectorAll('[data-live-id]')].map(e => e.dataset.liveId);
   const activeIds = active.map(a => a.id);
   const needsRebuild = existingIds.length !== activeIds.length || !activeIds.every(id => existingIds.includes(id));
@@ -7431,59 +7537,213 @@ function renderLiveActivities() {
       const card = el.querySelector(`[data-live-id="${a.id}"]`);
       if (!card) return;
       const elapsed = now - new Date(a.startedAt).getTime();
-      const timerEl = card.querySelector('.live-card-timer');
+      const timerEl = card.querySelector('.la-timer');
       if (timerEl) timerEl.textContent = formatDuration(elapsed);
       const meta = LIVE_ACTIVITY_META[a.type] || {};
       if (meta.targetMin) {
         const pct = Math.min(100, Math.round((elapsed / 60000) / meta.targetMin * 100));
-        const bar = card.querySelector('.live-card-progress-bar');
+        const bar = card.querySelector('.la-progress-fill');
         if (bar) bar.style.width = pct + '%';
+        // Ring countdown for shisha
+        const ringFill = card.querySelector('.la-ring-fill');
+        if (ringFill) {
+          const circumf = 2 * Math.PI * 22;
+          ringFill.setAttribute('stroke-dashoffset', String(circumf * (1 - pct / 100)));
+        }
+      }
+      // Deep work segments
+      if (a.type === 'deep_work') {
+        const mins = Math.floor(elapsed / 60000);
+        card.querySelectorAll('.la-seg').forEach((s, i) => {
+          s.classList.toggle('filled', mins >= (i + 1) * 25);
+        });
+        const pomoEl = card.querySelector('.la-pomo-count');
+        if (pomoEl) pomoEl.textContent = Math.floor(mins / 25);
       }
       // Update shisha cutoff warning
-      if (a.type === 'shisha') {
-        const warn = card.querySelector('.live-card-meta');
-        if (warn) { const w = getShishaCutoffWarning(); warn.textContent = w || ''; }
+      if (a.type === 'shisha' || a.type === 'shisha_late') {
+        const warn = card.querySelector('.la-warn');
+        if (warn) { const w = getShishaCutoffWarning(); warn.textContent = w || ''; warn.style.display = w ? '' : 'none'; }
+      }
+      // Workout elapsed stats
+      if (a.type === 'workout') {
+        const minEl = card.querySelector('.la-elapsed-min');
+        if (minEl) minEl.textContent = Math.floor(elapsed / 60000);
       }
     });
     return;
   }
 
-  // Full rebuild
+  // Full rebuild — unique layout per activity type
   el.innerHTML = active.map(a => {
     const meta = LIVE_ACTIVITY_META[a.type] || { icon: '⏱️', label: a.type };
     const elapsed = now - new Date(a.startedAt).getTime();
     const dur = formatDuration(elapsed);
     const startTime = new Date(a.startedAt);
     const startStr = String(startTime.getHours()).padStart(2,'0') + ':' + String(startTime.getMinutes()).padStart(2,'0');
+    const elapsedMin = Math.floor(elapsed / 60000);
 
-    let progressHtml = '';
-    if (meta.targetMin) {
-      const pct = Math.min(100, Math.round((elapsed / 60000) / meta.targetMin * 100));
-      progressHtml = `<div class="live-card-progress"><div class="live-card-progress-bar" style="width:${pct}%"></div></div>`;
-    }
+    const stopBtn = `<button class="la-stop" onclick="event.stopPropagation();stopLiveActivity('${a.id}')">Stop</button>`;
 
-    let metaText = `Started ${startStr}`;
-    if (a.type === 'shisha') {
+    // ── Shisha: ember card with cutoff warning ring ──
+    if (a.type === 'shisha' || a.type === 'shisha_late') {
       const w = getShishaCutoffWarning();
-      if (w) metaText = w;
+      return `<div class="live-card" data-live-id="${a.id}" data-type="${a.type}">
+        <div class="la-header">
+          <div class="la-badge">
+            <div class="la-icon">${meta.icon}</div>
+            <div>
+              <div class="la-title">${meta.label}</div>
+              <div class="la-live"><span class="la-live-dot"></span> LIVE</div>
+            </div>
+          </div>
+          ${stopBtn}
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div class="la-timer">${dur}</div>
+          <div class="la-meta-text" style="text-align:right;">Started ${startStr}</div>
+        </div>
+        ${w ? `<div class="la-warn" style="margin-top:10px;padding:8px 12px;border-radius:10px;background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.15);font-size:12px;font-weight:600;color:#e74c3c;">⚠️ ${w}</div>` : '<div class="la-warn" style="display:none;"></div>'}
+      </div>`;
     }
 
-    return `<div class="live-card" data-live-id="${a.id}" data-type="${a.type}">
-      <div class="live-card-top">
-        <div class="live-card-left">
-          <div class="live-card-icon">${meta.icon}</div>
-          <div>
-            <div class="live-card-label">${meta.label}</div>
-            <div class="live-card-status"><span class="live-card-dot"></span> LIVE</div>
+    // ── Workout: stats chips ──
+    if (a.type === 'workout') {
+      const pct = meta.targetMin ? Math.min(100, Math.round(elapsedMin / meta.targetMin * 100)) : 0;
+      return `<div class="live-card" data-live-id="${a.id}" data-type="workout">
+        <div class="la-header">
+          <div class="la-badge">
+            <div class="la-icon">${meta.icon}</div>
+            <div>
+              <div class="la-title">Workout</div>
+              <div class="la-live"><span class="la-live-dot"></span> ACTIVE</div>
+            </div>
+          </div>
+          ${stopBtn}
+        </div>
+        <div class="la-timer">${dur}</div>
+        <div class="la-stats">
+          <div class="la-stat">
+            <div class="la-stat-label">Duration</div>
+            <div class="la-stat-val"><span class="la-elapsed-min">${elapsedMin}</span><span style="font-size:11px;color:var(--text-3);"> min</span></div>
+          </div>
+          <div class="la-stat">
+            <div class="la-stat-label">Target</div>
+            <div class="la-stat-val">${meta.targetMin}<span style="font-size:11px;color:var(--text-3);"> min</span></div>
+          </div>
+          <div class="la-stat">
+            <div class="la-stat-label">Progress</div>
+            <div class="la-stat-val" style="color:var(--la-accent)">${pct}%</div>
           </div>
         </div>
-        <button class="live-card-stop" onclick="event.stopPropagation();stopLiveActivity('${a.id}')">Stop</button>
+        <div class="la-progress"><div class="la-progress-fill" style="width:${pct}%"></div></div>
+      </div>`;
+    }
+
+    // ── Deep Work: pomodoro segments ──
+    if (a.type === 'deep_work') {
+      const pomoCount = Math.floor(elapsedMin / 25);
+      const segments = [0,1,2,3,4,5].map(i =>
+        `<div class="la-seg ${elapsedMin >= (i + 1) * 25 ? 'filled' : ''}"></div>`
+      ).join('');
+      const pct = meta.targetMin ? Math.min(100, Math.round(elapsedMin / meta.targetMin * 100)) : 0;
+      return `<div class="live-card" data-live-id="${a.id}" data-type="deep_work">
+        <div class="la-header">
+          <div class="la-badge">
+            <div class="la-icon">${meta.icon}</div>
+            <div>
+              <div class="la-title">Deep Work</div>
+              <div class="la-live"><span class="la-live-dot"></span> FOCUSED</div>
+            </div>
+          </div>
+          ${stopBtn}
+        </div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;">
+          <div class="la-timer">${dur}</div>
+          <div style="text-align:right;">
+            <div style="font-size:28px;font-weight:800;color:var(--la-accent);line-height:1;" class="la-pomo-count">${pomoCount}</div>
+            <div style="font-size:9px;font-weight:600;color:rgba(255,255,255,0.3);letter-spacing:0.5px;">POMODOROS</div>
+          </div>
+        </div>
+        <div class="la-segments">${segments}</div>
+        <div class="la-progress" style="margin-top:8px;"><div class="la-progress-fill" style="width:${pct}%"></div></div>
+      </div>`;
+    }
+
+    // ── Sauna: heat timer with target ring ──
+    if (a.type === 'sauna') {
+      const pct = meta.targetMin ? Math.min(100, Math.round(elapsedMin / meta.targetMin * 100)) : 0;
+      const circumf = 2 * Math.PI * 22;
+      return `<div class="live-card" data-live-id="${a.id}" data-type="sauna">
+        <div class="la-header">
+          <div class="la-badge">
+            <div class="la-icon">${meta.icon}</div>
+            <div>
+              <div class="la-title">Sauna</div>
+              <div class="la-live"><span class="la-live-dot"></span> HEAT</div>
+            </div>
+          </div>
+          ${stopBtn}
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div class="la-timer">${dur}</div>
+          <div class="la-ring-wrap">
+            <svg viewBox="0 0 52 52">
+              <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"/>
+              <circle class="la-ring-fill" cx="26" cy="26" r="22" fill="none" stroke="var(--la-accent)" stroke-width="4"
+                stroke-dasharray="${circumf}" stroke-dashoffset="${circumf * (1 - pct / 100)}" stroke-linecap="round"/>
+            </svg>
+            <div class="la-ring-val">${pct}%</div>
+          </div>
+        </div>
+        <div class="la-meta" style="margin-top:8px;">
+          <span class="la-meta-text">Target ${meta.targetMin}min</span>
+          <span class="la-meta-text">${elapsedMin > meta.targetMin ? `<span class="la-meta-accent">+${elapsedMin - meta.targetMin}min over</span>` : `${meta.targetMin - elapsedMin}min left`}</span>
+        </div>
+      </div>`;
+    }
+
+    // ── Meditation: minimal zen card ──
+    if (a.type === 'meditation') {
+      const pct = meta.targetMin ? Math.min(100, Math.round(elapsedMin / meta.targetMin * 100)) : 0;
+      return `<div class="live-card" data-live-id="${a.id}" data-type="meditation">
+        <div class="la-header">
+          <div class="la-badge">
+            <div class="la-icon">${meta.icon}</div>
+            <div>
+              <div class="la-title">Meditation</div>
+              <div class="la-live"><span class="la-live-dot"></span> CALM</div>
+            </div>
+          </div>
+          ${stopBtn}
+        </div>
+        <div style="text-align:center;padding:8px 0;">
+          <div class="la-timer" style="font-size:56px;letter-spacing:-3px;">${dur}</div>
+          <div class="la-meta-text" style="margin-top:6px;">Breathe · ${meta.targetMin}min session</div>
+        </div>
+        <div class="la-progress"><div class="la-progress-fill" style="width:${pct}%"></div></div>
+      </div>`;
+    }
+
+    // ── Default: generic with progress ──
+    const pct = meta.targetMin ? Math.min(100, Math.round(elapsedMin / meta.targetMin * 100)) : 0;
+    return `<div class="live-card" data-live-id="${a.id}" data-type="${a.type}">
+      <div class="la-header">
+        <div class="la-badge">
+          <div class="la-icon">${meta.icon}</div>
+          <div>
+            <div class="la-title">${meta.label}</div>
+            <div class="la-live"><span class="la-live-dot"></span> LIVE</div>
+          </div>
+        </div>
+        ${stopBtn}
       </div>
-      <div class="live-card-mid">
-        <div class="live-card-timer">${dur}</div>
-        <div class="live-card-meta">${metaText}</div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;">
+        <div class="la-timer">${dur}</div>
+        <div class="la-meta-text">Started ${startStr}</div>
       </div>
-      ${progressHtml}
+      ${meta.targetMin ? `<div class="la-progress" style="margin-top:12px;"><div class="la-progress-fill" style="width:${pct}%"></div></div>
+      <div class="la-meta"><span class="la-meta-text">${elapsedMin}/${meta.targetMin} min</span><span class="la-meta-text la-meta-accent">${pct}%</span></div>` : ''}
     </div>`;
   }).join('');
 }
