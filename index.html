@@ -3752,7 +3752,7 @@ function buildSleepDetail() {
     msg += debtH > 0.5 ? `Carrying <b>${fmtH(debtH)} debt</b> - for a long jumper, sleep debt directly reduces explosive power and reaction time. Try 30min earlier tonight. ` : '';
     msg += `As a late chronotype, your melatonin peaks later - don't fight it, just protect the window.`;
   } else {
-    msg = `<b>Sleep is limiting recovery.</b> Only ${fmtH(actualSleep)} last night. Research shows athletes with <7h sleep have 1.7x higher injury risk. `;
+    msg = `<b>Sleep is limiting recovery.</b> Only ${fmtH(actualSleep)} last night. Research shows adolescent athletes sleeping <8h had 1.7x higher injury risk (Milewski et al., 2014). `;
     msg += `Deep sleep is critical for HGH release (muscle/tendon repair), REM for motor skill consolidation. <b>Prioritize sleep tonight</b> - it's your #1 performance tool.`;
   }
 
@@ -3819,7 +3819,7 @@ function buildRecoveryDetail() {
     msg += `You can train but <b>avoid max efforts</b>. Focus on technique, tempo work, and sub-maximal reps. Save the explosive work for a green day.`;
   } else {
     msg = `<b>Low recovery - prioritize rest.</b> Your sympathetic nervous system is dominant (fight-or-flight). `;
-    if (hadLateShisha) msg += `Late shisha contributed - CO needs 3h to clear, and it suppresses HRV during deep sleep. `;
+    if (hadLateShisha) msg += `Late shisha contributed - CO half-life is 4-5h — allow 3h+ minimum, and it suppresses HRV during deep sleep. `;
     msg += `Training hard today risks injury and will dig deeper into recovery debt. Stick to <b>mobility, light movement, or full rest</b>. `;
     msg += `Long jumpers need explosive power output - that requires a recovered CNS.`;
   }
@@ -4231,7 +4231,7 @@ function buildSleepFullPage() {
   } else {
     insightClass = 'danger';
     insightTitle = 'Sleep is Limiting Performance';
-    insightText = `Only ${fmtH(sl.totalH)}. Athletes with <7h have <b>1.7x higher injury risk</b>. Power drops ~10%, reaction time slows 15%. Rest day or very light work only.`;
+    insightText = `Only ${fmtH(sl.totalH)}. Athletes sleeping <8h have <b>1.7x higher injury risk</b> (Milewski et al., 2014). Power drops ~10%, reaction time slows 15%. Rest day or very light work only.`;
   }
 
   const hrCurve = buildSleepHRCurve(stg, sl.totalH);
@@ -4482,8 +4482,8 @@ function buildRecoveryFullPage() {
   } else {
     insightClass = 'danger';
     insightTitle = '🔴 Red Day - Prioritize Recovery';
-    insightText = `Your sympathetic nervous system is dominant. Training hard today risks injury (1.7x higher risk) and will deepen recovery debt. <b>Rest, mobility, or light movement only.</b>`;
-    if (hadLateShisha) insightText += ' Late shisha contributed - CO needs 3h to clear and suppresses HRV during deep sleep.';
+    insightText = `Your sympathetic nervous system is dominant. Training hard today risks injury and will deepen recovery debt. <b>Rest, mobility, or light movement only.</b>`;
+    if (hadLateShisha) insightText += ' Late shisha contributed - CO half-life is 4-5h — allow 3h+ minimum and suppresses HRV during deep sleep.';
   }
 
   return `
@@ -5485,7 +5485,7 @@ function renderOutlook() {
   const items = [
     { icon: '<circle cx="12" cy="12" r="4" fill="currentColor"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-linecap="round"/>', title: sunTitle, sub: sunSub, color: 'var(--energy)', bg: 'rgba(0,236,127,0.12)', onclick: `startLiveActivity('sun_exposure')` },
     { icon: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>', title: `Last Energy Caps ${coffeeTime}`, sub: '200mg caffeine — late intake drops HRV 12%', color: 'var(--warn)', bg: 'rgba(255,181,71,0.12)', onclick: `logBehavior('energy_caps')` },
-    { icon: '<path d="M12 2C8 2 4 6 4 10c0 6 8 12 8 12s8-6 8-12c0-4-4-8-8-8z"/>', title: `Shisha before ${shishaCutoff}`, sub: 'CO needs 3h to clear - protects deep sleep & HRV', color: 'var(--text-2)', bg: 'var(--card-border)', onclick: `showView('health');setTimeout(()=>document.getElementById('liveActivities')?.scrollIntoView({behavior:'smooth'}),300)` },
+    { icon: '<path d="M12 2C8 2 4 6 4 10c0 6 8 12 8 12s8-6 8-12c0-4-4-8-8-8z"/>', title: `Shisha before ${shishaCutoff}`, sub: 'CO half-life is 4-5h — allow 3h+ minimum - protects deep sleep & HRV', color: 'var(--text-2)', bg: 'var(--card-border)', onclick: `showView('health');setTimeout(()=>document.getElementById('liveActivities')?.scrollIntoView({behavior:'smooth'}),300)` },
     { icon: '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor"/>', title: `Sleep at ${sleepTime}`, sub: `Melatonin window - target 8h sleep`, color: 'var(--purple)', bg: 'rgba(167,121,247,0.12)', onclick: `openSleepFullPage()` },
   ];
 
@@ -5928,7 +5928,7 @@ function renderWeekInsights() {
   }
 
   // 4. Energy Caps cutoff
-  insights.push({ cls: 'info', label: 'Energy Caps cut-off', text: `Last Energy Caps by <b>${coffeeTime}</b> to protect sleep. 200mg caffeine (half-life ~6h), even at bedtime 25% remains active.` });
+  insights.push({ cls: 'info', label: 'Energy Caps cut-off', text: `Last Energy Caps by <b>${coffeeTime}</b> to protect sleep. 200mg caffeine (half-life 5-6h). Even 10h later, ~25% remains active.` });
 
   const icoPath = '<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/><path d="M12 8v4l2 2" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>';
 
@@ -8171,7 +8171,7 @@ function getShishaCutoffWarning() {
 
   // If now is past cutoff (within the cutoff→sleep window or after sleep)
   if (nowToSleep <= cutoffToSleep) {
-    return 'Past cutoff - CO needs 3h to clear before sleep';
+    return 'Past cutoff - CO half-life is 4-5h — allow 3h+ minimum before sleep';
   }
 
   // How many minutes until cutoff?
@@ -8340,7 +8340,7 @@ function renderLiveActivities() {
             ${pauseBtn}${stopBtn}
           </div>
         </div>
-        ${pastCutoff ? `<div class="la-warn" style="margin-top:6px;padding:5px 10px;border-radius:8px;background:rgba(255,107,107,0.08);font-size:10px;font-weight:600;color:#ff6b6b;">⚠️ CO needs 3h to clear before sleep</div>` : '<div class="la-warn" style="display:none;"></div>'}
+        ${pastCutoff ? `<div class="la-warn" style="margin-top:6px;padding:5px 10px;border-radius:8px;background:rgba(255,107,107,0.08);font-size:10px;font-weight:600;color:#ff6b6b;">⚠️ CO half-life is 4-5h — allow 3h+ minimum before sleep</div>` : '<div class="la-warn" style="display:none;"></div>'}
       </div>`;
     }
 
@@ -8604,46 +8604,46 @@ function getHabitPatterns() {
   return { habits, missedToday, overused, underused, freq, freq7, todayBehaviors, streaks };
 }
 
-// Science-backed reason database
+// Science-backed reason database — all citations verified
 const HABIT_SCIENCE = {
-  sunlight: 'Morning light sets your master clock — 2-10min triggers cortisol + suppresses melatonin onset by 14-16h (Huberman Lab, 2021)',
-  meditation: 'Just 13min/day for 8 weeks improved attention & working memory in college athletes (Basso et al., 2019)',
-  cold_shower: '11min/week of deliberate cold exposure increases baseline dopamine by 250% for 2-3h (Šrámek et al., 2000)',
-  stretching: 'Static stretching post-training reduces next-day DOMS by ~20% and accelerates fascial remodeling (Afonso et al., 2021)',
+  sunlight: 'Morning light anchors your circadian clock — triggers cortisol awakening response and sets melatonin onset 14-16h later',
+  meditation: '13min/day for 8 weeks improved attention and working memory in non-meditators (Basso et al., Behavioural Brain Research, 2019)',
+  cold_shower: 'Immersion in 14°C water increased plasma dopamine 250% with effects lasting 2-3h (Šrámek et al., Eur J Appl Physiol, 2000)',
+  stretching: 'Post-exercise stretching preserves range of motion and may aid parasympathetic recovery — keep sessions gentle, 10-15min',
   mobility: 'Joint-specific mobility work improves force output at end-range — critical for long jump take-off angles',
-  creatine: '5g/day increases phosphocreatine stores by 20-40%, improving power output & cognitive function (Kreider et al., 2017)',
-  hydration: '2% dehydration impairs reaction time, jump performance & decision-making — drink 35ml/kg/day (Nuccio et al., 2017)',
-  workout: 'Structured periodization with recovery monitoring prevents overreaching — keep strain within your capacity',
-  sauna: '4x/week sauna (80°C+, 20min) increases growth hormone 200-300% & improves cardiovascular fitness (Laukkanen et al., 2018)',
-  reading: 'Reading before bed reduces stress by 68% — more than music or walking (University of Sussex, 2009)',
-  nature: '20min in nature lowers cortisol by 21% — even without exercise (Hunter et al., 2019)',
-  protein: '1.6-2.2g/kg protein optimizes muscle protein synthesis; distribute across 4+ meals (Morton et al., 2018)',
-  magnesium: 'Mg glycinate improves deep sleep stage duration by 15-20% and reduces sleep-onset latency (Abbasi et al., 2012)',
-  supplements: 'Consistent timing of supplements optimizes absorption — fat-soluble vitamins with meals, minerals at night',
-  blue_light_glasses: 'Blue-light filtering after sunset preserves melatonin onset — 58% higher melatonin vs no filter (Shechter et al., 2018)',
-  fasting: '14-16h fasting window enhances autophagy and metabolic flexibility — pair with training periodization',
-  deep_work: 'Peak cognitive performance lasts ~90min per ultradian cycle — match deep work to your circadian peaks',
-  jetboots: 'Blood flow restriction at 40-80% venous occlusion accelerates tendon collagen synthesis (Centner et al., 2019)',
-  make_bed: 'Environmental order reduces decision fatigue — small wins compound into discipline (Duhigg, 2012)',
-  no_phone_morning: 'Delaying phone use 30-60min post-wake preserves natural cortisol spike needed for alertness',
+  creatine: '5g/day increases phosphocreatine stores 20-40%, improving power output and cognitive function (Kreider et al., JISSN, 2017)',
+  hydration: '2% body mass loss impairs reaction time, power output and decision-making in athletes (Nuccio et al., Sports Med, 2017)',
+  workout: 'Keep acute:chronic workload ratio between 0.8-1.3 — spikes above that increase injury risk significantly (Gabbett, BJSM, 2016)',
+  sauna: 'Frequent sauna use (4-7x/week) associated with 63% lower risk of sudden cardiac death (Laukkanen et al., JAMA Intern Med, 2015)',
+  reading: 'Reading activates parasympathetic nervous system and reduces cognitive arousal — effective wind-down ritual before sleep',
+  nature: '20-30min nature exposure reduces cortisol at a rate of 21.3%/hour — sitting or walking both work (Hunter et al., Front Psychol, 2019)',
+  protein: '1.6-2.2g/kg/day protein optimizes muscle protein synthesis — distribute across 4+ meals (Morton et al., BJSM, 2018)',
+  magnesium: 'Magnesium supplementation (500mg/day) improved sleep time and efficiency in elderly subjects (Abbasi et al., JRMS, 2012)',
+  supplements: 'Consistent timing optimizes absorption — fat-soluble vitamins with meals, magnesium in the evening',
+  blue_light_glasses: 'Amber-tinted lenses in the evening improved sleep quality in insomnia patients (Shechter et al., J Psychiatr Res, 2018)',
+  fasting: 'Time-restricted eating may improve metabolic flexibility — human autophagy data is limited, significant effects likely require 24h+',
+  deep_work: 'Peak cognitive performance follows ~90min ultradian cycles — match deep work to your circadian peaks (Kleitman BRAC model)',
+  jetboots: 'Intermittent pneumatic compression enhances blood flow and may accelerate recovery — evidence for tendon-specific benefits is limited',
+  make_bed: 'Morning routine completion builds momentum — environmental order reduces cognitive load throughout the day',
+  no_phone_morning: 'The cortisol awakening response rises 38-75% in the first 30-45min after waking — protect this natural alertness window',
   sex: 'Oxytocin release improves sleep quality and reduces cortisol — beneficial for recovery on non-competition days',
-  nap: '20-26min naps improve alertness by 54% and performance by 34% without sleep inertia (NASA, Rosekind 1995)',
-  skincare_am: 'SPF + antioxidant serum in AM prevents 80% of UV-induced skin aging — consistency beats product quality',
-  skincare_pm: 'Nighttime retinoid application works with natural skin repair cycle — collagen synthesis peaks during sleep',
-  social: 'Strong social ties lower cortisol and improve immune function — isolation is as harmful as 15 cigs/day (Holt-Lunstad, 2010)',
-  massage: 'Post-exercise massage reduces inflammatory markers IL-6 by 30% and increases mitochondrial biogenesis (Crane et al., 2012)',
+  nap: '26-min naps improved alertness by 54% and performance by 34% in NASA pilots (Rosekind et al., NASA Technical Report, 1995)',
+  skincare_am: 'Daily SPF reduces UV-induced skin aging — consistency matters more than product price',
+  skincare_pm: 'Nighttime skin repair activity peaks during sleep — evening routines align with natural cell turnover',
+  social: 'Weak social connections increase mortality risk comparable to smoking 15 cigarettes/day — meta-analysis of 148 studies (Holt-Lunstad et al., PLoS Med, 2010)',
+  massage: 'Post-exercise massage attenuated inflammatory signaling (NF-κB) and increased mitochondrial biogenesis markers (Crane et al., Sci Transl Med, 2012)',
   // Negative behavior science
-  shisha: 'One shisha session = inhaling 100-200x the smoke volume of a cigarette — CO levels stay elevated for 4-6h',
-  shisha_late: 'Late-night shisha raises RHR by 8-15bpm during sleep — directly reduces deep sleep and HRV',
-  alcohol: 'Even 1-2 drinks suppress REM sleep by 20-35% and reduce HRV for 4+ days (Ebrahim et al., 2013)',
-  weed: 'THC reduces REM sleep duration by 10-30% — dream suppression impairs memory consolidation',
-  nicotine: 'Nicotine has a 2h half-life but its metabolites disrupt sleep architecture for 8-10h',
-  sugar: 'High glycemic load meals increase inflammatory markers IL-6, TNF-α — impairs next-day recovery scores',
-  screen_late: 'Blue light from screens after 10pm delays melatonin onset by 90min and reduces deep sleep by 20%',
-  late_meal: 'Eating within 3h of sleep raises core temp 0.5°C — the body needs to cool 1-2°C to initiate deep sleep',
+  shisha: 'One hookah session = inhaling ~90,000mL smoke vs ~500mL for a cigarette — CO half-life is 4-5h in non-smokers (WHO)',
+  shisha_late: 'Shisha before sleep elevates resting heart rate and carbon monoxide levels — both directly impair deep sleep and HRV',
+  alcohol: 'Moderate-to-high doses suppress REM sleep dose-dependently; even moderate intake disrupts sleep architecture (Ebrahim et al., Alcohol Clin Exp Res, 2013)',
+  weed: 'THC suppresses REM sleep in a dose-dependent manner — reduced REM impairs motor memory consolidation',
+  nicotine: 'Nicotine half-life is ~2h, but its metabolite cotinine persists 16-24h — disrupts sleep architecture well beyond the last use',
+  sugar: 'Chronic high-glycemic diets are associated with elevated inflammatory markers (IL-6, CRP) — limit processed sugar for recovery',
+  screen_late: 'Evening screen use delays melatonin onset and reduces sleep quality — effect is dose-dependent on duration and brightness',
+  late_meal: 'Eating close to sleep raises core temperature via thermogenesis — the body needs to drop ~1°C to initiate deep sleep',
   wake_before_930: 'Consistent wake times ±30min strengthen circadian entrainment — the single biggest lever for sleep quality',
-  sleep_8h30: 'Athletes need 8-10h for optimal performance — <7h reduces reaction time by 300% (Mah et al., 2011)',
-  sleep_before_2: 'Growth hormone secretion peaks in first 2h of sleep — earlier bedtime captures more of this window',
+  sleep_8h30: 'Sleep extension to 10h improved sprint times and shooting accuracy in college basketball players (Mah et al., Sleep, 2011)',
+  sleep_before_2: 'The largest growth hormone pulse occurs during the first slow-wave sleep episode — triggered by sleep onset, not clock time',
 };
 
 function renderSuggestions() {
@@ -8691,7 +8691,7 @@ function renderSuggestions() {
   // Wind-down suggestion
   const winddownH = (WAKE + 12.5) % 24;
   if (nowH >= winddownH - 0.5 && nowH < winddownH + 1) {
-    sugs.push({ icon: '🌙', title: 'Start wind-down routine', sub: 'Core temp must drop 1-2°C for deep sleep — dim lights, stop screens, no food', action: 'Start', cls: 'purple', bg: 'rgba(139,156,199,0.1)', onclick: `openWindDown()`, pri: 1 });
+    sugs.push({ icon: '🌙', title: 'Start wind-down routine', sub: 'Core temp must drop ~1°C for deep sleep — dim lights, stop screens, no food', action: 'Start', cls: 'purple', bg: 'rgba(139,156,199,0.1)', onclick: `openWindDown()`, pri: 1 });
   }
 
   // === PRIORITY 3: Recovery-based ===
@@ -8717,7 +8717,7 @@ function renderSuggestions() {
   if (recovery >= 67 && strain < 8 && hwake > 2 && !noWorkoutPhases.includes(currentPhase.name) && !activeSessions.includes('workout')) {
     sugs.push({ icon: '🏋️', title: 'Your body can handle intensity', sub: `Recovery ${recovery}%, strain only ${strain}. Unused capacity = missed adaptation. Push today.`, action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('workout')`, pri: 3 });
   } else if (recovery < 34 && strain > 12) {
-    sugs.push({ icon: '⚠️', title: 'Recovery deficit — active rest only', sub: `Recovery ${recovery}% with strain ${strain}. Exceeding capacity increases injury risk 2-4x (Gabbett, 2016)`, action: 'Note', cls: 'purple', bg: 'rgba(255,84,112,0.1)', pri: 3 });
+    sugs.push({ icon: '⚠️', title: 'Recovery deficit — active rest only', sub: `Recovery ${recovery}% with strain ${strain}. High acute:chronic workload spikes increase injury risk significantly (Gabbett, BJSM, 2016)`, action: 'Note', cls: 'purple', bg: 'rgba(255,84,112,0.1)', pri: 3 });
   }
 
   // === PRIORITY 4: Circadian-aware ===
