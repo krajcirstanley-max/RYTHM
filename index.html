@@ -1824,6 +1824,79 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .dc-consistency-label { font-size: 9px; font-weight: 800; letter-spacing: 1px; color: var(--text-4); text-transform: uppercase; }
 .dc-consistency-val { font-size: 13px; font-weight: 700; font-family: 'DM Mono', monospace; }
 
+/* Coach Tab */
+.coach-section {
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: var(--radius); padding: 16px 18px; margin-bottom: 6px;
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+}
+.coach-section-label {
+  font-size: 10px; font-weight: 800; letter-spacing: 2px;
+  color: var(--text-4); text-transform: uppercase; margin-bottom: 12px;
+}
+.coach-training-badge {
+  display: inline-block; padding: 4px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+}
+.coach-protocol-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.coach-protocol-item:last-child { border-bottom: none; }
+.coach-protocol-icon { font-size: 18px; flex-shrink: 0; width: 28px; text-align: center; }
+.coach-protocol-text { font-size: 12px; color: var(--text-2); line-height: 1.4; }
+.coach-protocol-name { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 2px; }
+.coach-recovery-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+.coach-recovery-item {
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px; padding: 12px; cursor: pointer;
+  transition: border-color 0.2s;
+}
+.coach-recovery-item:active { border-color: rgba(255,255,255,0.15); }
+.coach-recovery-item .cr-icon { font-size: 20px; margin-bottom: 6px; }
+.coach-recovery-item .cr-name { font-size: 12px; font-weight: 600; color: #fff; }
+.coach-recovery-item .cr-reason { font-size: 10px; color: var(--text-3); margin-top: 3px; line-height: 1.3; }
+.coach-recovery-item .cr-action {
+  display: inline-block; margin-top: 6px; font-size: 10px; font-weight: 700;
+  color: var(--energy); letter-spacing: 0.5px; text-transform: uppercase;
+}
+.coach-selfcare-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.coach-selfcare-row:last-child { border-bottom: none; }
+.coach-selfcare-icon { font-size: 18px; width: 28px; text-align: center; flex-shrink: 0; }
+.coach-selfcare-info { flex: 1; }
+.coach-selfcare-name { font-size: 13px; font-weight: 600; color: #fff; }
+.coach-selfcare-sub { font-size: 11px; color: var(--text-3); }
+.coach-selfcare-status {
+  font-size: 10px; font-weight: 700; padding: 3px 8px;
+  border-radius: 10px; letter-spacing: 0.5px;
+}
+.coach-selfcare-status.done { background: rgba(48,217,138,0.12); color: var(--energy); }
+.coach-selfcare-status.due { background: rgba(255,181,71,0.12); color: var(--warn); }
+.coach-selfcare-status.overdue { background: rgba(255,84,112,0.12); color: var(--danger); }
+.coach-habit-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.coach-habit-row:last-child { border-bottom: none; }
+.coach-habit-icon { font-size: 14px; width: 22px; text-align: center; }
+.coach-habit-name { font-size: 12px; color: var(--text-2); flex: 1; }
+.coach-habit-streak { font-size: 11px; font-weight: 700; font-family: 'DM Mono', monospace; }
+.coach-habit-check { font-size: 14px; width: 22px; text-align: center; }
+.coach-week-link {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px; padding: 12px 20px; color: var(--text-2);
+  font-size: 12px; font-weight: 600; cursor: pointer; width: 100%;
+  font-family: inherit; transition: background 0.2s;
+}
+.coach-week-link:active { background: rgba(255,255,255,0.08); }
+
 /* Weekly Scorecard */
 .wk-score {
   background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
@@ -2964,7 +3037,33 @@ section { padding: 0 16px; margin-bottom: 8px; }
   </div>
 
   <!-- ============ JOURNAL ============ -->
+  <!-- ============ COACH ============ -->
   <div class="view" id="view-coach">
+    <section>
+      <div id="coachTraining"></div>
+    </section>
+    <section>
+      <div id="coachRecoveryStack"></div>
+    </section>
+    <section>
+      <div id="coachSelfCare"></div>
+    </section>
+    <section>
+      <div id="coachAccountability"></div>
+    </section>
+    <section>
+      <div id="coachWeekGrade"></div>
+    </section>
+    <section>
+      <div id="coachPotential"></div>
+    </section>
+    <section style="text-align:center;padding:8px 0 0;">
+      <button class="coach-week-link" onclick="showView('week')">View Full Week Analytics</button>
+    </section>
+  </div>
+
+  <!-- ============ JOURNAL ============ -->
+  <div class="view" id="view-journal">
     <section>
       <div class="journal-context" id="journalContext"></div>
     </section>
@@ -3199,11 +3298,11 @@ section { padding: 0 16px; margin-bottom: 8px; }
     <span class="nav-label">Health</span>
   </button>
   <div class="nav-center" onclick="openLog()">+</div>
-  <button class="nav-btn" data-view="week">
-    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 8-8"/><path d="M14 8h7v7"/></svg>
-    <span class="nav-label">Week</span>
-  </button>
   <button class="nav-btn" data-view="coach">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    <span class="nav-label">Coach</span>
+  </button>
+  <button class="nav-btn" data-view="journal">
     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span class="nav-label">Journal</span>
   </button>
@@ -7571,6 +7670,408 @@ function renderDailyCoach() {
 }
 
 // ========================================
+//  COACH VIEW (Coach tab)
+// ========================================
+function renderCoachView() {
+  renderCoachTraining();
+  renderCoachRecoveryStack();
+  renderCoachSelfCare();
+  renderCoachAccountability();
+  renderCoachWeekGrade();
+  renderCoachPotential();
+}
+
+function renderCoachTraining() {
+  const el = document.getElementById('coachTraining');
+  if (!el) return;
+
+  const recovery = computeReadiness();
+  const strain = computeStrain();
+  const tl = computeTrainingLoad();
+  const m = ST.metrics || {};
+  const sl = ST.sleep || {};
+  const hrvBase = m.hrvBaseline || 42;
+  const hrvPct = m.hrv ? Math.round(((m.hrv / hrvBase) - 1) * 100) : 0;
+
+  // Zone classification
+  let zone, zoneColor, zoneBg, protocols;
+  if (recovery >= 80) {
+    zone = 'GREEN';
+    zoneColor = 'var(--energy)';
+    zoneBg = 'rgba(48,217,138,0.1)';
+    protocols = [
+      { icon: '🏃', name: 'Max Effort Sprints', detail: 'Full approach runs, competition-pace takeoffs. CNS is primed.' },
+      { icon: '💪', name: 'Heavy Plyometrics', detail: 'Depth jumps, bounding, reactive drills. Full ground contact forces.' },
+      { icon: '🏋️', name: 'Strength (85%+ 1RM)', detail: 'Squats, cleans, RDLs. High load, low rep. Chase PRs today.' },
+    ];
+  } else if (recovery >= 67) {
+    zone = 'YELLOW';
+    zoneColor = 'var(--warn)';
+    zoneBg = 'rgba(255,181,71,0.1)';
+    protocols = [
+      { icon: '🎯', name: 'Technique Drills', detail: 'Short approach jumps at 70-80%. Focus on board accuracy and flight positions.' },
+      { icon: '🏋️', name: 'Moderate Strength (65-80%)', detail: 'Volume work, tempo sets. Build without draining.' },
+      { icon: '🤸', name: 'Mobility + Activation', detail: 'Hip flexor openers, ankle ROM, glute activation circuits.' },
+    ];
+  } else if (recovery >= 50) {
+    zone = 'ORANGE';
+    zoneColor = '#ff8c42';
+    zoneBg = 'rgba(255,140,66,0.1)';
+    protocols = [
+      { icon: '🧘‍♂️', name: 'Mobility Only', detail: 'Dynamic stretching, foam roll, joint circles. No load.' },
+      { icon: '📹', name: 'Film Review', detail: 'Analyze recent jumps. Cognitive work without physical stress.' },
+      { icon: '🚶', name: 'Zone 1 Walk', detail: '20-30 min easy walk. Parasympathetic activation, blood flow.' },
+    ];
+  } else {
+    zone = 'RED';
+    zoneColor = 'var(--danger)';
+    zoneBg = 'rgba(255,84,112,0.1)';
+    protocols = [
+      { icon: '🛌', name: 'Full Rest Day', detail: 'Sleep is your training today. Aim for 9+ hours tonight.' },
+      { icon: '🧊', name: 'Gentle Recovery', detail: 'Light walk, infrapanel on joints, massage gun on calves/quads.' },
+      { icon: '🍽️', name: 'Nutrition Focus', detail: 'Hit protein targets (107g+), hydrate 3L+, anti-inflammatory foods.' },
+    ];
+  }
+
+  const acrStatus = tl.acr >= 0.8 && tl.acr <= 1.3 ? 'optimal' : tl.acr > 1.5 ? 'danger zone' : tl.acr < 0.8 ? 'detraining risk' : 'elevated';
+  const acrColor = tl.acr >= 0.8 && tl.acr <= 1.3 ? 'var(--energy)' : tl.acr > 1.5 ? 'var(--danger)' : 'var(--warn)';
+
+  el.innerHTML = `
+    <div class="coach-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div class="coach-section-label" style="margin-bottom:0;">TRAINING PROTOCOL</div>
+        <div class="coach-training-badge" style="background:${zoneBg};color:${zoneColor}">${zone} ZONE</div>
+      </div>
+      <div style="display:flex;gap:16px;margin-bottom:14px;">
+        <div style="text-align:center;flex:1;">
+          <div style="font-size:24px;font-weight:800;color:${zoneColor};font-family:'DM Mono',monospace;">${recovery}%</div>
+          <div style="font-size:9px;color:var(--text-4);font-weight:700;letter-spacing:1px;">RECOVERY</div>
+        </div>
+        <div style="text-align:center;flex:1;">
+          <div style="font-size:24px;font-weight:800;color:var(--text-2);font-family:'DM Mono',monospace;">${strain}</div>
+          <div style="font-size:9px;color:var(--text-4);font-weight:700;letter-spacing:1px;">STRAIN</div>
+        </div>
+        <div style="text-align:center;flex:1;">
+          <div style="font-size:24px;font-weight:800;color:${acrColor};font-family:'DM Mono',monospace;">${tl.acr}x</div>
+          <div style="font-size:9px;color:var(--text-4);font-weight:700;letter-spacing:1px;">ACR</div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:${acrColor};text-align:center;margin-bottom:12px;font-weight:600;">
+        Training load: ${acrStatus}${hrvPct !== 0 ? ' · HRV ' + (hrvPct > 0 ? '+' : '') + hrvPct + '%' : ''}
+      </div>
+      ${protocols.map(p => `
+        <div class="coach-protocol-item">
+          <div class="coach-protocol-icon">${p.icon}</div>
+          <div>
+            <div class="coach-protocol-name">${p.name}</div>
+            <div class="coach-protocol-text">${p.detail}</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function renderCoachRecoveryStack() {
+  const el = document.getElementById('coachRecoveryStack');
+  if (!el) return;
+
+  const recovery = computeReadiness();
+  const strain = computeStrain();
+  const tl = computeTrainingLoad();
+  const today = new Date().toISOString().slice(0, 10);
+  const todayLogs = (ST.logs || []).filter(l => l.date === today);
+  const todayTags = todayLogs.map(l => l.tag);
+
+  // Build prioritized recovery recommendations
+  const modalities = [];
+
+  // High strain = prioritize inflammation reduction
+  if (strain > 12 || recovery < 50) {
+    if (!todayTags.includes('massage_gun'))
+      modalities.push({ icon: '🔫', id: 'massage_gun', name: 'Massage Gun', reason: 'Reduce DOMS, increase blood flow to loaded muscles', priority: 1 });
+    if (!todayTags.includes('infrapanel'))
+      modalities.push({ icon: '🔴', id: 'infrapanel', name: 'Infrapanel', reason: 'NIR therapy for tendons -- patellar + Achilles', priority: 1 });
+  }
+
+  // Always recommend foam roll post-training
+  if (!todayTags.includes('foam_roll'))
+    modalities.push({ icon: '🧱', id: 'foam_roll', name: 'Foam Roll', reason: 'ROM without power loss, target hip flexors + IT band', priority: strain > 8 ? 1 : 2 });
+
+  // Cold only on rest days or 4h+ post-training
+  const lastWorkout = (ST._workouts || []).filter(w => w.date === today);
+  const restDay = !lastWorkout.length;
+  if (!todayTags.includes('cold_shower')) {
+    if (restDay || recovery < 60)
+      modalities.push({ icon: '🧊', id: 'cold_shower', name: 'Cold Immersion', reason: restDay ? 'Rest day -- no mTOR blunting risk' : 'Low recovery -- prioritize inflammation reduction', priority: 2 });
+    else
+      modalities.push({ icon: '🧊', id: 'cold_shower', name: 'Cold Immersion', reason: 'Wait 4h+ post-strength to avoid blunting adaptation', priority: 3 });
+  }
+
+  if (!todayTags.includes('jetboots'))
+    modalities.push({ icon: '🦶', id: 'jetboots', name: 'Jetboots Pro+', reason: 'Metabolite clearance, parasympathetic activation', priority: 2 });
+
+  if (!todayTags.includes('powerdot'))
+    modalities.push({ icon: '⚡', id: 'powerdot', name: 'PowerDot EMS', reason: recovery >= 67 ? 'Pre-activation mode for PAP effect' : 'Recovery mode -- blood flow + clearance', priority: recovery >= 67 ? 3 : 2 });
+
+  if (!todayTags.includes('sauna'))
+    modalities.push({ icon: '🧖', id: 'sauna', name: 'Sauna', reason: 'GH surge + HSP70. Best 3h+ post-training or rest days', priority: 3 });
+
+  // Sort by priority
+  modalities.sort((a, b) => a.priority - b.priority);
+  const doneCount = ['massage_gun', 'infrapanel', 'foam_roll', 'cold_shower', 'jetboots', 'powerdot', 'sauna', 'massage'].filter(id => todayTags.includes(id)).length;
+
+  el.innerHTML = `
+    <div class="coach-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div class="coach-section-label" style="margin-bottom:0;">RECOVERY STACK</div>
+        <div style="font-size:11px;color:var(--text-3);font-family:'DM Mono',monospace;">${doneCount} done today</div>
+      </div>
+      ${modalities.length ? `<div class="coach-recovery-grid">
+        ${modalities.map(m => `
+          <div class="coach-recovery-item" onclick="startLiveActivity('${m.id}')">
+            <div class="cr-icon">${m.icon}</div>
+            <div class="cr-name">${m.name}</div>
+            <div class="cr-reason">${m.reason}</div>
+            <div class="cr-action">Start</div>
+          </div>`).join('')}
+      </div>` : '<div style="text-align:center;padding:16px;color:var(--energy);font-size:13px;font-weight:600;">All recovery modalities done today</div>'}
+    </div>`;
+}
+
+function renderCoachSelfCare() {
+  const el = document.getElementById('coachSelfCare');
+  if (!el) return;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const todayLogs = (ST.logs || []).filter(l => l.date === today);
+  const todayTags = todayLogs.map(l => l.tag);
+  const now = new Date();
+  const WAKE = profileWakeHour();
+  const hwake = ((now.getHours() + now.getMinutes() / 60) - WAKE + 24) % 24;
+
+  // Barber tracking
+  const lastBarberLog = (ST.logs || []).filter(l => l.tag === 'barber').sort((a,b) => b.date.localeCompare(a.date))[0];
+  const barberDays = lastBarberLog ? Math.floor((Date.now() - new Date(lastBarberLog.date + 'T12:00:00').getTime()) / 86400000) : 999;
+  const barberStatus = barberDays >= 23 ? 'overdue' : barberDays >= 20 ? 'due' : 'done';
+  const barberText = barberDays >= 999 ? 'Never logged' : barberDays >= 23 ? barberDays + 'd ago -- book now' : (23 - barberDays) + ' days until next';
+
+  // Skincare tracking
+  const skAm = todayTags.includes('skincare_am');
+  const skPm = todayTags.includes('skincare_pm');
+  const skAmStatus = skAm ? 'done' : hwake > 3 ? 'overdue' : hwake > 0.5 ? 'due' : 'done';
+  const skPmStatus = skPm ? 'done' : hwake > 14 ? 'overdue' : hwake > 12 ? 'due' : 'done';
+
+  const items = [
+    { icon: '💈', name: 'Barber', sub: barberText, status: barberStatus, statusLabel: barberStatus === 'overdue' ? 'OVERDUE' : barberStatus === 'due' ? 'SOON' : barberDays + 'd', onclick: `logBehavior('barber')` },
+    { icon: '🧴', name: 'Morning Skincare', sub: 'SPF + moisturizer', status: skAmStatus, statusLabel: skAm ? 'DONE' : 'TODO', onclick: `logBehavior('skincare_am')` },
+    { icon: '✨', name: 'Evening Skincare', sub: 'Cleanse + moisturize', status: skPmStatus, statusLabel: skPm ? 'DONE' : hwake > 12 ? 'TODO' : '--', onclick: `logBehavior('skincare_pm')` },
+  ];
+
+  el.innerHTML = `
+    <div class="coach-section">
+      <div class="coach-section-label">SELF-CARE</div>
+      ${items.map(i => `
+        <div class="coach-selfcare-row" onclick="${i.onclick}">
+          <div class="coach-selfcare-icon">${i.icon}</div>
+          <div class="coach-selfcare-info">
+            <div class="coach-selfcare-name">${i.name}</div>
+            <div class="coach-selfcare-sub">${i.sub}</div>
+          </div>
+          <div class="coach-selfcare-status ${i.status}">${i.statusLabel}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function renderCoachAccountability() {
+  const el = document.getElementById('coachAccountability');
+  if (!el) return;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const todayLogs = (ST.logs || []).filter(l => l.date === today);
+  const todayTags = todayLogs.map(l => l.tag);
+  const todayEntry = (ST.journal || []).find(j => j.date === today);
+  const todayBehaviors = todayEntry ? (todayEntry.behaviors || []) : [];
+
+  // Key daily habits from Life Hub
+  const habits = [
+    { id: 'wake_before_930', icon: '⏰', name: 'Wake < 9:30' },
+    { id: 'cold_shower', icon: '🧊', name: 'Cold Shower' },
+    { id: 'mobility', icon: '🤸', name: 'Mobility' },
+    { id: 'no_phone_morning', icon: '🚫', name: 'No Phone 30m' },
+    { id: 'supplements', icon: '💊', name: 'Supplements' },
+    { id: 'creatine', icon: '🧪', name: 'Creatine' },
+    { id: 'hydration', icon: '💧', name: 'Hydration' },
+    { id: 'make_bed', icon: '🛏️', name: 'Make the Bed' },
+    { id: 'skincare_am', icon: '🧴', name: 'AM Skincare' },
+    { id: 'blue_light_glasses', icon: '👓', name: 'Blue Light Glasses' },
+    { id: 'deep_work', icon: '🎯', name: 'Deep Work 1.5h+' },
+    { id: 'linkedin_30', icon: '💼', name: '30m LinkedIn' },
+    { id: 'skincare_pm', icon: '✨', name: 'PM Skincare' },
+    { id: 'magnesium', icon: '💊', name: 'Magnesium' },
+  ];
+
+  // Calculate streaks from journal history
+  const sorted = [...(ST.journal || [])].sort((a,b) => b.date.localeCompare(a.date));
+
+  const habitRows = habits.map(h => {
+    const done = todayTags.includes(h.id) || todayBehaviors.includes(h.id);
+    // Count streak
+    let streak = done ? 1 : 0;
+    for (let i = 0; i < sorted.length; i++) {
+      const j = sorted[i];
+      if (j.date === today) continue;
+      if ((j.behaviors || []).includes(h.id)) streak++;
+      else break;
+    }
+    return { ...h, done, streak };
+  });
+
+  const doneCount = habitRows.filter(h => h.done).length;
+  const pct = Math.round((doneCount / habits.length) * 100);
+  const pctColor = pct >= 80 ? 'var(--energy)' : pct >= 50 ? 'var(--warn)' : 'var(--danger)';
+
+  el.innerHTML = `
+    <div class="coach-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div class="coach-section-label" style="margin-bottom:0;">DAILY HABITS</div>
+        <div style="font-size:13px;font-weight:700;color:${pctColor};font-family:'DM Mono',monospace;">${doneCount}/${habits.length} (${pct}%)</div>
+      </div>
+      ${habitRows.map(h => `
+        <div class="coach-habit-row" onclick="logBehavior('${h.id}')" style="cursor:pointer;">
+          <div class="coach-habit-icon">${h.icon}</div>
+          <div class="coach-habit-name">${h.name}</div>
+          ${h.streak > 1 ? `<div class="coach-habit-streak" style="color:var(--warn);">${h.streak}d</div>` : ''}
+          <div class="coach-habit-check">${h.done ? '<span style="color:var(--energy);">&#10003;</span>' : '<span style="color:var(--text-4);">&#9675;</span>'}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function renderCoachWeekGrade() {
+  const el = document.getElementById('coachWeekGrade');
+  if (!el) return;
+
+  // Reuse weekly scorecard logic
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  const dow = now.getDay();
+  const monOffset = (dow + 6) % 7;
+  const weekDates = [];
+  for (let i = 0; i <= monOffset; i++) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - monOffset + i);
+    weekDates.push(d.toISOString().slice(0, 10));
+  }
+
+  const sleepTarget = ST.health?.sleepTarget || 8;
+  const history = ST._history || {};
+  const sleepHist = history.sleep || [];
+  const hrvHist = history.hrv || [];
+
+  // Sleep score (30%)
+  const weekSleep = weekDates.map(d => (sleepHist.find(h => h.d === d) || {}).value).filter(v => v != null);
+  const avgSleep = weekSleep.length ? weekSleep.reduce((s,v) => s+v, 0) / weekSleep.length : 0;
+  const sleepScore = Math.min(100, Math.round((avgSleep / sleepTarget) * 100));
+
+  // Recovery score (25%)
+  const weekReadiness = weekDates.map(d => (ST._dailyReadiness || {})[d]).filter(v => v != null);
+  const avgRecovery = weekReadiness.length ? weekReadiness.reduce((s,v) => s+v, 0) / weekReadiness.length : 50;
+
+  // Training score (20%)
+  const weekWorkouts = (ST._workouts || []).filter(w => weekDates.includes(w.date));
+  const trainingScore = Math.min(100, Math.round((weekWorkouts.length / Math.max(1, monOffset + 1)) * 100 * 1.5));
+
+  // Habits score (15%)
+  const weekJournals = (ST.journal || []).filter(j => weekDates.includes(j.date));
+  const habitsScore = Math.min(100, Math.round((weekJournals.length / Math.max(1, monOffset + 1)) * 100));
+
+  // HRV trend (10%)
+  const weekHrv = weekDates.map(d => (hrvHist.find(h => h.d === d) || {}).value).filter(v => v != null);
+  const hrvTrend = weekHrv.length >= 2 ? (weekHrv[weekHrv.length-1] - weekHrv[0]) : 0;
+  const hrvScore = hrvTrend >= 5 ? 100 : hrvTrend >= 0 ? 70 : hrvTrend >= -5 ? 40 : 20;
+
+  const weighted = Math.round(sleepScore * 0.3 + avgRecovery * 0.25 + trainingScore * 0.2 + habitsScore * 0.15 + hrvScore * 0.1);
+  const grade = weighted >= 90 ? 'A' : weighted >= 80 ? 'B' : weighted >= 65 ? 'C' : weighted >= 50 ? 'D' : 'F';
+  const gradeColor = weighted >= 80 ? 'var(--energy)' : weighted >= 65 ? 'var(--warn)' : 'var(--danger)';
+
+  const metrics = [
+    { label: 'Sleep', val: avgSleep > 0 ? avgSleep.toFixed(1) + 'h' : '--', score: sleepScore, weight: '30%' },
+    { label: 'Recovery', val: Math.round(avgRecovery) + '%', score: Math.round(avgRecovery), weight: '25%' },
+    { label: 'Training', val: weekWorkouts.length + ' sessions', score: trainingScore, weight: '20%' },
+    { label: 'Habits', val: weekJournals.length + '/' + (monOffset + 1) + ' days', score: habitsScore, weight: '15%' },
+    { label: 'HRV Trend', val: (hrvTrend >= 0 ? '+' : '') + hrvTrend.toFixed(0) + 'ms', score: hrvScore, weight: '10%' },
+  ];
+
+  el.innerHTML = `
+    <div class="coach-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div class="coach-section-label" style="margin-bottom:0;">WEEKLY GRADE</div>
+        <div style="font-size:28px;font-weight:900;color:${gradeColor};font-family:'DM Mono',monospace;">${grade}</div>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div style="height:6px;background:var(--card-border);border-radius:3px;overflow:hidden;">
+          <div style="height:100%;width:${weighted}%;background:${gradeColor};border-radius:3px;transition:width 0.5s;"></div>
+        </div>
+        <div style="text-align:right;font-size:11px;color:var(--text-3);margin-top:3px;font-family:'DM Mono',monospace;">${weighted}/100</div>
+      </div>
+      ${metrics.map(m => `
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <div style="font-size:11px;color:var(--text-3);width:70px;">${m.label}</div>
+          <div style="flex:1;height:4px;background:var(--card-border);border-radius:2px;overflow:hidden;">
+            <div style="height:100%;width:${m.score}%;background:${m.score >= 70 ? 'var(--energy)' : m.score >= 40 ? 'var(--warn)' : 'var(--danger)'};border-radius:2px;"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text-2);font-family:'DM Mono',monospace;width:65px;text-align:right;">${m.val}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function renderCoachPotential() {
+  const el = document.getElementById('coachPotential');
+  if (!el) return;
+
+  // Reuse genetic potential data
+  const m = ST.metrics || {};
+  const sl = ST.sleep || {};
+  const history = ST._history || {};
+
+  // VO2max estimate from RHR (simplified Cooper formula adaptation)
+  const rhr = m.rhr || 55;
+  const age = 23;
+  const vo2max = Math.round(15.3 * (208 - 0.7 * age) / rhr);
+  // Male long jumper VO2max percentile (general athlete population)
+  const vo2pct = vo2max >= 60 ? 95 : vo2max >= 55 ? 85 : vo2max >= 50 ? 70 : vo2max >= 45 ? 50 : 30;
+
+  // Recovery efficiency: how fast HRV bounces back after strain
+  const hrvArr = (history.hrv || []).slice(-14);
+  const avgHrv = hrvArr.length ? hrvArr.reduce((s,h) => s + h.value, 0) / hrvArr.length : m.hrv || 42;
+  const recoveryEff = avgHrv > 0 ? Math.min(100, Math.round((avgHrv / 60) * 100)) : 50;
+
+  // Training capacity: based on weekly volume tolerance
+  const tl = computeTrainingLoad();
+  const trainCap = tl.avg28 > 0 ? Math.min(100, Math.round((tl.avg28 / 800) * 100)) : 30;
+
+  const items = [
+    { label: 'VO2max', val: vo2max, unit: 'ml/kg/min', pct: vo2pct, color: vo2pct >= 70 ? 'var(--energy)' : 'var(--warn)' },
+    { label: 'Recovery Efficiency', val: recoveryEff, unit: '%', pct: recoveryEff, color: recoveryEff >= 70 ? 'var(--energy)' : 'var(--warn)' },
+    { label: 'Training Capacity', val: trainCap, unit: '%', pct: trainCap, color: trainCap >= 70 ? 'var(--energy)' : 'var(--warn)' },
+  ];
+
+  el.innerHTML = `
+    <div class="coach-section">
+      <div class="coach-section-label">ATHLETIC PROFILE</div>
+      <div style="display:flex;gap:12px;">
+        ${items.map(i => `
+          <div style="flex:1;text-align:center;padding:10px 4px;background:rgba(255,255,255,0.02);border-radius:10px;">
+            <div style="font-size:22px;font-weight:800;color:${i.color};font-family:'DM Mono',monospace;">${i.val}</div>
+            <div style="font-size:9px;color:var(--text-4);margin-top:2px;">${i.unit}</div>
+            <div style="font-size:10px;color:var(--text-3);margin-top:4px;font-weight:600;">${i.label}</div>
+            <div style="height:3px;background:var(--card-border);border-radius:2px;margin-top:6px;overflow:hidden;">
+              <div style="height:100%;width:${i.pct}%;background:${i.color};border-radius:2px;"></div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ========================================
 //  WEEKLY SCORECARD (Week view)
 // ========================================
 function renderWeeklyScorecard() {
@@ -10124,6 +10625,9 @@ function showView(name) {
     renderHealthView();
   }
   if (name === 'coach') {
+    renderCoachView();
+  }
+  if (name === 'journal') {
     initJournal();
     renderJournalContext();
     renderMoodTrend();
