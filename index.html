@@ -3275,8 +3275,14 @@ section { padding: 0 16px; margin-bottom: 8px; }
       <div style="padding:6px 0;font-size:10px;color:var(--text-4);line-height:1.5;font-family:'DM Mono',monospace;word-break:break-all;" id="settSyncUrl">
         lqaeggkwhlqclkqhljlk.supabase.co/functions/v1/rythm-health-sync
       </div>
-      <div style="padding:4px 0 0;font-size:11px;color:var(--text-4);line-height:1.5;">
-        Use Health Auto Export app → REST API → POST to the URL above. Data syncs every minute.
+      <div style="padding:4px 0 0;font-size:11px;color:var(--text-4);line-height:1.6;">
+        <b style="color:var(--text-2)">Setup (one-time):</b><br>
+        1. Install <b>Health Auto Export</b> from the App Store<br>
+        2. Open it, tap <b>Automations</b> → <b>+</b> → <b>REST API</b><br>
+        3. Set method to <b>POST</b>, paste the URL above<br>
+        4. Select metrics: <b>Heart Rate, HRV, Resting HR, Sleep Analysis, Active Energy, Respiratory Rate, SpO2, Body Mass</b><br>
+        5. Set interval to <b>1 minute</b>, enable background sync<br>
+        6. Data will auto-sync whenever RYTHM is opened
       </div>
     </div>
     <div class="settings-group">
@@ -4284,8 +4290,22 @@ function renderThreeRings() {
   const strain = computeStrain();
   const strainPct = Math.min(100, Math.round(((strain - 3) / 18) * 100)); // 3=baseline rest, 21=max
 
+  // Sleep performance: match sleep detail page (actual / needed including strain surcharge)
+  const sl = ST.sleep || { totalH: 0 };
+  let sleepPerf = r.sleep || 0;
+  if (sl.totalH > 0) {
+    const target = ST.health?.sleepTarget || 8;
+    const strainAdd = strain > 14 ? 1.0 : strain > 10 ? 0.5 : strain > 6 ? 0.25 : 0;
+    const today = new Date().toISOString().slice(0, 10);
+    const todayDebt = (ST.sleepDebt || []).find(d => d.date === today);
+    const debtH = todayDebt ? todayDebt.debtH : Math.max(0, +(target - sl.totalH).toFixed(1));
+    const debtAdd = Math.min(1.0, debtH > 0 ? debtH * 0.3 : 0);
+    const sleepNeeded = target + strainAdd + debtAdd;
+    sleepPerf = Math.min(100, Math.round((sl.totalH / sleepNeeded) * 100));
+  }
+
   const rings = [
-    { key: 'sleep', val: Math.max(0, Math.min(100, r.sleep || 0)), label: 'SLEEP', color: '#93a1c4', unit: '%' },
+    { key: 'sleep', val: Math.max(0, Math.min(100, sleepPerf)), label: 'SLEEP', color: '#93a1c4', unit: '%' },
     { key: 'recovery', val: Math.max(0, Math.min(100, computeReadiness())), label: 'RECOVERY', color: '#00ec7f', unit: '%' },
     { key: 'strain', val: Math.max(0, Math.min(100, strainPct)), label: 'STRAIN', color: '#4da9ff', unit: strainPct > 0 ? '%' : '', display: strainPct > 0 ? undefined : '<span style="font-size:14px;letter-spacing:1px;font-weight:700;opacity:0.5">REST</span>' },
   ];
