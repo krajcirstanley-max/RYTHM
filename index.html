@@ -8816,13 +8816,13 @@ function renderTrends() {
 
   // HRV trend from auto-calibration history (format: { v, d } where d is 'YYYY-MM-DD')
   const hrvData = hrvHistory.slice(-14).map(h => ({
-    d: h.d ? h.d.slice(5) : '--',
+    d: h.d ? h.d.slice(5, 10) : '--',
     v: +h.v.toFixed(1)
   }));
 
   // RHR trend from history (format: { v, d } where d is 'YYYY-MM-DD')
   const rhrData = rhrHistory.slice(-14).map(h => ({
-    d: h.d ? h.d.slice(5) : '--',
+    d: h.d ? h.d.slice(5, 10) : '--',
     v: Math.round(h.v)
   }));
 
