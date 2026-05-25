@@ -3315,6 +3315,12 @@ section { padding: 0 16px; margin-bottom: 8px; }
 const SB_URL = "https://lqaeggkwhlqclkqhljlk.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxYWVnZ2t3aGxxY2xrcWhsamxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNTc1MTIsImV4cCI6MjA5MTgzMzUxMn0.lyE_pTaYHVX1qgptwMoQXtLb9DR459AJN_LhXOGycPg";
 const sb = window.supabase ? window.supabase.createClient(SB_URL, SB_KEY) : null;
+// Hero (Workout app) Supabase - separate project for training data
+const HERO_SB_URL = "https://ulrblhxyrkdpvgsyoesf.supabase.co";
+const HERO_SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVscmJsaHh5cmtkcHZnc3lvZXNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNzY1MzAsImV4cCI6MjA5MjY1MjUzMH0.cVXpHtA-7E6pvltUOvdaUf_7vxGyHW5RpqKXjjM5La8";
+const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_SB_KEY) : null;
+const HERO_ATHLETE_ID = 'ath-1'; // Stanley
+
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
 
 function getSyncKey() {
@@ -5682,7 +5688,7 @@ async function manualRefresh() {
   if (btn) btn.classList.add('spinning');
 
   try {
-    await fetchHealthData();
+    await Promise.all([fetchHealthData(), fetchHeroWorkouts()]);
     // Re-render everything
     renderReadiness();
     renderThreeRings();
@@ -7767,6 +7773,45 @@ function renderCoachTraining() {
             <div class="coach-protocol-text">${p.detail}</div>
           </div>
         </div>`).join('')}
+      ${renderHeroRecentBlock()}
+    </div>`;
+}
+
+function renderHeroRecentBlock() {
+  const workouts = getHeroWorkoutSummary(7);
+  if (!workouts.length) return '';
+
+  // Calculate days since last session
+  const lastDate = workouts[workouts.length - 1]?.date;
+  const daysSince = lastDate ? Math.floor((Date.now() - new Date(lastDate + 'T12:00:00').getTime()) / 86400000) : null;
+  const restNote = daysSince === 0 ? 'Trained today' : daysSince === 1 ? '1 day rest' : daysSince ? daysSince + ' days rest' : '';
+
+  // Average RPE this week
+  const rpes = workouts.filter(w => w.rpe).map(w => w.rpe);
+  const avgRpe = rpes.length ? (rpes.reduce((s,v) => s+v, 0) / rpes.length).toFixed(1) : null;
+
+  return `
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);text-transform:uppercase;">RECENT TRAINING (HERO)</div>
+        <div style="font-size:10px;color:var(--text-3);">${workouts.length} sessions · ${restNote}</div>
+      </div>
+      ${avgRpe ? `<div style="font-size:10px;color:var(--text-3);margin-bottom:8px;">Avg RPE: <span style="color:${avgRpe >= 8 ? 'var(--danger)' : avgRpe >= 6 ? 'var(--warn)' : 'var(--energy)'};font-weight:700;">${avgRpe}/10</span></div>` : ''}
+      ${workouts.slice(-4).reverse().map(w => {
+        const exList = w.exercises.slice(0, 3).join(', ') + (w.exercises.length > 3 ? ' +' + (w.exercises.length - 3) : '');
+        const rpeColor = w.rpe >= 8 ? 'var(--danger)' : w.rpe >= 6 ? 'var(--warn)' : 'var(--energy)';
+        return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.03);">
+          <div style="font-size:11px;color:var(--text-4);font-family:'DM Mono',monospace;width:44px;flex-shrink:0;">${w.date.slice(5)}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:11px;color:var(--text-2);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${w.tag}${w.notes ? ' -- ' + w.notes.slice(0, 30) : ''}</div>
+            <div style="font-size:10px;color:var(--text-4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${exList || w.totalCompleted + ' sets'}</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+            ${w.rpe ? `<span style="font-size:10px;font-weight:700;color:${rpeColor};">RPE ${w.rpe}</span>` : ''}
+            <span style="font-size:10px;color:var(--text-4);">${w.durMin}m</span>
+          </div>
+        </div>`;
+      }).join('')}
     </div>`;
 }
 
@@ -11165,6 +11210,9 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
     const active = (ST.liveActivities || []).filter(a => !a.endedAt);
     if (active.length) requestWakeLock();
+    // Refresh health + workout data when app comes back to foreground
+    fetchHealthData();
+    fetchHeroWorkouts();
   }
 });
 
@@ -12158,6 +12206,82 @@ async function fetchHistoryData() {
   }
 }
 
+// ========================================
+//  HERO WORKOUT SYNC (read-only from workout app DB)
+// ========================================
+async function fetchHeroWorkouts() {
+  if (!heroSb) return;
+  try {
+    // READ-ONLY: only SELECT, never INSERT/UPDATE/DELETE
+    const [wkRes, exRes] = await Promise.all([
+      heroSb.from('wk_store').select('value').eq('key', 'workouts2').maybeSingle(),
+      heroSb.from('wk_store').select('value').eq('key', 'exercises').maybeSingle(),
+    ]);
+
+    if (wkRes.data?.value) {
+      const allWorkouts = wkRes.data.value;
+      // Filter to Stanley's completed workouts only
+      const mine = allWorkouts.filter(w =>
+        w.endTime && w.athletes && w.athletes[HERO_ATHLETE_ID]
+      ).sort((a, b) => a.startTime - b.startTime);
+
+      ST._heroWorkouts = mine;
+      console.log('[RYTHM] Hero workouts loaded:', mine.length, 'sessions');
+    }
+
+    if (exRes.data?.value) {
+      // Build exercise lookup map { id -> { name, metrics, ... } }
+      const exArr = exRes.data.value;
+      ST._heroExercises = {};
+      for (const ex of exArr) {
+        ST._heroExercises[ex.id] = { name: ex.name, metrics: ex.metrics, group: ex.group };
+      }
+      console.log('[RYTHM] Hero exercises loaded:', Object.keys(ST._heroExercises).length);
+    }
+
+    // Don't saveState() - _heroWorkouts is transient, fetched fresh each session
+    // Re-render coach if visible
+    if (document.getElementById('view-coach')?.classList.contains('active')) {
+      renderCoachView();
+    }
+  } catch (e) {
+    console.warn('[RYTHM] Hero workout fetch failed:', e);
+  }
+}
+
+// Extract last N workouts for Stanley with readable summaries
+function getHeroWorkoutSummary(days = 7) {
+  const workouts = ST._heroWorkouts || [];
+  const exercises = ST._heroExercises || {};
+  const cutoff = Date.now() - days * 86400000;
+  const recent = workouts.filter(w => w.startTime >= cutoff);
+
+  return recent.map(w => {
+    const ath = w.athletes[HERO_ATHLETE_ID];
+    const durMin = w.endTime ? Math.round((w.endTime - w.startTime) / 60000) : 0;
+    const date = new Date(w.startTime).toISOString().slice(0, 10);
+    const rpe = ath.rpe || null;
+    const tag = w.tag?.name || 'Workout';
+    const notes = ath.notes || '';
+
+    // Count exercises and sets
+    const sets = ath.sets || {};
+    const exNames = [];
+    let totalSets = 0;
+    let totalCompleted = 0;
+    for (const [eid, setArr] of Object.entries(sets)) {
+      const ex = exercises[eid.split('__')[0]] || exercises[eid];
+      if (ex) exNames.push(ex.name);
+      if (Array.isArray(setArr)) {
+        totalSets += setArr.length;
+        totalCompleted += setArr.filter(s => s.completed && !s.warmup).length;
+      }
+    }
+
+    return { date, tag, durMin, rpe, notes, exercises: exNames, totalSets, totalCompleted };
+  });
+}
+
 function renderSparkline(data, opts = {}) {
   const w = opts.width || 140;
   const h = opts.height || 40;
@@ -12419,6 +12543,8 @@ function bootApp() {
   fetchHealthData();
   // Fetch historical health data for trends
   fetchHistoryData();
+  // Fetch Hero workout data (read-only, on app open only)
+  fetchHeroWorkouts();
   // Fetch weather for sunlight advice
   fetchWeather().then(() => { renderOutlook(); renderSuggestions(); });
   initPullToRefresh();
@@ -12481,17 +12607,8 @@ function bootApp() {
   checkNotifications();
   setInterval(() => { if (!document.hidden) checkNotifications(); }, 120000);
 
-  // Auto-refresh health data every 5 minutes (Whoop-like live feel)
-  setInterval(() => {
-    if (document.hidden) return;
-    fetchHealthData();
-  }, 300000);
-
-  // Auto-refresh history data every 15 minutes
-  setInterval(() => {
-    if (document.hidden) return;
-    fetchHistoryData();
-  }, 900000);
+  // Health + workout data refreshes on visibility change (app foreground)
+  // No interval polling needed - saves battery
 }
 
 // ========================================
