@@ -2813,7 +2813,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
         </div>
       </div>
       <div style="padding:6px 0 0;font-size:11px;color:var(--text-4);line-height:1.5;">
-        Wake recovery, peak alerts, Energy Caps cutoff, energy dip, wind-down, and bedtime reminders.
+        Morning recovery briefing, peak alerts, caffeine cutoff, energy dip, hydration, wind-down, bedtime, journal reminders, streak protection, and sleep debt warnings.
       </div>
     </div>
     <div class="settings-group">
@@ -10665,45 +10665,121 @@ function getNotificationSchedule() {
   const peak2Start = (WAKE + 10) % 24;
   const score = computeReadiness();
   const interp = readinessInterpretation(score);
+  const sl = ST.sleep || {};
+  const m = ST.metrics || {};
+  const today = new Date().toISOString().slice(0, 10);
+  const journal = ST.journal || [];
+  const todayEntry = journal.find(j => j.date === today);
 
-  return [
+  // Build training guidance based on recovery
+  let trainingMsg;
+  if (score >= 80) trainingMsg = 'Green light for max jumps and heavy plyometrics';
+  else if (score >= 67) trainingMsg = 'Good for technique work and moderate intensity';
+  else if (score >= 50) trainingMsg = 'Keep it light — drills and mobility only';
+  else trainingMsg = 'Rest day recommended — active recovery only';
+
+  // HRV context
+  const hrvBase = m.hrvBaseline || 42;
+  const hrvPct = m.hrv ? Math.round(((m.hrv / hrvBase) - 1) * 100) : null;
+  const hrvNote = hrvPct !== null
+    ? (hrvPct >= 10 ? ', HRV ↑' + hrvPct + '%' : hrvPct <= -15 ? ', HRV ↓' + Math.abs(hrvPct) + '% ⚠️' : '')
+    : '';
+
+  // Sleep context for morning notification
+  const sleepNote = sl.totalH > 0
+    ? (sl.totalH >= 8 ? ' · ' + sl.totalH.toFixed(1) + 'h sleep ✓' : ' · ' + sl.totalH.toFixed(1) + 'h sleep (target 8h)')
+    : '';
+
+  // Streak protection — find habits with 3+ day streaks at risk
+  let streakAlert = null;
+  if (!todayEntry) {
+    const streaks = typeof computeHabitStreaks === 'function' ? computeHabitStreaks() : [];
+    const atRisk = streaks.filter(s => s.streak >= 3 && !s.active);
+    if (atRisk.length) {
+      const top = atRisk.sort((a, b) => b.streak - a.streak)[0];
+      streakAlert = top.icon + ' ' + top.streak + '-day ' + top.label + ' streak at risk';
+    }
+  }
+
+  // Sleep debt context
+  const debtArr = ST.sleepDebt || [];
+  const currentDebt = debtArr.length ? debtArr[debtArr.length - 1].debtH : 0;
+
+  const schedule = [
+    // 1. Morning briefing — 5min after wake
     {
-      type: 'wake',
+      type: 'morning',
       hour: (WAKE + 5/60) % 24,
-      title: 'RYTHM',
-      body: 'Recovery ' + score + '% - ' + interp.text + ' day ahead'
+      title: score + '% Recovery' + hrvNote,
+      body: trainingMsg + sleepNote
     },
+    // 2. Peak 2 approaching — 10min before
     {
       type: 'peak2',
       hour: (peak2Start - 10/60 + 24) % 24,
-      title: 'RYTHM',
-      body: 'Your strongest peak starts in 10 min'
+      title: 'Peak 2 in 10 min',
+      body: 'Your strongest window is coming — best time for training or your hardest task'
     },
+    // 3. Energy Caps cutoff — 30min warning
     {
       type: 'energy_caps',
       hour: (coffeeH - 30/60 + 24) % 24,
-      title: 'RYTHM',
-      body: 'Last Energy Caps in 30 min'
+      title: 'Energy Caps cutoff',
+      body: 'Last caffeine in 30 min to protect tonight\'s sleep'
     },
+    // 4. Energy dip — gentle nudge
     {
       type: 'dip',
       hour: dipStart,
-      title: 'RYTHM',
-      body: 'Energy dip - go for a 5-min walk'
+      title: 'Circadian dip — normal',
+      body: 'Walk, light admin, or 20-min nap. Avoid hard decisions for ~90 min.'
     },
+    // 5. Hydration check — midday
+    {
+      type: 'hydration',
+      hour: (WAKE + 4) % 24,
+      title: 'Hydration check 💧',
+      body: '1% dehydration = 5% performance drop. Aim for 0.5L by now.'
+    },
+    // 6. Wind-down start
     {
       type: 'winddown',
       hour: wdStart,
-      title: 'RYTHM',
-      body: 'Wind-down time - Step 1: Blue light off'
+      title: 'Wind-down time',
+      body: 'Blue light glasses on. Dim screens. Start your routine.'
     },
+    // 7. Bedtime — 15min before
     {
       type: 'bedtime',
       hour: (SLEEP_H - 15/60 + 24) % 24,
-      title: 'RYTHM',
-      body: 'Melatonin window open - time to sleep'
+      title: 'Sleep window opening',
+      body: currentDebt > 3
+        ? 'You have ' + currentDebt.toFixed(1) + 'h sleep debt — get to bed'
+        : 'Melatonin is rising. Dark, cool room for best recovery.'
     },
   ];
+
+  // 8. Journal reminder — evening, only if not logged today
+  if (!todayEntry) {
+    schedule.push({
+      type: 'journal',
+      hour: (wdStart - 1 + 24) % 24,
+      title: 'Log your day 📝',
+      body: streakAlert || 'Tap to log behaviors — data drives your insights'
+    });
+  }
+
+  // 9. Sleep debt warning — morning, only if debt > 3h
+  if (currentDebt > 3) {
+    schedule.push({
+      type: 'sleepdebt',
+      hour: (WAKE + 1) % 24,
+      title: 'Sleep debt: ' + currentDebt.toFixed(1) + 'h',
+      body: 'Reaction time and power output drop after 2h of debt. Add 30-60min sleep tonight.'
+    });
+  }
+
+  return schedule;
 }
 
 function checkNotifications() {
