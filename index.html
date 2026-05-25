@@ -597,6 +597,56 @@ section { padding: 0 16px; margin-bottom: 8px; }
 }
 .streak-cell .s-fire { font-size: 10px; color: var(--energy); font-weight: 800; }
 
+/* HABIT ACCOUNTABILITY */
+.ha-card {
+  background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
+  border: 1px solid var(--card-border); border-radius: var(--radius);
+  padding: 18px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.ha-summary {
+  display: flex; gap: 12px; margin-bottom: 16px; padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.ha-summary-stat {
+  flex: 1; text-align: center;
+}
+.ha-summary-val {
+  font-size: 22px; font-weight: 900; font-family: 'DM Mono', monospace;
+  letter-spacing: -0.5px; line-height: 1.1;
+}
+.ha-summary-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--text-4);
+  text-transform: uppercase; margin-top: 3px;
+}
+.ha-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.ha-row:last-child { border-bottom: none; }
+.ha-emoji { font-size: 14px; width: 20px; text-align: center; flex-shrink: 0; }
+.ha-name { font-size: 12px; font-weight: 600; color: var(--text-2); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ha-bar-wrap {
+  width: 60px; height: 5px; background: rgba(255,255,255,0.06);
+  border-radius: 3px; overflow: hidden; flex-shrink: 0;
+}
+.ha-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+.ha-pct {
+  font-size: 11px; font-weight: 800; font-family: 'DM Mono', monospace;
+  width: 36px; text-align: right; flex-shrink: 0;
+}
+.ha-dots {
+  display: flex; gap: 2px; flex-shrink: 0;
+}
+.ha-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+}
+.ha-dot.done { background: var(--energy); }
+.ha-dot.missed { background: rgba(255,84,112,0.4); }
+.ha-dot.today { border: 1px solid rgba(255,255,255,0.3); background: transparent; }
+.ha-dot.today.done { background: var(--energy); border-color: var(--energy); }
+
 /* IMPACT */
 .impact-card { background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9)); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 18px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04); }
 .impact-head {
@@ -2481,6 +2531,11 @@ section { padding: 0 16px; margin-bottom: 8px; }
         <div class="debt-bar-labels" id="debtLabels"></div>
         <div class="debt-scrub-tooltip" id="debtScrubTip"></div>
       </div>
+    </section>
+
+    <section>
+      <div class="section-head"><div class="section-title">Habit Accountability</div></div>
+      <div id="habitAccountability"></div>
     </section>
 
     <section>
@@ -6007,6 +6062,156 @@ function renderSleepDebt() {
   }).join('');
 }
 
+function renderHabitAccountability() {
+  const el = document.getElementById('habitAccountability');
+  if (!el) return;
+  const journal = ST.journal || [];
+  if (journal.length < 3) {
+    el.innerHTML = '<div class="ha-card" style="text-align:center;padding:24px 16px;color:var(--text-3);font-size:13px;">Log at least 3 days to see accountability data</div>';
+    return;
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  const last7 = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+    last7.push(d);
+  }
+
+  // Find habits logged at least 2 times in the last 30 days (these are "your" habits)
+  const last30 = [];
+  for (let i = 29; i >= 0; i--) {
+    last30.push(new Date(Date.now() - i * 86400000).toISOString().slice(0, 10));
+  }
+  const journalMap = {};
+  for (const j of journal) journalMap[j.date] = j;
+
+  // Count each behavior over 30 days
+  const behaviorCounts30 = {};
+  for (const d of last30) {
+    const j = journalMap[d];
+    if (!j) continue;
+    for (const b of j.behaviors || []) {
+      behaviorCounts30[b] = (behaviorCounts30[b] || 0) + 1;
+    }
+  }
+
+  // Filter to habits done 3+ times in 30 days (established habits)
+  // Split into positive and negative categories
+  const NEGATIVE_IDS = new Set(['shisha', 'shisha_late', 'alcohol', 'screen_late', 'stress', 'sugar', 'weed', 'nicotine', 'late_meal']);
+
+  const tracked = Object.entries(behaviorCounts30)
+    .filter(([id, count]) => count >= 3 && !NEGATIVE_IDS.has(id))
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10); // top 10 positive habits
+
+  const negativeTracked = Object.entries(behaviorCounts30)
+    .filter(([id, count]) => count >= 2 && NEGATIVE_IDS.has(id))
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+
+  if (!tracked.length && !negativeTracked.length) {
+    el.innerHTML = '<div class="ha-card" style="text-align:center;padding:24px 16px;color:var(--text-3);font-size:13px;">Keep logging consistently to see habit accountability</div>';
+    return;
+  }
+
+  // Compute 7-day adherence for each tracked positive habit
+  const daysLogged7 = last7.filter(d => journalMap[d]).length;
+
+  function buildHabitRow(id, count30) {
+    const beh = JOURNAL_BEHAVIORS.find(x => x.id === id);
+    if (!beh) return '';
+    const isNeg = NEGATIVE_IDS.has(id);
+
+    // 7-day dots
+    const dots = last7.map(d => {
+      const j = journalMap[d];
+      const isToday = d === today;
+      const done = j && j.behaviors.includes(id);
+      const logged = !!j; // day was logged at all
+      if (isToday) return `<div class="ha-dot today${done ? ' done' : ''}"></div>`;
+      if (!logged) return `<div class="ha-dot"></div>`; // no entry
+      return done
+        ? `<div class="ha-dot ${isNeg ? 'missed' : 'done'}"></div>`
+        : `<div class="ha-dot ${isNeg ? 'done' : 'missed'}"></div>`;
+    }).join('');
+
+    // 7-day rate
+    const doneIn7 = last7.filter(d => {
+      const j = journalMap[d];
+      return j && j.behaviors.includes(id);
+    }).length;
+    const rate7 = daysLogged7 > 0 ? Math.round((doneIn7 / daysLogged7) * 100) : 0;
+
+    // 30-day rate
+    const daysLogged30 = last30.filter(d => journalMap[d]).length;
+    const rate30 = daysLogged30 > 0 ? Math.round((count30 / daysLogged30) * 100) : 0;
+
+    // For negatives, invert: lower is better
+    const displayRate = isNeg ? rate7 : rate7;
+    const barColor = isNeg
+      ? (rate7 > 50 ? 'var(--danger)' : rate7 > 25 ? 'var(--warn)' : 'var(--energy)')
+      : (rate7 >= 80 ? 'var(--energy)' : rate7 >= 50 ? 'var(--warn)' : 'var(--danger)');
+
+    return `<div class="ha-row">
+      <span class="ha-emoji">${beh.icon}</span>
+      <span class="ha-name">${beh.label}</span>
+      <div class="ha-dots">${dots}</div>
+      <div class="ha-bar-wrap"><div class="ha-bar-fill" style="width:${displayRate}%;background:${barColor}"></div></div>
+      <span class="ha-pct" style="color:${barColor}">${displayRate}%</span>
+    </div>`;
+  }
+
+  // Summary stats
+  const avgAdherence = tracked.length > 0
+    ? Math.round(tracked.reduce((s, [id]) => {
+        const done7 = last7.filter(d => { const j = journalMap[d]; return j && j.behaviors.includes(id); }).length;
+        return s + (daysLogged7 > 0 ? (done7 / daysLogged7) * 100 : 0);
+      }, 0) / tracked.length)
+    : 0;
+
+  const journalStreak = (() => {
+    let streak = 0;
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+      if (journalMap[d]) streak++;
+      else break;
+    }
+    return streak;
+  })();
+
+  const summaryColor = avgAdherence >= 75 ? 'var(--energy)' : avgAdherence >= 50 ? 'var(--warn)' : 'var(--danger)';
+
+  let html = `<div class="ha-card">
+    <div class="ha-summary">
+      <div class="ha-summary-stat">
+        <div class="ha-summary-val" style="color:${summaryColor}">${avgAdherence}%</div>
+        <div class="ha-summary-label">7-Day Adherence</div>
+      </div>
+      <div class="ha-summary-stat">
+        <div class="ha-summary-val" style="color:var(--text-2)">${daysLogged7}/7</div>
+        <div class="ha-summary-label">Days Logged</div>
+      </div>
+      <div class="ha-summary-stat">
+        <div class="ha-summary-val" style="color:${journalStreak >= 5 ? 'var(--energy)' : 'var(--text-2)'}">${journalStreak}d</div>
+        <div class="ha-summary-label">Log Streak</div>
+      </div>
+    </div>`;
+
+  if (tracked.length) {
+    html += `<div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);text-transform:uppercase;margin-bottom:6px">Positive Habits</div>`;
+    html += tracked.map(([id, count]) => buildHabitRow(id, count)).join('');
+  }
+
+  if (negativeTracked.length) {
+    html += `<div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);text-transform:uppercase;margin:12px 0 6px">Negatives to Reduce</div>`;
+    html += negativeTracked.map(([id, count]) => buildHabitRow(id, count)).join('');
+  }
+
+  html += '</div>';
+  el.innerHTML = html;
+}
+
 function renderImpact() {
   const journal = ST.journal || [];
   if (journal.length < 5) {
@@ -8346,6 +8551,7 @@ function showView(name) {
     renderWeekStrip();
     renderStreaks();
     renderSleepDebt();
+    renderHabitAccountability();
     renderImpact();
     renderTrends();
     renderWeekInsights();
