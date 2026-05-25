@@ -9732,6 +9732,21 @@ function renderSuggestions() {
     sugs.push({ icon: '🎯', title: 'Peak zone — optimal focus window', sub: HABIT_SCIENCE.deep_work, action: 'Focus', cls: 'blue', bg: 'rgba(91,154,255,0.1)', onclick: `startLiveActivity('deep_work')`, pri: 4 });
   }
 
+  // Business-owner coaching: decision fatigue + meeting timing
+  if (currentPhase.name === 'DIP' && !activeSessions.includes('nap')) {
+    sugs.push({ icon: '📋', title: 'Decision fatigue zone', sub: 'Cortisol dip reduces executive function. Postpone big decisions, contracts, or strategy calls — do admin/email instead.', action: 'Note', cls: 'purple', bg: 'rgba(139,156,199,0.08)', pri: 5 });
+  }
+
+  // Creative work window (late afternoon second peak)
+  if (currentPhase.name === 'PEAK 2' && !activeSessions.includes('deep_work')) {
+    sugs.push({ icon: '💡', title: 'Creative window open', sub: 'Prefrontal cortex loosens in the 2nd peak — ideal for brainstorming, pitch decks, content creation. Analytical + creative overlap.', action: 'Focus', cls: 'blue', bg: 'rgba(91,154,255,0.1)', onclick: `startLiveActivity('deep_work')`, pri: 5 });
+  }
+
+  // High recovery + low strain = optimal day for both training AND business
+  if (recovery >= 80 && strain < 5 && hwake > 1 && hwake < 6) {
+    sugs.push({ icon: '🔥', title: 'High-leverage day', sub: `Recovery ${recovery}% — your body and mind are primed. Stack your hardest training session AND your most important business task today.`, action: 'Plan', cls: 'green', bg: 'rgba(48,217,138,0.08)', pri: 4 });
+  }
+
   // Low steps (afternoon+)
   if (h.steps.today < h.steps.goal * 0.5 && nowH > 14) {
     sugs.push({ icon: '🚶', title: `${h.steps.today.toLocaleString()} steps — go walk`, sub: `${Math.round(h.steps.today/h.steps.goal*100)}% of goal. A brisk 20-min walk improves blood flow to hippocampus and prefrontal cortex`, action: 'Track', cls: 'blue', bg: 'rgba(52,211,153,0.1)', onclick: `startLiveActivity('walk')`, pri: 4 });
