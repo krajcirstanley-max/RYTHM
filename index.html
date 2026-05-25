@@ -9021,8 +9021,8 @@ function renderNutrition() {
   const todayStr = new Date().toISOString().slice(0, 10);
   const isToday = n._calDate === todayStr;
 
-  // No data yet
-  if (!n.calories && !n.protein) {
+  // No data ever synced
+  if (!n.history || !n.history.length) {
     el.innerHTML = `<div class="nutri-card">
       <div class="nutri-nodata">
         <div style="font-size:28px;margin-bottom:8px">🍽️</div>
@@ -9035,10 +9035,12 @@ function renderNutrition() {
     return;
   }
 
-  const cal = n.calories || 0;
-  const protein = n.protein || 0;
-  const carbs = n.carbs || 0;
-  const fat = n.fat || 0;
+  // Data exists but not for today = user hasn't logged yet today
+  // Show trend + gentle nudge, NOT a 0-calorie danger warning
+  const cal = isToday ? (n.calories || 0) : 0;
+  const protein = isToday ? (n.protein || 0) : 0;
+  const carbs = isToday ? (n.carbs || 0) : 0;
+  const fat = isToday ? (n.fat || 0) : 0;
 
   // Strain-adaptive targets
   const strain = computeStrain();
@@ -9070,9 +9072,15 @@ function renderNutrition() {
 
   // Insight
   let insightClass = '', insightText = '';
-  if (cal === 0) {
+  if (!isToday) {
+    // Not logged today - show last logged date and average, no alarm
+    const lastEntry = (n.history || []).slice(-1)[0];
+    const avgCal = n.history.length ? Math.round(n.history.reduce((s, h) => s + (h.cal || 0), 0) / n.history.length) : 0;
     insightClass = 'warn';
-    insightText = 'No meals logged today. Snap your next meal with SnapCalorie.';
+    insightText = `Not logged today. Your ${n.history.length}-day average is ${avgCal.toLocaleString()} kcal. Snap your next meal with SnapCalorie.`;
+  } else if (cal === 0) {
+    insightClass = 'warn';
+    insightText = 'No meals logged yet today. Snap your next meal with SnapCalorie.';
   } else if (calPct >= 85 && protPct >= 80) {
     insightClass = 'good';
     insightText = `On track. ${cal} kcal with ${Math.round(protein)}g protein supports muscle repair and tendon collagen synthesis.`;
@@ -9110,23 +9118,27 @@ function renderNutrition() {
   // Strain label for target context
   const strainLabel = strain > 14 ? 'High strain' : strain > 10 ? 'Moderate strain' : strain > 6 ? 'Light strain' : 'Rest day';
 
+  const notLogged = !isToday;
+  const displayCal = notLogged ? '--' : cal.toLocaleString();
+  const displayCalColor = notLogged ? 'var(--text-3)' : calColor;
+
   el.innerHTML = `<div class="nutri-card">
     <div class="nutri-header">
       <div>
-        <div class="nutri-cal-big" style="color:${calColor}">${cal.toLocaleString()}</div>
+        <div class="nutri-cal-big" style="color:${displayCalColor}">${displayCal}</div>
         <div class="nutri-cal-target">/ ${calTarget.toLocaleString()} kcal <span style="font-size:10px;opacity:0.6">(${strainLabel})</span></div>
       </div>
-      <div class="nutri-cal-ring">
+      ${notLogged ? '' : `<div class="nutri-cal-ring">
         <svg viewBox="0 0 64 64">
           <circle cx="32" cy="32" r="26" fill="none" stroke="var(--bg-2)" stroke-width="5"/>
           <circle cx="32" cy="32" r="26" fill="none" stroke="${calColor}" stroke-width="5"
             stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
         </svg>
         <div class="ring-pct" style="color:${calColor}">${calPct}%</div>
-      </div>
+      </div>`}
     </div>
 
-    <div class="nutri-macros">
+    ${notLogged ? '' : `<div class="nutri-macros">
       <div class="nutri-macro">
         <div class="nutri-macro-icon" style="color:${protColor}">Protein</div>
         <div class="nutri-macro-val">${Math.round(protein)}<span class="nutri-macro-unit">g</span></div>
@@ -9145,7 +9157,7 @@ function renderNutrition() {
         <div class="nutri-macro-bar"><div class="nutri-macro-bar-fill" style="width:${fatPct}%;background:${fatColor}"></div></div>
         <div class="nutri-macro-target">${fatTarget}g target</div>
       </div>
-    </div>
+    </div>`}
 
     <div class="nutri-insight ${insightClass}">${insightText}</div>
     ${trendHtml}
