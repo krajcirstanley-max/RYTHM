@@ -47,7 +47,8 @@
   --glass-highlight: rgba(255,255,255,0.1);
 }
 
-* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; -webkit-user-select:none; user-select:none; }
+input, textarea { -webkit-user-select:text; user-select:text; }
 
 html, body {
   background: #000 !important;
@@ -3161,18 +3162,67 @@ function energyAt(h) {
 
   let energy = catmullRom(pts[i0][1], pts[i1][1], pts[i2][1], pts[i3][1], t);
 
-  // Recovery factor: readiness score modulates amplitude
-  const readiness = computeReadiness();
-  const recoveryMod = (readiness - 50) / 50; // -1 to +1
-  energy += recoveryMod * 8;
+  // === DAILY STATE MODIFIERS ===
+  // These make the curve reflect YOUR actual day, not a generic circadian model.
 
-  // Seasonal modifier (integrated — no monkey-patching)
+  // 1. Recovery/readiness: the primary daily modifier
+  //    Scale the entire curve based on how recovered you are.
+  //    100% recovery = full curve, 50% = ~15% lower, 30% = ~25% lower
+  const readiness = computeReadiness();
+  const recoveryScale = 0.7 + (readiness / 100) * 0.3; // 0.7 at 0% → 1.0 at 100%
+  energy *= recoveryScale;
+
+  // 2. Sleep quality/duration from last night
+  //    Short or poor sleep depresses the entire curve, especially peaks
+  const sl = ST.sleep || {};
+  if (sl.totalH > 0) {
+    const sleepTarget = ST.health?.sleepTarget || 8;
+    const deficit = sleepTarget - sl.totalH;
+    if (deficit > 0) {
+      // Each hour of sleep deficit costs 5-8% of energy (Van Dongen 2003)
+      // Bigger impact on peaks (high energy) than on troughs
+      const deficitPenalty = Math.min(deficit * 6, 25); // cap at 25
+      const peakFactor = energy > 70 ? 1.3 : 1.0; // peaks suffer more
+      energy -= deficitPenalty * peakFactor;
+    }
+    // Poor sleep efficiency also drags energy
+    if (sl.efficiency > 0 && sl.efficiency < 85) {
+      energy -= (85 - sl.efficiency) * 0.3;
+    }
+  }
+
+  // 3. Previous night's negative behaviors (lingering effects into today)
+  //    Shisha late, alcohol from yesterday still affect morning energy
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const yJournal = (ST.journal || []).find(j => j.date === yesterday);
+  if (yJournal) {
+    const yBehaviors = yJournal.behaviors || [];
+    if (yBehaviors.includes('shisha_late')) energy -= 6; // CO + sleep disruption
+    if (yBehaviors.includes('alcohol')) energy -= 8; // REM suppression + dehydration
+    if (yBehaviors.includes('shisha') && !yBehaviors.includes('shisha_late')) energy -= 2;
+    if (yBehaviors.includes('late_meal')) energy -= 2;
+    if (yBehaviors.includes('weed')) energy -= 4;
+  }
+
+  // 4. Training load fatigue — heavy recent training flattens the curve
+  const trainingLoad = computeTrainingLoad();
+  if (trainingLoad.avg3 > 600) {
+    // High 3-day avg (>600 cal/day) = overreaching territory
+    const loadPenalty = Math.min((trainingLoad.avg3 - 400) * 0.01, 8);
+    energy -= loadPenalty;
+  }
+  // Acute:Chronic ratio imbalance
+  if (trainingLoad.acr > 1.5) {
+    energy -= (trainingLoad.acr - 1.3) * 10; // spike in training → fatigue
+  }
+
+  // 5. Seasonal modifier
   if (ST.seasonal) {
     if (ST.seasonal.adjustment === 'summer') energy *= 1.05;
     else if (ST.seasonal.adjustment === 'winter') energy *= 0.95;
   }
 
-  // Behavior modifiers from today's logs
+  // 6. Behavior modifiers from today's logs (caffeine, workout, etc.)
   energy += getBehaviorEnergyMod(h);
 
   return Math.max(5, Math.min(98, Math.round(energy)));
