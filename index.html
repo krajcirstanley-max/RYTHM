@@ -3650,14 +3650,34 @@ const BEHAVIOR_ENERGY_MODS = {
   alcohol:       (hSince) => hSince <= 1 ? 3 : hSince <= 3 ? -4 : -8, // worse over time
   sugar:         (hSince) => hSince <= 0.5 ? 5 : hSince <= 2 ? -3 : hSince <= 4 ? -5 : 0,
   stress:        () => -6,
-  // Sauna: heat stress → acute fatigue (core temp rise, cardiovascular strain, dehydration)
-  // 0-30min post: -5 (depleted, heart rate elevated, hypotensive)
-  // 30min-1h: -2 (cooling, still recovering)
-  // 1-3h: +6 (endorphin release, growth hormone surge, norepinephrine 2-3x baseline)
-  // 3-6h: +4 (sustained mood lift, reduced cortisol, improved blood flow)
-  // 6h+: +2 (residual anti-inflammatory effect, better sleep later)
+  // Sauna: heat stress for explosive athletes
+  // 0-30min: -5 (core temp elevated, cardiovascular strain, acute dehydration)
+  // 30min-1h: -2 (cooling down, HR still elevated)
+  // 1-3h: +6 (GH surge 2-5x baseline, beta-endorphin release, norepinephrine 2-3x)
+  // 3-6h: +4 (sustained mood lift, HSP70/90 for muscle repair, reduced cortisol)
+  // 6h+: +2 (anti-inflammatory, improved sleep quality)
+  // WARNING for jumpers: avoid sauna day before competition - temporarily reduces tendon stiffness
   sauna: (hSince) => hSince <= 0.5 ? -5 : hSince <= 1 ? -2 : hSince <= 3 ? 6 : hSince <= 6 ? 4 : 2,
+  // Cold immersion: powerful but context-dependent for explosive athletes
+  // 0-15min: -3 (vasoconstriction, mild sympathetic stress)
+  // 15min-1h: +4 (norepinephrine +250-300%, dopamine surge, alertness)
+  // 1-3h: +3 (sustained catecholamine elevation, reduced inflammation)
+  // 3-6h: +1 (fading effects)
+  // Note: blunts mTOR/muscle protein synthesis post-strength work (Roberts 2015)
+  // Best on rest days or 4h+ post-training to avoid blunting adaptation
+  cold_shower: (hSince) => hSince <= 0.25 ? -3 : hSince <= 1 ? 4 : hSince <= 3 ? 3 : hSince <= 6 ? 1 : 0,
+  // Stretching: static stretching for explosive athletes
+  // Pre-training: REDUCES power output 3-5% (Simic 2013 meta-analysis)
+  // Post-training: neutral to slightly positive for recovery
   stretching:    (hSince) => hSince <= 2 ? 3 : 1,
+  // Foam rolling: increases ROM without reducing force production (Cheatham 2015)
+  // Pre-training: 60-120s per group improves ROM, no power loss
+  // Post-training: reduces DOMS 20-40% (Pearcey 2015)
+  foam_roll: (hSince) => hSince <= 1 ? 4 : hSince <= 3 ? 3 : hSince <= 6 ? 1 : 0,
+  // PowerDot EMS: electrical muscle stimulation
+  // Recovery mode (1-10Hz): promotes blood flow, clears metabolites
+  // Can potentiate fast-twitch fibers if used as warm-up (PAP effect)
+  powerdot: (hSince) => hSince <= 0.5 ? 2 : hSince <= 2 ? 3 : hSince <= 4 ? 1 : 0,
   hydration:     () => 2,
   late_meal:     (hSince) => hSince <= 3 ? -3 : -1,
   creatine:      () => 1,
@@ -5865,7 +5885,7 @@ function renderEnergy() {
   if (modsEl) {
     const mods = getActiveBehaviorMods();
     if (mods.length) {
-      const tagLabels = { sauna: 'Sauna', shisha: 'Shisha', shisha_late: 'Shisha', workout: 'Workout', meditation: 'Meditation', alcohol: 'Alcohol', cold_shower: 'Cold', nap: 'Nap', energy_caps: 'Caffeine', sugar: 'Sugar', stress: 'Stress', deep_work: 'Focus', walk: 'Walk', stretching: 'Stretch', weed: 'Weed', nicotine: 'Nicotine' };
+      const tagLabels = { sauna: 'Sauna', shisha: 'Shisha', shisha_late: 'Shisha', workout: 'Workout', meditation: 'Meditation', alcohol: 'Alcohol', cold_shower: 'Cold', nap: 'Nap', energy_caps: 'Caffeine', sugar: 'Sugar', stress: 'Stress', deep_work: 'Focus', walk: 'Walk', stretching: 'Stretch', weed: 'Weed', nicotine: 'Nicotine', foam_roll: 'Foam Roll', powerdot: 'PowerDot', jetboots: 'JetBoots', mobility: 'Mobility', massage: 'Massage' };
       modsEl.innerHTML = mods.map(m =>
         `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;font-size:11px;font-family:'DM Mono',monospace;background:${m.val >= 0 ? 'rgba(0,236,127,0.12)' : 'rgba(255,80,80,0.12)'};color:${m.val >= 0 ? 'var(--energy)' : 'var(--danger)'}">${m.icon} ${tagLabels[m.tag] || m.tag} ${m.val >= 0 ? '+' : ''}${m.val}%</span>`
       ).join('');
@@ -6187,8 +6207,8 @@ function renderTasks() {
 
   // 3. Logged activities (quick logs)
   const todayLogs = (ST.logs || []).filter(l => l.date === today);
-  const tagIcons = { shisha: '💨', shisha_late: '🌙', workout: '🏋️', sauna: '🧖', alcohol: '🍷', stress: '😤', nap: '😴', meditation: '🧘', sunlight: '☀️', screen: '📱', cold_shower: '🧊', sugar: '🍬', deep_work: '📊', walk: '🚶', sun_exposure: '☀️', energy_caps: '⚡', creatine: '🧪' };
-  const tagDots = { shisha: 'shisha', shisha_late: 'shisha', workout: 'strain', sauna: 'warn', alcohol: 'warn', stress: 'warn', nap: 'sleep', meditation: 'active', sunlight: 'active', cold_shower: 'active', deep_work: 'active', walk: 'active', sun_exposure: 'active' };
+  const tagIcons = { shisha: '💨', shisha_late: '🌙', workout: '🏋️', sauna: '🧖', alcohol: '🍷', stress: '😤', nap: '😴', meditation: '🧘', sunlight: '☀️', screen: '📱', cold_shower: '🧊', sugar: '🍬', deep_work: '📊', walk: '🚶', sun_exposure: '☀️', energy_caps: '⚡', creatine: '🧪', foam_roll: '🧱', powerdot: '⚡', jetboots: '🦶' };
+  const tagDots = { shisha: 'shisha', shisha_late: 'shisha', workout: 'strain', sauna: 'warn', alcohol: 'warn', stress: 'warn', nap: 'sleep', meditation: 'active', sunlight: 'active', cold_shower: 'active', deep_work: 'active', walk: 'active', sun_exposure: 'active', foam_roll: 'active', powerdot: 'active', jetboots: 'active' };
   for (let li = 0; li < todayLogs.length; li++) {
     const log = todayLogs[li];
     const d = new Date(log.ts);
@@ -8946,7 +8966,9 @@ const JOURNAL_BEHAVIORS = [
   { id: 'magnesium', icon: '💊', label: 'Magnesium' },
   { id: 'wake_before_930', icon: '⏰', label: 'Wake < 9:30' },
   { id: 'mobility', icon: '🤸', label: 'Mobility Work' },
-  { id: 'jetboots', icon: '🦶', label: 'Jetboots Pro+', sub: 'ankle rehab' },
+  { id: 'jetboots', icon: '🦶', label: 'Jetboots Pro+', sub: 'pneumatic compression' },
+  { id: 'foam_roll', icon: '🧱', label: 'Foam Roll' },
+  { id: 'powerdot', icon: '⚡', label: 'PowerDot EMS' },
   { id: 'linkedin_30', icon: '💼', label: '30m LinkedIn', sub: 'weekdays' },
   { id: 'sleep_8h30', icon: '🛌', label: 'Sleep 8.30+h' },
   { id: 'sleep_before_2', icon: '🌜', label: 'Sleep < 2 AM' },
@@ -9045,8 +9067,8 @@ function renderMoodTrend() {
 // Categorized behavior groups for cleaner journal layout
 const JOURNAL_CATEGORIES = [
   { label: 'Substances', ids: ['shisha', 'shisha_late', 'energy_caps', 'alcohol', 'weed', 'nicotine', 'sugar'] },
-  { label: 'Training', ids: ['workout', 'sauna', 'cold_shower', 'stretching', 'mobility', 'jetboots'] },
-  { label: 'Recovery', ids: ['meditation', 'nap', 'nature', 'massage', 'reading', 'social'] },
+  { label: 'Training', ids: ['workout', 'sauna', 'cold_shower', 'stretching', 'mobility', 'foam_roll'] },
+  { label: 'Recovery', ids: ['meditation', 'nap', 'nature', 'massage', 'reading', 'social', 'jetboots', 'powerdot'] },
   { label: 'Habits', ids: ['sunlight', 'hydration', 'creatine', 'magnesium', 'supplements', 'protein', 'fasting'] },
   { label: 'Sleep', ids: ['screen_late', 'late_meal', 'blue_light_glasses', 'sleep_8h30', 'sleep_before_2'] },
   { label: 'Routine', ids: ['wake_before_930', 'no_phone_morning', 'make_bed', 'skincare_am', 'skincare_pm', 'deep_work', 'linkedin_30', 'sex'] },
@@ -10139,6 +10161,8 @@ const LIVE_ACTIVITY_META = {
   reading:      { icon: '📖', label: 'Reading', targetMin: 30 },
   nap:          { icon: '😴', label: 'Nap', targetMin: 20, warnAtMin: 30 },
   massage:      { icon: '💆', label: 'Massage', targetMin: 30 },
+  foam_roll:    { icon: '🧱', label: 'Foam Roll', targetMin: 15 },
+  powerdot:     { icon: '⚡', label: 'PowerDot EMS', targetMin: 25 },
 };
 
 function logBehavior(tag) {
@@ -10729,13 +10753,13 @@ function getHabitPatterns() {
 const HABIT_SCIENCE = {
   sunlight: 'Morning light anchors your circadian clock  - triggers cortisol awakening response and sets melatonin onset 14-16h later',
   meditation: '13min/day for 8 weeks improved attention and working memory in non-meditators (Basso et al., Behavioural Brain Research, 2019)',
-  cold_shower: 'Immersion in 14°C water increased plasma dopamine 250% with effects lasting 2-3h (Šrámek et al., Eur J Appl Physiol, 2000)',
-  stretching: 'Post-exercise stretching preserves range of motion and may aid parasympathetic recovery  - keep sessions gentle, 10-15min',
-  mobility: 'Joint-specific mobility work improves force output at end-range  - critical for long jump take-off angles',
+  cold_shower: 'Norepinephrine +250%, dopamine surge lasting 2-3h (Šrámek 2000). For explosive athletes: use on rest days or 4h+ post-training. Blunts mTOR/muscle protein synthesis if done immediately post-strength (Roberts, J Physiol, 2015)',
+  stretching: 'Static stretching pre-training reduces power output 3-5% in explosive athletes (Simic meta-analysis, 2013). Use dynamic stretching pre-workout instead. Post-training static stretching is fine for recovery.',
+  mobility: 'Hip flexor and ankle dorsiflexion ROM directly affect long jump take-off angle and ground contact time. Every 1 degree of ankle ROM = measurable force application improvement at the board.',
   creatine: '5g/day increases phosphocreatine stores 20-40%, improving power output and cognitive function (Kreider et al., JISSN, 2017)',
   hydration: '2% body mass loss impairs reaction time, power output and decision-making in athletes (Nuccio et al., Sports Med, 2017)',
   workout: 'Keep acute:chronic workload ratio between 0.8-1.3  - spikes above that increase injury risk significantly (Gabbett, BJSM, 2016)',
-  sauna: 'Frequent sauna use (4-7x/week) associated with 63% lower risk of sudden cardiac death (Laukkanen et al., JAMA Intern Med, 2015)',
+  sauna: 'GH surge 2-5x baseline post-session (Leppäluoto 1986). HSP70/90 induction aids muscle repair. For jumpers: avoid day before competition as heat temporarily reduces tendon stiffness. Best 3h+ post-training or rest days. 15-20min at 80-100°C.',
   reading: 'Reading activates parasympathetic nervous system and reduces cognitive arousal  - effective wind-down ritual before sleep',
   nature: '20-30min nature exposure reduces cortisol at a rate of 21.3%/hour  - sitting or walking both work (Hunter et al., Front Psychol, 2019)',
   protein: '1.6-2.2g/kg/day protein optimizes muscle protein synthesis  - distribute across 4+ meals (Morton et al., BJSM, 2018)',
@@ -10744,7 +10768,9 @@ const HABIT_SCIENCE = {
   blue_light_glasses: 'Amber-tinted lenses in the evening improved sleep quality in insomnia patients (Shechter et al., J Psychiatr Res, 2018)',
   fasting: 'Time-restricted eating may improve metabolic flexibility  - human autophagy data is limited, significant effects likely require 24h+',
   deep_work: 'Peak cognitive performance follows ~90min ultradian cycles  - match deep work to your circadian peaks (Kleitman BRAC model)',
-  jetboots: 'Intermittent pneumatic compression enhances blood flow and may accelerate recovery  - evidence for tendon-specific benefits is limited',
+  jetboots: 'Sequential pneumatic compression accelerates metabolite clearance (lactate, CK) and enhances parasympathetic reactivation (HRV). Does not impair adaptation unlike cold immersion. 20-30min post-training. Particularly useful between sessions during competition blocks.',
+  foam_roll: 'Increases ROM without reducing force production, unlike static stretching (Cheatham, IJSPT, 2015). Reduces DOMS 20-40% post-exercise (Pearcey, JSCR, 2015). For long jumpers: focus on quads, hip flexors, IT band, calves, thoracic spine. 60-120s per muscle group.',
+  powerdot: 'Low-frequency EMS (1-10Hz) promotes blood flow and clears metabolites without causing fatigue. Pre-activation mode (20-50Hz) can potentiate fast-twitch fibers via post-activation potentiation (PAP). EMS training increased vertical jump height in trained athletes (Maffiuletti, J Strength Cond Res, 2000).',
   make_bed: 'Morning routine completion builds momentum  - environmental order reduces cognitive load throughout the day',
   no_phone_morning: 'The cortisol awakening response rises 38-75% in the first 30-45min after waking  - protect this natural alertness window',
   sex: 'Oxytocin release improves sleep quality and reduces cortisol  - beneficial for recovery on non-competition days',
@@ -10752,7 +10778,7 @@ const HABIT_SCIENCE = {
   skincare_am: 'Daily SPF reduces UV-induced skin aging  - consistency matters more than product price',
   skincare_pm: 'Nighttime skin repair activity peaks during sleep  - evening routines align with natural cell turnover',
   social: 'Weak social connections increase mortality risk comparable to smoking 15 cigarettes/day  - meta-analysis of 148 studies (Holt-Lunstad et al., PLoS Med, 2010)',
-  massage: 'Post-exercise massage attenuated inflammatory signaling (NF-κB) and increased mitochondrial biogenesis markers (Crane et al., Sci Transl Med, 2012)',
+  massage: 'Attenuated NF-κB inflammatory signaling and increased mitochondrial biogenesis (Crane, Sci Transl Med, 2012). For explosive athletes: reduces fascial adhesions that limit rate of force development. Best 2-6h post-training, not immediately after.',
   // Negative behavior science
   shisha: 'One hookah session = inhaling ~90,000mL smoke vs ~500mL for a cigarette  - CO half-life is 4-5h in non-smokers (WHO)',
   shisha_late: 'Shisha before sleep elevates resting heart rate and carbon monoxide levels  - both directly impair deep sleep and HRV',
@@ -10884,7 +10910,9 @@ function renderSuggestions() {
     make_bed: { icon: '🛏️', title: 'Make the bed', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('make_bed')` },
     skincare_am: { icon: '🧴', title: 'Morning skincare', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('skincare_am')` },
     skincare_pm: { icon: '✨', title: 'Evening skincare', action: 'Log', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `logBehavior('skincare_pm')` },
-    jetboots: { icon: '🦶', title: 'Jetboots rehab session', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('jetboots')` },
+    jetboots: { icon: '🦶', title: 'Jetboots recovery session', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('jetboots')` },
+    foam_roll: { icon: '🧱', title: 'Foam roll session', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('foam_roll')` },
+    powerdot: { icon: '⚡', title: 'PowerDot recovery', action: 'Start', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `startLiveActivity('powerdot')` },
     no_phone_morning: { icon: '🚫', title: 'No phone first 30 min', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('no_phone_morning')` },
   };
 
@@ -10905,8 +10933,10 @@ function renderSuggestions() {
 
   // === PRIORITY 6: Habit discovery (things they rarely do but should) ===
   const discoverySugs = {
-    cold_shower: { icon: '🧊', title: 'Try a cold shower', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('cold_shower')` },
+    cold_shower: { icon: '🧊', title: 'Cold immersion session', action: 'Start', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `startLiveActivity('cold_shower')` },
     sauna: { icon: '🧖', title: 'Sauna session', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('sauna')` },
+    foam_roll: { icon: '🧱', title: 'Foam roll recovery', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('foam_roll')` },
+    powerdot: { icon: '⚡', title: 'PowerDot EMS recovery', action: 'Start', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `startLiveActivity('powerdot')` },
     nature: { icon: '🌿', title: 'Get into nature', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('nature')` },
     reading: { icon: '📖', title: 'Read before bed', action: 'Start', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `startLiveActivity('reading')` },
     fasting: { icon: '⏳', title: 'Try intermittent fasting', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('fasting')` },
@@ -11897,6 +11927,35 @@ function bootApp() {
     renderDailyCoach();
     renderSuggestions();
   }, 60000);
+
+  // Auto-enable notifications if permission already granted, or prompt on first visit
+  (async () => {
+    if (!ST.notifications) ST.notifications = { enabled: false, fired: {} };
+    if (!ST.notifications.enabled && 'Notification' in window && 'PushManager' in window) {
+      if (Notification.permission === 'granted') {
+        // Permission was already given - just enable silently
+        const sub = await subscribePush();
+        ST.notifications.enabled = true;
+        saveState();
+        updateNotifToggleUI();
+      } else if (Notification.permission === 'default' && !ST._notifPrompted) {
+        // First time - ask permission after a brief delay so UI loads first
+        ST._notifPrompted = true;
+        saveState();
+        setTimeout(async () => {
+          const perm = await Notification.requestPermission();
+          if (perm === 'granted') {
+            const sub = await subscribePush();
+            ST.notifications.enabled = true;
+            saveState();
+            updateNotifToggleUI();
+            const reg = await navigator.serviceWorker.ready;
+            reg.showNotification('RYTHM', { body: 'Push notifications enabled - you\'ll get pinged even when the app is closed.', tag: 'rythm-setup' });
+          }
+        }, 2000);
+      }
+    }
+  })();
 
   // Notification check every 2 minutes
   checkNotifications();
