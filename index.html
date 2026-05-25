@@ -535,36 +535,50 @@ section { padding: 0 16px; margin-bottom: 8px; }
   font-family: 'DM Mono', monospace; font-size: 13px;
   color: var(--warn); font-weight: 700;
 }
-.debt-bars {
-  display: flex; gap: 3px; align-items: flex-end; height: 50px;
-  padding: 0 2px;
+.debt-chart-val.debt-low { color: var(--energy); }
+.debt-area-wrap {
+  position: relative; width: 100%; height: 72px;
+  touch-action: none;
 }
-.debt-bar {
-  flex: 1; border-radius: 2px 2px 0 0; min-height: 3px;
-  transition: height 0.5s;
-  position: relative;
+.debt-area-wrap svg { display: block; width: 100%; height: 100%; }
+.debt-area-labels {
+  display: flex; justify-content: space-between; margin-top: 6px; padding: 0 2px;
 }
-.debt-bar:last-child { opacity: 1 !important; }
-.debt-bar-labels {
-  display: flex; gap: 3px; margin-top: 4px; padding: 0 2px;
+.debt-area-labels span {
+  font-family: 'DM Mono', monospace; font-size: 8px; font-weight: 600;
+  color: var(--text-4); letter-spacing: 0.3px;
 }
-.debt-bar-labels span {
-  flex: 1; text-align: center;
-  font-family: 'DM Mono', monospace; font-size: 7px;
-  color: var(--text-4); letter-spacing: -0.3px;
+.debt-scrub-dot {
+  position: absolute; width: 10px; height: 10px; border-radius: 50%;
+  border: 2px solid #fff; pointer-events: none; z-index: 4;
+  transform: translate(-50%, -50%); display: none;
+  box-shadow: 0 0 8px rgba(255,255,255,0.3);
 }
-.debt-bar.scrub-active { opacity: 1 !important; box-shadow: 0 0 6px rgba(255,255,255,0.3); }
+.debt-scrub-line {
+  position: absolute; top: 0; width: 1px; height: 100%;
+  background: rgba(255,255,255,0.2); pointer-events: none; z-index: 3;
+  display: none;
+}
 .debt-scrub-tooltip {
-  position: absolute; top: -6px; right: 0;
-  background: rgba(0,0,0,0.88); border: 1px solid rgba(255,255,255,0.12);
+  position: absolute; top: -34px; transform: translateX(-50%);
+  background: rgba(0,0,0,0.92); border: 1px solid rgba(255,255,255,0.1);
   border-radius: 8px; padding: 4px 10px;
   font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 700;
   color: #fff; pointer-events: none; z-index: 5;
-  backdrop-filter: blur(8px); white-space: nowrap;
+  backdrop-filter: blur(12px); white-space: nowrap;
   display: none;
 }
 .debt-scrub-tooltip .scrub-date {
   font-size: 9px; font-weight: 600; color: var(--text-4); letter-spacing: 0.5px;
+}
+.debt-status {
+  display: flex; align-items: center; gap: 6px; margin-top: 10px;
+}
+.debt-status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+}
+.debt-status-text {
+  font-size: 11px; font-weight: 600; color: var(--text-3);
 }
 
 /* STREAKS */
@@ -1025,12 +1039,38 @@ section { padding: 0 16px; margin-bottom: 8px; }
 /* HR curve during sleep */
 .hr-curve-wrap {
   position: relative; height: 120px; margin: 8px 0 4px; overflow: hidden; border-radius: 8px;
+  touch-action: none;
 }
 .hr-curve-wrap svg { width: 100%; height: 100%; }
 .hr-curve-axis {
   position: absolute; left: 0; top: 0; bottom: 0; width: 28px;
   display: flex; flex-direction: column; justify-content: space-between; padding: 4px 0;
   font-size: 9px; color: var(--text-4); font-family: 'DM Mono', monospace;
+}
+.hr-scrub-line {
+  position: absolute; top: 0; width: 1px; height: 100%;
+  background: rgba(255,255,255,0.3); pointer-events: none; display: none; z-index: 3;
+}
+.hr-scrub-dot {
+  position: absolute; width: 8px; height: 8px; border-radius: 50%;
+  border: 2px solid #fff; pointer-events: none; display: none; z-index: 4;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 6px rgba(255,255,255,0.4);
+}
+.hr-scrub-tip {
+  position: absolute; top: -2px; transform: translateX(-50%);
+  background: rgba(0,0,0,0.92); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px; padding: 5px 10px; pointer-events: none; display: none; z-index: 5;
+  backdrop-filter: blur(12px); text-align: center; white-space: nowrap;
+}
+.hr-scrub-tip-hr {
+  font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 700; color: #fff;
+}
+.hr-scrub-tip-stage {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.hr-scrub-tip-time {
+  font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-4);
 }
 
 /* Sleep performance ring */
@@ -2549,9 +2589,14 @@ section { padding: 0 16px; margin-bottom: 8px; }
           <div class="debt-chart-label">SLEEP DEBT  14 DAYS</div>
           <div class="debt-chart-val" id="debtTotal">--</div>
         </div>
-        <div class="debt-bars" id="debtBars"></div>
-        <div class="debt-bar-labels" id="debtLabels"></div>
-        <div class="debt-scrub-tooltip" id="debtScrubTip"></div>
+        <div class="debt-area-wrap" id="debtAreaWrap">
+          <svg id="debtSvg" viewBox="0 0 300 72" preserveAspectRatio="none"></svg>
+          <div class="debt-scrub-line" id="debtScrubLine"></div>
+          <div class="debt-scrub-dot" id="debtScrubDot"></div>
+          <div class="debt-scrub-tooltip" id="debtScrubTip"></div>
+        </div>
+        <div class="debt-area-labels" id="debtLabels"></div>
+        <div class="debt-status" id="debtStatus"></div>
       </div>
     </section>
 
@@ -3180,11 +3225,15 @@ const ENERGY_CURVE_PCT = [
   [1.0,    8],   // bedtime
 ];
 
-// Compute awake window in hours from profile
+// Compute awake window in hours — uses today's actual wake/sleep times when available
 function awakeWindow() {
-  const wake = ST.profile.wakeMin;
-  const sleep = ST.profile.sleepMin;
-  return (sleep >= wake ? sleep - wake : sleep + 1440 - wake) / 60;
+  const wakeH = profileWakeHour();
+  const sleepH = profileSleepHour();
+  const wakeMin = wakeH * 60;
+  const sleepMin = sleepH * 60;
+  const aw = (sleepMin >= wakeMin ? sleepMin - wakeMin : sleepMin + 1440 - wakeMin) / 60;
+  // Clamp to reasonable range (12-18h) — bad data shouldn't break the curve
+  return Math.max(12, Math.min(18, aw));
 }
 
 // Build absolute ENERGY_CURVE from proportions × current awake window
@@ -3621,8 +3670,8 @@ function computeReadiness() {
     else if (spo2 < 96) spo2Bonus = -3;
   }
 
-  // Skin temperature deviation from baseline (if available from Apple Watch)
-  const skinTempDelta = ST.health?.skinTempDelta ?? null;
+  // Skin temperature deviation from baseline (only if watch has temp sensor)
+  const skinTempDelta = ST.health?._skinTempSynced ? ST.health.skinTempDelta : null;
   let skinTempBonus = 0;
   if (skinTempDelta != null) {
     // Deviation from rolling baseline — elevated = inflammation/illness
@@ -4047,7 +4096,7 @@ function buildRecoveryDetail() {
         <b style="color:var(--text-2)">Sleep</b> (30%) = quality + duration. Deep sleep releases HGH for tissue repair.<br>
         <b style="color:var(--text-2)">RHR</b> (15%) = cardiovascular recovery. Lower than baseline = good sign.<br>
         <b style="color:var(--text-2)">Training</b> (10%) = Acute:Chronic ratio (3d vs 7d). Sweet spot: 0.8-1.3x.<br>
-        <b style="color:var(--text-2)">Modifiers</b> = Resp rate, SpO₂, skin temp, yesterday's behaviors (shisha, alcohol, etc.).
+        <b style="color:var(--text-2)">Modifiers</b> = Resp rate, SpO₂${ST.health._skinTempSynced ? ', skin temp' : ''}, yesterday's behaviors (shisha, alcohol, etc.).
       </div>
     </div>
   </div>`;
@@ -4220,7 +4269,11 @@ function buildSleepHRCurve(stg, totalH) {
   // Y-axis labels
   const midHR = Math.round((minHR + maxHR) / 2);
 
-  return `<div class="hr-curve-wrap">
+  // Store points globally for scrubbing
+  ST._sleepHRPoints = points.map(p => ({ ...p, svgX: p.x, svgY: h - 10 - ((p.hr - minHR) / hrRange) * (h - 20) }));
+  ST._sleepHRMeta = { w, h, minHR, maxHR, totalMin, sleepStart: ST.sleep?.sleepStart };
+
+  return `<div class="hr-curve-wrap" id="hrCurveWrap">
     <div class="hr-curve-axis">
       <span>${maxHR}</span>
       <span>${midHR}</span>
@@ -4230,6 +4283,9 @@ function buildSleepHRCurve(stg, totalH) {
       <line x1="0" y1="${h - 10 - ((rhr - minHR) / hrRange) * (h - 20)}" x2="${w}" y2="${h - 10 - ((rhr - minHR) / hrRange) * (h - 20)}" stroke="rgba(255,255,255,0.08)" stroke-dasharray="4,4"/>
       ${pathsHtml}
     </svg>
+    <div class="hr-scrub-line" id="hrScrubLine"></div>
+    <div class="hr-scrub-dot" id="hrScrubDot"></div>
+    <div class="hr-scrub-tip" id="hrScrubTip"></div>
   </div>`;
 }
 
@@ -4358,6 +4414,120 @@ function markWatchBatteryDied() {
   renderReadiness();
   renderThreeRings();
   renderSleepBreakdown();
+}
+
+// ========================================
+//  SLEEP COACHING ENGINE
+// ========================================
+function buildSleepCoaching(sl, stg, debtH, pct) {
+  const tips = [];
+  const total = stg.deep + stg.rem + stg.core + stg.awake || 1;
+  const deepPct = Math.round((stg.deep / total) * 100);
+  const remPct = Math.round((stg.rem / total) * 100);
+  const target = (ST.health && ST.health.sleepTarget) || 8;
+  const journal = ST.journal || [];
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const recent7 = journal.filter(j => {
+    const d = new Date(j.date);
+    return (Date.now() - d.getTime()) < 7 * 86400000;
+  });
+
+  // 1. Duration coaching
+  if (sl.totalH < 7) {
+    tips.push({ icon: '⏰', title: 'Increase Sleep Duration', priority: 1,
+      text: `${fmtH(sl.totalH)} is below the 7-9h recommended for athletes. Research shows <7h sleep reduces sprint performance by 3% and increases injury risk 1.7x (Milewski 2014).`,
+      action: 'Set bedtime 30 min earlier this week' });
+  } else if (sl.totalH < target) {
+    tips.push({ icon: '⏰', title: 'Slight Duration Gap', priority: 3,
+      text: `${fmtH(sl.totalH)} vs ${fmtH(target)} target. Good base — closing this gap optimizes HGH release in late-night deep sleep cycles.`,
+      action: `Aim for lights off ${Math.round((target - sl.totalH) * 60 + 15)} min earlier` });
+  }
+
+  // 2. Deep sleep coaching (critical for athletes — HGH release, tissue repair)
+  if (deepPct < 15) {
+    tips.push({ icon: '🔷', title: 'Deep Sleep Below Optimal', priority: 1,
+      text: `${deepPct}% deep sleep (typical: 15-25%). Deep sleep drives 95% of daily HGH secretion — essential for muscle repair and tendon adaptation.`,
+      action: 'Avoid alcohol, keep room 18°C, consider magnesium glycinate 400mg' });
+  } else if (deepPct >= 25) {
+    tips.push({ icon: '🔷', title: 'Excellent Deep Sleep', priority: 4,
+      text: `${deepPct}% deep sleep — above typical range. Tissue repair and hormonal restoration are well supported.`,
+      action: 'Maintain current evening routine' });
+  }
+
+  // 3. REM coaching (motor memory consolidation for technique work)
+  if (remPct < 20) {
+    tips.push({ icon: '💜', title: 'Low REM Sleep', priority: 2,
+      text: `${remPct}% REM (typical: 20-30%). REM consolidates motor patterns — critical after technique sessions. Low REM impairs skill retention.`,
+      action: 'Avoid late caffeine (cuts REM 20%), keep consistent wake time' });
+  }
+
+  // 4. Sleep efficiency
+  if (sl.efficiency > 0 && sl.efficiency < 85) {
+    tips.push({ icon: '📊', title: 'Sleep Efficiency Low', priority: 2,
+      text: `${sl.efficiency}% efficiency means ${Math.round((100 - sl.efficiency) / 100 * sl.totalH * 60)} minutes spent awake in bed. Target: 85%+.`,
+      action: 'If awake >15 min, get up briefly. Avoid screens in bed.' });
+  }
+
+  // 5. Sleep debt coaching
+  if (debtH > 3) {
+    tips.push({ icon: '📉', title: 'High Sleep Debt', priority: 1,
+      text: `${fmtH(debtH)} accumulated debt reduces reaction time by ~15% and power output by ~10%. Takes 3-4 nights of extra sleep to recover.`,
+      action: 'Add 60-90 min sleep per night for the next 3 days' });
+  } else if (debtH > 1) {
+    tips.push({ icon: '📉', title: 'Moderate Sleep Debt', priority: 3,
+      text: `${fmtH(debtH)} debt. Manageable but accumulating — performance impact starts above 2h.`,
+      action: 'Add 30 min extra tonight to prevent further accumulation' });
+  }
+
+  // 6. Consistency coaching
+  if (sl.consistency > 0 && sl.consistency < 70) {
+    tips.push({ icon: '🔄', title: 'Inconsistent Sleep Schedule', priority: 2,
+      text: `${sl.consistency}% consistency. Irregular bedtimes shift circadian rhythm, reducing deep sleep. Elite athletes average 85%+ consistency.`,
+      action: 'Set a fixed bedtime alarm — even on weekends' });
+  }
+
+  // 7. Behavior-based coaching (check recent journal entries)
+  const recentShisha = recent7.filter(j => (j.behaviors || []).some(b => b === 'shisha' || b === 'shisha_late')).length;
+  if (recentShisha >= 3) {
+    tips.push({ icon: '💨', title: 'Frequent Shisha Impact', priority: 2,
+      text: `Shisha ${recentShisha}x this week. Carbon monoxide from shisha reduces blood oxygen for 4-6h, directly cutting deep sleep and HRV by 10-15%.`,
+      action: 'Limit to 2x/week max, never within 3h of bed' });
+  }
+
+  const recentAlcohol = recent7.filter(j => (j.behaviors || []).includes('alcohol')).length;
+  if (recentAlcohol >= 2) {
+    tips.push({ icon: '🍺', title: 'Alcohol Disrupting Sleep', priority: 2,
+      text: `Alcohol ${recentAlcohol}x this week. Even moderate alcohol cuts REM by 20-40% and suppresses melatonin for 3h.`,
+      action: 'Avoid alcohol 4h before bed, limit to 1-2x/week' });
+  }
+
+  const lateScreens = recent7.filter(j => (j.behaviors || []).includes('screen_late')).length;
+  if (lateScreens >= 3) {
+    tips.push({ icon: '📱', title: 'Late Screen Exposure', priority: 3,
+      text: `Late screens ${lateScreens}/7 nights. Blue light suppresses melatonin onset by 30-90 min, delaying sleep phase.`,
+      action: 'Night Shift mode after sunset, no screens 30 min before bed' });
+  }
+
+  // Sort by priority (1 = most important)
+  tips.sort((a, b) => a.priority - b.priority);
+  const shown = tips.slice(0, 4);
+
+  if (!shown.length) {
+    return `<div style="text-align:center;padding:16px 0;color:var(--text-3);font-size:12px;">Great sleep patterns — keep it up!</div>`;
+  }
+
+  return shown.map(tip => {
+    const urgColor = tip.priority <= 1 ? 'var(--danger)' : tip.priority <= 2 ? 'var(--warn)' : 'var(--energy)';
+    return `<div style="padding:12px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="font-size:16px">${tip.icon}</span>
+        <span style="font-size:12px;font-weight:700;color:#fff;letter-spacing:0.3px;">${tip.title}</span>
+        <span style="margin-left:auto;width:6px;height:6px;border-radius:50%;background:${urgColor};flex-shrink:0;"></span>
+      </div>
+      <div style="font-size:11px;color:var(--text-3);line-height:1.5;margin-bottom:8px;">${tip.text}</div>
+      <div style="font-size:11px;font-weight:600;color:var(--energy);padding:6px 10px;background:rgba(0,236,127,0.06);border-radius:8px;border:1px solid rgba(0,236,127,0.1);">→ ${tip.action}</div>
+    </div>`;
+  }).join('');
 }
 
 // ========================================
@@ -4578,6 +4748,11 @@ function buildSleepFullPage() {
       <div class="fp-row"><span class="fp-row-label">Room temp</span><span class="fp-row-val">18-19C</span></div>
       <div class="fp-row"><span class="fp-row-label">Shisha cutoff</span><span class="fp-row-val">${minToTime(idealBedMin - 180 < 0 ? idealBedMin - 180 + 1440 : idealBedMin - 180)}</span></div>
       <div class="fp-row"><span class="fp-row-label">Energy Caps cutoff</span><span class="fp-row-val">${minToTime(Math.round((ST.profile.wakeMin/60 + 6.5) % 24 * 60))}</span></div>
+    </div>
+
+    <div class="fp-section">
+      <div class="fp-section-title">SLEEP COACHING</div>
+      ${buildSleepCoaching(sl, stg, debtH, pct)}
     </div>
   `;
 }
@@ -5206,10 +5381,10 @@ function renderSicknessWarning() {
   if (hrvHist.length < 3 && rhrHist.length < 3) { section.classList.add('hidden'); return; }
 
   // Calculate recent vs baseline
-  const hrvRecent = hrvHist.slice(-3).map(h => h.value);
-  const hrvBaseline = hrvHist.slice(-14, -3).map(h => h.value);
-  const rhrRecent = rhrHist.slice(-3).map(h => h.value);
-  const rhrBaseline = rhrHist.slice(-14, -3).map(h => h.value);
+  const hrvRecent = hrvHist.slice(-3).map(h => h.v);
+  const hrvBaseline = hrvHist.slice(-14, -3).map(h => h.v);
+  const rhrRecent = rhrHist.slice(-3).map(h => h.v);
+  const rhrBaseline = rhrHist.slice(-14, -3).map(h => h.v);
 
   const avgRecent = hrvRecent.length ? hrvRecent.reduce((a,b) => a+b, 0) / hrvRecent.length : 0;
   const avgBase = hrvBaseline.length ? hrvBaseline.reduce((a,b) => a+b, 0) / hrvBaseline.length : avgRecent;
@@ -6071,30 +6246,110 @@ function renderStreaks() {
 
 function renderSleepDebt() {
   const debts = ST.sleepDebt || [];
+  const totalEl = document.getElementById('debtTotal');
+  const svgEl = document.getElementById('debtSvg');
+  const labelsEl = document.getElementById('debtLabels');
+  const statusEl = document.getElementById('debtStatus');
+  const wrapEl = document.getElementById('debtAreaWrap');
+  if (!totalEl || !svgEl) return;
+
   if (!debts.length) {
-    document.getElementById('debtTotal').textContent = '--';
-    document.getElementById('debtBars').innerHTML = '<div style="text-align:center;padding:16px 0;color:var(--text-4);font-size:12px;width:100%">Sync sleep data to track debt</div>';
-    document.getElementById('debtLabels').innerHTML = '';
+    totalEl.textContent = '--';
+    totalEl.className = 'debt-chart-val';
+    svgEl.innerHTML = '<text x="150" y="40" text-anchor="middle" fill="rgba(255,255,255,0.25)" font-size="11" font-family="DM Mono, monospace">Sync sleep data to track debt</text>';
+    if (labelsEl) labelsEl.innerHTML = '';
+    if (statusEl) statusEl.innerHTML = '';
     return;
   }
-  const maxDebt = Math.max(...debts.map(d => d.debtH), 5);
+
   const currentDebt = debts[debts.length - 1].debtH;
+  totalEl.textContent = fmtH(currentDebt);
+  totalEl.className = 'debt-chart-val' + (currentDebt <= 1 ? ' debt-low' : '');
 
-  document.getElementById('debtTotal').textContent = fmtH(currentDebt);
+  // SVG dimensions
+  const W = 300, H = 72;
+  const maxDebt = Math.max(...debts.map(d => d.debtH), 3);
+  const pad = { top: 4, bottom: 2 };
+  const chartH = H - pad.top - pad.bottom;
 
-  document.getElementById('debtBars').innerHTML = debts.map((d, i) => {
-    const h = (d.debtH / maxDebt) * 100;
-    const isLast = i === debts.length - 1;
-    const isRecent = i >= debts.length - 3;
-    const opacity = isLast ? 1 : isRecent ? 0.7 : 0.4;
-    // Gradient from warm to danger based on severity
-    const color = d.debtH > 4 ? '#ff5470' : d.debtH > 2.5 ? '#ff9f43' : d.debtH > 1 ? '#fbbf24' : '#4da9ff';
-    return `<div class="debt-bar" style="height:${Math.max(h, 6)}%;background:${color};opacity:${opacity};"></div>`;
-  }).join('');
+  // Build points
+  const pts = debts.map((d, i) => {
+    const x = debts.length === 1 ? W / 2 : (i / (debts.length - 1)) * W;
+    const y = pad.top + chartH - (d.debtH / maxDebt) * chartH;
+    return { x, y };
+  });
 
-  document.getElementById('debtLabels').innerHTML = debts.map((d, i) => {
-    return (i % 3 === 0 || i === debts.length - 1) ? `<span>${d.date.slice(5)}</span>` : '<span></span>';
-  }).join('');
+  // Color based on current severity
+  const gradColor = currentDebt > 4 ? ['#ff5470', '#ff547033']
+    : currentDebt > 2 ? ['#ff9f43', '#ff9f4322']
+    : currentDebt > 1 ? ['#fbbf24', '#fbbf2422']
+    : ['#4da9ff', '#4da9ff18'];
+
+  // Smooth curve using catmull-rom → cubic bezier
+  function smoothPath(points) {
+    if (points.length < 2) return `M${points[0].x},${points[0].y}`;
+    let d = `M${points[0].x},${points[0].y}`;
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[Math.max(0, i - 1)];
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      const p3 = points[Math.min(points.length - 1, i + 2)];
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+      d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
+    }
+    return d;
+  }
+
+  const linePath = smoothPath(pts);
+  const areaPath = linePath + ` L${pts[pts.length-1].x},${H} L${pts[0].x},${H} Z`;
+
+  // Target threshold line at 1h
+  const targetY = pad.top + chartH - (1 / maxDebt) * chartH;
+
+  svgEl.innerHTML = `
+    <defs>
+      <linearGradient id="debtGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${gradColor[0]}" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="${gradColor[0]}" stop-opacity="0.02"/>
+      </linearGradient>
+    </defs>
+    ${targetY < H - 4 ? `<line x1="0" y1="${targetY}" x2="${W}" y2="${targetY}" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="4,4"/>` : ''}
+    <path d="${areaPath}" fill="url(#debtGrad)"/>
+    <path d="${linePath}" fill="none" stroke="${gradColor[0]}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${pts[pts.length-1].x}" cy="${pts[pts.length-1].y}" r="3.5" fill="${gradColor[0]}" stroke="rgba(0,0,0,0.4)" stroke-width="1"/>
+  `;
+
+  // Store points for scrubbing
+  if (wrapEl) wrapEl._debtPts = pts;
+
+  // Labels — show first, middle, last
+  if (labelsEl) {
+    const labels = [];
+    if (debts.length >= 3) {
+      labels.push(`<span>${debts[0].date.slice(5)}</span>`);
+      labels.push(`<span style="text-align:center;flex:1"></span>`);
+      labels.push(`<span style="text-align:right">${debts[debts.length-1].date.slice(5)}</span>`);
+    } else {
+      labels.push(...debts.map(d => `<span>${d.date.slice(5)}</span>`));
+    }
+    labelsEl.innerHTML = labels.join('');
+  }
+
+  // Status message
+  if (statusEl) {
+    const trend = debts.length >= 3
+      ? debts[debts.length-1].debtH - debts[debts.length-3].debtH
+      : 0;
+    const dotColor = currentDebt <= 1 ? 'var(--energy)' : currentDebt <= 3 ? '#fbbf24' : 'var(--warn)';
+    const msg = currentDebt <= 0.5 ? 'Fully recovered'
+      : currentDebt <= 1 ? 'Low debt — well managed'
+      : currentDebt <= 3 ? (trend <= -0.3 ? 'Recovering — debt declining' : 'Moderate — prioritize sleep')
+      : (trend <= -0.5 ? 'High but improving' : 'High debt — recovery impaired');
+    statusEl.innerHTML = `<div class="debt-status-dot" style="background:${dotColor}"></div><div class="debt-status-text">${msg}</div>`;
+  }
 }
 
 function renderHabitAccountability() {
@@ -8160,16 +8415,19 @@ function renderTrends() {
     if (tooltip) tooltip.style.display = 'none';
   }
 
-  // Track scrub state to prevent click-through
+  // Track scrub state to prevent click-through (only block click after actual drag)
   let curveScrubbing = false;
+  let curveScrubMoved = false;
+  let curveScrubStartX = 0;
 
-  // Prevent click on energy hero when scrubbing
+  // Prevent click on energy hero only when user actually scrubbed (moved finger)
   document.addEventListener('click', e => {
-    if (curveScrubbing && e.target.closest('.curve-wrap')) {
+    if (curveScrubMoved && e.target.closest('.curve-wrap')) {
       e.stopPropagation();
       e.preventDefault();
-      curveScrubbing = false;
     }
+    curveScrubbing = false;
+    curveScrubMoved = false;
   }, true);
 
   // Touch events
@@ -8177,15 +8435,22 @@ function renderTrends() {
     const svg = e.target.closest('.curve-svg');
     if (svg && svg._scrubData) {
       curveScrubbing = true;
-      handleCurveScrub(svg, e.touches[0].clientX);
+      curveScrubMoved = false;
+      curveScrubStartX = e.touches[0].clientX;
     }
   }, { passive: true });
 
   document.addEventListener('touchmove', e => {
     const svg = e.target.closest('.curve-svg');
-    if (svg && svg._scrubData) {
-      e.preventDefault();
-      handleCurveScrub(svg, e.touches[0].clientX);
+    if (svg && svg._scrubData && curveScrubbing) {
+      // Only activate scrub if finger moved >8px (prevents tap-then-click block)
+      if (!curveScrubMoved && Math.abs(e.touches[0].clientX - curveScrubStartX) > 8) {
+        curveScrubMoved = true;
+      }
+      if (curveScrubMoved) {
+        e.preventDefault();
+        handleCurveScrub(svg, e.touches[0].clientX);
+      }
     }
   }, { passive: false });
 
@@ -8210,37 +8475,51 @@ function renderTrends() {
 //  SLEEP DEBT BAR SCRUBBING (touch/hover to see date + debt)
 // ========================================
 (function initDebtScrub() {
-  function handleDebtScrub(barsEl, clientX) {
+  function handleDebtScrub(wrapEl, clientX) {
     const debts = ST.sleepDebt || [];
-    if (!debts.length) return;
-    const bars = barsEl.querySelectorAll('.debt-bar');
-    if (!bars.length) return;
+    const pts = wrapEl._debtPts;
+    if (!debts.length || !pts || !pts.length) return;
 
-    const rect = barsEl.getBoundingClientRect();
+    const rect = wrapEl.getBoundingClientRect();
     const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     const idx = Math.min(Math.round(pct * (debts.length - 1)), debts.length - 1);
 
-    // Highlight active bar
-    bars.forEach((b, i) => b.classList.toggle('scrub-active', i === idx));
+    const d = debts[idx];
+    const pt = pts[idx];
+    const xPct = (pt.x / 300) * 100;
+    const yPct = (pt.y / 72) * 100;
+    const color = d.debtH > 4 ? '#ff5470' : d.debtH > 2.5 ? '#ff9f43' : d.debtH > 1 ? '#fbbf24' : '#4da9ff';
 
-    // Show tooltip
-    const chart = barsEl.closest('.debt-chart');
-    const tooltip = chart?.querySelector('.debt-scrub-tooltip');
+    // Scrub line
+    const line = wrapEl.querySelector('.debt-scrub-line');
+    if (line) { line.style.display = ''; line.style.left = xPct + '%'; }
+
+    // Scrub dot
+    const dot = wrapEl.querySelector('.debt-scrub-dot');
+    if (dot) { dot.style.display = ''; dot.style.left = xPct + '%'; dot.style.top = yPct + '%'; dot.style.background = color; }
+
+    // Tooltip
+    const tooltip = wrapEl.querySelector('.debt-scrub-tooltip');
     if (tooltip) {
-      const d = debts[idx];
-      const color = d.debtH > 4 ? '#ff5470' : d.debtH > 2.5 ? '#ff9f43' : d.debtH > 1 ? '#fbbf24' : '#4da9ff';
       tooltip.innerHTML = `<span class="scrub-date">${d.date.slice(5)}</span> <span style="color:${color}">${d.debtH.toFixed(1)}h</span>`;
       tooltip.style.display = '';
+      tooltip.style.left = Math.max(30, Math.min(xPct, 85)) + '%';
     }
 
     // Update header value
+    const chart = wrapEl.closest('.debt-chart');
     const valEl = chart?.querySelector('.debt-chart-val');
-    if (valEl) valEl.textContent = fmtH(debts[idx].debtH);
+    if (valEl) valEl.textContent = fmtH(d.debtH);
   }
 
   function endDebtScrub() {
-    document.querySelectorAll('.debt-bar.scrub-active').forEach(b => b.classList.remove('scrub-active'));
+    const wrapEl = document.getElementById('debtAreaWrap');
+    if (!wrapEl) return;
+    const line = wrapEl.querySelector('.debt-scrub-line');
+    const dot = wrapEl.querySelector('.debt-scrub-dot');
     const tooltip = document.getElementById('debtScrubTip');
+    if (line) line.style.display = 'none';
+    if (dot) dot.style.display = 'none';
     if (tooltip) tooltip.style.display = 'none';
     // Restore current value
     const debts = ST.sleepDebt || [];
@@ -8249,28 +8528,124 @@ function renderTrends() {
   }
 
   document.addEventListener('touchstart', e => {
-    const bars = e.target.closest('.debt-bars');
-    if (bars) handleDebtScrub(bars, e.touches[0].clientX);
+    const wrap = e.target.closest('.debt-area-wrap');
+    if (wrap) handleDebtScrub(wrap, e.touches[0].clientX);
   }, { passive: true });
 
   document.addEventListener('touchmove', e => {
-    const bars = e.target.closest('.debt-bars');
-    if (bars) {
+    const wrap = e.target.closest('.debt-area-wrap');
+    if (wrap) {
       e.preventDefault();
-      handleDebtScrub(bars, e.touches[0].clientX);
+      handleDebtScrub(wrap, e.touches[0].clientX);
     }
   }, { passive: false });
 
   document.addEventListener('touchend', e => {
-    if (e.target.closest('.debt-bars') || e.target.closest('.debt-chart')) endDebtScrub();
+    if (e.target.closest('.debt-area-wrap') || e.target.closest('.debt-chart')) endDebtScrub();
   }, { passive: true });
 
   document.addEventListener('mousemove', e => {
-    const bars = e.target.closest('.debt-bars');
-    if (bars) handleDebtScrub(bars, e.clientX);
+    const wrap = e.target.closest('.debt-area-wrap');
+    if (wrap) handleDebtScrub(wrap, e.clientX);
   });
   document.addEventListener('mouseleave', e => {
-    if (e.target.closest?.('.debt-bars')) endDebtScrub();
+    if (e.target.closest?.('.debt-area-wrap')) endDebtScrub();
+  }, true);
+})();
+
+// ========================================
+//  SLEEP HR CURVE SCRUBBING
+// ========================================
+(function initHRCurveScrub() {
+  const stageNames = { deep: 'Deep Sleep', rem: 'REM', light: 'Light Sleep', awake: 'Awake' };
+  const stageColors = { deep: '#5e60ce', rem: '#c77dff', light: '#4da9ff', awake: 'rgba(255,255,255,0.5)' };
+
+  function handleHRScrub(wrapEl, clientX) {
+    const pts = ST._sleepHRPoints;
+    const meta = ST._sleepHRMeta;
+    if (!pts || !pts.length || !meta) return;
+
+    const svgArea = wrapEl.querySelector('svg');
+    if (!svgArea) return;
+    const rect = svgArea.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+
+    // Find closest point by x position
+    const targetX = pct * meta.w;
+    let closest = 0, bestDist = Infinity;
+    for (let i = 0; i < pts.length; i++) {
+      const dist = Math.abs(pts[i].svgX - targetX);
+      if (dist < bestDist) { bestDist = dist; closest = i; }
+    }
+    const p = pts[closest];
+
+    // X/Y as percentages of the wrap area (accounting for 28px axis)
+    const axisOffset = 28;
+    const svgW = rect.width;
+    const xPx = axisOffset + (p.svgX / meta.w) * svgW;
+    const xPct = (xPx / wrapEl.offsetWidth) * 100;
+    const yPct = (p.svgY / meta.h) * 100;
+
+    // Scrub line
+    const line = wrapEl.querySelector('.hr-scrub-line');
+    if (line) { line.style.display = ''; line.style.left = xPct + '%'; }
+
+    // Scrub dot
+    const dot = wrapEl.querySelector('.hr-scrub-dot');
+    if (dot) { dot.style.display = ''; dot.style.left = xPct + '%'; dot.style.top = yPct + '%'; dot.style.background = stageColors[p.type] || '#fff'; }
+
+    // Estimated time at this point
+    const fracThrough = closest / (pts.length - 1);
+    const minutesIn = Math.round(fracThrough * meta.totalMin);
+    let timeStr = '';
+    if (meta.sleepStart) {
+      const [sh, sm] = meta.sleepStart.split(':').map(Number);
+      const totalMins = sh * 60 + (sm || 0) + minutesIn;
+      const hh = Math.floor(totalMins / 60) % 24;
+      const mm = totalMins % 60;
+      timeStr = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+    }
+
+    // Tooltip
+    const tip = wrapEl.querySelector('.hr-scrub-tip');
+    if (tip) {
+      tip.style.display = '';
+      tip.style.left = Math.max(15, Math.min(xPct, 85)) + '%';
+      tip.innerHTML = `<div class="hr-scrub-tip-hr">${Math.round(p.hr)} bpm</div>
+        <div class="hr-scrub-tip-stage" style="color:${stageColors[p.type]}">${stageNames[p.type] || p.type}</div>
+        ${timeStr ? `<div class="hr-scrub-tip-time">${timeStr}</div>` : ''}`;
+    }
+  }
+
+  function endHRScrub() {
+    const wrap = document.getElementById('hrCurveWrap');
+    if (!wrap) return;
+    ['hr-scrub-line','hr-scrub-dot','hr-scrub-tip'].forEach(cls => {
+      const el = wrap.querySelector('.' + cls);
+      if (el) el.style.display = 'none';
+    });
+  }
+
+  document.addEventListener('touchstart', e => {
+    const wrap = e.target.closest('.hr-curve-wrap');
+    if (wrap) handleHRScrub(wrap, e.touches[0].clientX);
+  }, { passive: true });
+
+  document.addEventListener('touchmove', e => {
+    const wrap = e.target.closest('.hr-curve-wrap');
+    if (wrap) { e.preventDefault(); handleHRScrub(wrap, e.touches[0].clientX); }
+  }, { passive: false });
+
+  document.addEventListener('touchend', e => {
+    if (e.target.closest('.hr-curve-wrap')) endHRScrub();
+  }, { passive: true });
+
+  document.addEventListener('mousemove', e => {
+    const wrap = e.target.closest('.hr-curve-wrap');
+    if (wrap) handleHRScrub(wrap, e.clientX);
+  });
+  document.addEventListener('mouseleave', e => {
+    if (e.target.closest?.('.hr-curve-wrap')) endHRScrub();
   }, true);
 })();
 
@@ -10018,7 +10393,50 @@ async function fetchHistoryData() {
     }
     renderHistoryTrends();
     backfillDailyReadiness();
-    console.log('[RYTHM] History loaded:', Object.keys(ST._history).map(k => k + '(' + ST._history[k].length + ')').join(', '));
+
+    // Seed _hrvHistory and _rhrHistory from fetched history so baselines auto-calibrate
+    if (ST._history.hrv && ST._history.hrv.length) {
+      if (!ST._hrvHistory) ST._hrvHistory = [];
+      const existingDates = new Set(ST._hrvHistory.map(h => h.d));
+      for (const entry of ST._history.hrv.slice(-30)) {
+        if (!existingDates.has(entry.date)) {
+          ST._hrvHistory.push({ v: entry.value, d: entry.date });
+        }
+      }
+      // Keep last 30 entries, sorted by date
+      ST._hrvHistory.sort((a, b) => a.d.localeCompare(b.d));
+      if (ST._hrvHistory.length > 30) ST._hrvHistory = ST._hrvHistory.slice(-30);
+      // Auto-calibrate baseline from rolling median (need 3+ days)
+      if (ST._hrvHistory.length >= 3) {
+        const vals = ST._hrvHistory.map(h => h.v).sort((a, b) => a - b);
+        ST.metrics.hrvBaseline = Math.round(vals[Math.floor(vals.length / 2)]);
+      }
+    }
+    if (ST._history.rhr && ST._history.rhr.length) {
+      if (!ST._rhrHistory) ST._rhrHistory = [];
+      const existingDates = new Set(ST._rhrHistory.map(h => h.d));
+      for (const entry of ST._history.rhr.slice(-30)) {
+        if (!existingDates.has(entry.date)) {
+          ST._rhrHistory.push({ v: entry.value, d: entry.date });
+        }
+      }
+      ST._rhrHistory.sort((a, b) => a.d.localeCompare(b.d));
+      if (ST._rhrHistory.length > 30) ST._rhrHistory = ST._rhrHistory.slice(-30);
+      if (ST._rhrHistory.length >= 3) {
+        const vals = ST._rhrHistory.map(h => h.v).sort((a, b) => a - b);
+        ST.metrics.rhrBaseline = Math.round(vals[Math.floor(vals.length / 2)]);
+      }
+    }
+    saveState();
+
+    // Re-render metrics with calibrated baselines
+    renderMetrics();
+    renderSicknessWarning();
+    buildSleepDebt();
+
+    console.log('[RYTHM] History loaded:', Object.keys(ST._history).map(k => k + '(' + ST._history[k].length + ')').join(', '),
+      '| Baselines: HRV', ST.metrics.hrvBaseline + 'ms, RHR', ST.metrics.rhrBaseline + 'bpm',
+      '| History points: HRV', (ST._hrvHistory||[]).length + ', RHR', (ST._rhrHistory||[]).length);
   } catch (e) {
     console.warn('[RYTHM] History fetch failed:', e);
   }
