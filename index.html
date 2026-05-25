@@ -101,8 +101,11 @@ body { padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0; min-he
 
 .brand {
   text-align: center;
-  font-size: 11px; font-weight: 900; letter-spacing: 5px;
-  color: var(--text-3); padding: 2px 0 8px;
+  font-size: 11px; font-weight: 900; letter-spacing: 6px;
+  color: var(--text-4); padding: 2px 0 8px;
+  background: linear-gradient(90deg, var(--text-4), var(--text-3), var(--text-4));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 section { padding: 0 16px; margin-bottom: 8px; }
@@ -115,25 +118,26 @@ section { padding: 0 16px; margin-bottom: 8px; }
   display: flex; flex-direction: column; align-items: center;
   padding: 4px 0 0;
 }
-.readiness-ring { position: relative; width: 180px; height: 180px; }
-.readiness-ring svg { width: 180px; height: 180px; }
-.readiness-ring .ring-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 5; }
+.readiness-ring { position: relative; width: 190px; height: 190px; }
+.readiness-ring svg { width: 190px; height: 190px; filter: drop-shadow(0 0 12px var(--ring-glow, rgba(48,217,138,0.25))); }
+.readiness-ring .ring-bg { fill: none; stroke: rgba(255,255,255,0.04); stroke-width: 7; }
 .readiness-ring .ring-fg {
-  fill: none; stroke-width: 5; stroke-linecap: round;
+  fill: none; stroke-width: 7; stroke-linecap: round;
   transition: stroke-dashoffset 1.4s cubic-bezier(.2,.7,.2,1);
+  filter: drop-shadow(0 0 6px var(--ring-glow, rgba(48,217,138,0.35)));
 }
 .readiness-center {
   position: absolute; inset: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
 .readiness-score {
-  font-size: 60px; font-weight: 900; letter-spacing: -3.5px; line-height: 1;
-  background: linear-gradient(180deg, #fff 20%, rgba(255,255,255,0.55) 100%);
+  font-size: 64px; font-weight: 900; letter-spacing: -4px; line-height: 1;
+  background: linear-gradient(180deg, #fff 10%, rgba(255,255,255,0.5) 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 .readiness-label {
-  font-size: 9px; font-weight: 800; letter-spacing: 2px;
+  font-size: 9px; font-weight: 800; letter-spacing: 2.5px;
   color: var(--text-4); text-transform: uppercase; margin-top: 2px;
 }
 .readiness-interp {
@@ -141,6 +145,11 @@ section { padding: 0 16px; margin-bottom: 8px; }
   max-width: 140px; text-align: center; line-height: 1.2;
   letter-spacing: -0.3px;
 }
+@keyframes ringPulse {
+  0%, 100% { filter: drop-shadow(0 0 8px var(--ring-glow, rgba(48,217,138,0.2))); }
+  50% { filter: drop-shadow(0 0 16px var(--ring-glow, rgba(48,217,138,0.4))); }
+}
+.readiness-ring svg { animation: ringPulse 4s ease-in-out infinite; }
 
 /* THREE RINGS */
 .rings-bar {
@@ -152,11 +161,12 @@ section { padding: 0 16px; margin-bottom: 8px; }
   transition: transform 0.2s;
 }
 .ring-wrap:active { transform: scale(0.96); }
-.ring-svg { width: 90px; height: 90px; }
-.ring-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 4; }
+.ring-svg { width: 92px; height: 92px; }
+.ring-bg { fill: none; stroke: rgba(255,255,255,0.04); stroke-width: 6; }
 .ring-fg {
-  fill: none; stroke-width: 4; stroke-linecap: round;
+  fill: none; stroke-width: 6; stroke-linecap: round;
   transition: stroke-dashoffset 1.4s cubic-bezier(.2,.7,.2,1);
+  filter: drop-shadow(0 0 4px var(--ring-color, rgba(48,217,138,0.3)));
 }
 .ring-val-wrap {
   position: absolute; inset: 0;
@@ -164,7 +174,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
 }
 .ring-pct {
   font-size: 26px; font-weight: 900; letter-spacing: -1.5px; line-height: 1;
-  background: linear-gradient(180deg, #fff 20%, rgba(255,255,255,0.6) 100%);
+  background: linear-gradient(180deg, #fff 15%, rgba(255,255,255,0.55) 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
 }
@@ -274,9 +284,9 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .monitor-top .arr { width: 11px; height: 11px; opacity: 0.4; }
 .monitor-val-row { display: flex; align-items: center; gap: 10px; }
 .monitor-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.monitor-dot.green { background: var(--energy); box-shadow: 0 0 6px rgba(0,236,127,0.3); }
-.monitor-dot.yellow { background: var(--warn); box-shadow: 0 0 6px rgba(255,181,71,0.3); }
-.monitor-dot.red { background: var(--danger); box-shadow: 0 0 6px rgba(255,84,112,0.3); }
+.monitor-dot.green { background: var(--energy); box-shadow: 0 0 8px rgba(0,236,127,0.45); }
+.monitor-dot.yellow { background: var(--warn); box-shadow: 0 0 8px rgba(255,181,71,0.45); }
+.monitor-dot.red { background: var(--danger); box-shadow: 0 0 8px rgba(255,84,112,0.45); }
 .monitor-check { width: 16px; height: 16px; flex-shrink: 0; }
 .monitor-val-text { display: flex; flex-direction: column; }
 .monitor-val { font-size: 12px; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.3px; }
@@ -304,7 +314,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
   color: var(--text-3); font-weight: 500;
 }
 .energy-now-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
-.energy-now-name { font-size: 26px; font-weight: 800; letter-spacing: -1.5px; line-height: 1; }
+.energy-now-name { font-size: 28px; font-weight: 900; letter-spacing: -1.5px; line-height: 1; }
 .energy-now-pct { font-size: 13px; color: var(--text-3); font-weight: 500; }
 .curve-svg { width: 100%; height: 100px; display: block; }
 .curve-wrap { position: relative; }
@@ -367,7 +377,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
   width: 10px; height: 10px; border-radius: 50%;
   border: 2px solid var(--text-4); background: var(--bg); z-index: 1;
 }
-.tl-dot.active { border-color: var(--energy); background: var(--energy); box-shadow: 0 0 8px rgba(0,236,127,0.4); }
+.tl-dot.active { border-color: var(--energy); background: var(--energy); box-shadow: 0 0 10px rgba(0,236,127,0.5), 0 0 20px rgba(0,236,127,0.15); }
 .tl-dot.past { border-color: var(--text-4); background: var(--text-4); }
 .tl-dot.sleep { border-color: var(--sleep); background: var(--sleep); }
 .tl-dot.warn { border-color: var(--warn); background: var(--warn); }
@@ -449,12 +459,12 @@ section { padding: 0 16px; margin-bottom: 8px; }
   padding: 3px 8px; border-radius: 100px;
   font-family: 'DM Mono', monospace;
 }
-.delta-up { background: rgba(0,236,127,0.08); color: var(--energy); }
+.delta-up { background: rgba(0,236,127,0.1); color: var(--energy); }
 .delta-down { background: rgba(255,255,255,0.06); color: var(--text-3); }
 .delta-flat { background: rgba(255,255,255,0.04); color: var(--text-3); }
 .metric-val {
-  font-size: 26px; font-weight: 900; letter-spacing: -1.2px; line-height: 1;
-  background: linear-gradient(180deg, #fff 30%, rgba(255,255,255,0.65) 100%);
+  font-size: 28px; font-weight: 900; letter-spacing: -1.5px; line-height: 1;
+  background: linear-gradient(180deg, #fff 15%, rgba(255,255,255,0.55) 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
 }
@@ -503,12 +513,12 @@ section { padding: 0 16px; margin-bottom: 8px; }
   -webkit-backdrop-filter: blur(16px);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
 }
-.day-cell.today { border-color: var(--energy); box-shadow: 0 0 12px rgba(0,236,127,0.15); }
+.day-cell.today { border-color: var(--energy); box-shadow: 0 0 16px rgba(0,236,127,0.2), inset 0 0 12px rgba(0,236,127,0.04); }
 .day-letter {
   font-size: 9px; color: var(--text-4); letter-spacing: 1.2px;
   font-weight: 800; margin-bottom: 3px;
 }
-.day-score { font-size: 18px; font-weight: 900; letter-spacing: -.5px; line-height: 1; }
+.day-score { font-size: 20px; font-weight: 900; letter-spacing: -0.8px; line-height: 1; }
 .day-mini-bar {
   width: 65%; height: 2px; border-radius: 1px;
   background: rgba(255,255,255,0.04); margin-top: 7px; overflow: hidden;
@@ -597,7 +607,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
   box-shadow: 0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
   display: flex; flex-direction: column; align-items: center; gap: 4px;
 }
-.streak-cell.on-fire { border-color: rgba(0,236,127,0.2); }
+.streak-cell.on-fire { border-color: rgba(0,236,127,0.25); box-shadow: 0 2px 12px rgba(0,0,0,0.2), 0 0 12px rgba(0,236,127,0.08), inset 0 1px 0 rgba(255,255,255,0.04); }
 .streak-cell .s-icon { font-size: 18px; line-height: 1; }
 .streak-cell .s-val {
   font-size: 20px; font-weight: 900; letter-spacing: -0.5px;
@@ -660,6 +670,128 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .ha-dot.missed { background: rgba(255,84,112,0.4); }
 .ha-dot.today { border: 1px solid rgba(255,255,255,0.3); background: transparent; }
 .ha-dot.today.done { background: var(--energy); border-color: var(--energy); }
+
+/* HABIT IMPACT */
+.hi-card {
+  background: linear-gradient(145deg, rgba(26,26,32,0.88), rgba(14,14,18,0.92));
+  border: 1px solid var(--card-border); border-radius: var(--radius);
+  padding: 18px; backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.hi-card + .hi-card { margin-top: 10px; }
+.hi-card-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
+  padding-bottom: 12px; border-bottom: 1px solid var(--border);
+}
+.hi-card-icon { font-size: 16px; }
+.hi-card-title {
+  font-size: 11px; font-weight: 800; letter-spacing: 1.2px;
+  color: var(--text-3); text-transform: uppercase; flex: 1;
+}
+.hi-card-badge {
+  font-size: 9px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 6px;
+  background: rgba(48,217,138,0.12); color: var(--energy);
+}
+.hi-card-badge.neg { background: rgba(255,84,112,0.12); color: var(--danger); }
+
+/* Before vs After rows */
+.hi-ba-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.hi-ba-row:last-child { border-bottom: none; }
+.hi-ba-icon { font-size: 16px; width: 24px; text-align: center; flex-shrink: 0; }
+.hi-ba-info { flex: 1; min-width: 0; }
+.hi-ba-name {
+  font-size: 13px; font-weight: 700; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hi-ba-since {
+  font-size: 10px; color: var(--text-4); font-weight: 500; margin-top: 2px;
+}
+.hi-ba-metrics { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.hi-ba-metric {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 4px 8px; border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  min-width: 56px;
+}
+.hi-ba-metric-val {
+  font-size: 13px; font-weight: 900; font-family: 'DM Mono', monospace;
+  letter-spacing: -0.3px; line-height: 1.2;
+}
+.hi-ba-metric-val.pos { color: var(--energy); }
+.hi-ba-metric-val.neg { color: var(--danger); }
+.hi-ba-metric-val.neutral { color: var(--text-3); }
+.hi-ba-metric-label {
+  font-size: 8px; font-weight: 700; letter-spacing: 0.8px;
+  color: var(--text-4); text-transform: uppercase; margin-top: 1px;
+}
+
+/* Projected Gains */
+.hi-proj-row {
+  display: flex; align-items: center; gap: 12px; padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.hi-proj-row:last-child { border-bottom: none; }
+.hi-proj-period {
+  font-size: 10px; font-weight: 800; letter-spacing: 1px;
+  color: var(--text-4); text-transform: uppercase;
+  width: 36px; flex-shrink: 0;
+}
+.hi-proj-bar-wrap {
+  flex: 1; height: 6px; background: rgba(255,255,255,0.06);
+  border-radius: 3px; overflow: hidden;
+}
+.hi-proj-bar-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--energy), var(--purple));
+  transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+.hi-proj-vals {
+  display: flex; gap: 10px; flex-shrink: 0;
+}
+.hi-proj-val {
+  font-size: 12px; font-weight: 800; font-family: 'DM Mono', monospace;
+  min-width: 48px; text-align: right;
+}
+
+/* Streak impact rows */
+.hi-streak-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.hi-streak-row:last-child { border-bottom: none; }
+.hi-streak-icon { font-size: 15px; width: 22px; text-align: center; flex-shrink: 0; }
+.hi-streak-info { flex: 1; min-width: 0; }
+.hi-streak-name {
+  font-size: 12px; font-weight: 600; color: var(--text-2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hi-streak-days {
+  font-size: 10px; color: var(--text-4); margin-top: 1px;
+}
+.hi-streak-impact {
+  display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+}
+.hi-streak-score {
+  font-size: 14px; font-weight: 900; font-family: 'DM Mono', monospace;
+  letter-spacing: -0.3px;
+}
+.hi-streak-score.high { color: var(--energy); }
+.hi-streak-score.mid { color: var(--warn); }
+.hi-streak-score.low { color: var(--text-3); }
+.hi-streak-score.bad { color: var(--danger); }
+.hi-streak-unit {
+  font-size: 9px; font-weight: 700; color: var(--text-4);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.hi-empty {
+  text-align: center; padding: 24px 16px;
+  color: var(--text-3); font-size: 13px; line-height: 1.6;
+}
+.hi-empty-icon { font-size: 28px; margin-bottom: 8px; }
 
 /* IMPACT */
 .impact-card { background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9)); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 18px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04); }
@@ -756,7 +888,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
 }
 .sleep-bar-fg { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
 
-/* JOURNAL — redesigned */
+/* JOURNAL  - redesigned */
 .journal-card {
   background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
   border: 1px solid var(--card-border);
@@ -789,6 +921,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .journal-item.active {
   border-color: rgba(0,236,127,0.35);
   background: rgba(0,236,127,0.08);
+  box-shadow: 0 0 8px rgba(0,236,127,0.1);
 }
 .journal-item .ji-icon { font-size: 16px; line-height: 1; flex-shrink: 0; }
 .journal-item .ji-label { font-size: 12px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
@@ -1175,8 +1308,8 @@ section { padding: 0 16px; margin-bottom: 8px; }
 
 .fp-hero { text-align: center; padding: 8px 0 20px; }
 .fp-hero-val {
-  font-size: 56px; font-weight: 900; letter-spacing: -3px; line-height: 1;
-  background: linear-gradient(180deg, #fff 30%, rgba(255,255,255,0.6) 100%);
+  font-size: 60px; font-weight: 900; letter-spacing: -3.5px; line-height: 1;
+  background: linear-gradient(180deg, #fff 10%, rgba(255,255,255,0.5) 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
 }
@@ -1731,14 +1864,14 @@ section { padding: 0 16px; margin-bottom: 8px; }
 /* ========== BOTTOM NAV ========== */
 .bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0;
-  background: rgba(6,6,8,0.92);
-  backdrop-filter: blur(60px) saturate(200%);
-  -webkit-backdrop-filter: blur(60px) saturate(200%);
-  border-top: 1px solid rgba(255,255,255,0.06);
+  background: rgba(4,4,6,0.94);
+  backdrop-filter: blur(80px) saturate(220%);
+  -webkit-backdrop-filter: blur(80px) saturate(220%);
+  border-top: 1px solid rgba(255,255,255,0.05);
   padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
   display: flex; justify-content: space-around; align-items: center;
   max-width: 440px; margin: 0 auto; z-index: 50;
-  box-shadow: 0 -8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04);
+  box-shadow: 0 -12px 40px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.03);
 }
 .nav-btn {
   background: none; border: none; cursor: pointer;
@@ -1750,8 +1883,8 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .nav-btn.active { color: #fff; }
 .nav-btn.active::after {
   content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-  width: 4px; height: 4px; border-radius: 50%; background: #fff;
-  box-shadow: 0 0 6px rgba(255,255,255,0.5);
+  width: 16px; height: 2px; border-radius: 1px; background: var(--energy);
+  box-shadow: 0 0 8px rgba(48,217,138,0.5);
 }
 .nav-icon { width: 22px; height: 22px; }
 .nav-label {
@@ -1763,8 +1896,9 @@ section { padding: 0 16px; margin-bottom: 8px; }
   background: linear-gradient(135deg, var(--purple), #6a5dd9);
   display: flex; align-items: center; justify-content: center;
   margin-top: -18px;
-  box-shadow: 0 0 24px rgba(167,121,247,0.3), 0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+  box-shadow: 0 0 28px rgba(167,121,247,0.35), 0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.25);
   cursor: pointer; font-weight: 900; font-size: 22px; color: #fff;
+  transition: transform 0.2s, box-shadow 0.2s;
   border: 2px solid rgba(0,0,0,0.8);
 }
 
@@ -2319,7 +2453,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
   border-color: rgba(147,161,196,0.1);
 }
 
-/* Stat chips — compact */
+/* Stat chips  - compact */
 .la-stats { display: flex; gap: 6px; margin-top: 8px; }
 .la-stat {
   flex: 1; background: rgba(255,255,255,0.04); border-radius: 8px; padding: 6px 8px;
@@ -2400,7 +2534,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
 <body>
 
 <!-- ========== ONBOARDING ========== -->
-<!-- Onboarding removed — app boots directly -->
+<!-- Onboarding removed  - app boots directly -->
 
 <!-- ========== MAIN APP ========== -->
 <div class="app" id="mainApp" style="display:none;">
@@ -2603,6 +2737,11 @@ section { padding: 0 16px; margin-bottom: 8px; }
     <section>
       <div class="section-head"><div class="section-title">Habit Accountability</div></div>
       <div id="habitAccountability"></div>
+    </section>
+
+    <section id="habitImpactSection">
+      <div class="section-head"><div class="section-title">Habit Impact</div></div>
+      <div id="habitImpact"></div>
     </section>
 
     <section>
@@ -3018,7 +3157,7 @@ const DEFAULT_STATE = {
     rhr: 57, rhrDelta: 0,
     sleepDebt: 0.5, sleepDebtDelta: -0.7,
     respiratory: 14.8, respiratoryDelta: 0,
-    // Personal baselines (calibrated from 1yr Apple Health data — 349-364 days)
+    // Personal baselines (calibrated from 1yr Apple Health data  - 349-364 days)
     hrvBaseline: 42,   // all-time median HRV (range 16-87ms)
     rhrBaseline: 63,   // all-time median RHR (range 54-89bpm)
   },
@@ -3146,7 +3285,7 @@ function parseTimeToMin(t) {
   return parseInt(parts[0]) * 60 + parseInt(parts[1]);
 }
 
-// Format any timestamp to HH:MM — handles raw "2026-05-22 00:43:25 +0200" and "00:43"
+// Format any timestamp to HH:MM  - handles raw "2026-05-22 00:43:25 +0200" and "00:43"
 function fmtTime(t) {
   if (!t) return '--:--';
   if (/^\d{2}:\d{2}$/.test(t)) return t; // already HH:MM
@@ -3206,33 +3345,33 @@ function fmtH(h) {
 //   - Core body temperature peak: ~65-75% through waking day (Refinetti 2006)
 //   - DLMO (melatonin onset): ~75-80% through waking day (Duffy & Wright 2005)
 const ENERGY_CURVE_PCT = [
-  [0,     12],   // wake — sleep inertia (Tassi & Muzet 2000)
+  [0,     12],   // wake  - sleep inertia (Tassi & Muzet 2000)
   [0.03,  35],   // cortisol awakening response peak (~30min)
   [0.08,  62],   // inertia clearing, Process S pressure dropping
-  [0.16,  82],   // PEAK 1 ramp — alerting signal rising
-  [0.23,  88],   // PEAK 1 max — cognitive peak (Dijk & Czeisler 1995)
-  [0.33,  80],   // pre-lunch — mild circadian dip only (no food yet)
-  [0.39,  72],   // lunch time ~16:00 — eating begins
-  [0.45,  48],   // post-prandial trough — food coma ~30-60min after eating
-  [0.52,  55],   // DIP exit — alerting signal recovering
-  [0.60,  70],   // RECOVERY ramp — second wind
-  [0.67,  85],   // PEAK 2 ramp — CBT rising
-  [0.73,  90],   // PEAK 2 max — core body temp peak (Refinetti 2006)
-  [0.79,  72],   // DLMO onset — melatonin begins (Duffy & Wright 2005)
-  [0.85,  48],   // wind-down — Process S pressure building
-  [0.92,  28],   // evening decline — melatonin rising
-  [0.97,  15],   // pre-sleep — high sleep pressure
+  [0.16,  82],   // PEAK 1 ramp  - alerting signal rising
+  [0.23,  88],   // PEAK 1 max  - cognitive peak (Dijk & Czeisler 1995)
+  [0.33,  80],   // pre-lunch  - mild circadian dip only (no food yet)
+  [0.39,  72],   // lunch time ~16:00  - eating begins
+  [0.45,  48],   // post-prandial trough  - food coma ~30-60min after eating
+  [0.52,  55],   // DIP exit  - alerting signal recovering
+  [0.60,  70],   // RECOVERY ramp  - second wind
+  [0.67,  85],   // PEAK 2 ramp  - CBT rising
+  [0.73,  90],   // PEAK 2 max  - core body temp peak (Refinetti 2006)
+  [0.79,  72],   // DLMO onset  - melatonin begins (Duffy & Wright 2005)
+  [0.85,  48],   // wind-down  - Process S pressure building
+  [0.92,  28],   // evening decline  - melatonin rising
+  [0.97,  15],   // pre-sleep  - high sleep pressure
   [1.0,    8],   // bedtime
 ];
 
-// Compute awake window in hours — uses today's actual wake/sleep times when available
+// Compute awake window in hours  - uses today's actual wake/sleep times when available
 function awakeWindow() {
   const wakeH = profileWakeHour();
   const sleepH = profileSleepHour();
   const wakeMin = wakeH * 60;
   const sleepMin = sleepH * 60;
   const aw = (sleepMin >= wakeMin ? sleepMin - wakeMin : sleepMin + 1440 - wakeMin) / 60;
-  // Clamp to reasonable range (12-18h) — bad data shouldn't break the curve
+  // Clamp to reasonable range (12-18h)  - bad data shouldn't break the curve
   return Math.max(12, Math.min(18, aw));
 }
 
@@ -3333,7 +3472,7 @@ function energyAt(h) {
     if (yBehaviors.includes('weed')) energy -= 4;
   }
 
-  // 4. Training load fatigue — heavy recent training flattens the curve
+  // 4. Training load fatigue  - heavy recent training flattens the curve
   const trainingLoad = computeTrainingLoad();
   if (trainingLoad.avg7 > 600) {
     // High 7-day avg (>600 cal/day) = overreaching territory
@@ -3357,7 +3496,7 @@ function energyAt(h) {
   return Math.max(5, Math.min(98, Math.round(energy)));
 }
 
-// Behavior energy modifier definitions — time-decayed effects on energy curve
+// Behavior energy modifier definitions  - time-decayed effects on energy curve
 const BEHAVIOR_ENERGY_MODS = {
   cold_shower:   (hSince) => hSince <= 0.5 ? 8 : hSince <= 3 ? 5 : hSince <= 6 ? 2 : 0,
   cold_exposure: (hSince) => hSince <= 0.5 ? 8 : hSince <= 3 ? 5 : hSince <= 6 ? 2 : 0,
@@ -3429,7 +3568,7 @@ const BEHAVIOR_ENERGY_MODS = {
   fasting:       (hSince) => hSince <= 4 ? -2 : hSince <= 12 ? 3 : hSince <= 16 ? 5 : -3,
   reading:       () => 2,
   massage:       (hSince) => hSince <= 2 ? 4 : 2,
-  protein:       () => 1,  // minor positive — supports muscle recovery
+  protein:       () => 1,  // minor positive  - supports muscle recovery
 };
 
 function getBehaviorEnergyMod(atHour) {
@@ -3566,7 +3705,7 @@ function computeReadiness() {
   const sl = ST.sleep || DEFAULT_STATE.sleep;
   const m = ST.metrics;
 
-  // === HRV Component (35%) — most important recovery indicator ===
+  // === HRV Component (35%)  - most important recovery indicator ===
   // Score HRV relative to personal baseline (from Apple Health calibration)
   const hrvBase = m.hrvBaseline || 42;
   const hrvNow = m.hrv || 0;
@@ -3583,7 +3722,7 @@ function computeReadiness() {
   }
   hrvScore = Math.max(0, Math.min(100, hrvScore));
 
-  // === RHR Component (15%) — lower is better for athletes ===
+  // === RHR Component (15%)  - lower is better for athletes ===
   const rhrBase = m.rhrBaseline || 63;
   const rhrNow = m.rhr || 0;
   let rhrScore;
@@ -3599,7 +3738,7 @@ function computeReadiness() {
   }
   rhrScore = Math.max(0, Math.min(100, rhrScore));
 
-  // === Sleep Component (30%) — multi-factor nighttime score ===
+  // === Sleep Component (30%)  - multi-factor nighttime score ===
   let sleepScore = r.sleep || 0;
   if (sl.totalH > 0) {
     const target = ST.health?.sleepTarget || 8;
@@ -3657,11 +3796,11 @@ function computeReadiness() {
   if (resp > 0) {
     if (resp <= 14) respBonus = 4;
     else if (resp <= 15) respBonus = 2;
-    else if (resp > 20) respBonus = -8;  // severe elevation — illness likely
+    else if (resp > 20) respBonus = -8;  // severe elevation  - illness likely
     else if (resp > 18) respBonus = -4;
   }
 
-  // SpO2 (penalty if low — indicates altitude, illness, or breathing issues)
+  // SpO2 (penalty if low  - indicates altitude, illness, or breathing issues)
   const spo2 = ST.health?.spo2 || 0;
   let spo2Bonus = 0;
   if (spo2 > 0) {
@@ -3674,7 +3813,7 @@ function computeReadiness() {
   const skinTempDelta = ST.health?._skinTempSynced ? ST.health.skinTempDelta : null;
   let skinTempBonus = 0;
   if (skinTempDelta != null) {
-    // Deviation from rolling baseline — elevated = inflammation/illness
+    // Deviation from rolling baseline  - elevated = inflammation/illness
     if (Math.abs(skinTempDelta) <= 0.3) skinTempBonus = 2;    // stable
     else if (skinTempDelta > 0.8) skinTempBonus = -5;          // fever territory
     else if (skinTempDelta > 0.5) skinTempBonus = -2;          // mild elevation
@@ -3705,7 +3844,7 @@ function computeReadiness() {
     if (yb.includes('blue_light_glasses')) behaviorMod += 1;
   }
 
-  // Weighted combination — heavier on HRV and sleep (nighttime data)
+  // Weighted combination  - heavier on HRV and sleep (nighttime data)
   // HRV 35% + Sleep 30% + RHR 15% + Training 10% + modifiers
   const base = hrvScore * 0.35 + sleepScore * 0.30 + rhrScore * 0.15 + training * 0.10;
   const modifiers = respBonus + spo2Bonus + skinTempBonus + behaviorMod;
@@ -3728,7 +3867,7 @@ function readinessInterpretation(score) {
   return { text: 'Low Recovery', color: 'var(--danger)' };
 }
 
-// Onboarding removed — app boots directly with profile defaults
+// Onboarding removed  - app boots directly with profile defaults
 
 // ========================================
 //  DRAWING
@@ -3795,7 +3934,7 @@ function drawCurve(id, withEvents) {
       const [hh, mm] = t.time.split(':').map(Number);
       const evH = hh + mm/60;
       let rel = evH - WAKE; if (rel < 0) rel += 24;
-      if (rel > aw) return; // event is during sleep — skip
+      if (rel > aw) return; // event is during sleep  - skip
       const x = PAD + (rel/aw)*(W-PAD*2);
       const ph = phaseAt(evH);
       const color = ph.name === 'DIP' ? '#ffb547' : ph.name === 'INERTIA' ? '#ff5470' : '#4da9ff';
@@ -3814,7 +3953,7 @@ function drawCurve(id, withEvents) {
     });
   }
 
-  // Now dot — only show if currently awake
+  // Now dot  - only show if currently awake
   const now = new Date();
   const nowH = now.getHours() + now.getMinutes()/60;
   let rel = nowH - WAKE; if (rel < 0) rel += 24;
@@ -3894,6 +4033,14 @@ function renderReadiness() {
   ring.setAttribute('stroke-dasharray', circ);
   ring.setAttribute('stroke-dashoffset', circ - (score/100)*circ);
   ring.setAttribute('stroke', interp.color);
+  // Set glow color CSS variable for pulse animation
+  const ringEl = document.querySelector('.readiness-ring');
+  if (ringEl) ringEl.style.setProperty('--ring-glow', interp.color.replace(')', ',0.3)').replace('rgb(', 'rgba(').replace('#', ''));
+  // Simpler approach: just set it directly
+  if (ringEl) {
+    const c = interp.color;
+    ringEl.style.setProperty('--ring-glow', c === '#00ec7f' ? 'rgba(0,236,127,0.3)' : c === '#ffb547' ? 'rgba(255,181,71,0.3)' : c === '#ff5470' ? 'rgba(255,84,112,0.3)' : 'rgba(48,217,138,0.3)');
+  }
 }
 
 let activeRingDetail = null;
@@ -3915,11 +4062,11 @@ function renderThreeRings() {
     const offset = circ - (Math.min(ri.val, 100) / 100) * circ;
     return `<div class="ring-wrap ${activeRingDetail === ri.key ? 'active' : ''}" onclick="toggleRingDetail('${ri.key}')">
       <div class="ring-pos">
-        <svg class="ring-svg" viewBox="0 0 120 120">
+        <svg class="ring-svg" viewBox="0 0 120 120" style="--ring-color:${ri.color}40">
           <circle class="ring-bg" cx="60" cy="60" r="50"/>
           <circle class="ring-fg" cx="60" cy="60" r="50"
             stroke="${ri.color}" stroke-dasharray="${circ}" stroke-dashoffset="${offset}"
-            transform="rotate(-90 60 60)"/>
+            transform="rotate(-90 60 60)" style="--ring-color:${ri.color}40"/>
         </svg>
         <div class="ring-val-wrap">
           <div class="ring-pct">${ri.display || (ri.val + (ri.unit ? '<span class="unit">'+ri.unit+'</span>' : ''))}</div>
@@ -4066,7 +4213,7 @@ function buildRecoveryDetail() {
     msg += `You can train but <b>avoid max efforts</b>. Focus on technique, tempo work, and sub-maximal reps. Save the explosive work for a green day.`;
   } else {
     msg = `<b>Low recovery - prioritize rest.</b> Your sympathetic nervous system is dominant (fight-or-flight). `;
-    if (hadLateShisha) msg += `Late shisha contributed - CO half-life is 4-5h — allow 3h+ minimum, and it suppresses HRV during deep sleep. `;
+    if (hadLateShisha) msg += `Late shisha contributed - CO half-life is 4-5h  - allow 3h+ minimum, and it suppresses HRV during deep sleep. `;
     msg += `Training hard today risks injury and will dig deeper into recovery debt. Stick to <b>mobility, light movement, or full rest</b>. `;
     msg += `Long jumpers need explosive power output - that requires a recovered CNS.`;
   }
@@ -4439,25 +4586,25 @@ function buildSleepCoaching(sl, stg, debtH, pct) {
       action: 'Set bedtime 30 min earlier this week' });
   } else if (sl.totalH < target) {
     tips.push({ icon: '⏰', title: 'Slight Duration Gap', priority: 3,
-      text: `${fmtH(sl.totalH)} vs ${fmtH(target)} target. Good base — closing this gap optimizes HGH release in late-night deep sleep cycles.`,
+      text: `${fmtH(sl.totalH)} vs ${fmtH(target)} target. Good base  - closing this gap optimizes HGH release in late-night deep sleep cycles.`,
       action: `Aim for lights off ${Math.round((target - sl.totalH) * 60 + 15)} min earlier` });
   }
 
-  // 2. Deep sleep coaching (critical for athletes — HGH release, tissue repair)
+  // 2. Deep sleep coaching (critical for athletes  - HGH release, tissue repair)
   if (deepPct < 15) {
     tips.push({ icon: '🔷', title: 'Deep Sleep Below Optimal', priority: 1,
-      text: `${deepPct}% deep sleep (typical: 15-25%). Deep sleep drives 70-80% of daily HGH secretion (Van Cauter 2000) — essential for muscle repair and tendon adaptation.`,
+      text: `${deepPct}% deep sleep (typical: 15-25%). Deep sleep drives 70-80% of daily HGH secretion (Van Cauter 2000)  - essential for muscle repair and tendon adaptation.`,
       action: 'Avoid alcohol, keep room 18°C, consider magnesium glycinate 400mg' });
   } else if (deepPct >= 25) {
     tips.push({ icon: '🔷', title: 'Excellent Deep Sleep', priority: 4,
-      text: `${deepPct}% deep sleep — above typical range. Tissue repair and hormonal restoration are well supported.`,
+      text: `${deepPct}% deep sleep  - above typical range. Tissue repair and hormonal restoration are well supported.`,
       action: 'Maintain current evening routine' });
   }
 
   // 3. REM coaching (motor memory consolidation for technique work)
   if (remPct < 20) {
     tips.push({ icon: '💜', title: 'Low REM Sleep', priority: 2,
-      text: `${remPct}% REM (typical: 20-30%). REM consolidates motor patterns — critical after technique sessions. Low REM impairs skill retention.`,
+      text: `${remPct}% REM (typical: 20-30%). REM consolidates motor patterns  - critical after technique sessions. Low REM impairs skill retention.`,
       action: 'Avoid late caffeine (cuts REM 20%), keep consistent wake time' });
   }
 
@@ -4475,7 +4622,7 @@ function buildSleepCoaching(sl, stg, debtH, pct) {
       action: 'Add 60-90 min sleep per night for the next 3 days' });
   } else if (debtH > 1) {
     tips.push({ icon: '📉', title: 'Moderate Sleep Debt', priority: 3,
-      text: `${fmtH(debtH)} debt. Manageable but accumulating — performance impact starts above 2h.`,
+      text: `${fmtH(debtH)} debt. Manageable but accumulating  - performance impact starts above 2h.`,
       action: 'Add 30 min extra tonight to prevent further accumulation' });
   }
 
@@ -4483,7 +4630,7 @@ function buildSleepCoaching(sl, stg, debtH, pct) {
   if (sl.consistency > 0 && sl.consistency < 70) {
     tips.push({ icon: '🔄', title: 'Inconsistent Sleep Schedule', priority: 2,
       text: `${sl.consistency}% consistency. Irregular bedtimes shift circadian rhythm, reducing deep sleep. Elite athletes average 85%+ consistency.`,
-      action: 'Set a fixed bedtime alarm — even on weekends' });
+      action: 'Set a fixed bedtime alarm  - even on weekends' });
   }
 
   // 7. Behavior-based coaching (check recent journal entries)
@@ -4513,7 +4660,7 @@ function buildSleepCoaching(sl, stg, debtH, pct) {
   const shown = tips.slice(0, 4);
 
   if (!shown.length) {
-    return `<div style="text-align:center;padding:16px 0;color:var(--text-3);font-size:12px;">Great sleep patterns — keep it up!</div>`;
+    return `<div style="text-align:center;padding:16px 0;color:var(--text-3);font-size:12px;">Great sleep patterns  - keep it up!</div>`;
   }
 
   return shown.map(tip => {
@@ -4823,7 +4970,7 @@ function buildRecoveryFullPage() {
   const autoColor = autoScore >= 65 ? 'var(--energy)' : autoScore >= 40 ? 'var(--warn)' : 'var(--danger)';
   const autoLabel = autoScore >= 65 ? 'Parasympathetic dominant (recovery)' : autoScore >= 40 ? 'Mixed - shifting toward recovery' : 'Sympathetic dominant (stress/fatigue)';
 
-  // Training recommendation — aligned with Whoop green/yellow/red (67/34)
+  // Training recommendation  - aligned with Whoop green/yellow/red (67/34)
   let trainingRec, trainingColor, trainingIcon;
   if (score >= 67) {
     trainingRec = 'Full send - max jumps, heavy squats, plyometrics. Your CNS and muscular systems are ready for peak output.';
@@ -4836,7 +4983,7 @@ function buildRecoveryFullPage() {
     trainingColor = 'var(--danger)'; trainingIcon = '🔴';
   }
 
-  // Insight — thresholds aligned with Whoop: Green ≥67%, Yellow 34-66%, Red <34%
+  // Insight  - thresholds aligned with Whoop: Green ≥67%, Yellow 34-66%, Red <34%
   let insightClass = '', insightTitle = '', insightText = '';
   if (score >= 67) {
     insightClass = '';
@@ -4855,7 +5002,7 @@ function buildRecoveryFullPage() {
     insightClass = 'danger';
     insightTitle = '🔴 Red Day - Prioritize Recovery';
     insightText = `Your sympathetic nervous system is dominant. Training hard today risks injury and will deepen recovery debt. <b>Rest, mobility, or light movement only.</b>`;
-    if (hadLateShisha) insightText += ' Late shisha contributed - CO half-life is 4-5h — allow 3h+ minimum and suppresses HRV during deep sleep.';
+    if (hadLateShisha) insightText += ' Late shisha contributed - CO half-life is 4-5h  - allow 3h+ minimum and suppresses HRV during deep sleep.';
   }
 
   return `
@@ -4962,7 +5109,7 @@ function buildRecoveryFullPage() {
         <p style="margin-bottom:8px"><b style="color:var(--text-1)">HRV (35%)</b> - Heart rate variability measures parasympathetic (vagal) tone. Higher = more recovered. Your autonomic nervous system controls CNS excitability - when HRV is high, you can recruit more motor units faster = more explosive takeoffs.</p>
         <p style="margin-bottom:8px"><b style="color:var(--text-1)">Sleep (30%)</b> - Quality + duration. Deep sleep = HGH for tissue repair. REM = motor memory consolidation. An athlete who sleeps 9h recovers faster than one who sleeps 7h, even with identical training.</p>
         <p style="margin-bottom:8px"><b style="color:var(--text-1)">RHR (15%)</b> - Resting heart rate reflects cardiovascular recovery. Lower than baseline = recovered. Elevated RHR often means inflammation, illness onset, or overtraining.</p>
-        <p><b style="color:var(--text-1)">Training Load (10%)</b> - Acute:Chronic workload ratio (3d vs 7d active calories). The ACR sweet spot is 0.8-1.3x — progressive overload without injury risk. Above 1.5x = spike danger. Below 0.6x = detraining.</p>
+        <p><b style="color:var(--text-1)">Training Load (10%)</b> - Acute:Chronic workload ratio (3d vs 7d active calories). The ACR sweet spot is 0.8-1.3x  - progressive overload without injury risk. Above 1.5x = spike danger. Below 0.6x = detraining.</p>
       </div>
     </div>
   `;
@@ -5083,7 +5230,7 @@ function buildStressFullPage() {
   const yEntry = ST.journal && ST.journal.find(j => j.date === yesterday);
   if (yEntry && yEntry.behaviors.includes('shisha_late')) contributors.push({ label: 'Late shisha', detail: 'CO from charcoal suppresses vagal tone overnight', impact: 'moderate', color: 'var(--warn)' });
   if (yEntry && yEntry.behaviors.includes('alcohol')) contributors.push({ label: 'Alcohol', detail: 'Disrupts REM and raises overnight RHR', impact: 'moderate', color: 'var(--warn)' });
-  if (yEntry && (yEntry.behaviors.includes('energy_caps') || yEntry.behaviors.includes('caffeine'))) contributors.push({ label: 'Late Energy Caps', detail: '200mg caffeine — adenosine blocking reduces sleep quality', impact: 'low', color: 'var(--text-3)' });
+  if (yEntry && (yEntry.behaviors.includes('energy_caps') || yEntry.behaviors.includes('caffeine'))) contributors.push({ label: 'Late Energy Caps', detail: '200mg caffeine  - adenosine blocking reduces sleep quality', impact: 'low', color: 'var(--text-3)' });
 
   if (contributors.length === 0) {
     contributors.push({ label: 'No stress flags', detail: 'All metrics within healthy ranges', impact: 'none', color: 'var(--energy)' });
@@ -5358,7 +5505,7 @@ function renderDayBanner() {
     const reasons = [];
     if (hrvPctBelow >= 15) reasons.push(`HRV ${hrvPctBelow}% below baseline`);
     if (debtH >= 8) reasons.push(`${debtH.toFixed(0)}h sleep debt`);
-    msg = `Recovery is low — prioritize rest, mobility, and sleep tonight.` + (reasons.length ? ` Drivers: ${reasons.join(', ')}.` : ` Skip heavy training.`);
+    msg = `Recovery is low  - prioritize rest, mobility, and sleep tonight.` + (reasons.length ? ` Drivers: ${reasons.join(', ')}.` : ` Skip heavy training.`);
   }
 
   el.innerHTML = `<div class="day-banner-body">
@@ -5468,7 +5615,7 @@ function computeStrain() {
     if (estCal > todayCal) todayCal = estCal;
   }
 
-  // Also check live activities — if a workout is running or recently ended
+  // Also check live activities  - if a workout is running or recently ended
   const liveWorkout = (ST.liveActivities || []).find(a => a.type === 'workout');
   if (liveWorkout) {
     const elapsedMin = (Date.now() - liveWorkout.startedAt) / 60000;
@@ -5484,7 +5631,7 @@ function computeStrain() {
                   (zones.z3 || 0) * 3 + (zones.z4 || 0) * 4 + (zones.z5 || 0) * 5;
     // Scale TRIMP minutes to 0-21 strain score
     const zoneStrain = Math.min(21, Math.round(3 + Math.log2(1 + trimp) * 2.8));
-    // Use whichever method gives higher fidelity — prefer zone data
+    // Use whichever method gives higher fidelity  - prefer zone data
     const calStrain = todayCal > 0 ? Math.min(21, Math.round(3 + Math.sqrt(todayCal) * 0.42)) : 3;
     return Math.max(zoneStrain, calStrain);
   }
@@ -5495,7 +5642,7 @@ function computeStrain() {
   return Math.min(21, Math.round(3 + Math.sqrt(todayCal) * 0.42));
 }
 
-// Compute Acute:Chronic Workload Ratio (Gabbett 2016) — 7d/21d windows
+// Compute Acute:Chronic Workload Ratio (Gabbett 2016)  - 7d/21d windows
 function computeTrainingLoad() {
   const workouts = ST._workouts || [];
   const history = ST._history || {};
@@ -5520,7 +5667,7 @@ function computeTrainingLoad() {
   const avg7 = days7.length ? days7.reduce((a,b) => a+b, 0) / days7.length : 0;
   const avg21 = days21.length ? days21.reduce((a,b) => a+b, 0) / days21.length : 0;
 
-  // Acute:Chronic ratio — 0.8-1.3 is optimal zone (Gabbett 2016)
+  // Acute:Chronic ratio  - 0.8-1.3 is optimal zone (Gabbett 2016)
   // Below 0.6 = detraining, above 1.5 = injury risk spike
   const acr = avg21 > 50 ? avg7 / avg21 : 1.0;
 
@@ -5860,8 +6007,8 @@ function renderOutlook() {
 
   const items = [
     { icon: '<circle cx="12" cy="12" r="4" fill="currentColor"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-linecap="round"/>', title: sunTitle, sub: sunSub, color: 'var(--energy)', bg: 'rgba(0,236,127,0.12)', onclick: `startLiveActivity('sun_exposure')` },
-    { icon: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>', title: `Last Energy Caps ${coffeeTime}`, sub: '200mg caffeine — late intake drops HRV 12%', color: 'var(--warn)', bg: 'rgba(255,181,71,0.12)', onclick: `logBehavior('energy_caps')` },
-    { icon: '<path d="M12 2C8 2 4 6 4 10c0 6 8 12 8 12s8-6 8-12c0-4-4-8-8-8z"/>', title: `Shisha before ${shishaCutoff}`, sub: 'CO half-life is 4-5h — allow 3h+ minimum - protects deep sleep & HRV', color: 'var(--text-2)', bg: 'var(--card-border)', onclick: `showView('health');setTimeout(()=>document.getElementById('liveActivities')?.scrollIntoView({behavior:'smooth'}),300)` },
+    { icon: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>', title: `Last Energy Caps ${coffeeTime}`, sub: '200mg caffeine  - late intake drops HRV 12%', color: 'var(--warn)', bg: 'rgba(255,181,71,0.12)', onclick: `logBehavior('energy_caps')` },
+    { icon: '<path d="M12 2C8 2 4 6 4 10c0 6 8 12 8 12s8-6 8-12c0-4-4-8-8-8z"/>', title: `Shisha before ${shishaCutoff}`, sub: 'CO half-life is 4-5h  - allow 3h+ minimum - protects deep sleep & HRV', color: 'var(--text-2)', bg: 'var(--card-border)', onclick: `showView('health');setTimeout(()=>document.getElementById('liveActivities')?.scrollIntoView({behavior:'smooth'}),300)` },
     { icon: '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor"/>', title: `Sleep at ${sleepTime}`, sub: `Melatonin window - target 8h sleep`, color: 'var(--purple)', bg: 'rgba(167,121,247,0.12)', onclick: `openSleepFullPage()` },
   ];
 
@@ -5882,7 +6029,7 @@ function renderOutlook() {
 }
 
 // ========================================
-//  TASKS (My Day) — Vertical Timeline
+//  TASKS (My Day)  - Vertical Timeline
 // ========================================
 function renderTasks() {
   const el = document.getElementById('dayTasks');
@@ -6048,7 +6195,7 @@ function addWorkoutsToMyDay() {
     const durStr = w.durMin > 0 ? `${Math.floor(w.durMin / 60)}h ${w.durMin % 60}min` : '';
     const calStr = w.cal > 0 ? `${w.cal} kcal` : '';
     const detail = [durStr, calStr].filter(Boolean).join(' · ');
-    const title = `🏋️ ${w.type || 'Workout'}${detail ? ' — ' + detail : ''}`;
+    const title = `🏋️ ${w.type || 'Workout'}${detail ? '  - ' + detail : ''}`;
     // Check if already added (by matching workout type for today)
     const exists = ST.tasks.find(t => t._workout && t._workoutType === (w.type || 'Workout') && t._workoutDate === today);
     if (!exists) {
@@ -6316,7 +6463,7 @@ function renderSleepDebt() {
   // Store points for scrubbing
   if (wrapEl) wrapEl._debtPts = pts;
 
-  // Labels — show first, middle, last
+  // Labels  - show first, middle, last
   if (labelsEl) {
     const labels = [];
     if (debts.length >= 3) {
@@ -6336,9 +6483,9 @@ function renderSleepDebt() {
       : 0;
     const dotColor = currentDebt <= 1 ? 'var(--energy)' : currentDebt <= 3 ? '#fbbf24' : 'var(--warn)';
     const msg = currentDebt <= 0.5 ? 'Fully recovered'
-      : currentDebt <= 1 ? 'Low debt — well managed'
-      : currentDebt <= 3 ? (trend <= -0.3 ? 'Recovering — debt declining' : 'Moderate — prioritize sleep')
-      : (trend <= -0.5 ? 'High but improving' : 'High debt — recovery impaired');
+      : currentDebt <= 1 ? 'Low debt  - well managed'
+      : currentDebt <= 3 ? (trend <= -0.3 ? 'Recovering  - debt declining' : 'Moderate  - prioritize sleep')
+      : (trend <= -0.5 ? 'High but improving' : 'High debt  - recovery impaired');
     statusEl.innerHTML = `<div class="debt-status-dot" style="background:${dotColor}"></div><div class="debt-status-text">${msg}</div>`;
   }
 }
@@ -6490,6 +6637,465 @@ function renderHabitAccountability() {
   }
 
   html += '</div>';
+  el.innerHTML = html;
+}
+
+function renderHabitImpact() {
+  const el = document.getElementById('habitImpact');
+  if (!el) return;
+
+  const journal = ST.journal || [];
+  const hist = ST._history || {};
+  const NEGATIVE_IDS = new Set(['shisha', 'shisha_late', 'alcohol', 'screen_late', 'stress', 'sugar', 'weed', 'nicotine', 'late_meal']);
+
+  if (journal.length < 7) {
+    el.innerHTML = `<div class="hi-card"><div class="hi-empty">
+      <div class="hi-empty-icon">📈</div>
+      <div>Log at least <b style="color:var(--text)">${7 - journal.length} more days</b> to unlock Habit Impact analysis.</div>
+      <div style="margin-top:6px;color:var(--text-4)">RYTHM will show you how each habit changes your recovery.</div>
+    </div></div>`;
+    return;
+  }
+
+  // Build a date-keyed journal map
+  const journalMap = {};
+  for (const j of journal) journalMap[j.date] = j;
+
+  // Sort journal chronologically
+  const sorted = [...journal].sort((a, b) => a.date.localeCompare(b.date));
+
+  // Build history maps for HRV, RHR, Sleep keyed by date
+  function buildHistMap(arr) {
+    const m = {};
+    if (!arr) return m;
+    for (const d of arr) m[d.date] = d.value;
+    return m;
+  }
+  const hrvMap = buildHistMap(hist.hrv);
+  const rhrMap = buildHistMap(hist.rhr);
+  const sleepMap = buildHistMap(hist.sleep);
+
+  // Helper: get readiness from journal entry
+  function getReadiness(dateStr) {
+    const j = journalMap[dateStr];
+    return j && j.readiness != null ? j.readiness : null;
+  }
+
+  // Helper: compute average for a set of dates from a history map
+  function avgFromMap(map, dates) {
+    const vals = dates.map(d => map[d]).filter(v => v != null && v > 0);
+    if (!vals.length) return null;
+    return vals.reduce((s, v) => s + v, 0) / vals.length;
+  }
+
+  // Find when each habit was first logged
+  function findHabitStartDate(behaviorId) {
+    for (const j of sorted) {
+      if ((j.behaviors || []).includes(behaviorId)) return j.date;
+    }
+    return null;
+  }
+
+  // Count total days a habit has been logged
+  function countHabitDays(behaviorId) {
+    return journal.filter(j => (j.behaviors || []).includes(behaviorId)).length;
+  }
+
+  // Get all dates before first occurrence and all dates from first occurrence onward
+  function getBeforeAfterDates(behaviorId) {
+    const startDate = findHabitStartDate(behaviorId);
+    if (!startDate) return { before: [], after: [] };
+    const allDates = sorted.map(j => j.date);
+    const before = allDates.filter(d => d < startDate);
+    const after = allDates.filter(d => d >= startDate);
+    return { before, after };
+  }
+
+  // ========================================
+  //  1. BEFORE vs AFTER COMPARISONS
+  // ========================================
+  const beforeAfterItems = [];
+
+  // Get all unique behaviors from journal
+  const allBehaviors = new Set();
+  for (const j of journal) {
+    for (const b of (j.behaviors || [])) allBehaviors.add(b);
+  }
+
+  for (const bId of allBehaviors) {
+    const totalDays = countHabitDays(bId);
+    if (totalDays < 7) continue; // Need 7+ days of data
+
+    const isNeg = NEGATIVE_IDS.has(bId);
+    const beh = JOURNAL_BEHAVIORS.find(x => x.id === bId);
+    if (!beh) continue;
+
+    // Compare days WITH this behavior vs days WITHOUT
+    const withDates = journal.filter(j => (j.behaviors || []).includes(bId)).map(j => j.date);
+    const withoutDates = journal.filter(j => !(j.behaviors || []).includes(bId)).map(j => j.date);
+
+    if (withDates.length < 5 || withoutDates.length < 3) continue;
+
+    // HRV comparison
+    const hrvWith = avgFromMap(hrvMap, withDates);
+    const hrvWithout = avgFromMap(hrvMap, withoutDates);
+    let hrvDelta = null;
+    if (hrvWith != null && hrvWithout != null && hrvWithout > 0) {
+      hrvDelta = Math.round(((hrvWith - hrvWithout) / hrvWithout) * 100);
+    }
+
+    // Sleep comparison (hours)
+    const sleepWith = avgFromMap(sleepMap, withDates);
+    const sleepWithout = avgFromMap(sleepMap, withoutDates);
+    let sleepDelta = null;
+    if (sleepWith != null && sleepWithout != null) {
+      sleepDelta = Math.round((sleepWith - sleepWithout) * 60); // in minutes
+    }
+
+    // Readiness comparison
+    const readWith = withDates.map(d => getReadiness(d)).filter(v => v != null);
+    const readWithout = withoutDates.map(d => getReadiness(d)).filter(v => v != null);
+    let readDelta = null;
+    if (readWith.length >= 3 && readWithout.length >= 3) {
+      const avgReadWith = readWith.reduce((s, v) => s + v, 0) / readWith.length;
+      const avgReadWithout = readWithout.reduce((s, v) => s + v, 0) / readWithout.length;
+      readDelta = Math.round(avgReadWith - avgReadWithout);
+    }
+
+    // Need at least one meaningful delta
+    if (hrvDelta == null && sleepDelta == null && readDelta == null) continue;
+
+    // Compute composite score for sorting
+    const absScore = Math.abs(hrvDelta || 0) + Math.abs(sleepDelta || 0) / 5 + Math.abs(readDelta || 0);
+
+    beforeAfterItems.push({
+      id: bId,
+      icon: beh.icon,
+      label: beh.label,
+      isNeg,
+      totalDays,
+      hrvDelta,
+      sleepDelta,
+      readDelta,
+      absScore
+    });
+  }
+
+  // Sort by absolute impact
+  beforeAfterItems.sort((a, b) => b.absScore - a.absScore);
+
+  // ========================================
+  //  2. PROJECTED GAINS (based on trends)
+  // ========================================
+  function computeTrend(histArr, days) {
+    if (!histArr || histArr.length < 7) return null;
+    const recent = histArr.slice(-days);
+    if (recent.length < 5) return null;
+    // Simple linear regression
+    const n = recent.length;
+    let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+    for (let i = 0; i < n; i++) {
+      sumX += i;
+      sumY += recent[i].value;
+      sumXY += i * recent[i].value;
+      sumX2 += i * i;
+    }
+    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / n;
+    const current = intercept + slope * (n - 1);
+    return { slope, current };
+  }
+
+  const hrvTrend = computeTrend(hist.hrv, 30);
+  const rhrTrend = computeTrend(hist.rhr, 30);
+  const sleepTrend = computeTrend(hist.sleep, 30);
+
+  // Readiness trend from journal
+  const readinessArr = sorted
+    .filter(j => j.readiness != null)
+    .map(j => ({ date: j.date, value: j.readiness }));
+  const readTrend = computeTrend(readinessArr, 30);
+
+  const projections = [];
+  if (hrvTrend && Math.abs(hrvTrend.slope) > 0.01) {
+    projections.push({
+      label: 'HRV',
+      unit: 'ms',
+      current: Math.round(hrvTrend.current),
+      d30: Math.max(0, Math.round(hrvTrend.current + hrvTrend.slope * 30)),
+      d90: Math.max(0, Math.round(hrvTrend.current + hrvTrend.slope * 90)),
+      improving: hrvTrend.slope > 0,
+      max: Math.max(120, Math.round(hrvTrend.current + hrvTrend.slope * 90) + 10)
+    });
+  }
+  if (rhrTrend && Math.abs(rhrTrend.slope) > 0.01) {
+    projections.push({
+      label: 'RHR',
+      unit: 'bpm',
+      current: Math.round(rhrTrend.current),
+      d30: Math.max(35, Math.round(rhrTrend.current + rhrTrend.slope * 30)),
+      d90: Math.max(35, Math.round(rhrTrend.current + rhrTrend.slope * 90)),
+      improving: rhrTrend.slope < 0, // lower RHR is better
+      max: Math.max(100, Math.round(rhrTrend.current) + 10)
+    });
+  }
+  if (sleepTrend && Math.abs(sleepTrend.slope) > 0.005) {
+    projections.push({
+      label: 'Sleep',
+      unit: 'h',
+      current: +sleepTrend.current.toFixed(1),
+      d30: +Math.max(4, sleepTrend.current + sleepTrend.slope * 30).toFixed(1),
+      d90: +Math.max(4, sleepTrend.current + sleepTrend.slope * 90).toFixed(1),
+      improving: sleepTrend.slope > 0,
+      max: 12
+    });
+  }
+  if (readTrend && Math.abs(readTrend.slope) > 0.05) {
+    projections.push({
+      label: 'Readiness',
+      unit: 'pts',
+      current: Math.round(readTrend.current),
+      d30: Math.max(0, Math.min(100, Math.round(readTrend.current + readTrend.slope * 30))),
+      d90: Math.max(0, Math.min(100, Math.round(readTrend.current + readTrend.slope * 90))),
+      improving: readTrend.slope > 0,
+      max: 100
+    });
+  }
+
+  // ========================================
+  //  3. STREAK IMPACT SCORES
+  // ========================================
+  const habitStreaks = computeHabitStreaks();
+  const streakImpacts = [];
+
+  for (const hs of habitStreaks) {
+    if (hs.streak < 3) continue; // need at least 3 day streak
+    const beh = JOURNAL_BEHAVIORS.find(x => x.id === hs.id);
+    if (!beh) continue;
+    const isNeg = NEGATIVE_IDS.has(hs.id);
+
+    // Compute impact during streak vs rest of data
+    const streakDates = [];
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
+    const todayLogged = journal.find(j => j.date === todayStr && (j.behaviors || []).includes(hs.id));
+    const startOff = todayLogged ? 0 : 1;
+    for (let i = startOff; i < startOff + hs.streak; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      streakDates.push(d.toISOString().slice(0, 10));
+    }
+
+    const nonStreakDates = journal
+      .filter(j => !streakDates.includes(j.date))
+      .map(j => j.date);
+
+    if (nonStreakDates.length < 3) continue;
+
+    // Readiness during streak vs outside
+    const readStreak = streakDates.map(d => getReadiness(d)).filter(v => v != null);
+    const readOther = nonStreakDates.map(d => getReadiness(d)).filter(v => v != null);
+
+    let impactScore = null;
+    if (readStreak.length >= 2 && readOther.length >= 3) {
+      const avgStreak = readStreak.reduce((s, v) => s + v, 0) / readStreak.length;
+      const avgOther = readOther.reduce((s, v) => s + v, 0) / readOther.length;
+      impactScore = Math.round(avgStreak - avgOther);
+    }
+
+    // HRV impact during streak
+    const hrvStreak = avgFromMap(hrvMap, streakDates);
+    const hrvOther = avgFromMap(hrvMap, nonStreakDates);
+    let hrvImpact = null;
+    if (hrvStreak != null && hrvOther != null && hrvOther > 0) {
+      hrvImpact = Math.round(((hrvStreak - hrvOther) / hrvOther) * 100);
+    }
+
+    streakImpacts.push({
+      id: hs.id,
+      icon: hs.icon,
+      label: hs.label,
+      streak: hs.streak,
+      active: hs.active,
+      isNeg,
+      impactScore,
+      hrvImpact
+    });
+  }
+
+  // Sort by absolute impact
+  streakImpacts.sort((a, b) => Math.abs(b.impactScore || 0) - Math.abs(a.impactScore || 0));
+
+  // ========================================
+  //  BUILD HTML
+  // ========================================
+  if (!beforeAfterItems.length && !projections.length && !streakImpacts.length) {
+    el.innerHTML = `<div class="hi-card"><div class="hi-empty">
+      <div class="hi-empty-icon">📈</div>
+      <div>Keep logging consistently to unlock impact analysis.</div>
+      <div style="margin-top:6px;color:var(--text-4)">Need habits logged 7+ days with biomarker history.</div>
+    </div></div>`;
+    return;
+  }
+
+  let html = '';
+
+  // Card 1: Before vs After
+  if (beforeAfterItems.length) {
+    const top = beforeAfterItems.slice(0, 6);
+    html += `<div class="hi-card">
+      <div class="hi-card-header">
+        <span class="hi-card-icon">🔬</span>
+        <span class="hi-card-title">Before vs After</span>
+        <span class="hi-card-badge">${beforeAfterItems.length} habits</span>
+      </div>`;
+
+    for (const item of top) {
+      function formatDelta(val, suffix, invert) {
+        if (val == null) return '';
+        const isGood = invert ? val < 0 : val > 0;
+        // For negative habits, flip the interpretation
+        const effectiveGood = item.isNeg ? !isGood : isGood;
+        const cls = val === 0 ? 'neutral' : effectiveGood ? 'pos' : 'neg';
+        const sign = val > 0 ? '+' : '';
+        return `<div class="hi-ba-metric">
+          <div class="hi-ba-metric-val ${cls}">${sign}${val}${suffix}</div>
+          <div class="hi-ba-metric-label">${suffix === '%' ? 'HRV' : suffix === 'min' ? 'SLEEP' : 'READY'}</div>
+        </div>`;
+      }
+
+      html += `<div class="hi-ba-row">
+        <span class="hi-ba-icon">${item.icon}</span>
+        <div class="hi-ba-info">
+          <div class="hi-ba-name">${item.label}</div>
+          <div class="hi-ba-since">${item.totalDays} days logged${item.isNeg ? ' - negative habit' : ''}</div>
+        </div>
+        <div class="hi-ba-metrics">
+          ${formatDelta(item.hrvDelta, '%', false)}
+          ${formatDelta(item.sleepDelta, 'min', false)}
+          ${formatDelta(item.readDelta, 'pts', false)}
+        </div>
+      </div>`;
+    }
+    html += '</div>';
+  }
+
+  // Card 2: Projected Gains
+  if (projections.length) {
+    html += `<div class="hi-card">
+      <div class="hi-card-header">
+        <span class="hi-card-icon">🚀</span>
+        <span class="hi-card-title">Projected Trajectory</span>
+        <span class="hi-card-badge${projections.every(p => p.improving) ? '' : ' neg'}">
+          ${projections.filter(p => p.improving).length}/${projections.length} improving
+        </span>
+      </div>`;
+
+    for (const p of projections) {
+      const barPct30 = Math.min(100, Math.round((p.d30 / p.max) * 100));
+      const barPct90 = Math.min(100, Math.round((p.d90 / p.max) * 100));
+      const d30Color = p.improving ? 'var(--energy)' : 'var(--warn)';
+      const d90Color = p.improving ? 'var(--purple)' : 'var(--danger)';
+      const d30Sign = p.d30 > p.current ? '+' : '';
+      const d90Sign = p.d90 > p.current ? '+' : '';
+      const d30Diff = p.label === 'Sleep' ? +(p.d30 - p.current).toFixed(1) : Math.round(p.d30 - p.current);
+      const d90Diff = p.label === 'Sleep' ? +(p.d90 - p.current).toFixed(1) : Math.round(p.d90 - p.current);
+
+      html += `<div class="hi-proj-row">
+        <div class="hi-proj-period" style="width:52px">${p.label}</div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:3px;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:9px;font-weight:700;color:var(--text-4);width:22px">30d</span>
+            <div class="hi-proj-bar-wrap">
+              <div class="hi-proj-bar-fill" style="width:${barPct30}%;background:${d30Color}"></div>
+            </div>
+            <span class="hi-proj-val" style="color:${d30Color}">${p.d30}${p.unit}</span>
+            <span style="font-size:10px;color:var(--text-4)">(${d30Sign}${d30Diff})</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:9px;font-weight:700;color:var(--text-4);width:22px">90d</span>
+            <div class="hi-proj-bar-wrap">
+              <div class="hi-proj-bar-fill" style="width:${barPct90}%;background:${d90Color}"></div>
+            </div>
+            <span class="hi-proj-val" style="color:${d90Color}">${p.d90}${p.unit}</span>
+            <span style="font-size:10px;color:var(--text-4)">(${d90Sign}${d90Diff})</span>
+          </div>
+        </div>
+      </div>`;
+    }
+    html += '</div>';
+  }
+
+  // Card 3: Streak Impact Scores
+  if (streakImpacts.length) {
+    const activeStreaks = streakImpacts.filter(s => !s.isNeg);
+    const negStreaks = streakImpacts.filter(s => s.isNeg);
+
+    html += `<div class="hi-card">
+      <div class="hi-card-header">
+        <span class="hi-card-icon">🔥</span>
+        <span class="hi-card-title">Streak Impact</span>
+      </div>`;
+
+    if (activeStreaks.length) {
+      for (const s of activeStreaks.slice(0, 6)) {
+        const score = s.impactScore;
+        const scoreCls = score == null ? 'low'
+          : score >= 5 ? 'high'
+          : score >= 0 ? 'mid'
+          : 'bad';
+        const scoreLabel = score == null ? '...'
+          : (score >= 0 ? '+' : '') + score;
+
+        let hrvBit = '';
+        if (s.hrvImpact != null) {
+          const hCls = s.hrvImpact >= 0 ? 'pos' : 'neg';
+          hrvBit = `<span style="font-size:10px;color:var(--text-4);margin-left:4px">HRV ${s.hrvImpact >= 0 ? '+' : ''}${s.hrvImpact}%</span>`;
+        }
+
+        html += `<div class="hi-streak-row">
+          <span class="hi-streak-icon">${s.icon}</span>
+          <div class="hi-streak-info">
+            <div class="hi-streak-name">${s.label}</div>
+            <div class="hi-streak-days">${s.streak} day streak${s.active ? ' - active today' : ''}</div>
+          </div>
+          <div class="hi-streak-impact">
+            <span class="hi-streak-score ${scoreCls}">${scoreLabel}</span>
+            <span class="hi-streak-unit">pts</span>
+            ${hrvBit}
+          </div>
+        </div>`;
+      }
+    }
+
+    if (negStreaks.length) {
+      html += `<div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);text-transform:uppercase;margin:10px 0 4px">Negative Streaks</div>`;
+      for (const s of negStreaks.slice(0, 4)) {
+        const score = s.impactScore;
+        const scoreCls = score == null ? 'low'
+          : score <= -3 ? 'bad'
+          : score < 0 ? 'mid'
+          : 'high';
+        const scoreLabel = score == null ? '...'
+          : (score >= 0 ? '+' : '') + score;
+
+        html += `<div class="hi-streak-row">
+          <span class="hi-streak-icon">${s.icon}</span>
+          <div class="hi-streak-info">
+            <div class="hi-streak-name">${s.label}</div>
+            <div class="hi-streak-days">${s.streak} day streak</div>
+          </div>
+          <div class="hi-streak-impact">
+            <span class="hi-streak-score ${scoreCls}">${scoreLabel}</span>
+            <span class="hi-streak-unit">pts</span>
+          </div>
+        </div>`;
+      }
+    }
+
+    html += '</div>';
+  }
+
   el.innerHTML = html;
 }
 
@@ -6778,7 +7384,7 @@ function computeRythmAge() {
   const sl = ST.sleep || DEFAULT_STATE.sleep;
   const h = ST.health || DEFAULT_STATE.health;
 
-  // RYTHM Biological Age — multi-biomarker algorithm
+  // RYTHM Biological Age  - multi-biomarker algorithm
   // Based on Levine's PhenoAge + DunedinPACE adapted for wearable data
   // Population norms sourced from NHANES, Framingham, Cooper Institute
   // Each biomarker: offset vs age-specific population median → weighted years
@@ -6786,7 +7392,7 @@ function computeRythmAge() {
   let adj = 0;
   let weights = 0;
 
-  // 1. HRV (RMSSD) — strongest wearable aging marker (weight: 3)
+  // 1. HRV (RMSSD)  - strongest wearable aging marker (weight: 3)
   // Population medians by age: 18-25 → 42ms, 25-30 → 37ms, 30-40 → 30ms, 40-50 → 24ms
   // Stanley's data: median 41.5ms, mean 42.4ms (n=364, range 16-87ms)
   const hrvNorms = [[18,48],[25,42],[30,37],[35,32],[40,28],[45,24],[50,21],[60,17]];
@@ -6805,7 +7411,7 @@ function computeRythmAge() {
     weights += 3;
   }
 
-  // 2. RHR — cardiovascular fitness proxy (weight: 2.5)
+  // 2. RHR  - cardiovascular fitness proxy (weight: 2.5)
   // Population median ~72bpm. Athletes 50-65bpm. Elite <50bpm.
   // Stanley's data: median 63bpm, mean 63.2 (n=349, range 54-89)
   // At 63bpm he's "Good" for 20s male (55-61 = Excellent, 62-65 = Good, 66-69 = Above avg)
@@ -6823,7 +7429,7 @@ function computeRythmAge() {
     weights += 2.5;
   }
 
-  // 3. VO2 Max — gold standard cardiorespiratory fitness (weight: 2.5)
+  // 3. VO2 Max  - gold standard cardiorespiratory fitness (weight: 2.5)
   // Cooper Institute norms for 20-29M: Superior >51.4, Excellent 46.8-51.4, Good 43.9-46.7
   // Stanley's data: median 48.6, latest 53.4 (n=13) → between Excellent and Superior
   const vo2 = h.vo2max || null;
@@ -6860,7 +7466,7 @@ function computeRythmAge() {
     weights += 2;
   }
 
-  // 5. Respiratory rate — autonomic health (weight: 1)
+  // 5. Respiratory rate  - autonomic health (weight: 1)
   // Normal rest: 12-20, optimal sleep: 12-16 br/min
   // Stanley's data: median 15.1, mean 15.2 (n=348) → optimal range
   const resp = m.respiratory || null;
@@ -6872,7 +7478,7 @@ function computeRythmAge() {
     weights += 1;
   }
 
-  // 6. SpO2 — vascular/pulmonary health (weight: 0.5)
+  // 6. SpO2  - vascular/pulmonary health (weight: 0.5)
   // Normal: 95-100%, healthy young adult: 96-99%
   // Stanley's data: median 97%, mean 96.5% (n=361) → normal
   const spo2 = h.spo2 || null;
@@ -6884,7 +7490,7 @@ function computeRythmAge() {
     weights += 0.5;
   }
 
-  // 7. Activity — daily movement (weight: 1.5)
+  // 7. Activity  - daily movement (weight: 1.5)
   // CDC recommends 7-8k steps; athlete training adds structured volume
   // Stanley's data: median 8065 steps/day (n=383)
   const steps = h.steps?.today || 0;
@@ -7461,8 +8067,8 @@ function buildDetailContent(type) {
         <div class="detail-section-title">YOUR DATA</div>
         <div class="detail-row"><span class="detail-row-label">Current</span><span class="detail-row-val" style="color:var(--energy)">${h.vo2max} ml/kg</span></div>
         <div class="detail-row"><span class="detail-row-label">30-day change</span><span class="detail-row-val" style="color:${h.vo2maxDelta >= 0 ? 'var(--energy)' : 'var(--warn)'}">${h.vo2maxDelta >= 0 ? '+' : ''}${h.vo2maxDelta}</span></div>
-        <div class="detail-row"><span class="detail-row-label">Classification</span><span class="detail-row-val">${h.vo2max >= 50 ? 'Excellent' : h.vo2max >= 43 ? 'Good' : h.vo2max >= 37 ? 'Fair' : h.vo2max != null ? 'Low' : '—'}</span></div>
-        <div class="detail-row"><span class="detail-row-label">Age percentile</span><span class="detail-row-val">${h.vo2max >= 55 ? '95th+' : h.vo2max >= 50 ? '90th' : h.vo2max >= 46 ? '80th' : h.vo2max >= 43 ? '65th' : h.vo2max >= 39 ? '50th' : h.vo2max != null ? '<40th' : '—'}</span></div>
+        <div class="detail-row"><span class="detail-row-label">Classification</span><span class="detail-row-val">${h.vo2max >= 50 ? 'Excellent' : h.vo2max >= 43 ? 'Good' : h.vo2max >= 37 ? 'Fair' : h.vo2max != null ? 'Low' : '--'}</span></div>
+        <div class="detail-row"><span class="detail-row-label">Age percentile</span><span class="detail-row-val">${h.vo2max >= 55 ? '95th+' : h.vo2max >= 50 ? '90th' : h.vo2max >= 46 ? '80th' : h.vo2max >= 43 ? '65th' : h.vo2max >= 39 ? '50th' : h.vo2max != null ? '<40th' : '--'}</span></div>
       </div>
       <div class="detail-section">
         <div class="detail-section-title">FOR LONG JUMPERS</div>
@@ -7486,7 +8092,7 @@ function buildDetailContent(type) {
         <div class="detail-section-title">YOUR DATA</div>
         <div class="detail-row"><span class="detail-row-label">Current</span><span class="detail-row-val" style="color:${h.spo2 >= 95 ? 'var(--energy)' : h.spo2 >= 92 ? 'var(--warn)' : 'var(--danger)'}">${h.spo2}%</span></div>
         <div class="detail-row"><span class="detail-row-label">Normal range</span><span class="detail-row-val">95-100%</span></div>
-        <div class="detail-row"><span class="detail-row-label">Status</span><span class="detail-row-val" style="color:${h.spo2 >= 95 ? 'var(--energy)' : h.spo2 >= 92 ? 'var(--warn)' : 'var(--danger)'}">${h.spo2 >= 95 ? 'Normal' : h.spo2 >= 92 ? 'Low — monitor' : 'Critical — seek medical attention'}</span></div>
+        <div class="detail-row"><span class="detail-row-label">Status</span><span class="detail-row-val" style="color:${h.spo2 >= 95 ? 'var(--energy)' : h.spo2 >= 92 ? 'var(--warn)' : 'var(--danger)'}">${h.spo2 >= 95 ? 'Normal' : h.spo2 >= 92 ? 'Low  - monitor' : 'Critical  - seek medical attention'}</span></div>
       </div>
       <div class="detail-section">
         <div class="detail-section-title">SHISHA IMPACT</div>
@@ -7510,7 +8116,7 @@ function buildDetailContent(type) {
         <div class="detail-section-title">YOUR DATA</div>
         <div class="detail-row"><span class="detail-row-label">Current</span><span class="detail-row-val">${m.respiratory} br/min</span></div>
         <div class="detail-row"><span class="detail-row-label">Normal range</span><span class="detail-row-val">12-20 rpm</span></div>
-        <div class="detail-row"><span class="detail-row-label">Status</span><span class="detail-row-val" style="color:${m.respiratory >= 12 && m.respiratory <= 20 ? 'var(--energy)' : 'var(--warn)'}">${m.respiratory >= 12 && m.respiratory <= 20 ? 'Normal' : m.respiratory < 12 ? 'Below normal' : 'Elevated — possible illness'}</span></div>
+        <div class="detail-row"><span class="detail-row-label">Status</span><span class="detail-row-val" style="color:${m.respiratory >= 12 && m.respiratory <= 20 ? 'var(--energy)' : 'var(--warn)'}">${m.respiratory >= 12 && m.respiratory <= 20 ? 'Normal' : m.respiratory < 12 ? 'Below normal' : 'Elevated  - possible illness'}</span></div>
       </div>`;
 
     case 'skintemp': return back + `
@@ -7527,7 +8133,7 @@ function buildDetailContent(type) {
         <div class="detail-section-title">YOUR DATA</div>
         <div class="detail-row"><span class="detail-row-label">Current</span><span class="detail-row-val">${h.skinTemp}&deg;C</span></div>
         <div class="detail-row"><span class="detail-row-label">Deviation</span><span class="detail-row-val">${h.skinTempDelta > 0 ? '+' : ''}${h.skinTempDelta}&deg;C</span></div>
-        <div class="detail-row"><span class="detail-row-label">Status</span><span class="detail-row-val" style="color:${Math.abs(h.skinTempDelta) <= 0.5 ? 'var(--energy)' : 'var(--warn)'}">${Math.abs(h.skinTempDelta) <= 0.5 ? 'Stable' : h.skinTempDelta > 0.5 ? 'Elevated — possible illness' : 'Below baseline'}</span></div>
+        <div class="detail-row"><span class="detail-row-label">Status</span><span class="detail-row-val" style="color:${Math.abs(h.skinTempDelta) <= 0.5 ? 'var(--energy)' : 'var(--warn)'}">${Math.abs(h.skinTempDelta) <= 0.5 ? 'Stable' : h.skinTempDelta > 0.5 ? 'Elevated  - possible illness' : 'Below baseline'}</span></div>
       </div>`;
 
     case 'hrv': return back + `
@@ -7753,10 +8359,10 @@ function buildDetailContent(type) {
         <div class="detail-section-title">HOW TO IMPROVE</div>
         <div class="detail-explainer">
           <p>Your biggest levers based on real data:</p>
-          <p><b>1. HRV consistency</b> — your range is 16-87ms (huge variance). Reduce alcohol/shisha nights and keep sleep timing consistent to narrow this.</p>
-          <p><b>2. VO2 Max</b> — at 48.6-53.4 you're Excellent/Superior. Adding 2x/week Zone 2 (20-30 min easy running HR 118-137) can push past 55.</p>
-          <p><b>3. RHR recovery</b> — your best days hit 54-57bpm but median is 63. Consistent sleep and hydration drive this down.</p>
-          <p><b>4. Sleep regularity</b> — consistent bed/wake times ±30 min matters more than total hours for biological aging.</p>
+          <p><b>1. HRV consistency</b>  - your range is 16-87ms (huge variance). Reduce alcohol/shisha nights and keep sleep timing consistent to narrow this.</p>
+          <p><b>2. VO2 Max</b>  - at 48.6-53.4 you're Excellent/Superior. Adding 2x/week Zone 2 (20-30 min easy running HR 118-137) can push past 55.</p>
+          <p><b>3. RHR recovery</b>  - your best days hit 54-57bpm but median is 63. Consistent sleep and hydration drive this down.</p>
+          <p><b>4. Sleep regularity</b>  - consistent bed/wake times ±30 min matters more than total hours for biological aging.</p>
         </div>
       </div>`;
 
@@ -8818,7 +9424,7 @@ function resetData() {
   }
 }
 
-// Settings sliders — inline setup (setupSlider was removed with onboarding)
+// Settings sliders  - inline setup (setupSlider was removed with onboarding)
 document.getElementById('settWakeSlider').oninput = function() {
   document.getElementById('settWakeDisplay').textContent = minToTime(parseInt(this.value));
 };
@@ -8851,7 +9457,7 @@ function changeDay(dir) {
   if (viewDayOffset !== 0) {
     loadHistoricalDay(d.toISOString().slice(0, 10));
   } else {
-    // Back to today — re-render everything with live data
+    // Back to today  - re-render everything with live data
     renderReadiness();
     renderThreeRings();
     renderStrainCoach();
@@ -8985,6 +9591,7 @@ function showView(name) {
     renderStreaks();
     renderSleepDebt();
     renderHabitAccountability();
+    renderHabitImpact();
     renderImpact();
     renderTrends();
     renderWeekInsights();
@@ -9102,7 +9709,7 @@ function getActiveElapsed(act) {
   const start = new Date(act.startedAt).getTime();
   const paused = act.totalPausedMs || 0;
   if (act.pausedAt) {
-    // Currently paused — elapsed = pausedAt - start - totalPaused
+    // Currently paused  - elapsed = pausedAt - start - totalPaused
     return new Date(act.pausedAt).getTime() - start - paused;
   }
   return now - start - paused;
@@ -9166,7 +9773,7 @@ function getShishaCutoffWarning() {
 
   // If now is past cutoff (within the cutoff→sleep window or after sleep)
   if (nowToSleep <= cutoffToSleep) {
-    return 'Past cutoff - CO half-life is 4-5h — allow 3h+ minimum before sleep';
+    return 'Past cutoff - CO half-life is 4-5h  - allow 3h+ minimum before sleep';
   }
 
   // How many minutes until cutoff?
@@ -9189,7 +9796,7 @@ function renderLiveActivities() {
 
   const now = Date.now();
 
-  // Check if cards already exist — update in-place (no flicker)
+  // Check if cards already exist  - update in-place (no flicker)
   const existingIds = [...el.querySelectorAll('[data-live-id]')].map(e => e.dataset.liveId);
   const activeIds = active.map(a => a.id);
   const needsRebuild = existingIds.length !== activeIds.length || !activeIds.every(id => existingIds.includes(id));
@@ -9276,7 +9883,7 @@ function renderLiveActivities() {
     return;
   }
 
-  // Full rebuild — unique layout per activity type
+  // Full rebuild  - unique layout per activity type
   el.innerHTML = active.map(a => {
     const meta = LIVE_ACTIVITY_META[a.type] || { icon: '⏱️', label: a.type };
     const elapsed = getActiveElapsed(a);
@@ -9291,7 +9898,7 @@ function renderLiveActivities() {
     const statusLabel = isPaused ? '<span class="la-paused-badge">PAUSED</span>' : '<span class="la-live-dot"></span> ACTIVE';
     const timerStyle = isPaused ? 'opacity:0.4;' : '';
 
-    // ── Shisha: parking meter style — ring + time remaining to cutoff ──
+    // ── Shisha: parking meter style  - ring + time remaining to cutoff ──
     if (a.type === 'shisha' || a.type === 'shisha_late') {
       const w = getShishaCutoffWarning();
       // Compute time remaining to cutoff
@@ -9335,7 +9942,7 @@ function renderLiveActivities() {
             ${pauseBtn}${stopBtn}
           </div>
         </div>
-        ${pastCutoff ? `<div class="la-warn" style="margin-top:6px;padding:5px 10px;border-radius:8px;background:rgba(255,107,107,0.08);font-size:10px;font-weight:600;color:#ff6b6b;">⚠️ CO half-life is 4-5h — allow 3h+ minimum before sleep</div>` : '<div class="la-warn" style="display:none;"></div>'}
+        ${pastCutoff ? `<div class="la-warn" style="margin-top:6px;padding:5px 10px;border-radius:8px;background:rgba(255,107,107,0.08);font-size:10px;font-weight:600;color:#ff6b6b;">⚠️ CO half-life is 4-5h  - allow 3h+ minimum before sleep</div>` : '<div class="la-warn" style="display:none;"></div>'}
       </div>`;
     }
 
@@ -9584,7 +10191,7 @@ function getHabitPatterns() {
   const positives = ['meditation', 'cold_shower', 'stretching', 'mobility', 'sunlight', 'creatine', 'hydration', 'reading', 'nature'];
   const underused = positives.filter(p => (freq[p] || 0) < 2 && !todayBehaviors.includes(p));
 
-  // Streak detection — consecutive days doing a behavior
+  // Streak detection  - consecutive days doing a behavior
   const sorted = [...ST.journal].sort((a,b) => a.date.localeCompare(b.date));
   const streaks = {};
   for (const h of habits) {
@@ -9599,46 +10206,46 @@ function getHabitPatterns() {
   return { habits, missedToday, overused, underused, freq, freq7, todayBehaviors, streaks };
 }
 
-// Science-backed reason database — all citations verified
+// Science-backed reason database  - all citations verified
 const HABIT_SCIENCE = {
-  sunlight: 'Morning light anchors your circadian clock — triggers cortisol awakening response and sets melatonin onset 14-16h later',
+  sunlight: 'Morning light anchors your circadian clock  - triggers cortisol awakening response and sets melatonin onset 14-16h later',
   meditation: '13min/day for 8 weeks improved attention and working memory in non-meditators (Basso et al., Behavioural Brain Research, 2019)',
   cold_shower: 'Immersion in 14°C water increased plasma dopamine 250% with effects lasting 2-3h (Šrámek et al., Eur J Appl Physiol, 2000)',
-  stretching: 'Post-exercise stretching preserves range of motion and may aid parasympathetic recovery — keep sessions gentle, 10-15min',
-  mobility: 'Joint-specific mobility work improves force output at end-range — critical for long jump take-off angles',
+  stretching: 'Post-exercise stretching preserves range of motion and may aid parasympathetic recovery  - keep sessions gentle, 10-15min',
+  mobility: 'Joint-specific mobility work improves force output at end-range  - critical for long jump take-off angles',
   creatine: '5g/day increases phosphocreatine stores 20-40%, improving power output and cognitive function (Kreider et al., JISSN, 2017)',
   hydration: '2% body mass loss impairs reaction time, power output and decision-making in athletes (Nuccio et al., Sports Med, 2017)',
-  workout: 'Keep acute:chronic workload ratio between 0.8-1.3 — spikes above that increase injury risk significantly (Gabbett, BJSM, 2016)',
+  workout: 'Keep acute:chronic workload ratio between 0.8-1.3  - spikes above that increase injury risk significantly (Gabbett, BJSM, 2016)',
   sauna: 'Frequent sauna use (4-7x/week) associated with 63% lower risk of sudden cardiac death (Laukkanen et al., JAMA Intern Med, 2015)',
-  reading: 'Reading activates parasympathetic nervous system and reduces cognitive arousal — effective wind-down ritual before sleep',
-  nature: '20-30min nature exposure reduces cortisol at a rate of 21.3%/hour — sitting or walking both work (Hunter et al., Front Psychol, 2019)',
-  protein: '1.6-2.2g/kg/day protein optimizes muscle protein synthesis — distribute across 4+ meals (Morton et al., BJSM, 2018)',
+  reading: 'Reading activates parasympathetic nervous system and reduces cognitive arousal  - effective wind-down ritual before sleep',
+  nature: '20-30min nature exposure reduces cortisol at a rate of 21.3%/hour  - sitting or walking both work (Hunter et al., Front Psychol, 2019)',
+  protein: '1.6-2.2g/kg/day protein optimizes muscle protein synthesis  - distribute across 4+ meals (Morton et al., BJSM, 2018)',
   magnesium: 'Magnesium supplementation (500mg/day) improved sleep time and efficiency in elderly subjects (Abbasi et al., JRMS, 2012)',
-  supplements: 'Consistent timing optimizes absorption — fat-soluble vitamins with meals, magnesium in the evening',
+  supplements: 'Consistent timing optimizes absorption  - fat-soluble vitamins with meals, magnesium in the evening',
   blue_light_glasses: 'Amber-tinted lenses in the evening improved sleep quality in insomnia patients (Shechter et al., J Psychiatr Res, 2018)',
-  fasting: 'Time-restricted eating may improve metabolic flexibility — human autophagy data is limited, significant effects likely require 24h+',
-  deep_work: 'Peak cognitive performance follows ~90min ultradian cycles — match deep work to your circadian peaks (Kleitman BRAC model)',
-  jetboots: 'Intermittent pneumatic compression enhances blood flow and may accelerate recovery — evidence for tendon-specific benefits is limited',
-  make_bed: 'Morning routine completion builds momentum — environmental order reduces cognitive load throughout the day',
-  no_phone_morning: 'The cortisol awakening response rises 38-75% in the first 30-45min after waking — protect this natural alertness window',
-  sex: 'Oxytocin release improves sleep quality and reduces cortisol — beneficial for recovery on non-competition days',
+  fasting: 'Time-restricted eating may improve metabolic flexibility  - human autophagy data is limited, significant effects likely require 24h+',
+  deep_work: 'Peak cognitive performance follows ~90min ultradian cycles  - match deep work to your circadian peaks (Kleitman BRAC model)',
+  jetboots: 'Intermittent pneumatic compression enhances blood flow and may accelerate recovery  - evidence for tendon-specific benefits is limited',
+  make_bed: 'Morning routine completion builds momentum  - environmental order reduces cognitive load throughout the day',
+  no_phone_morning: 'The cortisol awakening response rises 38-75% in the first 30-45min after waking  - protect this natural alertness window',
+  sex: 'Oxytocin release improves sleep quality and reduces cortisol  - beneficial for recovery on non-competition days',
   nap: '26-min naps improved alertness by 54% and performance by 34% in NASA pilots (Rosekind et al., NASA Technical Report, 1995)',
-  skincare_am: 'Daily SPF reduces UV-induced skin aging — consistency matters more than product price',
-  skincare_pm: 'Nighttime skin repair activity peaks during sleep — evening routines align with natural cell turnover',
-  social: 'Weak social connections increase mortality risk comparable to smoking 15 cigarettes/day — meta-analysis of 148 studies (Holt-Lunstad et al., PLoS Med, 2010)',
+  skincare_am: 'Daily SPF reduces UV-induced skin aging  - consistency matters more than product price',
+  skincare_pm: 'Nighttime skin repair activity peaks during sleep  - evening routines align with natural cell turnover',
+  social: 'Weak social connections increase mortality risk comparable to smoking 15 cigarettes/day  - meta-analysis of 148 studies (Holt-Lunstad et al., PLoS Med, 2010)',
   massage: 'Post-exercise massage attenuated inflammatory signaling (NF-κB) and increased mitochondrial biogenesis markers (Crane et al., Sci Transl Med, 2012)',
   // Negative behavior science
-  shisha: 'One hookah session = inhaling ~90,000mL smoke vs ~500mL for a cigarette — CO half-life is 4-5h in non-smokers (WHO)',
-  shisha_late: 'Shisha before sleep elevates resting heart rate and carbon monoxide levels — both directly impair deep sleep and HRV',
+  shisha: 'One hookah session = inhaling ~90,000mL smoke vs ~500mL for a cigarette  - CO half-life is 4-5h in non-smokers (WHO)',
+  shisha_late: 'Shisha before sleep elevates resting heart rate and carbon monoxide levels  - both directly impair deep sleep and HRV',
   alcohol: 'Moderate-to-high doses suppress REM sleep dose-dependently; even moderate intake disrupts sleep architecture (Ebrahim et al., Alcohol Clin Exp Res, 2013)',
-  weed: 'THC suppresses REM sleep in a dose-dependent manner — reduced REM impairs motor memory consolidation',
-  nicotine: 'Nicotine half-life is ~2h, but its metabolite cotinine persists 16-24h — disrupts sleep architecture well beyond the last use',
-  sugar: 'Chronic high-glycemic diets are associated with elevated inflammatory markers (IL-6, CRP) — limit processed sugar for recovery',
-  screen_late: 'Evening screen use delays melatonin onset and reduces sleep quality — effect is dose-dependent on duration and brightness',
-  late_meal: 'Eating close to sleep raises core temperature via thermogenesis — the body needs to drop ~1°C to initiate deep sleep',
-  wake_before_930: 'Consistent wake times ±30min strengthen circadian entrainment — the single biggest lever for sleep quality',
+  weed: 'THC suppresses REM sleep in a dose-dependent manner  - reduced REM impairs motor memory consolidation',
+  nicotine: 'Nicotine half-life is ~2h, but its metabolite cotinine persists 16-24h  - disrupts sleep architecture well beyond the last use',
+  sugar: 'Chronic high-glycemic diets are associated with elevated inflammatory markers (IL-6, CRP)  - limit processed sugar for recovery',
+  screen_late: 'Evening screen use delays melatonin onset and reduces sleep quality  - effect is dose-dependent on duration and brightness',
+  late_meal: 'Eating close to sleep raises core temperature via thermogenesis  - the body needs to drop ~1°C to initiate deep sleep',
+  wake_before_930: 'Consistent wake times ±30min strengthen circadian entrainment  - the single biggest lever for sleep quality',
   sleep_8h30: 'Sleep extension to 10h improved sprint times and shooting accuracy in college basketball players (Mah et al., Sleep, 2011)',
-  sleep_before_2: 'The largest growth hormone pulse occurs during the first slow-wave sleep episode — triggered by sleep onset, not clock time',
+  sleep_before_2: 'The largest growth hormone pulse occurs during the first slow-wave sleep episode  - triggered by sleep onset, not clock time',
 };
 
 function renderSuggestions() {
@@ -9680,31 +10287,31 @@ function renderSuggestions() {
   // Energy Caps cutoff approaching
   const coffeeCutH = (WAKE + 6.5) % 24;
   if (nowH >= coffeeCutH - 0.5 && nowH < coffeeCutH + 0.5) {
-    sugs.push({ icon: '⚡', title: 'Last call for Energy Caps', sub: `Cut-off at ${minToTime(Math.round(coffeeCutH * 60))} — caffeine half-life is 5-6h, quarter-life 10-12h`, action: 'Note', cls: 'blue', bg: 'rgba(255,181,71,0.1)', onclick: `logBehavior('energy_caps')`, pri: 1 });
+    sugs.push({ icon: '⚡', title: 'Last call for Energy Caps', sub: `Cut-off at ${minToTime(Math.round(coffeeCutH * 60))}  - caffeine half-life is 5-6h, quarter-life 10-12h`, action: 'Note', cls: 'blue', bg: 'rgba(255,181,71,0.1)', onclick: `logBehavior('energy_caps')`, pri: 1 });
   }
 
   // Wind-down suggestion
   const winddownH = (WAKE + 12.5) % 24;
   if (nowH >= winddownH - 0.5 && nowH < winddownH + 1) {
-    sugs.push({ icon: '🌙', title: 'Start wind-down routine', sub: 'Core temp must drop ~1°C for deep sleep — dim lights, stop screens, no food', action: 'Start', cls: 'purple', bg: 'rgba(139,156,199,0.1)', onclick: `openWindDown()`, pri: 1 });
+    sugs.push({ icon: '🌙', title: 'Start wind-down routine', sub: 'Core temp must drop ~1°C for deep sleep  - dim lights, stop screens, no food', action: 'Start', cls: 'purple', bg: 'rgba(139,156,199,0.1)', onclick: `openWindDown()`, pri: 1 });
   }
 
   // === PRIORITY 3: Recovery-based ===
 
-  // Poor sleep — urgent
+  // Poor sleep  - urgent
   if (sl.totalH > 0 && sl.totalH < 6.5) {
     sugs.push({ icon: '😴', title: 'Prioritize sleep tonight', sub: `Only ${fmtH(sl.totalH)} last night. ${HABIT_SCIENCE.sleep_8h30}`, action: 'Plan', cls: 'purple', bg: 'rgba(139,156,199,0.1)', onclick: `openSleepFullPage()`, pri: 2 });
   }
 
-  // Low recovery — nap suggestion
+  // Low recovery  - nap suggestion
   if (recovery < 50 && hwake > 3 && hwake < 8 && !activeSessions.includes('nap')) {
     sugs.push({ icon: '💤', title: 'Take a 20-min power nap', sub: HABIT_SCIENCE.nap, action: 'Nap', cls: 'purple', bg: 'rgba(139,156,199,0.1)', onclick: `startLiveActivity('nap')`, pri: 2 });
   }
 
-  // HRV below baseline — breathwork
+  // HRV below baseline  - breathwork
   const hrvBase = m.hrvBaseline || 42;
   if (m.hrv < hrvBase * 0.8 && !activeSessions.includes('meditation')) {
-    sugs.push({ icon: '🧘', title: 'Breathing session recommended', sub: `HRV ${m.hrv}ms — ${Math.round((1 - m.hrv/hrvBase)*100)}% below your baseline. Slow breathing (6/min) activates vagal tone in 5-10min`, action: 'Breathe', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `showView('health');setTimeout(()=>document.getElementById('breathingCard')?.scrollIntoView({behavior:'smooth'}),300)`, pri: 2 });
+    sugs.push({ icon: '🧘', title: 'Breathing session recommended', sub: `HRV ${m.hrv}ms  - ${Math.round((1 - m.hrv/hrvBase)*100)}% below your baseline. Slow breathing (6/min) activates vagal tone in 5-10min`, action: 'Breathe', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `showView('health');setTimeout(()=>document.getElementById('breathingCard')?.scrollIntoView({behavior:'smooth'}),300)`, pri: 2 });
   }
 
   // Strain + recovery mismatch
@@ -9712,7 +10319,7 @@ function renderSuggestions() {
   if (recovery >= 67 && strain < 8 && hwake > 2 && !noWorkoutPhases.includes(currentPhase.name) && !activeSessions.includes('workout')) {
     sugs.push({ icon: '🏋️', title: 'Your body can handle intensity', sub: `Recovery ${recovery}%, strain only ${strain}. Unused capacity = missed adaptation. Push today.`, action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('workout')`, pri: 3 });
   } else if (recovery < 34 && strain > 12) {
-    sugs.push({ icon: '⚠️', title: 'Recovery deficit — active rest only', sub: `Recovery ${recovery}% with strain ${strain}. High acute:chronic workload spikes increase injury risk significantly (Gabbett, BJSM, 2016)`, action: 'Note', cls: 'purple', bg: 'rgba(255,84,112,0.1)', pri: 3 });
+    sugs.push({ icon: '⚠️', title: 'Recovery deficit  - active rest only', sub: `Recovery ${recovery}% with strain ${strain}. High acute:chronic workload spikes increase injury risk significantly (Gabbett, BJSM, 2016)`, action: 'Note', cls: 'purple', bg: 'rgba(255,84,112,0.1)', pri: 3 });
   }
 
   // === PRIORITY 4: Circadian-aware ===
@@ -9720,27 +10327,27 @@ function renderSuggestions() {
   // Deep work in peak zones
   const peakPhases = ['PEAK 1', 'PEAK 2'];
   if (peakPhases.includes(currentPhase.name) && !activeSessions.includes('deep_work') && !activeSessions.includes('workout')) {
-    sugs.push({ icon: '🎯', title: 'Peak zone — optimal focus window', sub: HABIT_SCIENCE.deep_work, action: 'Focus', cls: 'blue', bg: 'rgba(91,154,255,0.1)', onclick: `startLiveActivity('deep_work')`, pri: 4 });
+    sugs.push({ icon: '🎯', title: 'Peak zone  - optimal focus window', sub: HABIT_SCIENCE.deep_work, action: 'Focus', cls: 'blue', bg: 'rgba(91,154,255,0.1)', onclick: `startLiveActivity('deep_work')`, pri: 4 });
   }
 
   // Business-owner coaching: decision fatigue + meeting timing
   if (currentPhase.name === 'DIP' && !activeSessions.includes('nap')) {
-    sugs.push({ icon: '📋', title: 'Decision fatigue zone', sub: 'Cortisol dip reduces executive function. Postpone big decisions, contracts, or strategy calls — do admin/email instead.', action: 'Note', cls: 'purple', bg: 'rgba(139,156,199,0.08)', pri: 5 });
+    sugs.push({ icon: '📋', title: 'Decision fatigue zone', sub: 'Cortisol dip reduces executive function. Postpone big decisions, contracts, or strategy calls  - do admin/email instead.', action: 'Note', cls: 'purple', bg: 'rgba(139,156,199,0.08)', pri: 5 });
   }
 
   // Creative work window (late afternoon second peak)
   if (currentPhase.name === 'PEAK 2' && !activeSessions.includes('deep_work')) {
-    sugs.push({ icon: '💡', title: 'Creative window open', sub: 'Prefrontal cortex loosens in the 2nd peak — ideal for brainstorming, pitch decks, content creation. Analytical + creative overlap.', action: 'Focus', cls: 'blue', bg: 'rgba(91,154,255,0.1)', onclick: `startLiveActivity('deep_work')`, pri: 5 });
+    sugs.push({ icon: '💡', title: 'Creative window open', sub: 'Prefrontal cortex loosens in the 2nd peak  - ideal for brainstorming, pitch decks, content creation. Analytical + creative overlap.', action: 'Focus', cls: 'blue', bg: 'rgba(91,154,255,0.1)', onclick: `startLiveActivity('deep_work')`, pri: 5 });
   }
 
   // High recovery + low strain = optimal day for both training AND business
   if (recovery >= 80 && strain < 5 && hwake > 1 && hwake < 6) {
-    sugs.push({ icon: '🔥', title: 'High-leverage day', sub: `Recovery ${recovery}% — your body and mind are primed. Stack your hardest training session AND your most important business task today.`, action: 'Plan', cls: 'green', bg: 'rgba(48,217,138,0.08)', pri: 4 });
+    sugs.push({ icon: '🔥', title: 'High-leverage day', sub: `Recovery ${recovery}%  - your body and mind are primed. Stack your hardest training session AND your most important business task today.`, action: 'Plan', cls: 'green', bg: 'rgba(48,217,138,0.08)', pri: 4 });
   }
 
   // Low steps (afternoon+)
   if (h.steps.today < h.steps.goal * 0.5 && nowH > 14) {
-    sugs.push({ icon: '🚶', title: `${h.steps.today.toLocaleString()} steps — go walk`, sub: `${Math.round(h.steps.today/h.steps.goal*100)}% of goal. A brisk 20-min walk improves blood flow to hippocampus and prefrontal cortex`, action: 'Track', cls: 'blue', bg: 'rgba(52,211,153,0.1)', onclick: `startLiveActivity('walk')`, pri: 4 });
+    sugs.push({ icon: '🚶', title: `${h.steps.today.toLocaleString()} steps  - go walk`, sub: `${Math.round(h.steps.today/h.steps.goal*100)}% of goal. A brisk 20-min walk improves blood flow to hippocampus and prefrontal cortex`, action: 'Track', cls: 'blue', bg: 'rgba(52,211,153,0.1)', onclick: `startLiveActivity('walk')`, pri: 4 });
   }
 
   // === PRIORITY 5: Habit-based (personalized) ===
@@ -9803,7 +10410,7 @@ function renderSuggestions() {
     if (!beh) continue;
     sugs.push({
       icon: '⚠️',
-      title: `${beh.label} — ${ov.count}x this week`,
+      title: `${beh.label}  - ${ov.count}x this week`,
       sub: sciReason || `High frequency impacts recovery. Consider cutting back.`,
       action: 'Note', cls: 'purple', bg: 'rgba(255,84,112,0.08)',
       pri: 7
@@ -10306,7 +10913,7 @@ function buildSleepDebt() {
     days14.push({ date: d, sleptH: +slept.toFixed(1), deficitH: +deficit.toFixed(1), hasData });
   }
 
-  // Accumulate debt (decays 10% per day — body partially repays)
+  // Accumulate debt (decays 10% per day  - body partially repays)
   // Days with no data: only apply decay (don't add deficit for missing data)
   let debt = 0;
   const debtArr = [];
@@ -10314,7 +10921,7 @@ function buildSleepDebt() {
     if (day.hasData) {
       debt = debt * 0.9 + day.deficitH; // 10% decay + new deficit
     } else {
-      debt = debt * 0.9; // decay only — no penalty for missing data
+      debt = debt * 0.9; // decay only  - no penalty for missing data
     }
     debtArr.push({ date: day.date, debtH: +debt.toFixed(1), sleptH: day.sleptH });
   }
@@ -10648,7 +11255,7 @@ function buildTrendFullPage(key) {
 // ========================================
 //  BOOT
 // ========================================
-// Moved before bootApp to avoid TDZ — const needs to be initialized before renderWinddown runs
+// Moved before bootApp to avoid TDZ  - const needs to be initialized before renderWinddown runs
 const WINDDOWN_STEPS = [
   { label: 'Blue light off', detail: 'Put on blue-light glasses or enable screen filter' },
   { label: 'No more food', detail: 'Last meal should be 2-3h before sleep' },
@@ -10754,7 +11361,7 @@ function bootApp() {
 loadState();
 initLogModal();
 
-// Boot directly — no onboarding gate
+// Boot directly  - no onboarding gate
 document.getElementById('mainApp').style.display = '';
 document.getElementById('bottomNav').style.display = '';
 bootApp();
@@ -10796,7 +11403,7 @@ bootApp();
     const dx = parseFloat(page.style.transform.replace(/[^0-9.-]/g, '')) || 0;
     page.style.transition = 'transform 0.3s cubic-bezier(.2,.7,.2,1), opacity 0.3s ease';
     if (dx > THRESHOLD) {
-      // Close — slide fully off screen
+      // Close  - slide fully off screen
       page.style.transform = 'translateX(100%)';
       page.style.opacity = '1';
       setTimeout(() => {
@@ -10834,7 +11441,7 @@ if ('serviceWorker' in navigator) {
       if (!nw) return;
       nw.addEventListener('statechange', () => {
         if (nw.state === 'activated') {
-          // New version active — reload to get fresh assets
+          // New version active  - reload to get fresh assets
           window.location.reload();
         }
       });
@@ -11106,7 +11713,7 @@ function updateSettingsLatitude() {
 }
 
 // Seasonal modifiers are now integrated directly into energyAt() and buildPhases()
-// — no monkey-patching needed. Summer: +5% amplitude. Winter: -5% amplitude + extended inertia.
+//  - no monkey-patching needed. Summer: +5% amplitude. Winter: -5% amplitude + extended inertia.
 
 // ========================================
 //  WEB PUSH NOTIFICATIONS
@@ -11186,8 +11793,8 @@ function getNotificationSchedule() {
   let trainingMsg;
   if (score >= 80) trainingMsg = 'Green light for max jumps and heavy plyometrics';
   else if (score >= 67) trainingMsg = 'Good for technique work and moderate intensity';
-  else if (score >= 50) trainingMsg = 'Keep it light — drills and mobility only';
-  else trainingMsg = 'Rest day recommended — active recovery only';
+  else if (score >= 50) trainingMsg = 'Keep it light  - drills and mobility only';
+  else trainingMsg = 'Rest day recommended  - active recovery only';
 
   // HRV context
   const hrvBase = m.hrvBaseline || 42;
@@ -11201,7 +11808,7 @@ function getNotificationSchedule() {
     ? (sl.totalH >= 8 ? ' · ' + sl.totalH.toFixed(1) + 'h sleep ✓' : ' · ' + sl.totalH.toFixed(1) + 'h sleep (target 8h)')
     : '';
 
-  // Streak protection — find habits with 3+ day streaks at risk
+  // Streak protection  - find habits with 3+ day streaks at risk
   let streakAlert = null;
   if (!todayEntry) {
     const streaks = typeof computeHabitStreaks === 'function' ? computeHabitStreaks() : [];
@@ -11217,35 +11824,35 @@ function getNotificationSchedule() {
   const currentDebt = debtArr.length ? debtArr[debtArr.length - 1].debtH : 0;
 
   const schedule = [
-    // 1. Morning briefing — 5min after wake
+    // 1. Morning briefing  - 5min after wake
     {
       type: 'morning',
       hour: (WAKE + 5/60) % 24,
       title: score + '% Recovery' + hrvNote,
       body: trainingMsg + sleepNote
     },
-    // 2. Peak 2 approaching — 10min before
+    // 2. Peak 2 approaching  - 10min before
     {
       type: 'peak2',
       hour: (peak2Start - 10/60 + 24) % 24,
       title: 'Peak 2 in 10 min',
-      body: 'Your strongest window is coming — best time for training or your hardest task'
+      body: 'Your strongest window is coming  - best time for training or your hardest task'
     },
-    // 3. Energy Caps cutoff — 30min warning
+    // 3. Energy Caps cutoff  - 30min warning
     {
       type: 'energy_caps',
       hour: (coffeeH - 30/60 + 24) % 24,
       title: 'Energy Caps cutoff',
       body: 'Last caffeine in 30 min to protect tonight\'s sleep'
     },
-    // 4. Energy dip — gentle nudge
+    // 4. Energy dip  - gentle nudge
     {
       type: 'dip',
       hour: dipStart,
-      title: 'Circadian dip — normal',
+      title: 'Circadian dip  - normal',
       body: 'Walk, light admin, or 20-min nap. Avoid hard decisions for ~90 min.'
     },
-    // 5. Hydration check — midday
+    // 5. Hydration check  - midday
     {
       type: 'hydration',
       hour: (WAKE + 4) % 24,
@@ -11259,28 +11866,28 @@ function getNotificationSchedule() {
       title: 'Wind-down time',
       body: 'Blue light glasses on. Dim screens. Start your routine.'
     },
-    // 7. Bedtime — 15min before
+    // 7. Bedtime  - 15min before
     {
       type: 'bedtime',
       hour: (SLEEP_H - 15/60 + 24) % 24,
       title: 'Sleep window opening',
       body: currentDebt > 3
-        ? 'You have ' + currentDebt.toFixed(1) + 'h sleep debt — get to bed'
+        ? 'You have ' + currentDebt.toFixed(1) + 'h sleep debt  - get to bed'
         : 'Melatonin is rising. Dark, cool room for best recovery.'
     },
   ];
 
-  // 8. Journal reminder — evening, only if not logged today
+  // 8. Journal reminder  - evening, only if not logged today
   if (!todayEntry) {
     schedule.push({
       type: 'journal',
       hour: (wdStart - 1 + 24) % 24,
       title: 'Log your day 📝',
-      body: streakAlert || 'Tap to log behaviors — data drives your insights'
+      body: streakAlert || 'Tap to log behaviors  - data drives your insights'
     });
   }
 
-  // 9. Sleep debt warning — morning, only if debt > 3h
+  // 9. Sleep debt warning  - morning, only if debt > 3h
   if (currentDebt > 3) {
     schedule.push({
       type: 'sleepdebt',
