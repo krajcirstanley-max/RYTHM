@@ -8484,7 +8484,20 @@ function changeDay(dir) {
   if (viewDayOffset !== 0) {
     loadHistoricalDay(d.toISOString().slice(0, 10));
   } else {
-    renderAll();
+    // Back to today — re-render everything with live data
+    renderReadiness();
+    renderThreeRings();
+    renderStrainCoach();
+    renderDayBanner();
+    renderEnergy();
+    drawCurve('curveSvg', false);
+    updateCurveFoot('curveFoot');
+    renderWinddown();
+    renderMetrics();
+    renderSleepBreakdown();
+    renderOutlook();
+    renderLiveActivities();
+    renderSuggestions();
   }
 }
 
