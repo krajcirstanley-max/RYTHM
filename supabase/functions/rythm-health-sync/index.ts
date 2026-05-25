@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
       const isHistory = url.searchParams.get("history") === "true";
 
       if (isHistory) {
-        const types = ["hrv", "sleep_hrv", "rhr", "spo2", "respiratory", "steps", "sleep", "active_cal", "skin_temp", "vo2max", "hr", "workout", "stand_hours", "flights", "weight"];
+        const types = ["hrv", "sleep_hrv", "rhr", "spo2", "respiratory", "steps", "sleep", "active_cal", "skin_temp", "vo2max", "hr", "workout", "stand_hours", "flights", "weight", "nutrition_cal", "nutrition_protein", "nutrition_carbs", "nutrition_fat"];
         const historyResult: Record<string, any[]> = {};
         for (const t of types) {
           let query = sb
@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
         return Response.json(historyResult, { headers: CORS });
       }
 
-      const types = ["hrv", "sleep_hrv", "rhr", "spo2", "respiratory", "steps", "sleep", "active_cal", "skin_temp", "vo2max", "hr", "workout", "stand_hours", "flights", "weight"];
+      const types = ["hrv", "sleep_hrv", "rhr", "spo2", "respiratory", "steps", "sleep", "active_cal", "skin_temp", "vo2max", "hr", "workout", "stand_hours", "flights", "weight", "nutrition_cal", "nutrition_protein", "nutrition_carbs", "nutrition_fat"];
       const result: Record<string, any> = {};
 
       for (const t of types) {
@@ -528,6 +528,59 @@ Deno.serve(async (req) => {
         }
         for (const [dk, d] of Object.entries(daily)) {
           processed.push({ type: "weight", value: +d.value.toFixed(1), date: dk, unit: "kg" });
+        }
+      }
+
+      // ---- NUTRITION (from SnapCalorie via Apple Health) ----
+      else if (name.includes("dietary_energy") || name === "dietary_energy_consumed") {
+        const dailyTotals: Record<string, number> = {};
+        for (const pt of dataPoints) {
+          const v = extractValue(pt);
+          if (v == null || v < 0) continue;
+          const dk = dateKey(pt.date);
+          dailyTotals[dk] = (dailyTotals[dk] || 0) + v;
+        }
+        for (const [date, total] of Object.entries(dailyTotals)) {
+          processed.push({ type: "nutrition_cal", value: Math.round(total), date, unit: "kcal" });
+        }
+      }
+
+      else if (name.includes("dietary_protein")) {
+        const dailyTotals: Record<string, number> = {};
+        for (const pt of dataPoints) {
+          const v = extractValue(pt);
+          if (v == null || v < 0) continue;
+          const dk = dateKey(pt.date);
+          dailyTotals[dk] = (dailyTotals[dk] || 0) + v;
+        }
+        for (const [date, total] of Object.entries(dailyTotals)) {
+          processed.push({ type: "nutrition_protein", value: +total.toFixed(1), date, unit: "g" });
+        }
+      }
+
+      else if (name.includes("dietary_carbohydrate") || name.includes("dietary_carbs")) {
+        const dailyTotals: Record<string, number> = {};
+        for (const pt of dataPoints) {
+          const v = extractValue(pt);
+          if (v == null || v < 0) continue;
+          const dk = dateKey(pt.date);
+          dailyTotals[dk] = (dailyTotals[dk] || 0) + v;
+        }
+        for (const [date, total] of Object.entries(dailyTotals)) {
+          processed.push({ type: "nutrition_carbs", value: +total.toFixed(1), date, unit: "g" });
+        }
+      }
+
+      else if (name.includes("dietary_fat") || name.includes("dietary_total_fat")) {
+        const dailyTotals: Record<string, number> = {};
+        for (const pt of dataPoints) {
+          const v = extractValue(pt);
+          if (v == null || v < 0) continue;
+          const dk = dateKey(pt.date);
+          dailyTotals[dk] = (dailyTotals[dk] || 0) + v;
+        }
+        for (const [date, total] of Object.entries(dailyTotals)) {
+          processed.push({ type: "nutrition_fat", value: +total.toFixed(1), date, unit: "g" });
         }
       }
 

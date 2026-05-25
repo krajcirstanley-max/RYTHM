@@ -1025,6 +1025,43 @@ section { padding: 0 16px; margin-bottom: 8px; }
   font-size: 9px; font-weight: 600; color: var(--text-4); letter-spacing: 0.5px;
 }
 
+/* ========== NUTRITION ========== */
+.nutri-card {
+  background: var(--card); border: 1px solid var(--card-border);
+  border-radius: var(--radius); padding: 14px 16px;
+}
+.nutri-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+}
+.nutri-cal-big {
+  font-size: 32px; font-weight: 800; letter-spacing: -1.5px; line-height: 1;
+}
+.nutri-cal-target { font-size: 13px; color: var(--text-3); margin-top: 2px; }
+.nutri-cal-ring { width: 64px; height: 64px; position: relative; }
+.nutri-cal-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.nutri-cal-ring .ring-pct {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  font-size: 13px; font-weight: 700;
+}
+.nutri-macros { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 14px; }
+.nutri-macro {
+  background: var(--bg-2); border-radius: 10px; padding: 10px 8px; text-align: center;
+}
+.nutri-macro-icon { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 4px; }
+.nutri-macro-val { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+.nutri-macro-unit { font-size: 11px; color: var(--text-3); }
+.nutri-macro-bar { height: 4px; background: var(--bg-3); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.nutri-macro-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+.nutri-macro-target { font-size: 9px; color: var(--text-4); margin-top: 3px; }
+.nutri-insight { margin-top: 14px; padding: 10px 12px; border-radius: 10px; font-size: 12px; line-height: 1.5; color: var(--text-2); }
+.nutri-insight.good { background: rgba(0,236,127,0.08); border-left: 3px solid var(--energy); }
+.nutri-insight.warn { background: rgba(255,181,71,0.08); border-left: 3px solid var(--warn); }
+.nutri-insight.danger { background: rgba(255,84,112,0.08); border-left: 3px solid var(--danger); }
+.nutri-trend { display: flex; gap: 3px; align-items: flex-end; height: 40px; margin-top: 14px; }
+.nutri-trend-bar { flex: 1; border-radius: 2px 2px 0 0; min-height: 2px; transition: height 0.3s ease; }
+.nutri-nodata { text-align: center; padding: 24px 16px; color: var(--text-4); font-size: 12px; line-height: 1.6; }
+.nutri-nodata b { color: var(--text-2); }
+
 /* ========== GUIDED BREATHING ========== */
 .breathing-card {
   background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
@@ -2974,7 +3011,10 @@ section { padding: 0 16px; margin-bottom: 8px; }
       <div class="gp-grid" id="geneticPotential"></div>
     </section>
 
-    <!-- Health Monitor, HR Zones, Steps, Active Calories removed -->
+    <section>
+      <div class="section-head"><div class="section-title">Nutrition</div></div>
+      <div id="nutritionSection"></div>
+    </section>
 
     <section>
       <div class="section-head"><div class="section-title">Trends</div></div>
@@ -3280,7 +3320,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
         1. Install <b>Health Auto Export</b> from the App Store<br>
         2. Open it, tap <b>Automations</b> → <b>+</b> → <b>REST API</b><br>
         3. Set method to <b>POST</b>, paste the URL above<br>
-        4. Select metrics: <b>Heart Rate, HRV, Resting HR, Sleep Analysis, Active Energy, Respiratory Rate, SpO2, Body Mass</b><br>
+        4. Select metrics: <b>Heart Rate, HRV, Resting HR, Sleep Analysis, Active Energy, Respiratory Rate, SpO2, Body Mass, Dietary Energy, Dietary Protein, Dietary Carbohydrates, Dietary Fat</b><br>
         5. Set interval to <b>2 hours</b> (battery-friendly), enable background sync<br>
         6. Data will be ready whenever you open RYTHM
       </div>
@@ -3415,7 +3455,13 @@ const DEFAULT_STATE = {
   activeCal: { today: 0, goal: 500, week: [] },
   liveActivities: [],
   calendarEvents: [],
-  outOfBed: {}
+  outOfBed: {},
+  nutrition: {
+    calories: 0, protein: 0, carbs: 0, fat: 0,
+    calorieTarget: 2800, proteinTarget: 130,
+    carbsTarget: 390, fatTarget: 65,
+    history: []  // [{ date, cal, protein, carbs, fat }]
+  }
 };
 
 let ST;
@@ -8957,11 +9003,153 @@ function renderWeekMetricCards() {
 function renderHealthView() {
   renderHealthAge();
   renderGeneticPotential();
+  renderNutrition();
   renderHealthStats();
   renderHRZones();
   renderSteps();
   renderActivity();
   renderSyncStatus();
+}
+
+// ========================================
+//  NUTRITION
+// ========================================
+function renderNutrition() {
+  const el = document.getElementById('nutritionSection');
+  if (!el) return;
+  const n = ST.nutrition || {};
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const isToday = n._calDate === todayStr;
+
+  // No data yet
+  if (!n.calories && !n.protein) {
+    el.innerHTML = `<div class="nutri-card">
+      <div class="nutri-nodata">
+        <div style="font-size:28px;margin-bottom:8px">🍽️</div>
+        <b>No nutrition data yet</b><br>
+        Use <b>SnapCalorie</b> to log meals.<br>
+        Photos sync to Apple Health automatically,<br>
+        then Health Auto Export pushes here.
+      </div>
+    </div>`;
+    return;
+  }
+
+  const cal = n.calories || 0;
+  const protein = n.protein || 0;
+  const carbs = n.carbs || 0;
+  const fat = n.fat || 0;
+
+  // Strain-adaptive targets
+  const strain = computeStrain();
+  const weight = ST.health?.weight || 65.3;
+  let calTarget = n.calorieTarget || 2800;
+  let protTarget = n.proteinTarget || Math.round(weight * 2.0);
+  let carbTarget = n.carbsTarget || Math.round(weight * 6);
+  let fatTarget = n.fatTarget || Math.round(weight * 1.0);
+
+  // Recalculate live targets based on current strain
+  if (strain > 14) calTarget = Math.round(weight * 46);
+  else if (strain > 10) calTarget = Math.round(weight * 43);
+  else if (strain > 6) calTarget = Math.round(weight * 41);
+  else calTarget = Math.round(weight * 37);
+
+  const calPct = Math.min(100, Math.round((cal / calTarget) * 100));
+  const protPct = Math.min(100, Math.round((protein / protTarget) * 100));
+  const carbPct = Math.min(100, Math.round((carbs / carbTarget) * 100));
+  const fatPct = Math.min(100, Math.round((fat / fatTarget) * 100));
+
+  const calColor = calPct >= 85 ? 'var(--energy)' : calPct >= 60 ? 'var(--warn)' : 'var(--danger)';
+  const protColor = protPct >= 80 ? '#00ec7f' : protPct >= 50 ? '#ffb547' : '#ff5470';
+  const carbColor = carbPct >= 80 ? '#4da9ff' : carbPct >= 50 ? '#ffb547' : '#ff5470';
+  const fatColor = fatPct >= 80 ? '#c77dff' : fatPct >= 50 ? '#ffb547' : '#ff5470';
+
+  // Ring
+  const circ = 2 * Math.PI * 26;
+  const offset = circ - (Math.min(calPct, 100) / 100) * circ;
+
+  // Insight
+  let insightClass = '', insightText = '';
+  if (cal === 0) {
+    insightClass = 'warn';
+    insightText = 'No meals logged today. Snap your next meal with SnapCalorie.';
+  } else if (calPct >= 85 && protPct >= 80) {
+    insightClass = 'good';
+    insightText = `On track. ${cal} kcal with ${Math.round(protein)}g protein supports muscle repair and tendon collagen synthesis.`;
+  } else if (calPct < 60) {
+    insightClass = 'danger';
+    const remaining = calTarget - cal;
+    insightText = `Under-fueled by ~${remaining} kcal. For explosive athletes, energy deficit impairs power output and increases injury risk (Mountjoy, Br J Sports Med, 2014).`;
+  } else if (protPct < 60) {
+    insightClass = 'warn';
+    insightText = `Protein at ${Math.round(protein)}g/${protTarget}g. Aim for 2.0g/kg to maximize muscle protein synthesis and support tendon adaptation.`;
+  } else {
+    insightClass = 'warn';
+    const gaps = [];
+    if (calPct < 85) gaps.push((calTarget - cal) + ' kcal');
+    if (protPct < 80) gaps.push(Math.round(protTarget - protein) + 'g protein');
+    insightText = `Getting there. Still need ${gaps.join(' and ')} to hit targets${strain > 10 ? ' (elevated for today\'s strain)' : ''}.`;
+  }
+
+  // 7-day trend bars
+  const hist = (n.history || []).slice(-7);
+  const maxCal = Math.max(calTarget, ...hist.map(h => h.cal || 0));
+  let trendHtml = '';
+  if (hist.length >= 2) {
+    trendHtml = `<div class="nutri-trend">${hist.map(h => {
+      const pct = Math.round(((h.cal || 0) / maxCal) * 100);
+      const c = (h.cal || 0) >= calTarget * 0.85 ? 'var(--energy)' : (h.cal || 0) >= calTarget * 0.6 ? 'var(--warn)' : 'var(--danger)';
+      return `<div class="nutri-trend-bar" style="height:${Math.max(4, pct)}%;background:${c}" title="${h.date}: ${h.cal} kcal"></div>`;
+    }).join('')}</div>
+    <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-4);margin-top:4px;">
+      <span>${hist.length}d trend</span>
+      <span>avg ${Math.round(hist.reduce((s, h) => s + (h.cal || 0), 0) / hist.length)} kcal</span>
+    </div>`;
+  }
+
+  // Strain label for target context
+  const strainLabel = strain > 14 ? 'High strain' : strain > 10 ? 'Moderate strain' : strain > 6 ? 'Light strain' : 'Rest day';
+
+  el.innerHTML = `<div class="nutri-card">
+    <div class="nutri-header">
+      <div>
+        <div class="nutri-cal-big" style="color:${calColor}">${cal.toLocaleString()}</div>
+        <div class="nutri-cal-target">/ ${calTarget.toLocaleString()} kcal <span style="font-size:10px;opacity:0.6">(${strainLabel})</span></div>
+      </div>
+      <div class="nutri-cal-ring">
+        <svg viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="26" fill="none" stroke="var(--bg-2)" stroke-width="5"/>
+          <circle cx="32" cy="32" r="26" fill="none" stroke="${calColor}" stroke-width="5"
+            stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
+        </svg>
+        <div class="ring-pct" style="color:${calColor}">${calPct}%</div>
+      </div>
+    </div>
+
+    <div class="nutri-macros">
+      <div class="nutri-macro">
+        <div class="nutri-macro-icon" style="color:${protColor}">Protein</div>
+        <div class="nutri-macro-val">${Math.round(protein)}<span class="nutri-macro-unit">g</span></div>
+        <div class="nutri-macro-bar"><div class="nutri-macro-bar-fill" style="width:${protPct}%;background:${protColor}"></div></div>
+        <div class="nutri-macro-target">${protTarget}g target</div>
+      </div>
+      <div class="nutri-macro">
+        <div class="nutri-macro-icon" style="color:${carbColor}">Carbs</div>
+        <div class="nutri-macro-val">${Math.round(carbs)}<span class="nutri-macro-unit">g</span></div>
+        <div class="nutri-macro-bar"><div class="nutri-macro-bar-fill" style="width:${carbPct}%;background:${carbColor}"></div></div>
+        <div class="nutri-macro-target">${carbTarget}g target</div>
+      </div>
+      <div class="nutri-macro">
+        <div class="nutri-macro-icon" style="color:${fatColor}">Fat</div>
+        <div class="nutri-macro-val">${Math.round(fat)}<span class="nutri-macro-unit">g</span></div>
+        <div class="nutri-macro-bar"><div class="nutri-macro-bar-fill" style="width:${fatPct}%;background:${fatColor}"></div></div>
+        <div class="nutri-macro-target">${fatTarget}g target</div>
+      </div>
+    </div>
+
+    <div class="nutri-insight ${insightClass}">${insightText}</div>
+    ${trendHtml}
+  </div>`;
 }
 
 // ========================================
@@ -11819,6 +12007,44 @@ async function fetchHealthData() {
     if (data.weight && data.weight.value != null) {
       if (!ST.health) ST.health = JSON.parse(JSON.stringify(DEFAULT_STATE.health));
       ST.health.weight = +Number(data.weight.value).toFixed(1);
+      changed = true;
+    }
+
+    // Nutrition (from SnapCalorie via Apple Health)
+    if (data.nutrition_cal || data.nutrition_protein || data.nutrition_carbs || data.nutrition_fat) {
+      if (!ST.nutrition) ST.nutrition = JSON.parse(JSON.stringify(DEFAULT_STATE.nutrition));
+      const todayN = new Date().toISOString().slice(0, 10);
+      if (data.nutrition_cal && data.nutrition_cal.value != null) {
+        ST.nutrition.calories = Math.round(Number(data.nutrition_cal.value));
+        ST.nutrition._calDate = data.nutrition_cal.date || todayN;
+      }
+      if (data.nutrition_protein && data.nutrition_protein.value != null) {
+        ST.nutrition.protein = +Number(data.nutrition_protein.value).toFixed(1);
+      }
+      if (data.nutrition_carbs && data.nutrition_carbs.value != null) {
+        ST.nutrition.carbs = +Number(data.nutrition_carbs.value).toFixed(1);
+      }
+      if (data.nutrition_fat && data.nutrition_fat.value != null) {
+        ST.nutrition.fat = +Number(data.nutrition_fat.value).toFixed(1);
+      }
+      // Store daily history
+      if (!ST.nutrition.history) ST.nutrition.history = [];
+      const dataDate = ST.nutrition._calDate || todayN;
+      const existIdx = ST.nutrition.history.findIndex(h => h.date === dataDate);
+      const entry = { date: dataDate, cal: ST.nutrition.calories, protein: ST.nutrition.protein, carbs: ST.nutrition.carbs, fat: ST.nutrition.fat };
+      if (existIdx >= 0) ST.nutrition.history[existIdx] = entry;
+      else ST.nutrition.history.push(entry);
+      if (ST.nutrition.history.length > 30) ST.nutrition.history = ST.nutrition.history.slice(-30);
+      // Adaptive calorie target based on training strain
+      const strain = computeStrain();
+      const baseWeight = ST.health?.weight || 65.3;
+      if (strain > 14) ST.nutrition.calorieTarget = Math.round(baseWeight * 46); // ~3,000 for 65kg
+      else if (strain > 10) ST.nutrition.calorieTarget = Math.round(baseWeight * 43); // ~2,800
+      else if (strain > 6) ST.nutrition.calorieTarget = Math.round(baseWeight * 41); // ~2,680
+      else ST.nutrition.calorieTarget = Math.round(baseWeight * 37); // ~2,400 rest day
+      ST.nutrition.proteinTarget = Math.round(baseWeight * 2.0); // 2.0g/kg
+      ST.nutrition.carbsTarget = Math.round(baseWeight * 6); // 6g/kg training
+      ST.nutrition.fatTarget = Math.round(baseWeight * 1.0); // 1.0g/kg
       changed = true;
     }
 
