@@ -9899,8 +9899,15 @@ function markOutOfBed() {
   const now = new Date();
   const today = now.toISOString().slice(0,10);
   ST.outOfBed = { date: today, time: now.toISOString() };
+  // Also set as actual wake time so circadian model uses Out of Bed time
+  if (!ST._actualWakeTimes) ST._actualWakeTimes = {};
+  ST._actualWakeTimes[today] = now.getHours() * 60 + now.getMinutes();
   saveState();
   renderOutOfBed();
+  // Recompute circadian schedule since wake time changed
+  renderSchedule();
+  renderEnergyCurve();
+  renderSuggestions();
 }
 
 // ========================================
