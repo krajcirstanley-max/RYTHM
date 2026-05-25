@@ -3608,8 +3608,8 @@ function computeReadiness() {
   if (resp > 0) {
     if (resp <= 14) respBonus = 4;
     else if (resp <= 15) respBonus = 2;
+    else if (resp > 20) respBonus = -8;  // severe elevation — illness likely
     else if (resp > 18) respBonus = -4;
-    else if (resp > 20) respBonus = -8;
   }
 
   // SpO2 (penalty if low — indicates altitude, illness, or breathing issues)
@@ -3621,14 +3621,15 @@ function computeReadiness() {
     else if (spo2 < 96) spo2Bonus = -3;
   }
 
-  // Skin temperature deviation (if available from Apple Watch)
-  const skinTemp = ST.health?.skinTemp || null;
+  // Skin temperature deviation from baseline (if available from Apple Watch)
+  const skinTempDelta = ST.health?.skinTempDelta ?? null;
   let skinTempBonus = 0;
-  if (skinTemp != null && skinTemp !== 0) {
-    // Deviation from baseline — elevated skin temp = inflammation/illness
-    if (Math.abs(skinTemp) < 0.3) skinTempBonus = 2;
-    else if (skinTemp > 0.8) skinTempBonus = -5;
-    else if (skinTemp > 0.5) skinTempBonus = -2;
+  if (skinTempDelta != null) {
+    // Deviation from rolling baseline — elevated = inflammation/illness
+    if (Math.abs(skinTempDelta) <= 0.3) skinTempBonus = 2;    // stable
+    else if (skinTempDelta > 0.8) skinTempBonus = -5;          // fever territory
+    else if (skinTempDelta > 0.5) skinTempBonus = -2;          // mild elevation
+    else if (skinTempDelta < -0.5) skinTempBonus = -1;         // below baseline
   }
 
   // === Previous-day behavior modifiers ===
