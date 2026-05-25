@@ -306,6 +306,19 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .energy-now-name { font-size: 26px; font-weight: 800; letter-spacing: -1.5px; line-height: 1; }
 .energy-now-pct { font-size: 13px; color: var(--text-3); font-weight: 500; }
 .curve-svg { width: 100%; height: 100px; display: block; }
+.curve-wrap { position: relative; }
+.curve-scrub-tooltip {
+  position: absolute; top: 4px; right: 4px;
+  background: rgba(0,0,0,0.88); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px; padding: 4px 10px;
+  font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 700;
+  color: #fff; pointer-events: none; z-index: 5;
+  backdrop-filter: blur(8px); white-space: nowrap;
+  display: none;
+}
+.curve-scrub-tooltip .scrub-time {
+  font-size: 9px; font-weight: 600; color: var(--text-4); letter-spacing: 0.5px;
+}
 .curve-foot {
   margin-top: 8px; display: flex; justify-content: space-between;
   font-size: 10px; color: var(--text-4); font-weight: 500;
@@ -538,6 +551,19 @@ section { padding: 0 16px; margin-bottom: 8px; }
   flex: 1; text-align: center;
   font-family: 'DM Mono', monospace; font-size: 7px;
   color: var(--text-4); letter-spacing: -0.3px;
+}
+.debt-bar.scrub-active { opacity: 1 !important; box-shadow: 0 0 6px rgba(255,255,255,0.3); }
+.debt-scrub-tooltip {
+  position: absolute; top: -6px; right: 0;
+  background: rgba(0,0,0,0.88); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px; padding: 4px 10px;
+  font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 700;
+  color: #fff; pointer-events: none; z-index: 5;
+  backdrop-filter: blur(8px); white-space: nowrap;
+  display: none;
+}
+.debt-scrub-tooltip .scrub-date {
+  font-size: 9px; font-weight: 600; color: var(--text-4); letter-spacing: 0.5px;
 }
 
 /* STREAKS */
@@ -2338,7 +2364,10 @@ section { padding: 0 16px; margin-bottom: 8px; }
           <div class="energy-now-name phase-peak" id="phaseName">--</div>
           <div class="energy-now-pct" id="phaseSub">--</div>
         </div>
-        <svg class="curve-svg" id="curveSvg" viewBox="0 0 400 100" preserveAspectRatio="none"></svg>
+        <div class="curve-wrap">
+          <svg class="curve-svg" id="curveSvg" viewBox="0 0 400 100" preserveAspectRatio="none"></svg>
+          <div class="curve-scrub-tooltip" id="curveScrubTip"></div>
+        </div>
         <div class="curve-foot" id="curveFoot"></div>
         <div class="energy-mods" id="energyMods" style="display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 8px;"></div>
         <div class="energy-msg" id="energyMsg"></div>
@@ -2409,7 +2438,10 @@ section { padding: 0 16px; margin-bottom: 8px; }
           <div class="energy-hero-label">ENERGY + SCHEDULE</div>
           <div class="energy-hero-time" id="planEvtCount">--</div>
         </div>
-        <svg class="curve-svg" id="curveOverlay" viewBox="0 0 400 100" preserveAspectRatio="none"></svg>
+        <div class="curve-wrap">
+          <svg class="curve-svg" id="curveOverlay" viewBox="0 0 400 100" preserveAspectRatio="none"></svg>
+          <div class="curve-scrub-tooltip" id="curveOverlayScrubTip"></div>
+        </div>
         <div class="curve-foot" id="curveFoot2"></div>
       </div>
     </section>
@@ -2439,13 +2471,14 @@ section { padding: 0 16px; margin-bottom: 8px; }
     </section>
 
     <section>
-      <div class="debt-chart" id="debtChart">
+      <div class="debt-chart" id="debtChart" style="position:relative">
         <div class="debt-chart-top">
           <div class="debt-chart-label">SLEEP DEBT  14 DAYS</div>
           <div class="debt-chart-val" id="debtTotal">--</div>
         </div>
         <div class="debt-bars" id="debtBars"></div>
         <div class="debt-bar-labels" id="debtLabels"></div>
+        <div class="debt-scrub-tooltip" id="debtScrubTip"></div>
       </div>
     </section>
 
@@ -3628,6 +3661,27 @@ function drawCurve(id, withEvents) {
   glow.setAttribute('cx', x); glow.setAttribute('cy', y);
   glow.setAttribute('r','10'); glow.setAttribute('fill', dotColor); glow.setAttribute('opacity', '0.15');
   svg.insertBefore(glow, dot);
+
+  // Add scrub line + dot (hidden until scrub)
+  const scrubLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+  scrubLine.setAttribute('class','curve-scrub-line');
+  scrubLine.setAttribute('x1','0'); scrubLine.setAttribute('y1','0');
+  scrubLine.setAttribute('x2','0'); scrubLine.setAttribute('y2', String(H));
+  scrubLine.setAttribute('stroke','rgba(255,255,255,0.35)');
+  scrubLine.setAttribute('stroke-width','1'); scrubLine.setAttribute('stroke-dasharray','2 3');
+  scrubLine.style.display = 'none';
+  svg.appendChild(scrubLine);
+
+  const scrubDot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  scrubDot.setAttribute('class','curve-scrub-dot');
+  scrubDot.setAttribute('cx','0'); scrubDot.setAttribute('cy','0');
+  scrubDot.setAttribute('r','5'); scrubDot.setAttribute('fill','#fff');
+  scrubDot.setAttribute('stroke', curveColor); scrubDot.setAttribute('stroke-width','2');
+  scrubDot.style.display = 'none';
+  svg.appendChild(scrubDot);
+
+  // Store scrub data for interactive scrubbing
+  svg._scrubData = { pts, W, H, PAD, WAKE, aw, curveColor };
 }
 
 function updateCurveFoot(id) {
@@ -5388,7 +5442,10 @@ function buildEnergyFullPage() {
 
     <div class="efp-curve-wrap">
       <div class="efp-curve-title">24-Hour Energy Curve</div>
-      <svg class="curve-svg" id="efpCurveSvg" viewBox="0 0 400 100" preserveAspectRatio="none" style="height:120px"></svg>
+      <div class="curve-wrap">
+        <svg class="curve-svg" id="efpCurveSvg" viewBox="0 0 400 100" preserveAspectRatio="none" style="height:120px"></svg>
+        <div class="curve-scrub-tooltip" id="efpCurveScrubTip"></div>
+      </div>
       <div class="curve-foot" id="efpCurveFoot"></div>
     </div>
 
@@ -7748,6 +7805,171 @@ function renderTrends() {
   document.addEventListener('mouseleave', e => {
     const card = e.target.closest?.('.trend-card[data-scrub-vals]');
     if (card) endScrub(card);
+  }, true);
+})();
+
+// ========================================
+//  ENERGY CURVE SCRUBBING (touch/hover to see time + energy%)
+// ========================================
+(function initCurveScrub() {
+  function handleCurveScrub(svg, clientX) {
+    if (!svg || !svg._scrubData) return;
+    const { pts, W, H, PAD, WAKE, aw, curveColor } = svg._scrubData;
+    const rect = svg.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+
+    // Map pixel % → SVG x → find closest point
+    const svgX = PAD + pct * (W - PAD * 2);
+    let closest = 0, minDist = Infinity;
+    for (let i = 0; i < pts.length; i++) {
+      const dist = Math.abs(pts[i][0] - svgX);
+      if (dist < minDist) { minDist = dist; closest = i; }
+    }
+
+    const pt = pts[closest];
+    const hour = pt[2]; // actual clock hour
+    const energy = pt[3]; // energy %
+    const phase = phaseAt(hour);
+
+    // Update scrub line + dot
+    const scrubLine = svg.querySelector('.curve-scrub-line');
+    const scrubDot = svg.querySelector('.curve-scrub-dot');
+    if (scrubLine) { scrubLine.setAttribute('x1', pt[0]); scrubLine.setAttribute('x2', pt[0]); scrubLine.style.display = ''; }
+    if (scrubDot) { scrubDot.setAttribute('cx', pt[0]); scrubDot.setAttribute('cy', pt[1]); scrubDot.style.display = ''; }
+
+    // Show tooltip
+    const wrap = svg.closest('.curve-wrap');
+    const tooltip = wrap?.querySelector('.curve-scrub-tooltip');
+    if (tooltip) {
+      const timeStr = minToTime(hour * 60);
+      const phaseColor = phase.cls === 'phase-peak' ? 'var(--energy)' : phase.cls === 'phase-dip' ? 'var(--warn)' : phase.cls === 'phase-wind' ? 'var(--sleep)' : 'var(--text-2)';
+      tooltip.innerHTML = `<span class="scrub-time">${timeStr}</span> <span style="color:${phaseColor}">${energy}%</span> <span style="font-size:9px;color:var(--text-3)">${phase.name}</span>`;
+      tooltip.style.display = '';
+    }
+  }
+
+  function endCurveScrub(svg) {
+    if (!svg) return;
+    const scrubLine = svg.querySelector('.curve-scrub-line');
+    const scrubDot = svg.querySelector('.curve-scrub-dot');
+    if (scrubLine) scrubLine.style.display = 'none';
+    if (scrubDot) scrubDot.style.display = 'none';
+    const wrap = svg.closest('.curve-wrap');
+    const tooltip = wrap?.querySelector('.curve-scrub-tooltip');
+    if (tooltip) tooltip.style.display = 'none';
+  }
+
+  // Track scrub state to prevent click-through
+  let curveScrubbing = false;
+
+  // Prevent click on energy hero when scrubbing
+  document.addEventListener('click', e => {
+    if (curveScrubbing && e.target.closest('.curve-wrap')) {
+      e.stopPropagation();
+      e.preventDefault();
+      curveScrubbing = false;
+    }
+  }, true);
+
+  // Touch events
+  document.addEventListener('touchstart', e => {
+    const svg = e.target.closest('.curve-svg');
+    if (svg && svg._scrubData) {
+      curveScrubbing = true;
+      handleCurveScrub(svg, e.touches[0].clientX);
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchmove', e => {
+    const svg = e.target.closest('.curve-svg');
+    if (svg && svg._scrubData) {
+      e.preventDefault();
+      handleCurveScrub(svg, e.touches[0].clientX);
+    }
+  }, { passive: false });
+
+  document.addEventListener('touchend', e => {
+    document.querySelectorAll('.curve-svg').forEach(s => endCurveScrub(s));
+  }, { passive: true });
+
+  // Mouse hover for desktop
+  document.addEventListener('mousemove', e => {
+    const svg = e.target.closest('.curve-svg');
+    if (svg && svg._scrubData && svg.matches(':hover')) {
+      handleCurveScrub(svg, e.clientX);
+    }
+  });
+  document.addEventListener('mouseleave', e => {
+    const svg = e.target.closest?.('.curve-svg');
+    if (svg) endCurveScrub(svg);
+  }, true);
+})();
+
+// ========================================
+//  SLEEP DEBT BAR SCRUBBING (touch/hover to see date + debt)
+// ========================================
+(function initDebtScrub() {
+  function handleDebtScrub(barsEl, clientX) {
+    const debts = ST.sleepDebt || [];
+    if (!debts.length) return;
+    const bars = barsEl.querySelectorAll('.debt-bar');
+    if (!bars.length) return;
+
+    const rect = barsEl.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const idx = Math.min(Math.round(pct * (debts.length - 1)), debts.length - 1);
+
+    // Highlight active bar
+    bars.forEach((b, i) => b.classList.toggle('scrub-active', i === idx));
+
+    // Show tooltip
+    const chart = barsEl.closest('.debt-chart');
+    const tooltip = chart?.querySelector('.debt-scrub-tooltip');
+    if (tooltip) {
+      const d = debts[idx];
+      const color = d.debtH > 4 ? '#ff5470' : d.debtH > 2.5 ? '#ff9f43' : d.debtH > 1 ? '#fbbf24' : '#4da9ff';
+      tooltip.innerHTML = `<span class="scrub-date">${d.date.slice(5)}</span> <span style="color:${color}">${d.debtH.toFixed(1)}h</span>`;
+      tooltip.style.display = '';
+    }
+
+    // Update header value
+    const valEl = chart?.querySelector('.debt-chart-val');
+    if (valEl) valEl.textContent = fmtH(debts[idx].debtH);
+  }
+
+  function endDebtScrub() {
+    document.querySelectorAll('.debt-bar.scrub-active').forEach(b => b.classList.remove('scrub-active'));
+    const tooltip = document.getElementById('debtScrubTip');
+    if (tooltip) tooltip.style.display = 'none';
+    // Restore current value
+    const debts = ST.sleepDebt || [];
+    const valEl = document.querySelector('.debt-chart-val');
+    if (valEl && debts.length) valEl.textContent = fmtH(debts[debts.length - 1].debtH);
+  }
+
+  document.addEventListener('touchstart', e => {
+    const bars = e.target.closest('.debt-bars');
+    if (bars) handleDebtScrub(bars, e.touches[0].clientX);
+  }, { passive: true });
+
+  document.addEventListener('touchmove', e => {
+    const bars = e.target.closest('.debt-bars');
+    if (bars) {
+      e.preventDefault();
+      handleDebtScrub(bars, e.touches[0].clientX);
+    }
+  }, { passive: false });
+
+  document.addEventListener('touchend', e => {
+    if (e.target.closest('.debt-bars') || e.target.closest('.debt-chart')) endDebtScrub();
+  }, { passive: true });
+
+  document.addEventListener('mousemove', e => {
+    const bars = e.target.closest('.debt-bars');
+    if (bars) handleDebtScrub(bars, e.clientX);
+  });
+  document.addEventListener('mouseleave', e => {
+    if (e.target.closest?.('.debt-bars')) endDebtScrub();
   }, true);
 })();
 
