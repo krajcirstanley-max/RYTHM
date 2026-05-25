@@ -4023,7 +4023,7 @@ function buildRecoveryDetail() {
       <div class="rd-title">Recovery Breakdown</div>
       <div class="rd-score" style="color:${interp.color}">${score}<span class="rd-unit">%</span></div>
     </div>
-    <div style="font-size:10px;color:var(--text-4);margin-bottom:10px;">RECOVERY = HRV (35%) + SLEEP (30%) + RHR (20%) + TRAINING (15%) ± Resp/SpO2</div>
+    <div style="font-size:10px;color:var(--text-4);margin-bottom:10px;">RECOVERY = HRV (35%) + SLEEP (30%) + RHR (15%) + TRAINING (10%) ± biometrics ± behavior</div>
     <div class="rd-row"><span class="rd-row-label"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${hrvColor};margin-right:4px;"></span> HRV Score</span><div class="rd-bar-wrap"><div class="rd-bar-fill" style="width:${hrvScore}%;background:${hrvColor}"></div></div><span class="rd-row-val" style="color:${hrvColor}">${hrvScore}%</span></div>
     <div class="rd-row"><span class="rd-row-label"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${rhrColor};margin-right:4px;"></span> Resting HR</span><div class="rd-bar-wrap"><div class="rd-bar-fill" style="width:${rhrScore}%;background:${rhrColor}"></div></div><span class="rd-row-val" style="color:${rhrColor}">${rhrScore}%</span></div>
     <div class="rd-row"><span class="rd-row-label"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#93a1c4;margin-right:4px;"></span> Sleep Quality</span><div class="rd-bar-wrap"><div class="rd-bar-fill" style="width:${sleepScore}%;background:#93a1c4"></div></div><span class="rd-row-val">${sleepScore}%</span></div>
@@ -4041,10 +4041,9 @@ function buildRecoveryDetail() {
       <div style="font-size:11px;color:var(--text-3);line-height:1.5;">
         <b style="color:var(--text-2)">HRV</b> (35%) = parasympathetic tone. Higher = more recovered. Your baseline: ${ST.metrics.hrvBaseline || 42}ms.<br>
         <b style="color:var(--text-2)">Sleep</b> (30%) = quality + duration. Deep sleep releases HGH for tissue repair.<br>
-        <b style="color:var(--text-2)">RHR</b> (20%) = cardiovascular recovery. Lower than baseline = good sign.<br>
-        <b style="color:var(--text-2)">Training Load</b> (15%) = Acute:Chronic ratio (3d vs 7d). Sweet spot: 0.8-1.3x.<br>
-        <b style="color:var(--text-2)">Resp/SpO2</b> = bonus modifiers. Low resp rate = good autonomic control.<br>
-        <b style="color:var(--text-2)">Training</b> (10%) = recent strain. Heavy days suppress recovery for 24-48h.
+        <b style="color:var(--text-2)">RHR</b> (15%) = cardiovascular recovery. Lower than baseline = good sign.<br>
+        <b style="color:var(--text-2)">Training</b> (10%) = Acute:Chronic ratio (3d vs 7d). Sweet spot: 0.8-1.3x.<br>
+        <b style="color:var(--text-2)">Modifiers</b> = Resp rate, SpO₂, skin temp, yesterday's behaviors (shisha, alcohol, etc.).
       </div>
     </div>
   </div>`;
@@ -4783,8 +4782,8 @@ function buildRecoveryFullPage() {
       <div style="font-size:12px;color:var(--text-3);line-height:1.6;padding:4px 0;">
         <p style="margin-bottom:8px"><b style="color:var(--text-1)">HRV (35%)</b> - Heart rate variability measures parasympathetic (vagal) tone. Higher = more recovered. Your autonomic nervous system controls CNS excitability - when HRV is high, you can recruit more motor units faster = more explosive takeoffs.</p>
         <p style="margin-bottom:8px"><b style="color:var(--text-1)">Sleep (30%)</b> - Quality + duration. Deep sleep = HGH for tissue repair. REM = motor memory consolidation. An athlete who sleeps 9h recovers faster than one who sleeps 7h, even with identical training.</p>
-        <p style="margin-bottom:8px"><b style="color:var(--text-1)">RHR (20%)</b> - Resting heart rate reflects cardiovascular recovery. Lower than baseline = recovered. Elevated RHR often means inflammation, illness onset, or overtraining.</p>
-        <p><b style="color:var(--text-1)">Training Load (15%)</b> - Acute:Chronic workload ratio (3d vs 7d active calories). The ACR sweet spot is 0.8-1.3x — progressive overload without injury risk. Above 1.5x = spike danger. Below 0.6x = detraining.</p>
+        <p style="margin-bottom:8px"><b style="color:var(--text-1)">RHR (15%)</b> - Resting heart rate reflects cardiovascular recovery. Lower than baseline = recovered. Elevated RHR often means inflammation, illness onset, or overtraining.</p>
+        <p><b style="color:var(--text-1)">Training Load (10%)</b> - Acute:Chronic workload ratio (3d vs 7d active calories). The ACR sweet spot is 0.8-1.3x — progressive overload without injury risk. Above 1.5x = spike danger. Below 0.6x = detraining.</p>
       </div>
     </div>
   `;
@@ -8490,7 +8489,7 @@ function loadHistoricalDay(dateStr) {
     const scoreEl = document.querySelector('.readiness-score');
     const interpEl = document.querySelector('.readiness-interp');
     if (ring && scoreEl) {
-      const circ = 2 * Math.PI * 80;
+      const circ = 2 * Math.PI * 52;
       ring.setAttribute('stroke-dasharray', circ);
       ring.setAttribute('stroke-dashoffset', circ * (1 - histReadiness / 100));
       const interp = readinessInterpretation(histReadiness);
@@ -8556,7 +8555,7 @@ function updateRingValue(key, value) {
   const fg = ring.querySelector('.ring-fg');
   const pct = ring.querySelector('.ring-pct');
   if (fg && pct) {
-    const circ = 2 * Math.PI * 38;
+    const circ = 2 * Math.PI * 50;
     fg.setAttribute('stroke-dashoffset', circ * (1 - value / 100));
     pct.innerHTML = value + '<span class="unit">%</span>';
   }
