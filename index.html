@@ -7213,9 +7213,9 @@ function buildDetailContent(type) {
       <div class="detail-section">
         <div class="detail-section-title">YOUR DATA</div>
         <div class="detail-row"><span class="detail-row-label">Current</span><span class="detail-row-val" style="color:var(--energy)">${h.vo2max} ml/kg</span></div>
-        <div class="detail-row"><span class="detail-row-label">30-day change</span><span class="detail-row-val" style="color:${h.vo2maxDelta >= 0 ? 'var(--energy)' : 'var(--warn)'}">+${h.vo2maxDelta}</span></div>
-        <div class="detail-row"><span class="detail-row-label">Classification</span><span class="detail-row-val">Excellent</span></div>
-        <div class="detail-row"><span class="detail-row-label">Age percentile</span><span class="detail-row-val">82nd</span></div>
+        <div class="detail-row"><span class="detail-row-label">30-day change</span><span class="detail-row-val" style="color:${h.vo2maxDelta >= 0 ? 'var(--energy)' : 'var(--warn)'}">${h.vo2maxDelta >= 0 ? '+' : ''}${h.vo2maxDelta}</span></div>
+        <div class="detail-row"><span class="detail-row-label">Classification</span><span class="detail-row-val">${h.vo2max >= 50 ? 'Excellent' : h.vo2max >= 43 ? 'Good' : h.vo2max >= 37 ? 'Fair' : h.vo2max != null ? 'Low' : '—'}</span></div>
+        <div class="detail-row"><span class="detail-row-label">Age percentile</span><span class="detail-row-val">${h.vo2max >= 55 ? '95th+' : h.vo2max >= 50 ? '90th' : h.vo2max >= 46 ? '80th' : h.vo2max >= 43 ? '65th' : h.vo2max >= 39 ? '50th' : h.vo2max != null ? '<40th' : '—'}</span></div>
       </div>
       <div class="detail-section">
         <div class="detail-section-title">FOR LONG JUMPERS</div>
@@ -7237,9 +7237,9 @@ function buildDetailContent(type) {
       </div>
       <div class="detail-section">
         <div class="detail-section-title">YOUR DATA</div>
-        <div class="detail-row"><span class="detail-row-label">Current</span><span class="detail-row-val" style="color:var(--energy)">${h.spo2}%</span></div>
+        <div class="detail-row"><span class="detail-row-label">Current</span><span class="detail-row-val" style="color:${h.spo2 >= 95 ? 'var(--energy)' : h.spo2 >= 92 ? 'var(--warn)' : 'var(--danger)'}">${h.spo2}%</span></div>
         <div class="detail-row"><span class="detail-row-label">Normal range</span><span class="detail-row-val">95-100%</span></div>
-        <div class="detail-row"><span class="detail-row-label">Status</span><span class="detail-row-val" style="color:var(--energy)">Normal</span></div>
+        <div class="detail-row"><span class="detail-row-label">Status</span><span class="detail-row-val" style="color:${h.spo2 >= 95 ? 'var(--energy)' : h.spo2 >= 92 ? 'var(--warn)' : 'var(--danger)'}">${h.spo2 >= 95 ? 'Normal' : h.spo2 >= 92 ? 'Low — monitor' : 'Critical — seek medical attention'}</span></div>
       </div>
       <div class="detail-section">
         <div class="detail-section-title">SHISHA IMPACT</div>
@@ -7263,7 +7263,7 @@ function buildDetailContent(type) {
         <div class="detail-section-title">YOUR DATA</div>
         <div class="detail-row"><span class="detail-row-label">Current</span><span class="detail-row-val">${m.respiratory} br/min</span></div>
         <div class="detail-row"><span class="detail-row-label">Normal range</span><span class="detail-row-val">12-20 rpm</span></div>
-        <div class="detail-row"><span class="detail-row-label">Status</span><span class="detail-row-val" style="color:var(--energy)">Normal</span></div>
+        <div class="detail-row"><span class="detail-row-label">Status</span><span class="detail-row-val" style="color:${m.respiratory >= 12 && m.respiratory <= 20 ? 'var(--energy)' : 'var(--warn)'}">${m.respiratory >= 12 && m.respiratory <= 20 ? 'Normal' : m.respiratory < 12 ? 'Below normal' : 'Elevated — possible illness'}</span></div>
       </div>`;
 
     case 'skintemp': return back + `
@@ -7280,7 +7280,7 @@ function buildDetailContent(type) {
         <div class="detail-section-title">YOUR DATA</div>
         <div class="detail-row"><span class="detail-row-label">Current</span><span class="detail-row-val">${h.skinTemp}&deg;C</span></div>
         <div class="detail-row"><span class="detail-row-label">Deviation</span><span class="detail-row-val">${h.skinTempDelta > 0 ? '+' : ''}${h.skinTempDelta}&deg;C</span></div>
-        <div class="detail-row"><span class="detail-row-label">Status</span><span class="detail-row-val" style="color:var(--energy)">Stable</span></div>
+        <div class="detail-row"><span class="detail-row-label">Status</span><span class="detail-row-val" style="color:${Math.abs(h.skinTempDelta) <= 0.5 ? 'var(--energy)' : 'var(--warn)'}">${Math.abs(h.skinTempDelta) <= 0.5 ? 'Stable' : h.skinTempDelta > 0.5 ? 'Elevated — possible illness' : 'Below baseline'}</span></div>
       </div>`;
 
     case 'hrv': return back + `
@@ -8539,7 +8539,7 @@ function loadHistoricalDay(dateStr) {
     const dayLogs = (ST.logs || []).filter(l => l.date === dateStr);
     const dayEntry = (ST.journalEntries || []).find(e => e.date === dateStr);
     if (dayLogs.length || dayEntry) {
-      const tagIcons = { shisha: '💨', workout: '🏋️', sauna: '🧖', alcohol: '🍷', stress: '😤', nap: '😴', meditation: '🧘', sunlight: '☀️', screen: '📱', cold_shower: '🧊', sugar: '🍬', deep_work: '📊', walk: '🚶', shisha_late: '🌙' };
+      const tagIcons = { shisha: '💨', workout: '🏋️', sauna: '🧖', alcohol: '🍷', stress: '😤', nap: '😴', meditation: '🧘', sunlight: '☀️', screen: '📱', cold_shower: '🧊', sugar: '🍬', deep_work: '📊', walk: '🚶', shisha_late: '🌙', energy_caps: '⚡', creatine: '🧪' };
       let html = '<div class="timeline">';
       for (const log of dayLogs) {
         const d = new Date(log.ts);
@@ -8548,10 +8548,18 @@ function loadHistoricalDay(dateStr) {
         const title = (log.tags || []).map(t => t.replace(/_/g, ' ')).join(', ');
         const icon = tagIcons[mainTag] || '📝';
         const sub = log.durationMin ? `${log.durationMin}min` : '';
-        html += `<div class="timeline-item"><div class="tl-dot past"></div><div class="tl-content"><div class="tl-time">${time}</div><div class="tl-title">${icon} ${title.charAt(0).toUpperCase() + title.slice(1)}</div>${sub ? `<div class="tl-sub">${sub}</div>` : ''}</div></div>`;
+        html += `<div class="tl-item past-item">
+          <div class="tl-dot past"></div>
+          <div class="tl-time">${time}</div>
+          <div class="tl-title">${icon} ${title.charAt(0).toUpperCase() + title.slice(1)}</div>
+          ${sub ? `<div class="tl-sub">${sub}</div>` : ''}
+        </div>`;
       }
       if (dayEntry && dayEntry.mood) {
-        html += `<div class="timeline-item"><div class="tl-dot past"></div><div class="tl-content"><div class="tl-title">Mood: ${dayEntry.mood}/5</div></div></div>`;
+        html += `<div class="tl-item past-item">
+          <div class="tl-dot past"></div>
+          <div class="tl-title">😊 Mood: ${dayEntry.mood}/5</div>
+        </div>`;
       }
       html += '</div>';
       el.innerHTML = html;
@@ -9577,7 +9585,7 @@ async function fetchHealthData() {
     if (data.vo2max && data.vo2max.value != null) {
       const oldVo2 = ST.health.vo2max;
       ST.health.vo2max = +Number(data.vo2max.value).toFixed(1);
-      ST.health.vo2maxDelta = +(ST.health.vo2max - oldVo2).toFixed(1);
+      ST.health.vo2maxDelta = oldVo2 != null ? +(ST.health.vo2max - oldVo2).toFixed(1) : 0;
       ST.health._vo2Synced = true;
       changed = true;
     }
