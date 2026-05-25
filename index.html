@@ -3335,9 +3335,9 @@ function energyAt(h) {
 
   // 4. Training load fatigue — heavy recent training flattens the curve
   const trainingLoad = computeTrainingLoad();
-  if (trainingLoad.avg3 > 600) {
-    // High 3-day avg (>600 cal/day) = overreaching territory
-    const loadPenalty = Math.min((trainingLoad.avg3 - 400) * 0.01, 8);
+  if (trainingLoad.avg7 > 600) {
+    // High 7-day avg (>600 cal/day) = overreaching territory
+    const loadPenalty = Math.min((trainingLoad.avg7 - 400) * 0.01, 8);
     energy -= loadPenalty;
   }
   // Acute:Chronic ratio imbalance
@@ -3578,7 +3578,7 @@ function computeReadiness() {
     const ratio = hrvNow / hrvBase;
     if (ratio >= 1.2) hrvScore = 100;
     else if (ratio >= 1.0) hrvScore = 50 + (ratio - 1.0) * 250; // 50-100 range
-    else if (ratio >= 0.5) hrvScore = Math.max(0, ratio * 100); // 0-50 range
+    else if (ratio >= 0.5) hrvScore = (ratio - 0.5) / 0.5 * 50;  // 0-50 range (linear)
     else hrvScore = 0;
   }
   hrvScore = Math.max(0, Math.min(100, hrvScore));
@@ -4081,7 +4081,7 @@ function buildRecoveryDetail() {
     <div class="rd-row"><span class="rd-row-label"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${rhrColor};margin-right:4px;"></span> Resting HR</span><div class="rd-bar-wrap"><div class="rd-bar-fill" style="width:${rhrScore}%;background:${rhrColor}"></div></div><span class="rd-row-val" style="color:${rhrColor}">${rhrScore}%</span></div>
     <div class="rd-row"><span class="rd-row-label"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#93a1c4;margin-right:4px;"></span> Sleep Quality</span><div class="rd-bar-wrap"><div class="rd-bar-fill" style="width:${sleepScore}%;background:#93a1c4"></div></div><span class="rd-row-val">${sleepScore}%</span></div>
     <div class="rd-row"><span class="rd-row-label"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${trainColor};margin-right:4px;"></span> Training Load</span><div class="rd-bar-wrap"><div class="rd-bar-fill" style="width:${trainScore}%;background:${trainColor}"></div></div><span class="rd-row-val" style="color:${trainColor}">${trainScore}%</span></div>
-    <div class="rd-row" style="padding-left:12px;"><span class="rd-row-label" style="font-size:11px;color:var(--text-4)">ACR (3d/7d)</span><span class="rd-row-val" style="font-size:11px;color:var(--text-4);font-family:'DM Mono',monospace">${tl.acr}x (${tl.avg3}/${tl.avg7} cal)</span></div>
+    <div class="rd-row" style="padding-left:12px;"><span class="rd-row-label" style="font-size:11px;color:var(--text-4)">ACR (7d/21d)</span><span class="rd-row-val" style="font-size:11px;color:var(--text-4);font-family:'DM Mono',monospace">${tl.acr}x (${tl.avg7}/${tl.avg21} cal)</span></div>
     <div class="rd-row" style="margin-top:6px;padding-top:8px;border-top:1px solid var(--card-border)"><span class="rd-row-label">HRV</span><span class="rd-row-val">${ST.metrics.hrv}ms <span style="color:${ST.metrics.hrvDelta >= 0 ? 'var(--energy)' : 'var(--warn)'};">(${ST.metrics.hrvDelta >= 0 ? '+' : ''}${ST.metrics.hrvDelta})</span></span></div>
     <div class="rd-row"><span class="rd-row-label">Resting HR</span><span class="rd-row-val">${ST.metrics.rhr}bpm <span style="color:${ST.metrics.rhrDelta <= 0 ? 'var(--energy)' : 'var(--warn)'};">(${ST.metrics.rhrDelta > 0 ? '+' : ''}${ST.metrics.rhrDelta})</span></span></div>
     <div class="rd-row"><span class="rd-row-label">Baseline HRV</span><span class="rd-row-val" style="color:var(--text-3)">${ST.metrics.hrvBaseline || 42}ms <span style="font-size:10px;color:var(--text-4)">(50th %ile: 42ms)</span></span></div>
@@ -4446,7 +4446,7 @@ function buildSleepCoaching(sl, stg, debtH, pct) {
   // 2. Deep sleep coaching (critical for athletes — HGH release, tissue repair)
   if (deepPct < 15) {
     tips.push({ icon: '🔷', title: 'Deep Sleep Below Optimal', priority: 1,
-      text: `${deepPct}% deep sleep (typical: 15-25%). Deep sleep drives 95% of daily HGH secretion — essential for muscle repair and tendon adaptation.`,
+      text: `${deepPct}% deep sleep (typical: 15-25%). Deep sleep drives 70-80% of daily HGH secretion (Van Cauter 2000) — essential for muscle repair and tendon adaptation.`,
       action: 'Avoid alcohol, keep room 18°C, consider magnesium glycinate 400mg' });
   } else if (deepPct >= 25) {
     tips.push({ icon: '🔷', title: 'Excellent Deep Sleep', priority: 4,
@@ -5476,13 +5476,13 @@ function computeStrain() {
     if (liveCal > todayCal) todayCal = liveCal;
   }
 
-  // HR zone-weighted strain (TRIMP-like) when zone data available
-  // Zones weighted by physiological cost: Z1×1, Z2×1.5, Z3×2.5, Z4×4, Z5×6
+  // HR zone-weighted strain (Edwards TRIMP) when zone data available
+  // Edwards' weights: Z1×1, Z2×2, Z3×3, Z4×4, Z5×5
   const zones = ST.health?.hrZones;
   if (zones && (zones.z1 || zones.z2 || zones.z3 || zones.z4 || zones.z5)) {
-    const trimp = (zones.z1 || 0) * 1 + (zones.z2 || 0) * 1.5 +
-                  (zones.z3 || 0) * 2.5 + (zones.z4 || 0) * 4 + (zones.z5 || 0) * 6;
-    // Scale TRIMP minutes to 0-21: ~10min Z1 = 2, ~30min Z3 = 8, ~60min Z4 = 16
+    const trimp = (zones.z1 || 0) * 1 + (zones.z2 || 0) * 2 +
+                  (zones.z3 || 0) * 3 + (zones.z4 || 0) * 4 + (zones.z5 || 0) * 5;
+    // Scale TRIMP minutes to 0-21 strain score
     const zoneStrain = Math.min(21, Math.round(3 + Math.log2(1 + trimp) * 2.8));
     // Use whichever method gives higher fidelity — prefer zone data
     const calStrain = todayCal > 0 ? Math.min(21, Math.round(3 + Math.sqrt(todayCal) * 0.42)) : 3;
@@ -5495,43 +5495,34 @@ function computeStrain() {
   return Math.min(21, Math.round(3 + Math.sqrt(todayCal) * 0.42));
 }
 
-// Compute rolling 3-day strain load for training readiness component
+// Compute Acute:Chronic Workload Ratio (Gabbett 2016) — 7d/21d windows
 function computeTrainingLoad() {
   const workouts = ST._workouts || [];
   const history = ST._history || {};
   const activeCals = history.active_cal || [];
 
-  // Get last 3 days of active calories (most responsive window)
-  const days3 = [];
-  for (let i = 0; i < 3; i++) {
-    const d = new Date(Date.now() - i * 86400000).toISOString().slice(0,10);
-    // Check synced active_cal data
+  function getDayCal(daysBack) {
+    const d = new Date(Date.now() - daysBack * 86400000).toISOString().slice(0,10);
     const synced = activeCals.find(x => x.date === d);
     let cal = synced ? synced.value : 0;
-    // Also check workouts
     const dayWorkouts = workouts.filter(w => w.date === d);
     const wCal = dayWorkouts.reduce((s, w) => s + (w.cal || 0), 0);
     if (wCal > cal) cal = wCal;
-    days3.push(cal);
+    return cal;
   }
-  // Also get 7-day for chronic load comparison
+
+  // Gabbett ACWR: 7-day acute / 21-day chronic (validated for injury prediction)
   const days7 = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(Date.now() - i * 86400000).toISOString().slice(0,10);
-    const synced = activeCals.find(x => x.date === d);
-    let cal = synced ? synced.value : 0;
-    const dayWorkouts = workouts.filter(w => w.date === d);
-    const wCal = dayWorkouts.reduce((s, w) => s + (w.cal || 0), 0);
-    if (wCal > cal) cal = wCal;
-    days7.push(cal);
-  }
+  for (let i = 0; i < 7; i++) days7.push(getDayCal(i));
+  const days21 = [];
+  for (let i = 0; i < 21; i++) days21.push(getDayCal(i));
 
-  const avg3 = days3.length ? days3.reduce((a,b) => a+b, 0) / days3.length : 0;
   const avg7 = days7.length ? days7.reduce((a,b) => a+b, 0) / days7.length : 0;
+  const avg21 = days21.length ? days21.reduce((a,b) => a+b, 0) / days21.length : 0;
 
-  // Acute:Chronic ratio — 0.8-1.3 is optimal zone
-  // Below 0.6 = detraining, above 1.5 = injury risk
-  const acr = avg7 > 50 ? avg3 / avg7 : 1.0;
+  // Acute:Chronic ratio — 0.8-1.3 is optimal zone (Gabbett 2016)
+  // Below 0.6 = detraining, above 1.5 = injury risk spike
+  const acr = avg21 > 50 ? avg7 / avg21 : 1.0;
 
   // Training readiness: 100 at sweet spot (ACR 0.8-1.3), drops outside
   let readiness;
@@ -5543,7 +5534,7 @@ function computeTrainingLoad() {
     readiness = Math.max(20, 80 - (acr - 1.3) * 150); // overreaching penalty
   }
 
-  return { readiness: Math.round(Math.min(100, Math.max(0, readiness))), acr: +acr.toFixed(2), avg3: Math.round(avg3), avg7: Math.round(avg7) };
+  return { readiness: Math.round(Math.min(100, Math.max(0, readiness))), acr: +acr.toFixed(2), avg7: Math.round(avg7), avg21: Math.round(avg21) };
 }
 
 // Training load modifier - reduces energy curve after heavy training days
@@ -6599,9 +6590,9 @@ function renderWeekInsights() {
 
   // 2. Training load balance (Acute:Chronic ratio)
   const tl = computeTrainingLoad();
-  if (tl.avg7 > 50) {
+  if (tl.avg21 > 50) {
     const cls = tl.acr >= 0.8 && tl.acr <= 1.3 ? 'good' : tl.acr > 1.5 ? 'warn' : 'info';
-    insights.push({ cls, label: 'Training Load Balance', text: `ACR: <b>${tl.acr}</b> (3d: ${tl.avg3} cal, 7d: ${tl.avg7} cal). ${tl.acr >= 0.8 && tl.acr <= 1.3 ? 'Sweet spot for progressive overload.' : tl.acr > 1.5 ? 'Spike detected, high injury risk. Pull back.' : tl.acr < 0.8 ? 'Detraining zone. Ramp up gradually.' : 'Monitor closely.'}` });
+    insights.push({ cls, label: 'Training Load Balance', text: `ACR: <b>${tl.acr}</b> (7d: ${tl.avg7} cal, 21d: ${tl.avg21} cal). ${tl.acr >= 0.8 && tl.acr <= 1.3 ? 'Sweet spot for progressive overload.' : tl.acr > 1.5 ? 'Spike detected, high injury risk. Pull back.' : tl.acr < 0.8 ? 'Detraining zone. Ramp up gradually.' : 'Monitor closely.'}` });
   }
 
   // 3. Strain-recovery balance
@@ -6876,8 +6867,8 @@ function computeRythmAge() {
   if (resp != null && resp > 0) {
     if (resp <= 14) adj -= 0.8;
     else if (resp <= 16) adj -= 0.3;
-    else if (resp > 18) adj += 0.5;
     else if (resp > 20) adj += 1.5;
+    else if (resp > 18) adj += 0.5;
     weights += 1;
   }
 
