@@ -1286,16 +1286,18 @@ section { padding: 0 16px; margin-bottom: 8px; }
 }
 .fullpage.open { transform: translateX(0); }
 .fp-header-wrap {
-  flex-shrink: 0; background: var(--bg); z-index: 10;
+  flex-shrink: 0; background: var(--bg); z-index: 20;
   padding-top: env(safe-area-inset-top, 47px);
-  position: relative; /* z-index requires positioning */
+  position: relative;
 }
 .fp-header {
   display: flex; align-items: center; gap: 10px;
   padding: 12px 16px;
 }
+.fp-back { position: relative; z-index: 25; }
 .fullpage-scroll {
   flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  position: relative; z-index: 1;
 }
 .fullpage-inner { max-width: 440px; margin: 0 auto; padding: 0 16px 100px; }
 .fp-back {
@@ -5522,44 +5524,54 @@ function renderSicknessWarning() {
   const section = document.getElementById('sicknessSection');
   if (!el || !section) return;
 
-  // Analyze HRV and RHR trends for sickness indicators
+  // Use sleep HRV (overnight, medically stable) not daytime readings that swing with activity.
+  // With AFib history on, watch records HRV every few hours - daytime values vary wildly
+  // and cause false sickness alerts. Only overnight/resting readings are meaningful.
   const hrvHist = ST._hrvHistory || [];
   const rhrHist = ST._rhrHistory || [];
-  if (hrvHist.length < 3 && rhrHist.length < 3) { section.classList.add('hidden'); return; }
 
-  // Calculate recent vs baseline
-  const hrvRecent = hrvHist.slice(-3).map(h => h.v);
-  const hrvBaseline = hrvHist.slice(-14, -3).map(h => h.v);
-  const rhrRecent = rhrHist.slice(-3).map(h => h.v);
-  const rhrBaseline = rhrHist.slice(-14, -3).map(h => h.v);
+  // Need at least 5 days of data to have a real baseline + recent comparison
+  if (hrvHist.length < 5 && rhrHist.length < 5) { section.classList.add('hidden'); return; }
 
-  const avgRecent = hrvRecent.length ? hrvRecent.reduce((a,b) => a+b, 0) / hrvRecent.length : 0;
-  const avgBase = hrvBaseline.length ? hrvBaseline.reduce((a,b) => a+b, 0) / hrvBaseline.length : avgRecent;
-  const rhrAvgRecent = rhrRecent.length ? rhrRecent.reduce((a,b) => a+b, 0) / rhrRecent.length : 0;
-  const rhrAvgBase = rhrBaseline.length ? rhrBaseline.reduce((a,b) => a+b, 0) / rhrBaseline.length : rhrAvgRecent;
+  // Use the stored rolling baseline (median over 14 days) instead of recomputing
+  // This is the stable baseline, not affected by today's intraday swings
+  const hrvBase = ST.metrics.hrvBaseline || 0;
+  const rhrBase = ST.metrics.rhrBaseline || 0;
 
-  const hrvDrop = avgBase > 0 ? ((avgBase - avgRecent) / avgBase) * 100 : 0;
-  const rhrRise = rhrAvgBase > 0 ? ((rhrAvgRecent - rhrAvgBase) / rhrAvgBase) * 100 : 0;
+  // Use sleep HRV if available (overnight reading, most stable)
+  // Fall back to the daily stored value only if sleep HRV isn't available
+  const todayHrv = ST.metrics.sleepHrv || ST.metrics.hrv || 0;
+  const todayRhr = ST.metrics.rhr || 0;
 
-  // Sickness likely when HRV drops >15% AND RHR rises >5% over 3 days
+  if (!hrvBase || !rhrBase) { section.classList.add('hidden'); return; }
+
+  // Compare today's values to the rolling baseline
+  const hrvDrop = hrvBase > 0 ? ((hrvBase - todayHrv) / hrvBase) * 100 : 0;
+  const rhrRise = rhrBase > 0 ? ((todayRhr - rhrBase) / rhrBase) * 100 : 0;
+
+  // Require BOTH signals to fire illness warning (single-signal is too noisy)
+  // Normal daily variation: HRV +/-10%, RHR +/-3%
   const signals = [];
-  if (hrvDrop > 15) signals.push(`HRV dropped ${Math.round(hrvDrop)}% below baseline`);
+  if (hrvDrop > 15) signals.push(`HRV ${Math.round(hrvDrop)}% below baseline`);
   if (rhrRise > 5) signals.push(`RHR elevated ${Math.round(rhrRise)}% above normal`);
 
-  if (signals.length >= 2 || hrvDrop > 25 || rhrRise > 10) {
+  if (signals.length >= 2) {
+    // Both HRV and RHR flagged - real physiological stress
     section.classList.remove('hidden');
     const tips = 'Extra sleep, vitamin C, zinc, reduce training intensity, avoid cold exposure.';
     el.innerHTML = `<div class="sickness-warning-icon">🛡️</div>
       <div class="sickness-warning-body">
         <div class="sickness-warning-title">Illness risk detected</div>
-        <div class="sickness-warning-text"><b>${signals.join(', ')}.</b> Your immune system may be under stress. ${tips}</div>
+        <div class="sickness-warning-text"><b>${signals.join('. ')}.</b> Your immune system may be under stress. ${tips}</div>
       </div>`;
-  } else if (signals.length === 1) {
+  } else if (hrvDrop > 25 || rhrRise > 10) {
+    // Single extreme signal
     section.classList.remove('hidden');
+    const sig = hrvDrop > 25 ? `HRV ${Math.round(hrvDrop)}% below baseline` : `RHR ${Math.round(rhrRise)}% above normal`;
     el.innerHTML = `<div class="sickness-warning-icon">⚠️</div>
       <div class="sickness-warning-body">
         <div class="sickness-warning-title">Watch your recovery</div>
-        <div class="sickness-warning-text"><b>${signals[0]}.</b> Monitor how you feel - one more bad night could mean your body is fighting something.</div>
+        <div class="sickness-warning-text"><b>${sig}.</b> Monitor how you feel - if this persists tomorrow, your body may be fighting something.</div>
       </div>`;
   } else {
     section.classList.add('hidden');
@@ -8802,15 +8814,15 @@ function renderTrends() {
   const rhrHistory = ST._rhrHistory || [];
   const readinessHistory = ST._dailyReadiness || {};
 
-  // HRV trend from auto-calibration history
+  // HRV trend from auto-calibration history (format: { v, d } where d is 'YYYY-MM-DD')
   const hrvData = hrvHistory.slice(-14).map(h => ({
-    d: new Date(h.t).toLocaleDateString('en', {month:'2-digit',day:'2-digit'}).replace('/','-'),
+    d: h.d ? h.d.slice(5) : '--',
     v: +h.v.toFixed(1)
   }));
 
-  // RHR trend from history
+  // RHR trend from history (format: { v, d } where d is 'YYYY-MM-DD')
   const rhrData = rhrHistory.slice(-14).map(h => ({
-    d: new Date(h.t).toLocaleDateString('en', {month:'2-digit',day:'2-digit'}).replace('/','-'),
+    d: h.d ? h.d.slice(5) : '--',
     v: Math.round(h.v)
   }));
 
@@ -10794,13 +10806,13 @@ async function fetchHealthData() {
     }
 
     // Store workouts from health data if available
-    // GET returns single workout entry with details
-    if (data.workout && data.workout.details) {
+    // Handles multiple formats: data.workout.details, data.workout (flat), data.workouts (array)
+    if (data.workout) {
       if (!ST._workouts) ST._workouts = [];
-      const wd = data.workout.details;
-      const wDate = data.workout.date || todayKey;
+      const wd = data.workout.details || data.workout;
+      const wDate = (data.workout.date || wd.date || todayKey).slice(0, 10);
       // Compute duration from startDate/endDate if durMin is 0
-      let durMin = wd.durMin || 0;
+      let durMin = wd.durMin || wd.duration || 0;
       if (durMin === 0 && wd.startDate && wd.endDate) {
         const s = new Date(wd.startDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
         const e = new Date(wd.endDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
@@ -10809,9 +10821,11 @@ async function fetchHealthData() {
           if (calc > 0 && calc < 1440) durMin = Math.round(calc);
         }
       }
-      const exists = ST._workouts.find(x => x.date === wDate && x.type === wd.type && x.durMin === durMin);
-      if (!exists) {
-        ST._workouts.push({ date: wDate, type: wd.type || 'Workout', durMin, cal: wd.cal || 0, startDate: wd.startDate || null });
+      const wType = wd.type || wd.workoutType || 'Workout';
+      const wCal = wd.cal || wd.calories || wd.activeCalories || 0;
+      const exists = ST._workouts.find(x => x.date === wDate && x.type === wType && Math.abs((x.durMin || 0) - durMin) < 5);
+      if (!exists && (durMin > 0 || wCal > 10)) {
+        ST._workouts.push({ date: wDate, type: wType, durMin, cal: wCal, startDate: wd.startDate || null });
       }
     }
     if (data.workouts && Array.isArray(data.workouts)) {
@@ -11047,6 +11061,30 @@ async function fetchHistoryData() {
         ST.metrics.rhrBaseline = Math.round(vals[Math.floor(vals.length / 2)]);
       }
     }
+
+    // Backfill workouts from history (workout entries with cal > 0 or active_cal > 200)
+    if (ST._history.workout && ST._history.workout.length) {
+      if (!ST._workouts) ST._workouts = [];
+      const existDates = new Set(ST._workouts.map(w => w.date));
+      for (const w of ST._history.workout) {
+        if (!existDates.has(w.date) && w.value > 0) {
+          ST._workouts.push({ date: w.date, type: 'Workout', durMin: w.value || 0, cal: 0 });
+          existDates.add(w.date);
+        }
+      }
+    }
+    // Also detect workout days from high active calories in history
+    if (ST._history.active_cal && ST._history.active_cal.length) {
+      if (!ST._workouts) ST._workouts = [];
+      const existDates = new Set(ST._workouts.map(w => w.date));
+      for (const ac of ST._history.active_cal) {
+        if (!existDates.has(ac.date) && ac.value >= 200) {
+          ST._workouts.push({ date: ac.date, type: 'Workout', durMin: 0, cal: Math.round(ac.value) });
+          existDates.add(ac.date);
+        }
+      }
+    }
+
     saveState();
 
     // Re-render metrics with calibrated baselines
@@ -11265,6 +11303,18 @@ const WINDDOWN_STEPS = [
 ];
 
 function bootApp() {
+  // One-time cleanup: remove journal entries that weren't manually saved by the user
+  // Real entries from saveJournal() have mood/notes/hrv fields; auto-generated ones don't
+  if (ST._journalCleanup !== 'v72') {
+    if (ST.journal && ST.journal.length) {
+      const before = ST.journal.length;
+      ST.journal = ST.journal.filter(j => j.mood != null || (j.notes && j.notes.length > 0) || j.hrv != null);
+      if (ST.journal.length !== before) console.log('[RYTHM] Cleaned ' + (before - ST.journal.length) + ' auto-generated journal entries');
+    }
+    ST._journalCleanup = 'v72';
+    saveState();
+  }
+
   // One-time migration: clear stale recovery lock so it recomputes with nighttime-based algorithm (v51)
   if (ST._recoveryMigration !== 'v51') {
     ST._recoveryLockedDate = null;
