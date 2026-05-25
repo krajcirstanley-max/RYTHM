@@ -1833,6 +1833,21 @@ section { padding: 0 16px; margin-bottom: 8px; }
   color: var(--danger); font-family: inherit; font-size: 14px;
   font-weight: 600; cursor: pointer; margin-top: 8px;
 }
+.onboard-btn {
+  padding: 10px 24px; border: 1px solid var(--card-border);
+  border-radius: 10px; background: rgba(255,255,255,0.06);
+  color: #fff; font-family: inherit; font-size: 13px;
+  font-weight: 600; cursor: pointer; transition: background 0.15s;
+}
+.onboard-btn:active { background: rgba(255,255,255,0.12); }
+.settings-body input[type=range] {
+  -webkit-appearance: none; appearance: none; width: 150px; height: 4px;
+  background: var(--border-2); border-radius: 2px; outline: none; margin: 6px 0;
+}
+.settings-body input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+  background: #fff; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
 
 /* MY DAY TASK INPUT */
 .task-input-row {
