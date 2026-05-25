@@ -686,7 +686,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
 }
 .insight-dot svg { width: 16px; height: 16px; }
 .insight.good .insight-dot { background: rgba(0,236,127,0.12); color: var(--energy); }
-.insight.info .insight-dot { background: rgba(77,169,255,0.12); color: var(--strain); }
+.insight.info .insight-dot { background: rgba(77,169,255,0.12); color: #4da9ff; }
 .insight.warn .insight-dot { background: rgba(255,181,71,0.12); color: var(--warn); }
 .insight-body { flex: 1; min-width: 0; }
 .insight-label {
@@ -795,6 +795,13 @@ section { padding: 0 16px; margin-bottom: 8px; }
   border: 1px solid var(--card-border);
   border-radius: var(--radius); padding: 14px 16px; margin-bottom: 6px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.04);
+  position: relative; overflow: hidden;
+}
+.jh-entry::before {
+  content: ''; position: absolute; left: 0; top: 10px; bottom: 10px;
+  width: 3px; border-radius: 0 2px 2px 0;
+  background: var(--jh-accent, var(--text-4));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--jh-accent, transparent) 40%, transparent);
 }
 .jh-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .jh-date { font-size: 10px; font-weight: 800; letter-spacing: 1.5px; color: var(--text-3); }
@@ -7881,8 +7888,12 @@ function renderJournalHistory() {
       const beh = JOURNAL_BEHAVIORS.find(x => x.id === b);
       return beh ? `<span class="jh-tag">${beh.icon} ${beh.label}</span>` : '';
     }).join('');
-    const context = j.strain != null ? `<span style="font-size:10px;color:var(--text-4);font-family:'DM Mono',monospace;margin-left:8px;">S${j.strain} · ${j.sleep || '--'}h · ${j.hrv || '--'}ms</span>` : '';
-    return `<div class="jh-entry">
+    const ctxParts = [];
+    if (j.strain != null) ctxParts.push('S' + j.strain);
+    if (j.sleep) { const sh = Math.floor(j.sleep), sm = Math.round((j.sleep - sh) * 60); ctxParts.push(sh + 'h' + (sm ? ' ' + sm + 'm' : '')); }
+    if (j.hrv) ctxParts.push(j.hrv + 'ms');
+    const context = ctxParts.length ? `<span style="font-size:10px;color:var(--text-4);font-family:'DM Mono',monospace;margin-left:8px;">${ctxParts.join(' · ')}</span>` : '';
+    return `<div class="jh-entry" style="--jh-accent:${interp.color}">
       <div class="jh-top">
         <span class="jh-date">${dateStr.toUpperCase()}</span>
         <span class="jh-score" style="color:${interp.color}">${j.readiness != null ? Math.round(j.readiness) + '%' : ''}${context}</span>
