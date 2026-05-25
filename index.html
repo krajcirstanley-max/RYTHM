@@ -3629,7 +3629,7 @@ function getActiveBehaviorMods() {
       if (hSince < 0) continue;
       const val = modFn(hSince);
       if (val !== 0) {
-        active.push({ icon: behaviorIcons[tag] || '•', val });
+        active.push({ icon: behaviorIcons[tag] || '•', val, tag });
       }
       if (modFn.length === 0) seen.add(tag);
     }
@@ -5759,8 +5759,9 @@ function renderEnergy() {
   if (modsEl) {
     const mods = getActiveBehaviorMods();
     if (mods.length) {
+      const tagLabels = { sauna: 'Sauna', shisha: 'Shisha', shisha_late: 'Shisha', workout: 'Workout', meditation: 'Meditation', alcohol: 'Alcohol', cold_shower: 'Cold', nap: 'Nap', energy_caps: 'Caffeine', sugar: 'Sugar', stress: 'Stress', deep_work: 'Focus', walk: 'Walk', stretching: 'Stretch', weed: 'Weed', nicotine: 'Nicotine' };
       modsEl.innerHTML = mods.map(m =>
-        `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;font-size:11px;font-family:'DM Mono',monospace;background:${m.val >= 0 ? 'rgba(0,236,127,0.12)' : 'rgba(255,80,80,0.12)'};color:${m.val >= 0 ? 'var(--energy)' : 'var(--danger)'}">${m.icon} ${m.val >= 0 ? '+' : ''}${m.val}</span>`
+        `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;font-size:11px;font-family:'DM Mono',monospace;background:${m.val >= 0 ? 'rgba(0,236,127,0.12)' : 'rgba(255,80,80,0.12)'};color:${m.val >= 0 ? 'var(--energy)' : 'var(--danger)'}">${m.icon} ${tagLabels[m.tag] || m.tag} ${m.val >= 0 ? '+' : ''}${m.val}%</span>`
       ).join('');
     } else {
       modsEl.innerHTML = '';
@@ -6114,10 +6115,15 @@ function renderTasks() {
   // 6. Wind down
   const windDownH = WAKE + 14; // ~14h after wake
   const windTime = minToTime((windDownH * 60) % 1440);
-  events.push({ time: windTime, title: 'Wind down', sub: 'Dim lights, no screens', icon: '🌙', dot: 'sleep', type: 'auto' });
+  const windDownNextDay = windDownH >= 24; // wraps past midnight
+  events.push({ time: windTime, title: 'Wind down', sub: 'Dim lights, no screens', icon: '🌙', dot: 'sleep', type: 'auto', nextDay: windDownNextDay });
 
-  // Sort by time
-  events.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+  // Sort by time, but events that wrap past midnight (nextDay) go last
+  events.sort((a, b) => {
+    const ka = (a.nextDay ? '1-' : '0-') + (a.time || '');
+    const kb = (b.nextDay ? '1-' : '0-') + (b.time || '');
+    return ka.localeCompare(kb);
+  });
 
   if (events.length === 0) {
     el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-4);font-size:13px;">No activity yet today.</div>`;
@@ -6125,8 +6131,10 @@ function renderTasks() {
   }
 
   // Find current event (last one whose time has passed)
+  // Skip nextDay events - they haven't happened yet
   let currentIdx = -1;
   for (let i = 0; i < events.length; i++) {
+    if (events[i].nextDay) continue;
     if (events[i].time) {
       const [h, m] = events[i].time.split(':').map(Number);
       if (h * 60 + m <= nowMin) currentIdx = i;
