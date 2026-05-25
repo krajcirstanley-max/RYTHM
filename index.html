@@ -9899,21 +9899,34 @@ function buildSleepDebt() {
   const hist = ST._history && ST._history.sleep ? ST._history.sleep : ST._sleepHistory || [];
   if (!hist.length) return;
 
+  const today = new Date().toISOString().slice(0, 10);
+
   // Get last 14 days
   const days14 = [];
   for (let i = 13; i >= 0; i--) {
     const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
     const entry = hist.find(h => h.date === d);
-    const slept = entry ? (entry.totalH || entry.value || 0) : 0;
-    const deficit = Math.max(0, target - slept);
-    days14.push({ date: d, sleptH: +slept.toFixed(1), deficitH: +deficit.toFixed(1) });
+    let slept = entry ? (entry.totalH || entry.value || 0) : 0;
+    // For today, prefer live sleep data (history may not include it yet)
+    if (d === today && slept === 0 && ST.sleep && ST.sleep.totalH > 0) {
+      slept = ST.sleep.totalH;
+    }
+    // No data ≠ 0 sleep. Skip days with no data (carry forward debt with decay only)
+    const hasData = slept > 0;
+    const deficit = hasData ? Math.max(0, target - slept) : 0;
+    days14.push({ date: d, sleptH: +slept.toFixed(1), deficitH: +deficit.toFixed(1), hasData });
   }
 
   // Accumulate debt (decays 10% per day — body partially repays)
+  // Days with no data: only apply decay (don't add deficit for missing data)
   let debt = 0;
   const debtArr = [];
   for (const day of days14) {
-    debt = debt * 0.9 + day.deficitH; // 10% decay + new deficit
+    if (day.hasData) {
+      debt = debt * 0.9 + day.deficitH; // 10% decay + new deficit
+    } else {
+      debt = debt * 0.9; // decay only — no penalty for missing data
+    }
     debtArr.push({ date: day.date, debtH: +debt.toFixed(1), sleptH: day.sleptH });
   }
 
