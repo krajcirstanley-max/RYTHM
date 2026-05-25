@@ -2534,13 +2534,13 @@ section { padding: 0 16px; margin-bottom: 8px; }
   --la-accent: #f472b6; --la-glow: rgba(244,114,182,0.15);
   border-color: rgba(244,114,182,0.1);
 }
-.live-card[data-type="nature"] {
+.live-card[data-type="massage_gun"] {
   --la-accent: #34d399; --la-glow: rgba(52,211,153,0.15);
   border-color: rgba(52,211,153,0.1);
 }
-.live-card[data-type="reading"] {
-  --la-accent: #a78bfa; --la-glow: rgba(167,139,250,0.15);
-  border-color: rgba(167,139,250,0.1);
+.live-card[data-type="infrapanel"] {
+  --la-accent: #ef4444; --la-glow: rgba(239,68,68,0.15);
+  border-color: rgba(239,68,68,0.1);
 }
 .live-card[data-type="nap"] {
   --la-accent: #93a1c4; --la-glow: rgba(147,161,196,0.15);
@@ -3576,7 +3576,6 @@ function energyAt(h) {
     if (yBehaviors.includes('alcohol')) energy -= 8; // REM suppression + dehydration
     if (yBehaviors.includes('shisha') && !yBehaviors.includes('shisha_late')) energy -= 2;
     if (yBehaviors.includes('late_meal')) energy -= 2;
-    if (yBehaviors.includes('weed')) energy -= 4;
   }
 
   // 4. Training load fatigue  - heavy recent training flattens the curve
@@ -3681,21 +3680,24 @@ const BEHAVIOR_ENERGY_MODS = {
   hydration:     () => 2,
   late_meal:     (hSince) => hSince <= 3 ? -3 : -1,
   creatine:      () => 1,
-  social:        (hSince) => hSince <= 2 ? 4 : 1,
-  nature:        (hSince) => hSince <= 3 ? 5 : 2,
   sex:           (hSince) => hSince <= 1 ? -2 : hSince <= 4 ? 3 : 0,
   supplements:   () => 1,
   omega3:        () => 1,
   vitamin_d:     () => 1,
   magnesium:     () => 1,
-  weed:          (hSince) => hSince <= 1 ? 3 : hSince <= 4 ? -4 : -6,
-  nicotine:      (hSince) => hSince <= 0.5 ? 5 : hSince <= 2 ? -3 : -4,
   blue_light:    () => -3,
   screen_time:   () => -2,
-  fasting:       (hSince) => hSince <= 4 ? -2 : hSince <= 12 ? 3 : hSince <= 16 ? 5 : -3,
-  reading:       () => 2,
   massage:       (hSince) => hSince <= 2 ? 4 : 2,
-  protein:       () => 1,  // minor positive  - supports muscle recovery
+  // Massage gun (heat/cold): percussive therapy + thermotherapy
+  // Heat mode: vasodilation, increases blood flow, loosens fascia
+  // Cold mode: reduces inflammation, numbs pain, vasoconstriction then rebound
+  // For long jumpers: target hip flexors, quads, calves, Achilles region
+  massage_gun: (hSince) => hSince <= 0.5 ? 3 : hSince <= 2 ? 4 : hSince <= 4 ? 2 : 0,
+  // Infrared panel (small, targeted): penetrates 2-7cm into tissue
+  // Increases local blood flow, accelerates collagen synthesis in tendons
+  // For jumpers: ideal for patellar tendon, Achilles, ankle joint capsule
+  // NIR (near-infrared 700-1400nm) promotes mitochondrial function via cytochrome c oxidase
+  infrapanel: (hSince) => hSince <= 1 ? 3 : hSince <= 3 ? 4 : hSince <= 6 ? 2 : 0,
 };
 
 function getBehaviorEnergyMod(atHour) {
@@ -3958,8 +3960,6 @@ function computeReadiness() {
     else if (yb.includes('shisha')) behaviorMod -= 2;
     // Alcohol significantly impacts sleep architecture
     if (yb.includes('alcohol')) behaviorMod -= 6;
-    // Weed reduces REM
-    if (yb.includes('weed')) behaviorMod -= 3;
     // Late screen delays melatonin
     if (yb.includes('screen_late')) behaviorMod -= 2;
     // Late meal raises core temp
@@ -5885,7 +5885,7 @@ function renderEnergy() {
   if (modsEl) {
     const mods = getActiveBehaviorMods();
     if (mods.length) {
-      const tagLabels = { sauna: 'Sauna', shisha: 'Shisha', shisha_late: 'Shisha', workout: 'Workout', meditation: 'Meditation', alcohol: 'Alcohol', cold_shower: 'Cold', nap: 'Nap', energy_caps: 'Caffeine', sugar: 'Sugar', stress: 'Stress', deep_work: 'Focus', walk: 'Walk', stretching: 'Stretch', weed: 'Weed', nicotine: 'Nicotine', foam_roll: 'Foam Roll', powerdot: 'PowerDot', jetboots: 'JetBoots', mobility: 'Mobility', massage: 'Massage' };
+      const tagLabels = { sauna: 'Sauna', shisha: 'Shisha', shisha_late: 'Shisha', workout: 'Workout', meditation: 'Meditation', alcohol: 'Alcohol', cold_shower: 'Cold', nap: 'Nap', energy_caps: 'Caffeine', sugar: 'Sugar', stress: 'Stress', deep_work: 'Focus', walk: 'Walk', stretching: 'Stretch', foam_roll: 'Foam Roll', powerdot: 'PowerDot', jetboots: 'JetBoots', mobility: 'Mobility', massage: 'Massage', massage_gun: 'Massage Gun', infrapanel: 'Infrapanel' };
       modsEl.innerHTML = mods.map(m =>
         `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;font-size:11px;font-family:'DM Mono',monospace;background:${m.val >= 0 ? 'rgba(0,236,127,0.12)' : 'rgba(255,80,80,0.12)'};color:${m.val >= 0 ? 'var(--energy)' : 'var(--danger)'}">${m.icon} ${tagLabels[m.tag] || m.tag} ${m.val >= 0 ? '+' : ''}${m.val}%</span>`
       ).join('');
@@ -6207,8 +6207,8 @@ function renderTasks() {
 
   // 3. Logged activities (quick logs)
   const todayLogs = (ST.logs || []).filter(l => l.date === today);
-  const tagIcons = { shisha: '💨', shisha_late: '🌙', workout: '🏋️', sauna: '🧖', alcohol: '🍷', stress: '😤', nap: '😴', meditation: '🧘', sunlight: '☀️', screen: '📱', cold_shower: '🧊', sugar: '🍬', deep_work: '📊', walk: '🚶', sun_exposure: '☀️', energy_caps: '⚡', creatine: '🧪', foam_roll: '🧱', powerdot: '⚡', jetboots: '🦶' };
-  const tagDots = { shisha: 'shisha', shisha_late: 'shisha', workout: 'strain', sauna: 'warn', alcohol: 'warn', stress: 'warn', nap: 'sleep', meditation: 'active', sunlight: 'active', cold_shower: 'active', deep_work: 'active', walk: 'active', sun_exposure: 'active', foam_roll: 'active', powerdot: 'active', jetboots: 'active' };
+  const tagIcons = { shisha: '💨', shisha_late: '🌙', workout: '🏋️', sauna: '🧖', alcohol: '🍷', stress: '😤', nap: '😴', meditation: '🧘', sunlight: '☀️', screen: '📱', cold_shower: '🧊', sugar: '🍬', deep_work: '📊', walk: '🚶', sun_exposure: '☀️', energy_caps: '⚡', creatine: '🧪', foam_roll: '🧱', powerdot: '⚡', jetboots: '🦶', massage_gun: '🔫', infrapanel: '🔴' };
+  const tagDots = { shisha: 'shisha', shisha_late: 'shisha', workout: 'strain', sauna: 'warn', alcohol: 'warn', stress: 'warn', nap: 'sleep', meditation: 'active', sunlight: 'active', cold_shower: 'active', deep_work: 'active', walk: 'active', sun_exposure: 'active', foam_roll: 'active', powerdot: 'active', jetboots: 'active', massage_gun: 'active', infrapanel: 'active' };
   for (let li = 0; li < todayLogs.length; li++) {
     const log = todayLogs[li];
     const d = new Date(log.ts);
@@ -6702,7 +6702,7 @@ function renderHabitAccountability() {
 
   // Filter to habits done 3+ times in 30 days (established habits)
   // Split into positive and negative categories
-  const NEGATIVE_IDS = new Set(['shisha', 'shisha_late', 'alcohol', 'screen_late', 'stress', 'sugar', 'weed', 'nicotine', 'late_meal']);
+  const NEGATIVE_IDS = new Set(['shisha', 'shisha_late', 'alcohol', 'screen_late', 'stress', 'sugar', 'late_meal']);
 
   const tracked = Object.entries(behaviorCounts30)
     .filter(([id, count]) => count >= 3 && !NEGATIVE_IDS.has(id))
@@ -6822,7 +6822,7 @@ function renderHabitImpact() {
 
   const journal = ST.journal || [];
   const hist = ST._history || {};
-  const NEGATIVE_IDS = new Set(['shisha', 'shisha_late', 'alcohol', 'screen_late', 'stress', 'sugar', 'weed', 'nicotine', 'late_meal']);
+  const NEGATIVE_IDS = new Set(['shisha', 'shisha_late', 'alcohol', 'screen_late', 'stress', 'sugar', 'late_meal']);
 
   if (journal.length < 7) {
     el.innerHTML = `<div class="hi-card"><div class="hi-empty">
@@ -8969,6 +8969,8 @@ const JOURNAL_BEHAVIORS = [
   { id: 'jetboots', icon: '🦶', label: 'Jetboots Pro+', sub: 'pneumatic compression' },
   { id: 'foam_roll', icon: '🧱', label: 'Foam Roll' },
   { id: 'powerdot', icon: '⚡', label: 'PowerDot EMS' },
+  { id: 'massage_gun', icon: '🔫', label: 'Massage Gun', sub: 'heat + cold' },
+  { id: 'infrapanel', icon: '🔴', label: 'Infrapanel', sub: 'knees, ankles, tendons' },
   { id: 'linkedin_30', icon: '💼', label: '30m LinkedIn', sub: 'weekdays' },
   { id: 'sleep_8h30', icon: '🛌', label: 'Sleep 8.30+h' },
   { id: 'sleep_before_2', icon: '🌜', label: 'Sleep < 2 AM' },
@@ -8980,16 +8982,10 @@ const JOURNAL_BEHAVIORS = [
   { id: 'make_bed', icon: '🛏️', label: 'Make the Bed' },
   { id: 'skincare_am', icon: '🧴', label: 'Morning Skincare' },
   { id: 'skincare_pm', icon: '✨', label: 'Evening Skincare' },
-  { id: 'protein', icon: '🥛', label: 'Protein Shake' },
+  { id: 'barber', icon: '💈', label: 'Barber', sub: 'every 23 days' },
   { id: 'sauna', icon: '🧖', label: 'Sauna' },
-  { id: 'nature', icon: '🌿', label: 'Nature/Walk' },
-  { id: 'social', icon: '🤝', label: 'Social' },
   { id: 'massage', icon: '💆', label: 'Massage' },
-  { id: 'reading', icon: '📖', label: 'Reading' },
-  { id: 'weed', icon: '🌿', label: 'Weed' },
-  { id: 'nicotine', icon: '🚬', label: 'Nicotine' },
   { id: 'late_meal', icon: '🍽️', label: 'Late Meal', sub: 'after 22:00' },
-  { id: 'fasting', icon: '⏳', label: 'Fasting' },
 ];
 
 let selectedBehaviors = new Set();
@@ -9066,12 +9062,12 @@ function renderMoodTrend() {
 
 // Categorized behavior groups for cleaner journal layout
 const JOURNAL_CATEGORIES = [
-  { label: 'Substances', ids: ['shisha', 'shisha_late', 'energy_caps', 'alcohol', 'weed', 'nicotine', 'sugar'] },
+  { label: 'Substances', ids: ['shisha', 'shisha_late', 'energy_caps', 'alcohol', 'sugar'] },
   { label: 'Training', ids: ['workout', 'sauna', 'cold_shower', 'stretching', 'mobility', 'foam_roll'] },
-  { label: 'Recovery', ids: ['meditation', 'nap', 'nature', 'massage', 'reading', 'social', 'jetboots', 'powerdot'] },
-  { label: 'Habits', ids: ['sunlight', 'hydration', 'creatine', 'magnesium', 'supplements', 'protein', 'fasting'] },
+  { label: 'Recovery', ids: ['meditation', 'nap', 'massage', 'massage_gun', 'infrapanel', 'jetboots', 'powerdot'] },
+  { label: 'Habits', ids: ['sunlight', 'hydration', 'creatine', 'magnesium', 'supplements'] },
   { label: 'Sleep', ids: ['screen_late', 'late_meal', 'blue_light_glasses', 'sleep_8h30', 'sleep_before_2'] },
-  { label: 'Routine', ids: ['wake_before_930', 'no_phone_morning', 'make_bed', 'skincare_am', 'skincare_pm', 'deep_work', 'linkedin_30', 'sex'] },
+  { label: 'Routine', ids: ['wake_before_930', 'no_phone_morning', 'make_bed', 'skincare_am', 'skincare_pm', 'deep_work', 'linkedin_30', 'sex', 'barber'] },
 ];
 
 function initJournal() {
@@ -10157,12 +10153,12 @@ const LIVE_ACTIVITY_META = {
   mobility:     { icon: '🤸', label: 'Mobility', targetMin: 15 },
   cold_shower:  { icon: '🧊', label: 'Cold Shower', targetMin: 3 },
   jetboots:     { icon: '🦶', label: 'Jetboots', targetMin: 20 },
-  nature:       { icon: '🌿', label: 'Nature Walk', targetMin: 20 },
-  reading:      { icon: '📖', label: 'Reading', targetMin: 30 },
   nap:          { icon: '😴', label: 'Nap', targetMin: 20, warnAtMin: 30 },
   massage:      { icon: '💆', label: 'Massage', targetMin: 30 },
   foam_roll:    { icon: '🧱', label: 'Foam Roll', targetMin: 15 },
   powerdot:     { icon: '⚡', label: 'PowerDot EMS', targetMin: 25 },
+  massage_gun:  { icon: '🔫', label: 'Massage Gun', targetMin: 10 },
+  infrapanel:   { icon: '🔴', label: 'Infrapanel', targetMin: 15 },
 };
 
 function logBehavior(tag) {
@@ -10721,7 +10717,7 @@ function getHabitPatterns() {
   const missedToday = habits.filter(h => !todayBehaviors.includes(h));
 
   // Identify negative patterns (substances used 3+ times in 7 days)
-  const negatives = ['shisha', 'shisha_late', 'alcohol', 'weed', 'nicotine', 'sugar', 'screen_late', 'late_meal'];
+  const negatives = ['shisha', 'shisha_late', 'alcohol', 'sugar', 'screen_late', 'late_meal'];
   const freq7 = {};
   for (const j of last7) {
     for (const b of (j.behaviors || [])) {
@@ -10731,7 +10727,7 @@ function getHabitPatterns() {
   const overused = Object.entries(freq7).filter(([_,c]) => c >= 3).map(([id, count]) => ({ id, count }));
 
   // Identify positive habits rarely done (logged <2 times in 14 days)
-  const positives = ['meditation', 'cold_shower', 'stretching', 'mobility', 'sunlight', 'creatine', 'hydration', 'reading', 'nature'];
+  const positives = ['meditation', 'cold_shower', 'stretching', 'mobility', 'sunlight', 'creatine', 'hydration', 'foam_roll', 'massage_gun', 'infrapanel'];
   const underused = positives.filter(p => (freq[p] || 0) < 2 && !todayBehaviors.includes(p));
 
   // Streak detection  - consecutive days doing a behavior
@@ -10760,13 +10756,12 @@ const HABIT_SCIENCE = {
   hydration: '2% body mass loss impairs reaction time, power output and decision-making in athletes (Nuccio et al., Sports Med, 2017)',
   workout: 'Keep acute:chronic workload ratio between 0.8-1.3  - spikes above that increase injury risk significantly (Gabbett, BJSM, 2016)',
   sauna: 'GH surge 2-5x baseline post-session (Leppäluoto 1986). HSP70/90 induction aids muscle repair. For jumpers: avoid day before competition as heat temporarily reduces tendon stiffness. Best 3h+ post-training or rest days. 15-20min at 80-100°C.',
-  reading: 'Reading activates parasympathetic nervous system and reduces cognitive arousal  - effective wind-down ritual before sleep',
-  nature: '20-30min nature exposure reduces cortisol at a rate of 21.3%/hour  - sitting or walking both work (Hunter et al., Front Psychol, 2019)',
-  protein: '1.6-2.2g/kg/day protein optimizes muscle protein synthesis  - distribute across 4+ meals (Morton et al., BJSM, 2018)',
+  massage_gun: 'Percussive therapy at 40-53Hz reduces DOMS and improves range of motion comparable to massage (Konrad, J Sports Sci Med, 2020). Heat mode increases tissue extensibility. Cold mode reduces acute inflammation. For jumpers: target hip flexors, quads, calves, Achilles. 30-60s per group.',
+  infrapanel: 'Near-infrared (NIR 700-1400nm) penetrates 2-7cm, activating cytochrome c oxidase and boosting mitochondrial ATP production (Hamblin, BBA Bioenergetics, 2018). Accelerates collagen synthesis in tendons. For jumpers: patellar tendon, Achilles, ankle joint capsule. 15-20min per area.',
+  barber: 'Scheduled every 23 days. Looking sharp builds confidence and maintains professional presentation.',
   magnesium: 'Magnesium supplementation (500mg/day) improved sleep time and efficiency in elderly subjects (Abbasi et al., JRMS, 2012)',
   supplements: 'Consistent timing optimizes absorption  - fat-soluble vitamins with meals, magnesium in the evening',
   blue_light_glasses: 'Amber-tinted lenses in the evening improved sleep quality in insomnia patients (Shechter et al., J Psychiatr Res, 2018)',
-  fasting: 'Time-restricted eating may improve metabolic flexibility  - human autophagy data is limited, significant effects likely require 24h+',
   deep_work: 'Peak cognitive performance follows ~90min ultradian cycles  - match deep work to your circadian peaks (Kleitman BRAC model)',
   jetboots: 'Sequential pneumatic compression accelerates metabolite clearance (lactate, CK) and enhances parasympathetic reactivation (HRV). Does not impair adaptation unlike cold immersion. 20-30min post-training. Particularly useful between sessions during competition blocks.',
   foam_roll: 'Increases ROM without reducing force production, unlike static stretching (Cheatham, IJSPT, 2015). Reduces DOMS 20-40% post-exercise (Pearcey, JSCR, 2015). For long jumpers: focus on quads, hip flexors, IT band, calves, thoracic spine. 60-120s per muscle group.',
@@ -10777,14 +10772,11 @@ const HABIT_SCIENCE = {
   nap: '26-min naps improved alertness by 54% and performance by 34% in NASA pilots (Rosekind et al., NASA Technical Report, 1995)',
   skincare_am: 'Daily SPF reduces UV-induced skin aging  - consistency matters more than product price',
   skincare_pm: 'Nighttime skin repair activity peaks during sleep  - evening routines align with natural cell turnover',
-  social: 'Weak social connections increase mortality risk comparable to smoking 15 cigarettes/day  - meta-analysis of 148 studies (Holt-Lunstad et al., PLoS Med, 2010)',
   massage: 'Attenuated NF-κB inflammatory signaling and increased mitochondrial biogenesis (Crane, Sci Transl Med, 2012). For explosive athletes: reduces fascial adhesions that limit rate of force development. Best 2-6h post-training, not immediately after.',
   // Negative behavior science
   shisha: 'One hookah session = inhaling ~90,000mL smoke vs ~500mL for a cigarette  - CO half-life is 4-5h in non-smokers (WHO)',
   shisha_late: 'Shisha before sleep elevates resting heart rate and carbon monoxide levels  - both directly impair deep sleep and HRV',
   alcohol: 'Moderate-to-high doses suppress REM sleep dose-dependently; even moderate intake disrupts sleep architecture (Ebrahim et al., Alcohol Clin Exp Res, 2013)',
-  weed: 'THC suppresses REM sleep in a dose-dependent manner  - reduced REM impairs motor memory consolidation',
-  nicotine: 'Nicotine half-life is ~2h, but its metabolite cotinine persists 16-24h  - disrupts sleep architecture well beyond the last use',
   sugar: 'Chronic high-glycemic diets are associated with elevated inflammatory markers (IL-6, CRP)  - limit processed sugar for recovery',
   screen_late: 'Evening screen use delays melatonin onset and reduces sleep quality  - effect is dose-dependent on duration and brightness',
   late_meal: 'Eating close to sleep raises core temperature via thermogenesis  - the body needs to drop ~1°C to initiate deep sleep',
@@ -10903,7 +10895,6 @@ function renderSuggestions() {
     hydration: { icon: '💧', title: 'Track your hydration', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('hydration')` },
     supplements: { icon: '💊', title: 'Take your supplements', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('supplements')` },
     magnesium: { icon: '💊', title: 'Magnesium before bed', action: 'Log', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `logBehavior('magnesium')` },
-    protein: { icon: '🥛', title: 'Hit your protein target', action: 'Log', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `logBehavior('protein')` },
     stretching: { icon: '🧘‍♂️', title: 'Stretch session', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('stretching')` },
     mobility: { icon: '🤸', title: 'Mobility work', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('mobility')` },
     meditation: { icon: '🧘', title: '13-min meditation', action: 'Start', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `startLiveActivity('meditation')` },
@@ -10913,6 +10904,8 @@ function renderSuggestions() {
     jetboots: { icon: '🦶', title: 'Jetboots recovery session', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('jetboots')` },
     foam_roll: { icon: '🧱', title: 'Foam roll session', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('foam_roll')` },
     powerdot: { icon: '⚡', title: 'PowerDot recovery', action: 'Start', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `startLiveActivity('powerdot')` },
+    massage_gun: { icon: '🔫', title: 'Massage gun session', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('massage_gun')` },
+    infrapanel: { icon: '🔴', title: 'Infrapanel for joints', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('infrapanel')` },
     no_phone_morning: { icon: '🚫', title: 'No phone first 30 min', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('no_phone_morning')` },
   };
 
@@ -10937,9 +10930,8 @@ function renderSuggestions() {
     sauna: { icon: '🧖', title: 'Sauna session', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('sauna')` },
     foam_roll: { icon: '🧱', title: 'Foam roll recovery', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('foam_roll')` },
     powerdot: { icon: '⚡', title: 'PowerDot EMS recovery', action: 'Start', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `startLiveActivity('powerdot')` },
-    nature: { icon: '🌿', title: 'Get into nature', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('nature')` },
-    reading: { icon: '📖', title: 'Read before bed', action: 'Start', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `startLiveActivity('reading')` },
-    fasting: { icon: '⏳', title: 'Try intermittent fasting', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('fasting')` },
+    massage_gun: { icon: '🔫', title: 'Massage gun recovery', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('massage_gun')` },
+    infrapanel: { icon: '🔴', title: 'Infrared therapy for joints', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('infrapanel')` },
   };
   // Only suggest 1 discovery item, and only if we have room
   if (sugs.length < 4) {
@@ -10950,6 +10942,30 @@ function renderSuggestions() {
         break;
       }
     }
+  }
+
+  // === PRIORITY 6B: Grooming & hygiene coaching ===
+  // Barber reminder every 23 days
+  const lastBarber = (ST.logs || []).filter(l => l.tag === 'barber').sort((a,b) => b.date.localeCompare(a.date))[0];
+  const daysSinceBarber = lastBarber ? Math.floor((Date.now() - new Date(lastBarber.date + 'T12:00:00').getTime()) / 86400000) : 999;
+  if (daysSinceBarber >= 20) {
+    const urgency = daysSinceBarber >= 23 ? 'Due today' : `${23 - daysSinceBarber}d left`;
+    sugs.push({
+      icon: '💈', title: `Barber  - ${urgency}`,
+      sub: daysSinceBarber >= 23
+        ? `${daysSinceBarber} days since last cut. Time to book.`
+        : `Last cut ${daysSinceBarber} days ago. Schedule soon.`,
+      action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)',
+      onclick: `logBehavior('barber')`, pri: 6
+    });
+  }
+
+  // Skincare coaching - remind if not logged today
+  if (hwake > 0.5 && hwake < 2 && !todayBehaviors.includes('skincare_am')) {
+    sugs.push({ icon: '🧴', title: 'Morning skincare', sub: 'SPF + moisturizer. UV protection is the #1 anti-aging intervention.', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('skincare_am')`, pri: 6 });
+  }
+  if (hwake > 12 && !todayBehaviors.includes('skincare_pm')) {
+    sugs.push({ icon: '✨', title: 'Evening skincare', sub: 'Cleanse + retinol/moisturize. Skin repair peaks during sleep.', action: 'Log', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `logBehavior('skincare_pm')`, pri: 6 });
   }
 
   // === PRIORITY 7: Negative pattern warnings ===
@@ -12506,7 +12522,19 @@ function getNotificationSchedule() {
     });
   }
 
-  // 9. Sleep debt warning  - morning, only if debt > 3h
+  // 9. Barber reminder  - morning, when due (23-day cycle)
+  const lastBarberLog = (ST.logs || []).filter(l => l.tag === 'barber').sort((a,b) => b.date.localeCompare(a.date))[0];
+  const barberDays = lastBarberLog ? Math.floor((Date.now() - new Date(lastBarberLog.date + 'T12:00:00').getTime()) / 86400000) : 999;
+  if (barberDays >= 23) {
+    schedule.push({
+      type: 'barber',
+      hour: (WAKE + 2) % 24,
+      title: 'Barber day 💈',
+      body: barberDays + ' days since last cut. Book your appointment.'
+    });
+  }
+
+  // 10. Sleep debt warning  - morning, only if debt > 3h
   if (currentDebt > 3) {
     schedule.push({
       type: 'sleepdebt',
