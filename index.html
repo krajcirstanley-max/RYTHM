@@ -3073,9 +3073,12 @@ function rebuildWeekScores() {
     const key = d.toISOString().slice(0,10);
     const isPast = i < monOffset;
     const isToday = i === monOffset;
+    let score = null;
+    if (isPast) score = history[key] || null;
+    else if (isToday) score = history[key] || computeReadiness();
     ST.weekScores.push({
       label: days[i],
-      score: (isPast || isToday) ? (history[key] || null) : null,
+      score,
       today: isToday
     });
   }
@@ -6347,11 +6350,18 @@ function renderWeekInsights() {
 
   // 3. Strain-recovery balance
   const weekScores = ST.weekScores || [];
-  const greenDays = weekScores.filter(d => d.score !== null && d.score >= 67).length;
-  const redDays = weekScores.filter(d => d.score !== null && d.score < 34).length;
-  if (weekScores.some(d => d.score !== null)) {
+  const scoredDays = weekScores.filter(d => d.score !== null);
+  const greenDays = scoredDays.filter(d => d.score >= 67).length;
+  const yellowDays = scoredDays.filter(d => d.score >= 34 && d.score < 67).length;
+  const redDays = scoredDays.filter(d => d.score < 34).length;
+  if (scoredDays.length > 0) {
     const cls = greenDays >= 5 ? 'good' : redDays >= 3 ? 'warn' : 'info';
-    insights.push({ cls, label: 'Recovery Distribution', text: `<b>${greenDays}</b> green days, <b>${redDays}</b> red days this week. ${greenDays >= 5 ? 'Strong recovery week, good capacity for hard sessions.' : redDays >= 3 ? 'Multiple low-recovery days. Prioritize rest.' : 'Mixed week. Balance strain with recovery days.'}` });
+    const parts = [];
+    if (greenDays) parts.push(`<b>${greenDays}</b> green`);
+    if (yellowDays) parts.push(`<b>${yellowDays}</b> yellow`);
+    if (redDays) parts.push(`<b>${redDays}</b> red`);
+    const summary = parts.join(', ') + ` (${scoredDays.length}d tracked)`;
+    insights.push({ cls, label: 'Recovery Distribution', text: `${summary}. ${greenDays >= 5 ? 'Strong recovery week, good capacity for hard sessions.' : redDays >= 3 ? 'Multiple low-recovery days. Prioritize rest.' : greenDays >= 3 ? 'Decent recovery. Aim for more green days.' : 'Balance strain with recovery days.'}` });
   }
 
   // 4. Energy Caps cutoff
