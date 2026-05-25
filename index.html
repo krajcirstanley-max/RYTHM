@@ -3840,7 +3840,7 @@ function renderThreeRings() {
   const rings = [
     { key: 'sleep', val: Math.max(0, Math.min(100, r.sleep || 0)), label: 'SLEEP', color: '#93a1c4', unit: '%' },
     { key: 'recovery', val: Math.max(0, Math.min(100, computeReadiness())), label: 'RECOVERY', color: '#00ec7f', unit: '%' },
-    { key: 'strain', val: Math.max(0, Math.min(100, strainPct)), label: 'STRAIN', color: '#4da9ff', unit: '%' },
+    { key: 'strain', val: Math.max(0, Math.min(100, strainPct)), label: 'STRAIN', color: '#4da9ff', unit: strainPct > 0 ? '%' : '', display: strainPct > 0 ? undefined : '<span style="font-size:14px;letter-spacing:1px;font-weight:700;opacity:0.5">REST</span>' },
   ];
 
   document.getElementById('threeRings').innerHTML = rings.map(ri => {
@@ -3854,7 +3854,7 @@ function renderThreeRings() {
             transform="rotate(-90 60 60)"/>
         </svg>
         <div class="ring-val-wrap">
-          <div class="ring-pct">${ri.val}${ri.unit ? '<span class="unit">'+ri.unit+'</span>' : ''}</div>
+          <div class="ring-pct">${ri.display || (ri.val + (ri.unit ? '<span class="unit">'+ri.unit+'</span>' : ''))}</div>
         </div>
       </div>
       <div class="ring-name-row">${ri.label}
@@ -5143,6 +5143,10 @@ function renderDayBanner() {
   const score = computeReadiness();
   const interp = readinessInterpretation(score);
 
+  const m = ST.metrics;
+  const hrvPctBelow = m.hrvBaseline ? Math.round((1 - m.hrv / m.hrvBaseline) * 100) : 0;
+  const debtH = m.sleepDebt || 0;
+
   let title, msg, checkColor;
   if (score >= 67) {
     title = 'Optimal Health';
@@ -5151,11 +5155,17 @@ function renderDayBanner() {
   } else if (score >= 34) {
     title = 'Moderate Recovery';
     checkColor = 'var(--warn)';
-    msg = `Stick to technique work and sub-max intensity. Avoid stacking hard sessions back to back.`;
+    const reasons = [];
+    if (hrvPctBelow >= 10) reasons.push(`HRV ${hrvPctBelow}% below baseline`);
+    if (debtH >= 5) reasons.push(`${debtH.toFixed(0)}h sleep debt`);
+    msg = `Stick to technique work and sub-max intensity.` + (reasons.length ? ` Key factors: ${reasons.join(', ')}.` : ` Avoid stacking hard sessions back to back.`);
   } else {
     title = 'Low Recovery';
     checkColor = 'var(--danger)';
-    msg = `Recovery is low - prioritize rest, mobility, and sleep tonight. Skip heavy training.`;
+    const reasons = [];
+    if (hrvPctBelow >= 15) reasons.push(`HRV ${hrvPctBelow}% below baseline`);
+    if (debtH >= 8) reasons.push(`${debtH.toFixed(0)}h sleep debt`);
+    msg = `Recovery is low — prioritize rest, mobility, and sleep tonight.` + (reasons.length ? ` Drivers: ${reasons.join(', ')}.` : ` Skip heavy training.`);
   }
 
   el.innerHTML = `<div class="day-banner-body">
