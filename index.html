@@ -7741,7 +7741,7 @@ function saveJournal() {
   const entry = {
     date: today,
     behaviors: [...selectedBehaviors],
-    readiness: computeReadiness(),
+    readiness: Math.round(computeReadiness()),
     strain: computeStrain(),
     hrv: ST.metrics.hrv,
     rhr: ST.metrics.rhr,
@@ -7885,7 +7885,7 @@ function renderJournalHistory() {
     return `<div class="jh-entry">
       <div class="jh-top">
         <span class="jh-date">${dateStr.toUpperCase()}</span>
-        <span class="jh-score" style="color:${interp.color}">${j.readiness != null ? j.readiness + '%' : ''}${context}</span>
+        <span class="jh-score" style="color:${interp.color}">${j.readiness != null ? Math.round(j.readiness) + '%' : ''}${context}</span>
       </div>
       <div class="jh-tags">${tags || '<span style="font-size:11px;color:var(--text-4)">No behaviors logged</span>'}</div>
     </div>`;
