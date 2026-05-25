@@ -541,22 +541,34 @@ section { padding: 0 16px; margin-bottom: 8px; }
 }
 
 /* STREAKS */
-.streaks-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+.streaks-row {
+  display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px;
+  scrollbar-width: none; -ms-overflow-style: none;
+  scroll-snap-type: x mandatory;
+}
+.streaks-row::-webkit-scrollbar { display: none; }
 .streak-cell {
+  flex-shrink: 0; scroll-snap-align: start;
   background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
   border: 1px solid var(--card-border);
-  border-radius: var(--radius); padding: 14px 10px; text-align: center;
+  border-radius: 14px; padding: 12px 14px; min-width: 90px;
   backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
   box-shadow: 0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
 }
+.streak-cell.on-fire { border-color: rgba(0,236,127,0.2); }
+.streak-cell .s-icon { font-size: 18px; line-height: 1; }
 .streak-cell .s-val {
-  font-size: 24px; font-weight: 900; letter-spacing: -0.5px;
-  color: #fff; line-height: 1; margin-bottom: 4px;
+  font-size: 20px; font-weight: 900; letter-spacing: -0.5px;
+  color: #fff; line-height: 1;
+  font-family: 'DM Mono', monospace;
 }
+.streak-cell.on-fire .s-val { color: var(--energy); }
 .streak-cell .s-label {
-  font-size: 9px; font-weight: 700; letter-spacing: 1px;
-  color: var(--text-3); text-transform: uppercase;
+  font-size: 8px; font-weight: 700; letter-spacing: 0.8px;
+  color: var(--text-4); text-transform: uppercase; text-align: center;
 }
+.streak-cell .s-fire { font-size: 10px; color: var(--energy); font-weight: 800; }
 
 /* IMPACT */
 .impact-card { background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9)); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 18px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04); }
@@ -1017,8 +1029,9 @@ section { padding: 0 16px; margin-bottom: 8px; }
 }
 .fullpage.open { transform: translateX(0); }
 .fp-header-wrap {
-  flex-shrink: 0; background: var(--bg); z-index: 5;
+  flex-shrink: 0; background: var(--bg); z-index: 10;
   padding-top: env(safe-area-inset-top, 47px);
+  position: relative; /* z-index requires positioning */
 }
 .fp-header {
   display: flex; align-items: center; gap: 10px;
@@ -5770,20 +5783,91 @@ function renderWeekStrip() {
   }).join('');
 }
 
-function renderStreaks() {
-  const s = ST.streaks;
-  const streakData = [
-    { val: s.wake, label: 'Wake', icon: '☀️' },
-    { val: s.sleep, label: 'Sleep', icon: '🌙' },
-    { val: s.winddown || 0, label: 'Wind-down', icon: '📴' },
-  ];
-  document.getElementById('streaksRow').innerHTML = streakData.map(d => `
-    <div class="streak-cell">
-      <div class="s-val">${d.val}</div>
-      <div class="s-label">${d.label}</div>
-    </div>`).join('');
+function computeHabitStreaks() {
+  // Compute consecutive-day streaks for each behavior from journal data
+  const sorted = [...ST.journal].sort((a,b) => b.date.localeCompare(a.date));
+  if (!sorted.length) return [];
 
-  const total = s.wake + s.sleep + (s.winddown || 0);
+  // Get all unique behaviors across journal
+  const allBehaviors = new Set();
+  for (const j of sorted) {
+    for (const b of (j.behaviors || [])) allBehaviors.add(b);
+  }
+
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0,10);
+  const streaks = [];
+
+  for (const bId of allBehaviors) {
+    let streak = 0;
+    // Check consecutive days backwards from today (or yesterday if today isn't logged yet)
+    const todayLogged = sorted.find(j => j.date === todayStr && j.behaviors.includes(bId));
+    const startOffset = todayLogged ? 0 : 1; // start from yesterday if today not logged yet
+
+    for (let i = startOffset; i < 365; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dStr = d.toISOString().slice(0,10);
+      const entry = sorted.find(j => j.date === dStr);
+      if (entry && entry.behaviors.includes(bId)) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+
+    if (streak >= 1) {
+      const beh = (typeof JOURNAL_BEHAVIORS !== 'undefined')
+        ? JOURNAL_BEHAVIORS.find(b => b.id === bId)
+        : null;
+      streaks.push({
+        id: bId,
+        streak,
+        icon: beh ? beh.icon : '📋',
+        label: beh ? beh.label : bId.replace(/_/g, ' '),
+        active: !!todayLogged // did it today
+      });
+    }
+  }
+
+  // Sort by streak length descending
+  streaks.sort((a,b) => b.streak - a.streak);
+  return streaks;
+}
+
+function renderStreaks() {
+  const el = document.getElementById('streaksRow');
+  if (!el) return;
+
+  const habitStreaks = computeHabitStreaks();
+
+  // Also include the legacy wake/sleep/winddown streaks
+  const s = ST.streaks;
+  const legacyStreaks = [];
+  if (s.wake > 0) legacyStreaks.push({ id: '_wake', streak: s.wake, icon: '☀️', label: 'Wake Time', active: s.lastWakeDate === new Date().toISOString().slice(0,10) });
+  if (s.sleep > 0) legacyStreaks.push({ id: '_sleep', streak: s.sleep, icon: '🌙', label: 'Sleep Goal', active: s.lastSleepDate === new Date().toISOString().slice(0,10) });
+  if ((s.winddown || 0) > 0) legacyStreaks.push({ id: '_winddown', streak: s.winddown, icon: '📴', label: 'Wind-down', active: s.lastWinddownDate === new Date().toISOString().slice(0,10) });
+
+  // Merge and sort all by streak
+  const all = [...habitStreaks, ...legacyStreaks].sort((a,b) => b.streak - a.streak);
+
+  if (!all.length) {
+    el.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text-4);font-size:12px;width:100%;">Log habits in Journal to build streaks</div>`;
+    return;
+  }
+
+  el.innerHTML = all.map(d => {
+    const onFire = d.streak >= 3;
+    return `<div class="streak-cell ${onFire ? 'on-fire' : ''}">
+      <div class="s-icon">${d.icon}</div>
+      <div class="s-val">${d.streak}</div>
+      <div class="s-label">${d.label}</div>
+      ${onFire ? '<div class="s-fire">🔥</div>' : ''}
+    </div>`;
+  }).join('');
+
+  // Update streak badge in header if it exists
+  const total = all.reduce((s,d) => s + d.streak, 0);
   const streakEl = document.getElementById('streakDisplay');
   if (streakEl) streakEl.innerHTML = total > 0 ? `${total}` : '';
 }
@@ -9585,11 +9669,12 @@ const WINDDOWN_STEPS = [
 ];
 
 function bootApp() {
-  // One-time migration: clear stale recovery lock so it recomputes with sleep-HRV logic (v30)
-  if (ST._recoveryMigration !== 'v30') {
+  // One-time migration: clear stale recovery lock so it recomputes with nighttime-based algorithm (v51)
+  if (ST._recoveryMigration !== 'v51') {
     ST._recoveryLockedDate = null;
     ST._recoveryLockedScore = null;
-    ST._recoveryMigration = 'v30';
+    ST._readinessBreakdown = null;
+    ST._recoveryMigration = 'v51';
     saveState();
   }
 
