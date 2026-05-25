@@ -392,6 +392,16 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .tl-item.current .tl-title { color: var(--energy); font-weight: 600; }
 .tl-item.past-item .tl-title { opacity: 0.5; }
 .tl-item.past-item .tl-time { opacity: 0.5; }
+.tl-remove {
+  position: absolute; right: 0; top: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; opacity: 0.3; transition: all 0.15s;
+}
+.tl-remove:active { opacity: 1; background: rgba(255,84,112,0.2); border-color: rgba(255,84,112,0.3); }
+.tl-remove svg { width: 10px; height: 10px; }
+.tl-remove path { stroke: rgba(255,255,255,0.6); }
 .tl-task-check {
   position: absolute; right: 0; top: 6px;
   width: 20px; height: 20px; border-radius: 50%;
@@ -2428,6 +2438,14 @@ section { padding: 0 16px; margin-bottom: 8px; }
   transition: all 0.15s; text-transform: uppercase;
 }
 .la-pause:active { background: rgba(91,154,255,0.2); color: #5b9aff; transform: scale(0.95); }
+.la-discard {
+  padding: 7px 16px; border: none; border-radius: 100px;
+  background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.3);
+  font-size: 11px; font-weight: 800; cursor: pointer; font-family: inherit;
+  border: 1px solid rgba(255,255,255,0.06); letter-spacing: 0.3px;
+  transition: all 0.15s; text-transform: uppercase;
+}
+.la-discard:active { background: rgba(255,84,112,0.15); color: rgba(255,84,112,0.6); transform: scale(0.95); }
 .la-paused-badge {
   font-size: 9px; font-weight: 800; color: #fbbf24;
   letter-spacing: 0.8px; display: flex; align-items: center; gap: 5px;
@@ -6152,7 +6170,8 @@ function renderTasks() {
 
   // 2. Workouts from health sync
   const workouts = (ST._workouts || []).filter(w => (w.date || '').slice(0, 10) === today);
-  for (const w of workouts) {
+  for (let wi = 0; wi < workouts.length; wi++) {
+    const w = workouts[wi];
     let time = null;
     if (w.startDate) {
       const d = new Date(w.startDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
@@ -6161,14 +6180,17 @@ function renderTasks() {
     const durStr = w.durMin > 0 ? `${Math.round(w.durMin)}min` : '';
     const calStr = w.cal > 0 ? `${w.cal} kcal` : '';
     const sub = [durStr, calStr].filter(Boolean).join(' · ');
-    events.push({ time: time || minToTime((WAKE + 3) * 60 % 1440), title: w.type || 'Workout', sub, icon: '🏋️', dot: 'strain', type: 'workout' });
+    // Store original index in ST._workouts for removal
+    const origIdx = (ST._workouts || []).indexOf(w);
+    events.push({ time: time || minToTime((WAKE + 3) * 60 % 1440), title: w.type || 'Workout', sub, icon: '🏋️', dot: 'strain', type: 'workout', workoutIdx: origIdx });
   }
 
   // 3. Logged activities (quick logs)
   const todayLogs = (ST.logs || []).filter(l => l.date === today);
   const tagIcons = { shisha: '💨', shisha_late: '🌙', workout: '🏋️', sauna: '🧖', alcohol: '🍷', stress: '😤', nap: '😴', meditation: '🧘', sunlight: '☀️', screen: '📱', cold_shower: '🧊', sugar: '🍬', deep_work: '📊', walk: '🚶', sun_exposure: '☀️', energy_caps: '⚡', creatine: '🧪' };
   const tagDots = { shisha: 'shisha', shisha_late: 'shisha', workout: 'strain', sauna: 'warn', alcohol: 'warn', stress: 'warn', nap: 'sleep', meditation: 'active', sunlight: 'active', cold_shower: 'active', deep_work: 'active', walk: 'active', sun_exposure: 'active' };
-  for (const log of todayLogs) {
+  for (let li = 0; li < todayLogs.length; li++) {
+    const log = todayLogs[li];
     const d = new Date(log.ts);
     const time = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
     const tags = log.tags || [];
@@ -6178,7 +6200,9 @@ function renderTasks() {
     const icon = tagIcons[mainTag] || '📝';
     const dot = tagDots[mainTag] || 'past';
     const sub = log.durationMin ? `${log.durationMin}min` : '';
-    events.push({ time, title: displayTitle, sub, icon, dot, type: 'log' });
+    // Store original index in ST.logs for removal
+    const origLogIdx = (ST.logs || []).indexOf(log);
+    events.push({ time, title: displayTitle, sub, icon, dot, type: 'log', logIdx: origLogIdx });
   }
 
   // 4. Manual tasks
@@ -6238,9 +6262,15 @@ function renderTasks() {
     const itemCls = isCurrent ? 'current' : (isPast ? 'past-item' : '');
     const taskCheck = ev.type === 'task' ? `<div class="tl-task-check ${ev.done ? 'checked' : ''}" onclick="event.stopPropagation();toggleTask(${ev.taskIdx})"></div>` : '';
 
+    // Remove button for removable items (logs, tasks, workouts - not auto events)
+    const canRemove = ev.type === 'log' || ev.type === 'task' || ev.type === 'workout';
+    const removeBtn = canRemove
+      ? `<div class="tl-remove" onclick="event.stopPropagation();removeDayEvent('${ev.type}',${ev.type === 'task' ? ev.taskIdx : (ev.type === 'log' ? (ev.logIdx || 0) : (ev.workoutIdx || 0))})"><svg viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>`
+      : '';
+
     return `<div class="tl-item ${itemCls}">
       <div class="tl-dot ${dotCls}"></div>
-      ${taskCheck}
+      ${taskCheck}${removeBtn}
       <div class="tl-time">${ev.time || ''}</div>
       <div class="tl-title">${ev.icon} ${ev.title}</div>
       ${ev.sub ? `<div class="tl-sub">${ev.sub}</div>` : ''}
@@ -6292,6 +6322,24 @@ function addTask() {
 
 function toggleTask(idx) {
   ST.tasks[idx].done = !ST.tasks[idx].done;
+  saveState();
+  renderTasks();
+}
+
+function removeDayEvent(type, idx) {
+  if (type === 'task') {
+    if (idx >= 0 && idx < ST.tasks.length) {
+      ST.tasks.splice(idx, 1);
+    }
+  } else if (type === 'log') {
+    if (ST.logs && idx >= 0 && idx < ST.logs.length) {
+      ST.logs.splice(idx, 1);
+    }
+  } else if (type === 'workout') {
+    if (ST._workouts && idx >= 0 && idx < ST._workouts.length) {
+      ST._workouts.splice(idx, 1);
+    }
+  }
   saveState();
   renderTasks();
 }
@@ -10173,6 +10221,18 @@ function getActiveElapsed(act) {
   return now - start - paused;
 }
 
+function discardLiveActivity(id) {
+  if (!ST.liveActivities) return;
+  const idx = ST.liveActivities.findIndex(a => a.id === id);
+  if (idx > -1) {
+    ST.liveActivities.splice(idx, 1);
+    saveState();
+    renderLiveActivities();
+    const remaining = ST.liveActivities.filter(a => !a.endedAt);
+    if (!remaining.length) releaseWakeLock();
+  }
+}
+
 function stopLiveActivity(id) {
   if (!ST.liveActivities) return;
   const act = ST.liveActivities.find(a => a.id === id);
@@ -10353,6 +10413,7 @@ function renderLiveActivities() {
 
     const pauseBtn = `<button class="la-pause" onclick="event.stopPropagation();${isPaused ? 'resumeLiveActivity' : 'pauseLiveActivity'}('${a.id}')">${isPaused ? 'Resume' : 'Pause'}</button>`;
     const stopBtn = `<button class="la-stop" onclick="event.stopPropagation();stopLiveActivity('${a.id}')">Stop</button>`;
+    const discardBtn = `<button class="la-discard" onclick="event.stopPropagation();discardLiveActivity('${a.id}')">Discard</button>`;
     const statusLabel = isPaused ? '<span class="la-paused-badge">PAUSED</span>' : '<span class="la-live-dot"></span> ACTIVE';
     const timerStyle = isPaused ? 'opacity:0.4;' : '';
 
@@ -10397,7 +10458,7 @@ function renderLiveActivities() {
           </div>
           <div style="display:flex;align-items:center;gap:8px;">
             <div class="la-timer" style="font-size:22px;letter-spacing:-1px;${timerStyle}">${dur}</div>
-            ${pauseBtn}${stopBtn}
+            ${pauseBtn}${stopBtn}${discardBtn}
           </div>
         </div>
         ${pastCutoff ? `<div class="la-warn" style="margin-top:6px;padding:5px 10px;border-radius:8px;background:rgba(255,107,107,0.08);font-size:10px;font-weight:600;color:#ff6b6b;">⚠️ CO half-life is 4-5h  - allow 3h+ minimum before sleep</div>` : '<div class="la-warn" style="display:none;"></div>'}
@@ -10418,7 +10479,7 @@ function renderLiveActivities() {
           </div>
           <div style="display:flex;align-items:center;gap:8px;">
             <div class="la-timer" style="${timerStyle}">${dur}</div>
-            ${pauseBtn}${stopBtn}
+            ${pauseBtn}${stopBtn}${discardBtn}
           </div>
         </div>
         <div class="la-progress"><div class="la-progress-fill" style="width:${pct}%"></div></div>
@@ -10465,7 +10526,7 @@ function renderLiveActivities() {
               <div class="la-timer" style="font-size:24px;letter-spacing:-1px;${timerStyle}">${dur}</div>
               <div style="font-size:9px;color:rgba(255,255,255,0.3);font-weight:600;margin-top:1px;"><span class="la-pomo-count">${pomoCount}</span> pomodoros</div>
             </div>
-            ${pauseBtn}${stopBtn}
+            ${pauseBtn}${stopBtn}${discardBtn}
           </div>
         </div>
         <div class="la-arc-wrap">
@@ -10499,7 +10560,7 @@ function renderLiveActivities() {
           </div>
           <div style="display:flex;align-items:center;gap:8px;">
             <div class="la-timer" style="${timerStyle}">${dur}</div>
-            ${pauseBtn}${stopBtn}
+            ${pauseBtn}${stopBtn}${discardBtn}
           </div>
         </div>
         <div class="la-progress"><div class="la-progress-fill" style="width:${pct}%"></div></div>
@@ -10525,7 +10586,7 @@ function renderLiveActivities() {
           </div>
           <div style="display:flex;align-items:center;gap:8px;">
             <div class="la-timer" style="${timerStyle}">${dur}</div>
-            ${pauseBtn}${stopBtn}
+            ${pauseBtn}${stopBtn}${discardBtn}
           </div>
         </div>
         <div class="la-progress"><div class="la-progress-fill" style="width:${pct}%"></div></div>
@@ -10545,7 +10606,7 @@ function renderLiveActivities() {
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <div class="la-timer" style="${timerStyle}">${dur}</div>
-          ${pauseBtn}${stopBtn}
+          ${pauseBtn}${stopBtn}${discardBtn}
         </div>
       </div>
       ${meta.targetMin ? `<div class="la-progress"><div class="la-progress-fill" style="width:${pct}%"></div></div>` : ''}
