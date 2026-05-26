@@ -3302,7 +3302,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v102';
+const APP_VERSION = 'v103';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -6410,6 +6410,7 @@ function renderTasks() {
 
   // 2. Workouts from health sync
   const workouts = (ST._workouts || []).filter(w => (w.date || '').slice(0, 10) === today);
+  const genericWorkoutTypes = ['Workout', 'Traditional Strength Training', 'Other', 'Functional Strength Training', 'Mixed Cardio'];
   for (let wi = 0; wi < workouts.length; wi++) {
     const w = workouts[wi];
     let time = null;
@@ -6417,12 +6418,20 @@ function renderTasks() {
       const d = new Date(w.startDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
       if (!isNaN(d.getTime())) time = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
     }
+    // Best name: Hero name > non-generic type > time-of-day label
+    let wName = w._heroName || null;
+    if (!wName && w.type && !genericWorkoutTypes.includes(w.type)) wName = w.type;
+    if (!wName && time) {
+      const h = parseInt(time.split(':')[0]);
+      wName = h < 12 ? 'Morning Session' : h < 17 ? 'Afternoon Session' : 'Evening Session';
+    }
+    if (!wName) wName = 'Workout';
     const durStr = w.durMin > 0 ? `${Math.round(w.durMin)}min` : '';
     const calStr = w.cal > 0 ? `${w.cal} kcal` : '';
     const sub = [durStr, calStr].filter(Boolean).join(' · ');
     // Store original index in ST._workouts for removal
     const origIdx = (ST._workouts || []).indexOf(w);
-    events.push({ time: time || minToTime((WAKE + 3) * 60 % 1440), title: w.type || 'Workout', sub, icon: '🏋️', dot: 'strain', type: 'workout', workoutIdx: origIdx });
+    events.push({ time: time || minToTime((WAKE + 3) * 60 % 1440), title: wName, sub, icon: '🏋️', dot: 'strain', type: 'workout', workoutIdx: origIdx });
   }
 
   // 3. Logged activities (quick logs)
@@ -6644,6 +6653,9 @@ function addWorkoutsToMyDay() {
     // Use startDate as unique key (two workouts at different times = different entries)
     const wKey = w.startDate || (w.type + '-' + (w.durMin || 0) + '-' + (w.cal || 0));
     const heroName = getHeroName(w, wi);
+
+    // Store Hero name on the workout entry itself for renderTasks() to use
+    if (heroName) w._heroName = heroName;
 
     const durStr = w.durMin > 0 ? (w.durMin >= 60 ? Math.floor(w.durMin / 60) + 'h ' + (w.durMin % 60) + 'min' : w.durMin + 'min') : '';
     const calStr = w.cal > 0 ? w.cal + ' kcal' : '';
@@ -12763,25 +12775,24 @@ async function fetchHealthData() {
     }
 
     // Store workouts from health data if available
-    // Handles multiple formats: data.workout.details, data.workout (flat), data.workouts (array)
-    if (data.workout) {
-      if (!ST._workouts) ST._workouts = [];
-      const wd = data.workout.details || data.workout;
-      const wDate = (data.workout.date || wd.date || todayKey).slice(0, 10);
-      // Compute duration from startDate/endDate if durMin is 0
-      let durMin = wd.durMin || wd.duration || 0;
-      if (durMin === 0 && wd.startDate && wd.endDate) {
-        const s = new Date(wd.startDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
-        const e = new Date(wd.endDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
+    // Edge function returns data.workouts[] (array of all recent workouts)
+    // Also handles legacy data.workout (single) format
+    if (!ST._workouts) ST._workouts = [];
+    function addWorkoutFromData(wd, fallbackDate) {
+      const wDate = (wd.date || fallbackDate).slice(0, 10);
+      const det = wd.details || wd;
+      let durMin = det.durMin || det.duration || wd.value || 0;
+      if (durMin === 0 && det.startDate && det.endDate) {
+        const s = new Date(det.startDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
+        const e = new Date(det.endDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
         if (!isNaN(s.getTime()) && !isNaN(e.getTime())) {
           const calc = (e - s) / 60000;
           if (calc > 0 && calc < 1440) durMin = Math.round(calc);
         }
       }
-      const wType = wd.type || wd.workoutType || 'Workout';
-      const wCal = wd.cal || wd.calories || wd.activeCalories || 0;
-      // Dedup by startDate if available, otherwise by type+duration
-      const startDateStr = wd.startDate || null;
+      const wType = det.type || det.workoutType || 'Workout';
+      const wCal = det.cal || det.calories || det.activeCalories || 0;
+      const startDateStr = det.startDate || null;
       const exists = startDateStr
         ? ST._workouts.find(x => x.startDate === startDateStr)
         : ST._workouts.find(x => x.date === wDate && x.type === wType && Math.abs((x.durMin || 0) - durMin) < 5);
@@ -12790,19 +12801,15 @@ async function fetchHealthData() {
       }
     }
     if (data.workouts && Array.isArray(data.workouts)) {
-      if (!ST._workouts) ST._workouts = [];
-      for (const w of data.workouts) {
-        const wDate = w.date || todayKey;
-        const wStart = w.startDate || null;
-        const exists = wStart
-          ? ST._workouts.find(x => x.startDate === wStart)
-          : ST._workouts.find(x => x.date === wDate && x.type === w.type && x.durMin === w.durMin);
-        if (!exists) ST._workouts.push({ date: wDate, type: w.type || 'Workout', durMin: w.durMin || 0, cal: w.cal || 0, startDate: wStart });
-      }
-      // Keep last 30 days
-      const cutoff = new Date(Date.now() - 30*86400000).toISOString().slice(0,10);
-      ST._workouts = ST._workouts.filter(w => w.date >= cutoff);
+      for (const w of data.workouts) addWorkoutFromData(w, todayKey);
     }
+    if (data.workout) {
+      addWorkoutFromData(data.workout, todayKey);
+    }
+    // Keep last 30 days
+    const wCutoff = new Date(Date.now() - 30*86400000).toISOString().slice(0,10);
+    ST._workouts = ST._workouts.filter(w => w.date >= wCutoff);
+    console.log('[RYTHM] Workouts after sync:', ST._workouts.filter(w => w.date === todayKey).length, 'today,', ST._workouts.length, 'total');
 
     // Auto-add today's synced workouts to My Day
     addWorkoutsToMyDay();
@@ -13028,14 +13035,22 @@ async function fetchHistoryData() {
       }
     }
 
-    // Backfill workouts from history (workout entries with cal > 0 or active_cal > 200)
-    if (ST._history.workout && ST._history.workout.length) {
+    // Backfill workouts from history (includes details with startDate, type, cal)
+    if (data.workout && Array.isArray(data.workout)) {
       if (!ST._workouts) ST._workouts = [];
-      const existDates = new Set(ST._workouts.map(w => w.date));
-      for (const w of ST._history.workout) {
-        if (!existDates.has(w.date) && w.value > 0) {
-          ST._workouts.push({ date: w.date, type: 'Workout', durMin: w.value || 0, cal: 0 });
-          existDates.add(w.date);
+      for (const w of data.workout) {
+        const det = w.details || {};
+        const wDate = (w.date || '').slice(0, 10);
+        const startDateStr = det.startDate || null;
+        const wType = det.type || 'Workout';
+        const durMin = det.durMin || w.value || 0;
+        const cal = det.cal || 0;
+        // Dedup by startDate (unique per session)
+        const exists = startDateStr
+          ? ST._workouts.find(x => x.startDate === startDateStr)
+          : ST._workouts.find(x => x.date === wDate && x.type === wType && Math.abs((x.durMin || 0) - durMin) < 5);
+        if (!exists && (durMin > 0 || cal > 10)) {
+          ST._workouts.push({ date: wDate, type: wType, durMin, cal, startDate: startDateStr });
         }
       }
     }

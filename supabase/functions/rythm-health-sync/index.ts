@@ -78,14 +78,26 @@ Deno.serve(async (req) => {
       const result: Record<string, any> = {};
 
       for (const t of types) {
+        // Workouts: fetch ALL for last 2 days (multiple sessions per day)
+        if (t === "workout") {
+          const twoDaysAgo = new Date();
+          twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+          const { data } = await sb
+            .from("rythm_health_data")
+            .select("*")
+            .eq("type", "workout")
+            .eq("unit", "min")
+            .gte("date", twoDaysAgo.toISOString().slice(0, 10))
+            .order("date", { ascending: false });
+          if (data?.length) result.workouts = data;
+          continue;
+        }
         // Order by DATE desc for all types — this ensures we always get the most recent
         // actual data, not a stale old entry that happened to re-sync last
         let query = sb
           .from("rythm_health_data")
           .select("*")
           .eq("type", t);
-        // Filter out bogus workout entries (misclassified metrics with unit=null)
-        if (t === "workout") query = query.eq("unit", "min");
         const { data } = await query
           .order("date", { ascending: false })
           .limit(1)
