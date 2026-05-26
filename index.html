@@ -3330,7 +3330,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v94';
+const APP_VERSION = 'v95';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -6580,29 +6580,72 @@ function removeDayEvent(type, idx) {
 
 function addWorkoutsToMyDay() {
   const today = new Date().toISOString().slice(0, 10);
+  // Remove old-format workout tasks (migrating from _workoutType to _workoutKey)
+  ST.tasks = (ST.tasks || []).filter(t => !(t._workout && !t._workoutKey && t._workoutDate === today));
   const workouts = (ST._workouts || []).filter(w => (w.date || '').slice(0, 10) === today);
-  for (const w of workouts) {
-    const durStr = w.durMin > 0 ? `${Math.floor(w.durMin / 60)}h ${w.durMin % 60}min` : '';
-    const calStr = w.cal > 0 ? `${w.cal} kcal` : '';
-    const detail = [durStr, calStr].filter(Boolean).join(' · ');
-    const title = `🏋️ ${w.type || 'Workout'}${detail ? '  - ' + detail : ''}`;
-    // Check if already added (by matching workout type for today)
-    const exists = ST.tasks.find(t => t._workout && t._workoutType === (w.type || 'Workout') && t._workoutDate === today);
-    if (!exists) {
-      // Extract time from workout startDate if available
-      let time = null;
-      if (w.startDate) {
-        const d = new Date(w.startDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
-        if (!isNaN(d.getTime())) time = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+
+  // Cross-reference with Hero workouts to get real session names
+  const heroToday = (ST._heroWorkouts || []).filter(w => {
+    const d = new Date(w.startTime).toISOString().slice(0, 10);
+    return d === today && w.athletes && w.athletes[HERO_ATHLETE_ID];
+  }).sort((a, b) => a.startTime - b.startTime);
+
+  // Match Hero workouts by overlapping time window
+  function getHeroName(w) {
+    if (!w.startDate || !heroToday.length) return null;
+    const sd = new Date(w.startDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
+    if (isNaN(sd.getTime())) return null;
+    const wStart = sd.getTime();
+    for (const h of heroToday) {
+      // Match if Apple Health workout started within 30min of Hero workout
+      if (Math.abs(wStart - h.startTime) < 30 * 60000) {
+        return h.tag?.name || null;
       }
-      ST.tasks.push({ title, time, done: true, created: Date.now(), _workout: true, _workoutType: w.type || 'Workout', _workoutDate: today });
-      ST.tasks.sort((a, b) => {
-        if (!a.time && !b.time) return 0;
-        if (!a.time) return 1;
-        if (!b.time) return -1;
-        return a.time.localeCompare(b.time);
-      });
     }
+    return null;
+  }
+
+  let added = false;
+  for (const w of workouts) {
+    // Use startDate as unique key (two workouts at different times = different entries)
+    const wKey = w.startDate || (w.type + '-' + (w.durMin || 0));
+    const exists = ST.tasks.find(t => t._workout && t._workoutKey === wKey && t._workoutDate === today);
+    if (exists) {
+      // Update title if Hero name became available
+      if (heroName && !exists.title.includes(heroName)) {
+        const durStr2 = w.durMin > 0 ? (w.durMin >= 60 ? Math.floor(w.durMin / 60) + 'h ' + (w.durMin % 60) + 'min' : w.durMin + 'min') : '';
+        const calStr2 = w.cal > 0 ? w.cal + ' kcal' : '';
+        const detail2 = [durStr2, calStr2].filter(Boolean).join(' · ');
+        exists.title = `🏋️ ${heroName}${detail2 ? '  - ' + detail2 : ''}`;
+      }
+      continue;
+    }
+
+    // Get name: Hero tag name > Apple Health type > fallback
+    const heroName = getHeroName(w);
+    const name = heroName || (w.type && w.type !== 'Workout' && w.type !== 'Traditional Strength Training' ? w.type : 'Workout');
+    const durStr = w.durMin > 0 ? (w.durMin >= 60 ? Math.floor(w.durMin / 60) + 'h ' + (w.durMin % 60) + 'min' : w.durMin + 'min') : '';
+    const calStr = w.cal > 0 ? w.cal + ' kcal' : '';
+    const detail = [durStr, calStr].filter(Boolean).join(' · ');
+    const title = `🏋️ ${name}${detail ? '  - ' + detail : ''}`;
+
+    let time = null;
+    if (w.startDate) {
+      const d = new Date(w.startDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
+      if (!isNaN(d.getTime())) time = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    }
+
+    ST.tasks.push({ title, time, done: true, created: Date.now(), _workout: true, _workoutKey: wKey, _workoutDate: today });
+    added = true;
+  }
+
+  if (added) {
+    ST.tasks.sort((a, b) => {
+      if (!a.time && !b.time) return 0;
+      if (!a.time) return 1;
+      if (!b.time) return -1;
+      return a.time.localeCompare(b.time);
+    });
   }
   renderTasks();
 }
@@ -11732,7 +11775,7 @@ function renderSuggestions() {
   // HRV below baseline  - breathwork
   const hrvBase = m.hrvBaseline || 42;
   if (m.hrv < hrvBase * 0.8 && !activeSessions.includes('meditation')) {
-    sugs.push({ icon: '🧘', title: 'Breathing session recommended', sub: `HRV ${m.hrv}ms  - ${Math.round((1 - m.hrv/hrvBase)*100)}% below your baseline. Slow breathing (6/min) activates vagal tone in 5-10min`, action: 'Breathe', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `showView('health');setTimeout(()=>document.getElementById('breathingCard')?.scrollIntoView({behavior:'smooth'}),300)`, pri: 2 });
+    sugs.push({ icon: '🧘', title: 'Breathing session recommended', sub: `HRV ${m.hrv}ms  - ${Math.round((1 - m.hrv/hrvBase)*100)}% below your baseline. Slow breathing (6/min) activates vagal tone in 5-10min`, action: 'Breathe', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `showView('coach');setTimeout(()=>document.getElementById('breathingCard')?.scrollIntoView({behavior:'smooth'}),300)`, pri: 2 });
   }
 
   // Strain + recovery mismatch
@@ -12618,6 +12661,8 @@ async function fetchHeroWorkouts() {
     }
 
     // Don't saveState() - _heroWorkouts is transient, fetched fresh each session
+    // Re-add workouts to My Day now that Hero names are available
+    addWorkoutsToMyDay();
     // Re-render coach if visible
     if (document.getElementById('view-coach')?.classList.contains('active')) {
       renderCoachView();
