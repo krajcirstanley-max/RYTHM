@@ -909,6 +909,14 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .sleep-bar-fg { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
 
 /* JOURNAL  - redesigned */
+.journal-today-card {
+  background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius); padding: 18px 16px 16px;
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
+}
 .journal-card {
   background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
   border: 1px solid var(--card-border);
@@ -3066,6 +3074,9 @@ section { padding: 0 16px; margin-bottom: 8px; }
   <!-- ============ COACH ============ -->
   <div class="view" id="view-coach">
     <section>
+      <div id="coachRecoveryPlan"></div>
+    </section>
+    <section>
       <div id="coachTraining"></div>
     </section>
     <section>
@@ -3082,19 +3093,16 @@ section { padding: 0 16px; margin-bottom: 8px; }
   <!-- ============ JOURNAL ============ -->
   <div class="view" id="view-journal">
     <section>
-      <div class="journal-context" id="journalContext"></div>
-    </section>
-
-    <section>
-      <div class="journal-streak" id="journalStreak"></div>
-    </section>
-
-    <section>
-      <div class="journal-card">
-        <div class="journal-date" id="journalDate">TODAY</div>
+      <div class="journal-today-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div class="journal-date" id="journalDate" style="margin-bottom:0;">TODAY</div>
+          <div id="journalStreak" style="display:flex;align-items:center;gap:6px;"></div>
+        </div>
         <div id="journalGrid"></div>
-        <div class="journal-sel-count" id="journalSelCount"></div>
-        <button class="journal-save" id="journalSaveBtn" onclick="saveJournal()">Save Entry</button>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:14px;">
+          <button class="journal-save" id="journalSaveBtn" onclick="saveJournal()" style="flex:1;margin-top:0;">Save Entry</button>
+          <div class="journal-sel-count" id="journalSelCount" style="padding:0;min-width:50px;text-align:right;"></div>
+        </div>
       </div>
     </section>
 
@@ -3103,12 +3111,10 @@ section { padding: 0 16px; margin-bottom: 8px; }
     </section>
 
     <section>
-      <div class="section-head"><div class="section-title">Correlations</div></div>
       <div class="correlation-card" id="correlations"></div>
     </section>
 
     <section>
-      <div class="section-head"><div class="section-title">Recent Entries</div></div>
       <div class="journal-history" id="journalHistory"></div>
     </section>
   </div>
@@ -3339,7 +3345,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v97';
+const APP_VERSION = 'v98';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -7874,10 +7880,143 @@ function renderDailyCoach() {
 //  COACH VIEW (Coach tab)
 // ========================================
 function renderCoachView() {
+  renderCoachRecoveryPlan();
   renderCoachTraining();
   renderCoachBreathwork();
   renderCoachRecoveryStack();
   renderCoachInsights();
+}
+
+function renderCoachRecoveryPlan() {
+  const el = document.getElementById('coachRecoveryPlan');
+  if (!el) return;
+
+  const recovery = computeReadiness();
+  const strain = computeStrain();
+  const m = ST.metrics || {};
+  const sl = ST.sleep || {};
+  const now = new Date();
+  const hour = now.getHours();
+  const today = now.toISOString().slice(0, 10);
+  const todayLogs = (ST.logs || []).filter(l => l.date === today);
+  const todayTags = todayLogs.map(l => l.tag);
+  const todayWorkouts = (ST._workouts || []).filter(w => w.date === today);
+  const trainedToday = todayWorkouts.length > 0;
+  const sleepH = sl.totalH || 0;
+  const sleepDebt = m.sleepDebt || 0;
+  const hrvBase = m.hrvBaseline || 0;
+  const hrvPct = hrvBase ? Math.round(((m.hrv || 0) / hrvBase - 1) * 100) : 0;
+
+  // Build personalized plan steps based on actual state
+  const steps = [];
+
+  // Morning block
+  if (hour < 14) {
+    if (sleepH < 7) {
+      steps.push({ time: 'MORNING', icon: '☀️', action: 'Get 15min sunlight within 30min of waking', why: `You got ${sleepH.toFixed(1)}h sleep. Morning light resets your clock and helps you fall asleep earlier tonight.`, done: todayTags.includes('sunlight') });
+    } else {
+      steps.push({ time: 'MORNING', icon: '☀️', action: 'Sunlight exposure (10-15 min)', why: 'Cortisol pulse + serotonin for circadian anchor.', done: todayTags.includes('sunlight') });
+    }
+    if (!todayTags.includes('hydration')) {
+      steps.push({ time: 'MORNING', icon: '💧', action: 'Hydrate 500ml + electrolytes', why: 'You lose ~1L overnight. Rehydrate before caffeine.', done: false });
+    }
+  }
+
+  // Post-training block
+  if (trainedToday) {
+    const wName = todayWorkouts[0]?.tag?.name || todayWorkouts[0]?.type || 'session';
+    if (!todayTags.includes('foam_roll')) {
+      steps.push({ time: 'POST-TRAINING', icon: '🧱', action: 'Foam roll for 10min', why: `After ${wName}: target hip flexors, quads, IT band. Maintain ROM without blunting adaptation.`, done: false });
+    }
+    if (!todayTags.includes('massage_gun') && strain > 10) {
+      steps.push({ time: 'POST-TRAINING', icon: '🔫', action: 'Massage gun on calves + quads (5min)', why: `Strain is ${strain}. Percussive therapy reduces DOMS onset by clearing metabolites.`, done: false });
+    }
+    if (recovery < 60 && !todayTags.includes('infrapanel')) {
+      steps.push({ time: 'POST-TRAINING', icon: '🔴', action: 'Infrapanel on patellar + Achilles (15min)', why: `Recovery at ${recovery}%. NIR penetrates 2-3cm to accelerate tendon repair.`, done: false });
+    }
+  }
+
+  // Afternoon/evening block
+  if (hour >= 12 || !trainedToday) {
+    if (recovery < 50 && !todayTags.includes('cold_shower')) {
+      steps.push({ time: hour >= 16 ? 'EVENING' : 'AFTERNOON', icon: '🧊', action: 'Cold immersion 2-3min', why: `Recovery ${recovery}%. Norepinephrine spike reduces inflammation. Safe on rest/low days.`, done: false });
+    } else if (trainedToday && !todayTags.includes('cold_shower')) {
+      steps.push({ time: 'EVENING', icon: '🧊', action: 'Cold immersion (wait 4h+ post-training)', why: 'Blunts mTOR if done too soon after strength. Evening is better.', done: false });
+    }
+
+    if (!todayTags.includes('jetboots') && (strain > 8 || trainedToday)) {
+      steps.push({ time: hour >= 16 ? 'EVENING' : 'AFTERNOON', icon: '🦶', action: 'Jetboots Pro+ (20-30min)', why: 'Pneumatic compression clears metabolites and activates parasympathetic system.', done: false });
+    }
+  }
+
+  // Breathing recommendation based on state
+  const breathDone = todayTags.includes('breathwork');
+  if (!breathDone) {
+    if (hour >= 20) {
+      steps.push({ time: 'WIND-DOWN', icon: '🫁', action: 'Breathing: 4-7-8 Sleep Prep (5 rounds)', why: 'Extended exhale activates vagal brake. Ideal 30min before bed.', done: false });
+    } else if (hrvPct < -10) {
+      steps.push({ time: hour >= 16 ? 'EVENING' : 'AFTERNOON', icon: '🫁', action: 'Breathing: Recovery 6bpm (10min)', why: `HRV is ${hrvPct}% below baseline. Resonance breathing at 6/min is the fastest vagal tone reset.`, done: false });
+    } else if (trainedToday && hour >= 14) {
+      steps.push({ time: 'POST-TRAINING', icon: '🫁', action: 'Breathing: Cyclic Sigh (5min)', why: 'Stanford 2023: strongest acute anxiety reduction + faster HRV rebound post-exertion.', done: false });
+    }
+  }
+
+  // Sleep block
+  if (hour >= 18) {
+    if (sleepDebt > 5) {
+      steps.push({ time: 'TONIGHT', icon: '🛌', action: `Aim for ${Math.min(9.5, 8.5 + sleepDebt * 0.1).toFixed(1)}h sleep`, why: `You have ${sleepDebt.toFixed(0)}h sleep debt. Add 30-60min to your normal bedtime tonight.`, done: false });
+    }
+    const shishaToday = todayTags.includes('shisha') || todayTags.includes('shisha_late');
+    if (shishaToday) {
+      steps.push({ time: 'TONIGHT', icon: '💨', action: 'Allow 3h+ after last shisha before sleep', why: 'CO half-life is 4-5h. Late exposure suppresses deep sleep and drops HRV.', done: false });
+    }
+  }
+
+  // Nutrition
+  const cals = ST.health?.todayCals || 0;
+  const protein = ST.health?.todayProtein || 0;
+  if (cals > 0 && protein < 100 && hour >= 14) {
+    steps.push({ time: hour >= 18 ? 'EVENING' : 'AFTERNOON', icon: '🍗', action: `Get ${Math.max(0, 107 - Math.round(protein))}g more protein today`, why: `At ${Math.round(protein)}g of 107g target (1.6g/kg). Spread remaining across meals.`, done: protein >= 107 });
+  }
+
+  const doneCount = steps.filter(s => s.done).length;
+  const totalCount = steps.length;
+
+  // Group by time block
+  const blocks = {};
+  for (const s of steps) {
+    if (!blocks[s.time]) blocks[s.time] = [];
+    blocks[s.time].push(s);
+  }
+
+  const interp = readinessInterpretation(recovery);
+
+  el.innerHTML = `
+    <div class="coach-section" style="border-color:${interp.color}22;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <div class="coach-section-label" style="margin-bottom:0;">YOUR RECOVERY PLAN</div>
+        <div style="font-size:11px;color:var(--text-3);font-family:'DM Mono',monospace;">${doneCount}/${totalCount}</div>
+      </div>
+      <div style="font-size:12px;color:var(--text-2);margin-bottom:14px;line-height:1.4;">
+        ${recovery >= 80 ? 'Recovery is high. Use it. Train hard and recover smart tonight.'
+          : recovery >= 60 ? 'Moderate recovery. Do your session, then follow this stack to bounce back.'
+          : recovery >= 40 ? `Recovery at ${recovery}%. ${trainedToday ? 'You trained, so recovery work is critical now.' : 'Keep today light and focus on the stack below.'}`
+          : `Recovery is low (${recovery}%). Rest and recover. Every step below matters today.`}
+      </div>
+      ${Object.entries(blocks).map(([time, items]) => `
+        <div style="margin-bottom:12px;">
+          <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);margin-bottom:8px;">${time}</div>
+          ${items.map(s => `
+            <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.03);${s.done ? 'opacity:0.4;' : ''}" onclick="${s.done ? '' : (s.icon === '🫁' ? "showView('coach');setTimeout(()=>document.getElementById('breathingCard')?.scrollIntoView({behavior:'smooth'}),300)" : '')}">
+              <div style="font-size:16px;width:24px;text-align:center;flex-shrink:0;padding-top:1px;">${s.done ? '✓' : s.icon}</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:600;color:${s.done ? 'var(--text-3)' : '#fff'};${s.done ? 'text-decoration:line-through;' : ''}">${s.action}</div>
+                <div style="font-size:11px;color:var(--text-3);margin-top:2px;line-height:1.35;">${s.why}</div>
+              </div>
+            </div>`).join('')}
+        </div>`).join('')}
+      ${!steps.length ? '<div style="text-align:center;padding:12px;color:var(--energy);font-size:13px;font-weight:600;">All recovery steps done. Nice work.</div>' : ''}
+    </div>`;
 }
 
 function renderCoachTraining() {
@@ -10110,7 +10249,6 @@ function initJournal() {
   btn.classList.remove('saved');
 
   renderJournalStreak();
-  renderJournalContext();
   renderCorrelations();
   renderMoodTrend();
   renderJournalHistory();
@@ -10124,7 +10262,6 @@ function updateJournalSelCount() {
 function renderJournalStreak() {
   const el = document.getElementById('journalStreak');
   if (!el) return;
-  // Calculate consecutive days logged
   const sorted = [...ST.journal].sort((a,b) => b.date.localeCompare(a.date));
   let streak = 0;
   const today = new Date();
@@ -10135,10 +10272,11 @@ function renderJournalStreak() {
     if (sorted.find(j => j.date === expectedStr)) streak++;
     else break;
   }
-  el.innerHTML = `
-    <div class="journal-streak-label">🔥 Logging Streak</div>
-    <div class="journal-streak-val">${streak} day${streak !== 1 ? 's' : ''}</div>
-  `;
+  if (streak > 0) {
+    el.innerHTML = `<span style="font-size:12px;">🔥</span><span style="font-size:12px;font-weight:700;color:var(--energy);font-family:'DM Mono',monospace;">${streak}d</span>`;
+  } else {
+    el.innerHTML = '';
+  }
 }
 
 function toggleBehavior(id, el) {
@@ -10205,7 +10343,7 @@ function saveJournal() {
 function renderCorrelations() {
   const el = document.getElementById('correlations');
   if (ST.journal.length < 5) {
-    el.innerHTML = `<div style="padding:12px;text-align:center;color:var(--text-3);font-size:13px;">Log at least 5 days to see correlations</div>`;
+    el.innerHTML = '';
     return;
   }
 
@@ -10266,8 +10404,8 @@ function renderCorrelations() {
     return;
   }
 
-  el.innerHTML = `<div style="display:flex;justify-content:space-between;padding:0 2px 6px;font-size:9px;font-weight:700;letter-spacing:1px;color:var(--text-4);text-transform:uppercase;">
-    <span>BEHAVIOR</span><span>RECOVERY IMPACT</span>
+  el.innerHTML = `<div style="display:flex;justify-content:space-between;padding:0 2px 8px;font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);text-transform:uppercase;">
+    <span>WHAT HELPS / HURTS</span><span>RECOVERY IMPACT</span>
   </div>` + corrs.map(c => {
     const hrvTag = c.hrvDiff != null
       ? `<span style="font-size:10px;opacity:0.7;color:${c.hrvDiff >= 0 ? 'var(--energy)' : 'var(--warn)'}">HRV ${c.hrvDiff >= 0 ? '+' : ''}${c.hrvDiff}</span>`
@@ -10290,30 +10428,36 @@ function renderCorrelations() {
 
 function renderJournalHistory() {
   const el = document.getElementById('journalHistory');
-  const entries = [...ST.journal].reverse().slice(0, 7);
+  const entries = [...ST.journal].reverse().slice(0, 10);
   if (!entries.length) {
-    el.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-3);font-size:13px;">No entries yet</div>`;
+    el.innerHTML = '';
     return;
   }
-  el.innerHTML = entries.map(j => {
-    const d = new Date(j.date);
-    const dateStr = d.toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' });
+  el.innerHTML = `<div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);text-transform:uppercase;margin-bottom:10px;">RECENT ENTRIES</div>` +
+  entries.map(j => {
+    const d = new Date(j.date + 'T12:00:00');
+    const isToday = j.date === new Date().toISOString().slice(0,10);
+    const dateStr = isToday ? 'TODAY' : d.toLocaleDateString('en', { weekday: 'short', day: 'numeric' }).toUpperCase();
     const interp = readinessInterpretation(j.readiness || 0);
-    const tags = (j.behaviors || []).map(b => {
+    const behaviors = (j.behaviors || []);
+    const icons = behaviors.map(b => {
       const beh = JOURNAL_BEHAVIORS.find(x => x.id === b);
-      return beh ? `<span class="jh-tag">${beh.icon} ${beh.label}</span>` : '';
-    }).join('');
+      return beh ? beh.icon : '';
+    }).filter(Boolean).slice(0, 8).join(' ');
+    const extra = behaviors.length > 8 ? ' +' + (behaviors.length - 8) : '';
     const ctxParts = [];
-    if (j.strain != null) ctxParts.push('S' + j.strain);
-    if (j.sleep) { const sh = Math.floor(j.sleep), sm = Math.round((j.sleep - sh) * 60); ctxParts.push(sh + 'h' + (sm ? ' ' + sm + 'm' : '')); }
+    if (j.sleep) ctxParts.push(j.sleep.toFixed(1) + 'h');
     if (j.hrv) ctxParts.push(j.hrv + 'ms');
-    const context = ctxParts.length ? `<span style="font-size:10px;color:var(--text-4);font-family:'DM Mono',monospace;margin-left:8px;">${ctxParts.join(' · ')}</span>` : '';
-    return `<div class="jh-entry" style="--jh-accent:${interp.color}">
-      <div class="jh-top">
-        <span class="jh-date">${dateStr.toUpperCase()}</span>
-        <span class="jh-score" style="color:${interp.color}">${j.readiness != null ? Math.round(j.readiness) + '%' : ''}${context}</span>
+    if (j.strain != null) ctxParts.push('S' + j.strain);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+      <div style="width:36px;flex-shrink:0;text-align:center;">
+        <div style="font-size:16px;font-weight:800;color:${interp.color};font-family:'DM Mono',monospace;">${j.readiness != null ? Math.round(j.readiness) : '--'}</div>
+        <div style="font-size:8px;font-weight:700;letter-spacing:0.5px;color:var(--text-4);margin-top:1px;">${dateStr}</div>
       </div>
-      <div class="jh-tags">${tags || '<span style="font-size:11px;color:var(--text-4)">No behaviors logged</span>'}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;line-height:1.3;letter-spacing:1px;">${icons}${extra}</div>
+        <div style="font-size:10px;color:var(--text-4);font-family:'DM Mono',monospace;margin-top:2px;">${ctxParts.join(' · ')}</div>
+      </div>
     </div>`;
   }).join('');
 }
@@ -11149,7 +11293,6 @@ function showView(name) {
   }
   if (name === 'journal') {
     initJournal();
-    renderJournalContext();
     renderMoodTrend();
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
