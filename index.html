@@ -3330,6 +3330,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
       <!-- Chronotype quiz removed -->
       <button class="settings-danger-btn" onclick="resetData()">Reset All Data</button>
     </div>
+    <div style="text-align:center;padding:16px 0 4px;font-size:10px;color:var(--text-4);letter-spacing:0.5px;font-family:var(--font-mono,monospace);" id="settingsVersion"></div>
   </div>
 </div>
 
@@ -3368,12 +3369,25 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
+const APP_VERSION = 'v91';
 
-function getSyncKey() {
-  let k = localStorage.getItem(SYNC_KEY_STORAGE);
-  if (!k) { k = 'rythm-' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + '-' + Date.now()); localStorage.setItem(SYNC_KEY_STORAGE, k); }
+// State sync key — FIXED, same across ALL devices/browsers so data converges
+function getUserSyncKey() { return 'rythm-main'; }
+
+// Device key — unique per device/browser, used for push subscriptions only
+function getDeviceKey() {
+  let k = localStorage.getItem('rythm-device-key');
+  // Migrate: reuse old sync key as device key if it exists
+  if (!k) {
+    const old = localStorage.getItem(SYNC_KEY_STORAGE);
+    if (old) { k = old; } else { k = 'rythm-' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + '-' + Date.now()); }
+    localStorage.setItem('rythm-device-key', k);
+  }
   return k;
 }
+
+// Legacy compat
+function getSyncKey() { return getUserSyncKey(); }
 function setSyncKeyLocal(k) { localStorage.setItem(SYNC_KEY_STORAGE, k); }
 
 async function fetchRemote(key) {
@@ -3467,44 +3481,110 @@ const DEFAULT_STATE = {
 let ST;
 var weatherCache = null; // global - weather/UV cache from Open-Meteo
 
-function loadState() {
+async function loadState() {
+  // 1. Load localStorage as immediate cache
+  let localState = null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      ST = JSON.parse(raw);
-      // merge missing keys
+      localState = JSON.parse(raw);
       for (const k in DEFAULT_STATE) {
-        if (!(k in ST)) ST[k] = JSON.parse(JSON.stringify(DEFAULT_STATE[k]));
+        if (!(k in localState)) localState[k] = JSON.parse(JSON.stringify(DEFAULT_STATE[k]));
       }
-    } else {
-      ST = JSON.parse(JSON.stringify(DEFAULT_STATE));
     }
-  } catch(e) {
+  } catch(e) { localState = null; }
+
+  // 2. Cloud-first: fetch from Supabase (4s timeout)
+  let cloudState = null;
+  try {
+    const key = getUserSyncKey();
+    cloudState = await Promise.race([
+      fetchRemote(key),
+      new Promise(r => setTimeout(() => r(null), 4000))
+    ]);
+    if (cloudState) {
+      for (const k in DEFAULT_STATE) {
+        if (!(k in cloudState)) cloudState[k] = JSON.parse(JSON.stringify(DEFAULT_STATE[k]));
+      }
+    }
+  } catch(e) { console.warn("cloud fetch failed, using local cache", e); }
+
+  // 3. Pick the freshest source
+  if (cloudState && localState) {
+    const ct = cloudState.updatedAt || 0;
+    const lt = localState.updatedAt || 0;
+    ST = ct >= lt ? cloudState : localState;
+    // If local was newer, push it to cloud
+    if (lt > ct) pushRemote(getUserSyncKey(), ST);
+  } else if (cloudState) {
+    ST = cloudState;
+  } else if (localState) {
+    ST = localState;
+    // Cloud empty — seed it
+    pushRemote(getUserSyncKey(), ST);
+  } else {
     ST = JSON.parse(JSON.stringify(DEFAULT_STATE));
   }
-  // initialize arrays if missing (populated from real health data)
+
+  // 4. Init arrays
   if (!ST.sleepDebt) ST.sleepDebt = [];
   if (!ST.weekScores) ST.weekScores = [];
   rebuildWeekScores();
-  // async Supabase pull
-  (async () => {
-    try {
-      const key = getSyncKey();
-      const remote = await fetchRemote(key);
-      if (remote) {
-        const lt = ST.updatedAt || 0;
-        const rt = remote.updatedAt || 0;
-        if (rt > lt) { ST = remote; localStorage.setItem(STORAGE_KEY, JSON.stringify(ST)); render(); }
-      } else { await pushRemote(key, ST); }
-    } catch(e) { console.warn("initial sync failed", e); }
-  })();
+
+  // 5. Cache to localStorage
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(ST));
+}
+
+// Re-render entire UI (called after cloud sync replaces ST)
+function fullRerender() {
+  rebuildWeekScores();
+  renderReadiness();
+  renderThreeRings();
+  renderStrainCoach();
+  renderDailyCoach();
+  renderDayBanner();
+  renderSicknessWarning();
+  renderEnergy();
+  drawCurve('curveSvg', false);
+  updateCurveFoot('curveFoot');
+  renderWinddown();
+  renderTasks();
+  renderMetrics();
+  renderSleepBreakdown();
+  renderOutlook();
+  renderStreaks();
+  renderLiveActivities();
+  renderSuggestions();
+  renderOutOfBed();
+  updateNotifToggleUI();
+}
+
+// Live cloud sync — call on visibility change / focus
+async function syncFromCloud() {
+  try {
+    const key = getUserSyncKey();
+    const remote = await fetchRemote(key);
+    if (remote) {
+      const rt = remote.updatedAt || 0;
+      const lt = ST.updatedAt || 0;
+      if (rt > lt) {
+        ST = remote;
+        for (const k in DEFAULT_STATE) {
+          if (!(k in ST)) ST[k] = JSON.parse(JSON.stringify(DEFAULT_STATE[k]));
+        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(ST));
+        fullRerender();
+        console.log('[RYTHM] Cloud sync: updated to', new Date(rt).toISOString());
+      }
+    }
+  } catch(e) { console.warn("cloud sync failed", e); }
 }
 
 function saveState() {
   ST.updatedAt = Date.now();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(ST));
   clearTimeout(saveState._tmr);
-  saveState._tmr = setTimeout(() => pushRemote(getSyncKey(), ST), 800);
+  saveState._tmr = setTimeout(() => pushRemote(getUserSyncKey(), ST), 800);
 }
 
 // Rebuild week scores from stored daily readiness history (no demo data)
@@ -10677,6 +10757,8 @@ function openSettings() {
     syncEl.textContent = h.lastSyncAt ? 'Connected' : 'Not connected';
     syncEl.style.color = h.lastSyncAt ? 'var(--energy)' : 'var(--text-4)';
   }
+  const verEl = document.getElementById('settingsVersion');
+  if (verEl) verEl.textContent = 'RYTHM ' + APP_VERSION + ' · sync:' + getUserSyncKey() + ' · device:' + getDeviceKey().slice(-6);
 }
 
 function closeSettings() {
@@ -12880,13 +12962,13 @@ function bootApp() {
 // ========================================
 //  INIT
 // ========================================
-loadState();
-initLogModal();
-
-// Boot directly  - no onboarding gate
-document.getElementById('mainApp').style.display = '';
-document.getElementById('bottomNav').style.display = '';
-bootApp();
+(async () => {
+  await loadState();
+  initLogModal();
+  document.getElementById('mainApp').style.display = '';
+  document.getElementById('bottomNav').style.display = '';
+  bootApp();
+})();
 
 // ========================================
 //  SWIPE-TO-GO-BACK (Safari-style edge swipe for full-page views)
@@ -12953,8 +13035,15 @@ let swRegistration = null;
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw-rythm.js').then(reg => {
     swRegistration = reg;
-    // Check for updates every 30s
-    setInterval(() => { if (!document.hidden) reg.update(); }, 300000);
+    // Check for SW updates immediately
+    reg.update();
+    // Re-check on every focus and visibility change (instant freshness)
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) { reg.update(); syncFromCloud(); }
+    });
+    window.addEventListener('focus', () => { reg.update(); syncFromCloud(); });
+    // Also poll every 60s when visible
+    setInterval(() => { if (!document.hidden) reg.update(); }, 60000);
     // If a new SW is already waiting, reload immediately
     if (reg.waiting) { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); }
     // Listen for new SW installing
@@ -12963,7 +13052,6 @@ if ('serviceWorker' in navigator) {
       if (!nw) return;
       nw.addEventListener('statechange', () => {
         if (nw.state === 'activated') {
-          // New version active  - reload to get fresh assets
           window.location.reload();
         }
       });
@@ -13250,7 +13338,7 @@ async function subscribePush() {
     let sub = await reg.pushManager.getSubscription();
     if (!sub) { sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8(VAPID_PUBLIC) }); }
     if (sb) {
-      const key = getSyncKey();
+      const key = getDeviceKey();
       await sb.from("push_subscriptions").upsert({ id: key, subscription: sub.toJSON(), updated_at: new Date().toISOString() });
     }
     return sub;
@@ -13262,7 +13350,7 @@ async function unsubscribePush() {
     const reg = await navigator.serviceWorker.ready;
     const sub = await reg.pushManager.getSubscription();
     if (sub) await sub.unsubscribe();
-    if (sb) await sb.from("push_subscriptions").delete().eq("id", getSyncKey());
+    if (sb) await sb.from("push_subscriptions").delete().eq("id", getDeviceKey());
   } catch(e) {}
 }
 
@@ -13488,7 +13576,7 @@ async function uploadPushSchedule(schedule) {
   if (now - _lastScheduleUpload < 600000) return;
   _lastScheduleUpload = now;
   try {
-    const key = getSyncKey();
+    const key = getDeviceKey();
     await sb.from('push_schedules').upsert({
       id: key,
       schedule: JSON.stringify(schedule),
