@@ -3404,7 +3404,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v111';
+const APP_VERSION = 'v112';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -4571,7 +4571,7 @@ function buildRingDetail(key) {
 function buildSleepDetail() {
   const r = ST.readiness;
   const today = new Date().toISOString().slice(0,10);
-  const todayDebt = ST.sleepDebt.find(d => d.date === today);
+  const todayDebt = (ST.sleepDebt || []).find(d => d.date === today);
   const debtH = todayDebt ? todayDebt.debtH : 0;
 
   const sleepMin = ST.profile.sleepMin >= 1440 ? ST.profile.sleepMin - 1440 : ST.profile.sleepMin;
@@ -8562,93 +8562,150 @@ function renderDailyCoach() {
   const strain = computeStrain();
   const m = ST.metrics;
   const sl = ST.sleep || {};
-  const tl = computeTrainingLoad();
   const patterns = getHabitPatterns();
   const now = new Date();
+  const nowH = now.getHours() + now.getMinutes() / 60;
   const WAKE = profileWakeHour();
-  const hwake = ((now.getHours() + now.getMinutes() / 60) - WAKE + 24) % 24;
+  const hwake = (nowH - WAKE + 24) % 24;
+  const today = now.toISOString().slice(0, 10);
 
-  // Accent color based on readiness
+  // Current phase + time until next phase
+  const currentPhase = phaseAt(nowH);
+  const phases = buildPhases();
+  const SLEEP_H = profileSleepHour();
+  let nextPhaseName = '', minutesLeft = 0;
+  for (let i = 0; i < phases.length; i++) {
+    const p = phases[i];
+    if (hwake >= p.hwStart && hwake < p.hwEnd) {
+      const endH = WAKE + p.hwEnd;
+      minutesLeft = Math.max(0, Math.round((p.hwEnd - hwake) * 60));
+      const ni = (i + 1) % phases.length;
+      nextPhaseName = phases[ni] ? phases[ni].name : 'SLEEP';
+      break;
+    }
+  }
+  if (['SLEEP', 'NIGHT'].includes(currentPhase.name) && nextPhaseName === '') {
+    nextPhaseName = 'INERTIA';
+    // Minutes until wake
+    let wakeInH = WAKE - nowH; if (wakeInH < 0) wakeInH += 24;
+    minutesLeft = Math.round(wakeInH * 60);
+  }
+  const timeLeftStr = minutesLeft >= 60
+    ? Math.floor(minutesLeft / 60) + 'h ' + (minutesLeft % 60) + 'min'
+    : minutesLeft + 'min';
+
+  // What have they done today?
+  const todayWorkouts = (ST._workouts || []).filter(w => w.date === today);
+  const trainedToday = todayWorkouts.length > 0;
+  const totalTrainMin = todayWorkouts.reduce((s, w) => s + (w.durMin || 0), 0);
+  const todayBehaviors = patterns.todayBehaviors || [];
+  const hadSunlight = todayBehaviors.includes('sunlight') || todayBehaviors.includes('sun_exposure');
+  const hadCold = todayBehaviors.includes('cold_shower');
+  const activeSession = (ST.liveActivities || []).find(a => !a.endedAt);
+
+  // Accent color
   let accentCls = 'green';
   if (recovery < 50) accentCls = 'red';
   else if (recovery < 67) accentCls = 'amber';
-
-  // Badge color
   const badgeColor = recovery >= 67 ? 'var(--energy)' : recovery >= 50 ? 'var(--warn)' : 'var(--danger)';
   const badgeBg = recovery >= 67 ? 'rgba(48,217,138,0.12)' : recovery >= 50 ? 'rgba(255,181,71,0.12)' : 'rgba(255,84,112,0.12)';
 
-  // Training guidance - time-aware
-  const currentPhaseCoach = phaseAt(now.getHours() + now.getMinutes() / 60);
-  const isNight = ['WIND-DOWN', 'NIGHT', 'SLEEP'].includes(currentPhaseCoach.name);
-  const isInertia = currentPhaseCoach.name === 'INERTIA';
-  let guidance;
-  if (isNight) {
-    if (recovery >= 67) guidance = 'Good recovery day. Wind down, protect tonight\'s sleep for tomorrow\'s gains.';
-    else if (recovery >= 50) guidance = 'Moderate recovery. Prioritize sleep quality tonight, extend by 30min if possible.';
-    else guidance = 'Recovery is low. Get to bed early, no screens, dark and cool room.';
-  } else if (isInertia) {
-    guidance = 'Wake-up phase. Hydrate, get sunlight, let cortisol rise before any decisions.';
+  // === RIGHT NOW directive - one clear action ===
+  let directive, directiveIcon;
+
+  if (activeSession) {
+    // Active workout/sauna/etc - give live guidance
+    const elapsed = Math.round((Date.now() - activeSession.startedAt) / 60000);
+    const meta = LIVE_ACTIVITY_META[activeSession.type] || {};
+    if (activeSession.type === 'workout') {
+      directiveIcon = '🏋️';
+      if (elapsed > 90) directive = `${elapsed}min in. Consider wrapping up - CNS fatigue increases injury risk past 90min.`;
+      else if (recovery >= 67) directive = `${elapsed}min in. Recovery is ${recovery}% - push intensity, you can handle it.`;
+      else directive = `${elapsed}min in. Keep intensity moderate, recovery is only ${recovery}%.`;
+    } else if (activeSession.type === 'sauna') {
+      directiveIcon = '🧖';
+      directive = `${elapsed}min in sauna. ${elapsed >= 15 ? 'Target reached. Exit when ready, hydrate immediately.' : 'Stay 15-20min for full heat shock protein activation.'}`;
+    } else {
+      directiveIcon = meta.icon || '⏱️';
+      directive = `${meta.label || activeSession.type} active - ${elapsed}min.`;
+    }
+  } else if (currentPhase.name === 'SLEEP') {
+    directiveIcon = '😴';
+    directive = 'Sleep. Phone down. Every minute of screen time delays melatonin.';
+  } else if (currentPhase.name === 'INERTIA') {
+    directiveIcon = '☀️';
+    if (!hadSunlight) directive = 'Get outside for 10min sunlight. Hydrate 500ml. No caffeine for 90min after waking.';
+    else directive = 'Sunlight done. Let cortisol rise naturally. Light movement, no big decisions yet.';
+  } else if (currentPhase.name === 'PEAK 1') {
+    directiveIcon = '⚡';
+    if (trainedToday) directive = `Already trained ${totalTrainMin}min. Fuel recovery - protein + carbs within 2h post-training.`;
+    else if (recovery >= 80) directive = 'Peak energy zone. This is your window for max-effort jumps and heavy plyometrics.';
+    else if (recovery >= 67) directive = 'Peak zone but moderate recovery. Technique work, sub-max drills.';
+    else directive = 'Peak zone but body needs rest. Light mobility or film review only.';
+  } else if (currentPhase.name === 'DIP') {
+    directiveIcon = '💤';
+    if (!trainedToday && recovery >= 67) directive = 'Dip zone. If you missed training this morning, do a light session now before Peak 2.';
+    else directive = 'Afternoon dip - executive function drops. Power nap 20min or walk. No big decisions.';
+  } else if (currentPhase.name === 'RECOVERY') {
+    directiveIcon = '🔄';
+    directive = trainedToday ? 'Recovery phase. Foam roll, massage gun, or light stretching. Prep for evening peak.' : 'Transition phase. Energy rising toward your second peak.';
+  } else if (currentPhase.name === 'PEAK 2') {
+    directiveIcon = '🔥';
+    if (trainedToday) directive = `Trained ${totalTrainMin}min today. Use Peak 2 for deep work, creative tasks, or business strategy.`;
+    else if (recovery >= 67) directive = 'Strongest window of the day. Train now if you haven\'t - or do your hardest deep work.';
+    else directive = 'Second peak. Best used for focused work. Training not recommended at this recovery level.';
+  } else if (currentPhase.name === 'WIND-DOWN') {
+    directiveIcon = '🌙';
+    directive = 'Dim all lights. No screens, no caffeine, no heavy food. Core temp must drop for deep sleep.';
+  } else if (currentPhase.name === 'NIGHT') {
+    directiveIcon = '🛏️';
+    const sleepTarget = ST.health?.sleepTarget || 8;
+    const wakeMin = ST.profile.wakeMin;
+    const needMin = Math.round(sleepTarget * 60) + 15;
+    let bedMin = wakeMin - needMin; if (bedMin < 0) bedMin += 1440;
+    const bedTime = minToTime(bedMin);
+    directive = `Get to bed by ${bedTime}. Dark room, cool temp, no phone. Every hour before midnight counts double.`;
   } else {
-    if (recovery >= 80) guidance = 'Green light. Max jumps, heavy plyometrics, full sprint volume.';
-    else if (recovery >= 67) guidance = 'Technique focus. Sub-max intensity, drills, moderate volume.';
-    else if (recovery >= 50) guidance = 'Light day. Mobility, stretching, film review only.';
-    else guidance = 'Rest day. Active recovery, walk, sleep early.';
+    directiveIcon = '🧠';
+    directive = 'Stay consistent. Small daily wins compound into extraordinary results.';
   }
 
-  // #1 Priority - data-driven
+  // === Priority - most important thing based on data ===
   const sleepTarget = ST.health?.sleepTarget || 8;
-  const todayDebt = ST.sleepDebt.find(d => d.date === now.toISOString().slice(0, 10));
+  const todayDebt = (ST.sleepDebt || []).find(d => d.date === today);
   const debtH = todayDebt ? todayDebt.debtH : 0;
   const hrvBase = m.hrvBaseline || 42;
   const hrvPctBelow = hrvBase > 0 ? Math.round((1 - (m.hrv || 0) / hrvBase) * 100) : 0;
-  const weekWorkouts = (ST._workouts || []).filter(w => {
-    const wd = new Date(w.date);
-    return (now - wd) < 7 * 86400000;
-  }).length;
 
-  let priority;
+  let priority, priorityIcon;
   if (debtH > 3) {
-    priority = 'Add 30-60min sleep tonight. You have ' + debtH.toFixed(1) + 'h sleep debt to repay.';
+    priorityIcon = '😴'; priority = `Sleep debt: ${debtH.toFixed(1)}h. Add 30-60min tonight.`;
   } else if (hrvPctBelow >= 15) {
-    priority = 'Parasympathetic recovery, breathing exercises, cold exposure. HRV is ' + hrvPctBelow + '% below baseline.';
-  } else if (strain > 15 && recovery < 60) {
-    priority = 'Lower training volume today. Strain-to-recovery ratio needs rebalancing.';
-  } else if (weekWorkouts === 0) {
-    priority = 'Move your body, even 20min helps. No workouts logged this week.';
+    priorityIcon = '💓'; priority = `HRV ${hrvPctBelow}% below baseline. Prioritize recovery modalities.`;
+  } else if (strain > 18 && recovery < 60) {
+    priorityIcon = '⚠️'; priority = `High strain (${strain}) on low recovery (${recovery}%). Cut volume.`;
+  } else if (trainedToday && !hadCold && recovery < 70 && !['WIND-DOWN','NIGHT','SLEEP'].includes(currentPhase.name)) {
+    priorityIcon = '🧊'; priority = 'Post-training recovery. Cold immersion or breathing session.';
+  } else if (!trainedToday && recovery >= 67 && ['PEAK 1','PEAK 2'].includes(currentPhase.name)) {
+    priorityIcon = '🏋️'; priority = 'You haven\'t trained yet. Recovery supports intensity.';
   } else {
-    // Default based on circadian phase
-    const phase = phaseAt(now.getHours() + now.getMinutes() / 60);
-    if (phase.name === 'PEAK 1' || phase.name === 'PEAK 2') priority = 'Peak energy window, schedule your hardest training now.';
-    else if (phase.name === 'DIP') priority = 'Afternoon dip, ideal for a power nap or light mobility.';
-    else if (phase.name === 'WIND-DOWN') priority = 'Start winding down. Dim lights, no screens, prep for sleep.';
-    else priority = 'Stay consistent with your daily habits. Consistency compounds.';
+    priorityIcon = '✅'; priority = 'On track. Stay consistent with your routine.';
   }
 
-  // 7-day consistency score
-  const last7dates = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    last7dates.push(d.toISOString().slice(0, 10));
-  }
-  const logged = ST.journal.filter(j => last7dates.includes(j.date)).length;
-  const consistency = Math.round((logged / 7) * 100);
-  const consistColor = consistency >= 80 ? 'var(--energy)' : consistency >= 50 ? 'var(--warn)' : 'var(--text-3)';
+  // Next up line
+  const nextPhaseClean = nextPhaseName.replace(/_/g, ' ').toLowerCase();
+  const nextUp = minutesLeft > 0 ? `${nextPhaseClean} in ${timeLeftStr}` : '';
 
   el.className = 'daily-coach ' + accentCls;
   el.innerHTML = `
     <div class="dc-top">
-      <div class="dc-label">DAILY COACH</div>
+      <div class="dc-label">${currentPhase.name.replace(/_/g, ' ')} <span style="font-weight:400;opacity:0.5;font-size:9px;letter-spacing:0.5px">${nextUp ? '// ' + nextUp : ''}</span></div>
       <div class="dc-badge" style="background:${badgeBg};color:${badgeColor}">${recovery}%</div>
     </div>
-    <div class="dc-guidance">${guidance}</div>
+    <div class="dc-guidance"><span style="margin-right:6px">${directiveIcon}</span>${directive}</div>
     <div class="dc-priority">
-      <div class="dc-priority-label">#1 Priority</div>
+      <div class="dc-priority-label">${priorityIcon} #1 Priority</div>
       <div class="dc-priority-text">${priority}</div>
-    </div>
-    <div class="dc-footer">
-      <div class="dc-consistency-label">7-day consistency</div>
-      <div class="dc-consistency-val" style="color:${consistColor}">${consistency}%</div>
     </div>`;
 }
 
