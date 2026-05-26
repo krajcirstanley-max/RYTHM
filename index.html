@@ -3061,6 +3061,9 @@ section { padding: 0 16px; margin-bottom: 8px; }
     <section>
       <div id="coachRecoveryStack"></div>
     </section>
+    <section>
+      <div id="coachAccountability"></div>
+    </section>
   </div>
 
   <!-- ============ JOURNAL ============ -->
@@ -3157,21 +3160,14 @@ section { padding: 0 16px; margin-bottom: 8px; }
     <div class="modal-handle"></div>
     <div class="modal-title">Quick Log</div>
 
-    <div class="modal-section-label">Mood</div>
+    <div class="modal-section-label">How are you feeling?</div>
     <div class="mood-row" id="moodRow"></div>
 
-    <div class="modal-section-label">When & Duration</div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-      <input type="time" id="logTimeInput" style="background:var(--card);color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 10px;font-size:14px;font-family:inherit;width:110px;" placeholder="Time">
-      <div style="display:flex;align-items:center;gap:4px;">
-        <input type="number" id="logDurationInput" min="1" max="480" placeholder="min" style="background:var(--card);color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 10px;font-size:14px;font-family:inherit;width:70px;">
-        <span style="color:var(--text-4);font-size:12px;">min</span>
-      </div>
-      <span style="color:var(--text-4);font-size:11px;width:100%;">Empty time = now · Empty duration = instant</span>
-    </div>
-
-    <div class="modal-section-label">Tags (optional)</div>
+    <div class="modal-section-label">What happened?</div>
     <div class="tag-row" id="tagRow"></div>
+
+    <input type="time" id="logTimeInput" style="display:none;">
+    <input type="number" id="logDurationInput" style="display:none;">
 
     <button class="modal-submit" onclick="submitLog()">Log it</button>
   </div>
@@ -3330,7 +3326,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v95';
+const APP_VERSION = 'v96';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -7834,6 +7830,7 @@ function renderCoachView() {
   renderCoachTraining();
   renderCoachBreathwork();
   renderCoachRecoveryStack();
+  renderCoachInsights();
 }
 
 function renderCoachTraining() {
@@ -8075,67 +8072,98 @@ function renderCoachSelfCare() {
     </div>`;
 }
 
-function renderCoachAccountability() {
+function renderCoachInsights() {
   const el = document.getElementById('coachAccountability');
   if (!el) return;
 
-  const today = new Date().toISOString().slice(0, 10);
-  const todayLogs = (ST.logs || []).filter(l => l.date === today);
-  const todayTags = todayLogs.map(l => l.tag);
-  const todayEntry = (ST.journal || []).find(j => j.date === today);
-  const todayBehaviors = todayEntry ? (todayEntry.behaviors || []) : [];
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  const history = ST._history || {};
+  const hrvHist = history.hrv || [];
+  const sleepHist = history.sleep || [];
+  const recovery = computeReadiness();
+  const strain = computeStrain();
 
-  // Key daily habits from Life Hub
-  const habits = [
-    { id: 'wake_before_930', icon: '⏰', name: 'Wake < 9:30' },
-    { id: 'cold_shower', icon: '🧊', name: 'Cold Shower' },
-    { id: 'mobility', icon: '🤸', name: 'Mobility' },
-    { id: 'no_phone_morning', icon: '🚫', name: 'No Phone 30m' },
-    { id: 'supplements', icon: '💊', name: 'Supplements' },
-    { id: 'creatine', icon: '🧪', name: 'Creatine' },
-    { id: 'hydration', icon: '💧', name: 'Hydration' },
-    { id: 'make_bed', icon: '🛏️', name: 'Make the Bed' },
-    { id: 'skincare_am', icon: '🧴', name: 'AM Skincare' },
-    { id: 'blue_light_glasses', icon: '👓', name: 'Blue Light Glasses' },
-    { id: 'deep_work', icon: '🎯', name: 'Deep Work 1.5h+' },
-    { id: 'linkedin_30', icon: '💼', name: '30m LinkedIn' },
-    { id: 'skincare_pm', icon: '✨', name: 'PM Skincare' },
-    { id: 'magnesium', icon: '💊', name: 'Magnesium' },
-  ];
+  // Build insights from real data
+  const insights = [];
 
-  // Calculate streaks from journal history
-  const sorted = [...(ST.journal || [])].sort((a,b) => b.date.localeCompare(a.date));
-
-  const habitRows = habits.map(h => {
-    const done = todayTags.includes(h.id) || todayBehaviors.includes(h.id);
-    // Count streak
-    let streak = done ? 1 : 0;
-    for (let i = 0; i < sorted.length; i++) {
-      const j = sorted[i];
-      if (j.date === today) continue;
-      if ((j.behaviors || []).includes(h.id)) streak++;
-      else break;
+  // 1. Sleep consistency (last 7 days)
+  const last7sleep = sleepHist.slice(-7);
+  if (last7sleep.length >= 3) {
+    const avg = last7sleep.reduce((s, h) => s + h.value, 0) / last7sleep.length;
+    const target = ST.health?.sleepTarget || 8;
+    const consistency = last7sleep.filter(h => h.value >= target - 0.5).length;
+    const pct = Math.round((consistency / last7sleep.length) * 100);
+    if (pct >= 70) {
+      insights.push({ icon: '🟢', text: `Sleep consistency ${pct}% this week (${consistency}/${last7sleep.length} nights ≥${(target - 0.5).toFixed(1)}h). This is driving your recovery.`, type: 'good' });
+    } else {
+      insights.push({ icon: '🔴', text: `Sleep consistency only ${pct}% this week. Inconsistent sleep is your #1 limiter — even one short night drops next-day HRV.`, type: 'bad' });
     }
-    return { ...h, done, streak };
-  });
+  }
 
-  const doneCount = habitRows.filter(h => h.done).length;
-  const pct = Math.round((doneCount / habits.length) * 100);
-  const pctColor = pct >= 80 ? 'var(--energy)' : pct >= 50 ? 'var(--warn)' : 'var(--danger)';
+  // 2. HRV trend (7-day direction)
+  const last7hrv = hrvHist.slice(-7);
+  if (last7hrv.length >= 4) {
+    const firstHalf = last7hrv.slice(0, Math.floor(last7hrv.length / 2));
+    const secondHalf = last7hrv.slice(Math.floor(last7hrv.length / 2));
+    const avgFirst = firstHalf.reduce((s, h) => s + h.value, 0) / firstHalf.length;
+    const avgSecond = secondHalf.reduce((s, h) => s + h.value, 0) / secondHalf.length;
+    const delta = Math.round(avgSecond - avgFirst);
+    if (delta > 3) {
+      insights.push({ icon: '📈', text: `HRV trending up +${delta}ms this week. Your training load and recovery are well balanced.`, type: 'good' });
+    } else if (delta < -3) {
+      insights.push({ icon: '📉', text: `HRV trending down ${delta}ms. You may be accumulating fatigue — consider a deload or extra sleep.`, type: 'warn' });
+    }
+  }
+
+  // 3. Training frequency this week
+  const weekStart = new Date(now);
+  weekStart.setDate(weekStart.getDate() - ((now.getDay() + 6) % 7));
+  const weekStartStr = weekStart.toISOString().slice(0, 10);
+  const weekWorkouts = (ST._workouts || []).filter(w => w.date >= weekStartStr && w.date <= today);
+  const dayOfWeek = (now.getDay() + 6) % 7 + 1; // Mon=1
+  if (weekWorkouts.length >= 4 && dayOfWeek <= 5) {
+    insights.push({ icon: '⚡', text: `${weekWorkouts.length} sessions in ${dayOfWeek} days. Training volume is high — watch for accumulated strain.`, type: 'warn' });
+  } else if (weekWorkouts.length === 0 && dayOfWeek >= 3) {
+    insights.push({ icon: '⚠️', text: `No training logged this week yet. Detraining risk increases after 72h without stimulus.`, type: 'bad' });
+  } else if (weekWorkouts.length >= 2) {
+    insights.push({ icon: '✅', text: `${weekWorkouts.length} sessions this week. Training consistency is solid.`, type: 'good' });
+  }
+
+  // 4. Shisha/substance impact
+  const recentLogs = (ST.logs || []).filter(l => {
+    const d = new Date(l.date + 'T12:00:00');
+    return (now - d) < 7 * 86400000;
+  });
+  const shishaDays = new Set(recentLogs.filter(l => (l.tags || []).includes('shisha') || l.tag === 'shisha').map(l => l.date)).size;
+  if (shishaDays >= 3) {
+    insights.push({ icon: '💨', text: `Shisha ${shishaDays}x this week. CO exposure blunts HRV recovery for 4-5 hours after each session.`, type: 'bad' });
+  } else if (shishaDays >= 1) {
+    insights.push({ icon: '💨', text: `Shisha ${shishaDays}x this week. Keep sessions before the caffeine cutoff for minimal sleep impact.`, type: 'warn' });
+  }
+
+  // 5. Recovery score context
+  if (recovery >= 85) {
+    insights.push({ icon: '🔋', text: `Recovery at ${recovery}% — this is a peak day. Don't waste it on easy training. Go hard.`, type: 'good' });
+  } else if (recovery < 50) {
+    insights.push({ icon: '🪫', text: `Recovery at ${recovery}%. Your body is telling you to back off. Active recovery or rest only.`, type: 'bad' });
+  }
+
+  if (!insights.length) {
+    insights.push({ icon: '📊', text: 'Keep syncing data — insights get sharper with 7+ days of history.', type: 'neutral' });
+  }
 
   el.innerHTML = `
     <div class="coach-section">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <div class="coach-section-label" style="margin-bottom:0;">DAILY HABITS</div>
-        <div style="font-size:13px;font-weight:700;color:${pctColor};font-family:'DM Mono',monospace;">${doneCount}/${habits.length} (${pct}%)</div>
-      </div>
-      ${habitRows.map(h => `
-        <div class="coach-habit-row" onclick="logBehavior('${h.id}')" style="cursor:pointer;">
-          <div class="coach-habit-icon">${h.icon}</div>
-          <div class="coach-habit-name">${h.name}</div>
-          ${h.streak > 1 ? `<div class="coach-habit-streak" style="color:var(--warn);">${h.streak}d</div>` : ''}
-          <div class="coach-habit-check">${h.done ? '<span style="color:var(--energy);">&#10003;</span>' : '<span style="color:var(--text-4);">&#9675;</span>'}</div>
-        </div>`).join('')}
+      <div class="coach-section-label" style="margin-bottom:12px;">THIS WEEK</div>
+      ${insights.map(i => {
+        const bgMap = { good: 'rgba(48,217,138,0.06)', bad: 'rgba(255,84,112,0.06)', warn: 'rgba(255,181,71,0.06)', neutral: 'rgba(255,255,255,0.03)' };
+        const borderMap = { good: 'rgba(48,217,138,0.12)', bad: 'rgba(255,84,112,0.12)', warn: 'rgba(255,181,71,0.12)', neutral: 'rgba(255,255,255,0.06)' };
+        return `<div style="display:flex;gap:10px;padding:12px;border-radius:10px;margin-bottom:6px;background:${bgMap[i.type]};border:1px solid ${borderMap[i.type]};">
+          <div style="font-size:16px;flex-shrink:0;line-height:1.4;">${i.icon}</div>
+          <div style="font-size:12px;color:var(--text-2);line-height:1.5;">${i.text}</div>
+        </div>`;
+      }).join('')}
     </div>`;
 }
 
@@ -9106,13 +9134,13 @@ function renderNutrition() {
 
   // No data ever synced
   if (!n.history || !n.history.length) {
-    el.innerHTML = `<div class="nutri-card">
-      <div class="nutri-nodata">
-        <div style="font-size:28px;margin-bottom:8px">🍽️</div>
-        <b>No nutrition data yet</b><br>
-        Use <b>SnapCalorie</b> to log meals.<br>
-        Photos sync to Apple Health automatically,<br>
-        then Health Auto Export pushes here.
+    el.innerHTML = `<div style="padding:16px;border-radius:var(--radius);background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.08);">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:40px;height:40px;border-radius:10px;background:rgba(167,121,247,0.08);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">📸</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text-2);margin-bottom:2px;">Snap meals with SnapCalorie</div>
+          <div style="font-size:11px;color:var(--text-4);line-height:1.4;">Syncs to Apple Health → Health Auto Export → here</div>
+        </div>
       </div>
     </div>`;
     return;
@@ -9380,16 +9408,29 @@ function runBreathingCycle() {
   if (!breathingActive) return;
   const p = BREATHING_PATTERNS[breathingPattern];
   if (breathingRound >= p.rounds) {
-    // Done
-    document.getElementById('breathingInstruction').textContent = 'DONE';
-    document.getElementById('breathingTimer').textContent = '';
-    document.getElementById('breathingSub').textContent = breathingRound + ' rounds complete';
+    breathingActive = false;
     const dot = document.getElementById('breathDot');
     dot.className = 'breath-dot idle';
-    breathingActive = false;
-    const btn = document.getElementById('breathingStartBtn');
-    btn.textContent = 'Start';
-    btn.className = 'breathing-btn start';
+    const totalSec = (p.inhale + (p.inhale2 || 0) + p.hold + p.exhale + (p.holdOut || 0)) * p.rounds;
+    const durMin = Math.ceil(totalSec / 60);
+
+    // Show completion card instead of just "DONE"
+    const card = document.getElementById('breathingCard');
+    const benefits = {
+      'sigh': 'Respiratory rate reduced. Mood boost lasts 2-3 hours.',
+      'recovery': 'HRV elevated. Parasympathetic recovery accelerated.',
+      'box': 'Autonomic balance restored. Focus sharpened.',
+      '478': 'Vagal tone maximized. Body primed for sleep.'
+    };
+    card.innerHTML = `
+      <div style="padding:20px 0;text-align:center;">
+        <div style="font-size:36px;margin-bottom:8px;">✓</div>
+        <div style="font-size:16px;font-weight:800;color:var(--energy);letter-spacing:1px;margin-bottom:4px;">SESSION COMPLETE</div>
+        <div style="font-size:12px;color:var(--text-3);font-family:'DM Mono',monospace;margin-bottom:16px;">${p.label} · ${breathingRound} rounds · ${durMin} min</div>
+        <div style="font-size:13px;color:var(--text-2);line-height:1.5;max-width:280px;margin:0 auto 16px;">${benefits[breathingPattern] || ''}</div>
+        <button class="breathing-btn start" onclick="renderCoachBreathwork()" style="font-size:12px;padding:10px 24px;">Done</button>
+      </div>`;
+
     // Log the breathing session
     if (breathingRound >= 2) {
       logBehavior('breathwork');
@@ -10697,7 +10738,21 @@ const MOODS = [
   { val: 5, label: 'Great' },
 ];
 
-const TAGS = ['shisha','workout','deep_work','sauna','alcohol','stress','nap','meditation','walk','sunlight','screen','cold_shower','sugar'];
+const TAGS = [
+  { id: 'shisha', icon: '💨', label: 'Shisha' },
+  { id: 'workout', icon: '🏋️', label: 'Workout' },
+  { id: 'deep_work', icon: '🎯', label: 'Deep Work' },
+  { id: 'sauna', icon: '🧖', label: 'Sauna' },
+  { id: 'alcohol', icon: '🍺', label: 'Alcohol' },
+  { id: 'stress', icon: '😤', label: 'Stress' },
+  { id: 'nap', icon: '😴', label: 'Nap' },
+  { id: 'meditation', icon: '🧘', label: 'Meditate' },
+  { id: 'walk', icon: '🚶', label: 'Walk' },
+  { id: 'sunlight', icon: '☀️', label: 'Sunlight' },
+  { id: 'screen', icon: '📱', label: 'Screen' },
+  { id: 'cold_shower', icon: '🧊', label: 'Cold' },
+  { id: 'sugar', icon: '🍬', label: 'Sugar' },
+];
 
 let selectedMood = 3;
 let selectedTags = new Set();
@@ -10711,7 +10766,7 @@ function initLogModal() {
   `).join('');
 
   document.getElementById('tagRow').innerHTML = TAGS.map(t => `
-    <div class="tag-chip" data-tag="${t}" onclick="toggleTag('${t}', this)">${t}</div>
+    <div class="tag-chip" data-tag="${t.id}" onclick="toggleTag('${t.id}', this)">${t.icon} ${t.label}</div>
   `).join('');
 }
 
@@ -10778,8 +10833,6 @@ function submitLog() {
   selectedTags.clear();
   document.querySelectorAll('.mood-btn').forEach(el => el.classList.toggle('selected', parseInt(el.dataset.val) === 3));
   document.querySelectorAll('.tag-chip').forEach(el => el.classList.remove('selected'));
-  document.getElementById('logTimeInput').value = '';
-  document.getElementById('logDurationInput').value = '';
 }
 
 // ========================================
