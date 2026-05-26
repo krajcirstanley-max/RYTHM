@@ -8135,7 +8135,7 @@ function renderHeroRecentBlock() {
         return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.03);">
           <div style="font-size:11px;color:var(--text-4);font-family:'DM Mono',monospace;width:44px;flex-shrink:0;">${w.date.slice(5)}</div>
           <div style="flex:1;min-width:0;">
-            <div style="font-size:11px;color:var(--text-2);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${w.tag}${w.notes ? ' -- ' + w.notes.slice(0, 30) : ''}</div>
+            <div style="font-size:11px;color:var(--text-2);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${w.tag}${w.notes ? ' · ' + w.notes.slice(0, 30) : ''}</div>
             <div style="font-size:10px;color:var(--text-4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${exList || w.totalCompleted + ' sets'}</div>
           </div>
           <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
@@ -8166,7 +8166,7 @@ function renderCoachRecoveryStack() {
     if (!todayTags.includes('massage_gun'))
       modalities.push({ icon: '🔫', id: 'massage_gun', name: 'Massage Gun', reason: 'Reduce DOMS, increase blood flow to loaded muscles', priority: 1 });
     if (!todayTags.includes('infrapanel'))
-      modalities.push({ icon: '🔴', id: 'infrapanel', name: 'Infrapanel', reason: 'NIR therapy for tendons -- patellar + Achilles', priority: 1 });
+      modalities.push({ icon: '🔴', id: 'infrapanel', name: 'Infrapanel', reason: 'NIR therapy for tendons (patellar + Achilles)', priority: 1 });
   }
 
   // Always recommend foam roll post-training
@@ -8178,7 +8178,7 @@ function renderCoachRecoveryStack() {
   const restDay = !lastWorkout.length;
   if (!todayTags.includes('cold_shower')) {
     if (restDay || recovery < 60)
-      modalities.push({ icon: '🧊', id: 'cold_shower', name: 'Cold Immersion', reason: restDay ? 'Rest day -- no mTOR blunting risk' : 'Low recovery -- prioritize inflammation reduction', priority: 2 });
+      modalities.push({ icon: '🧊', id: 'cold_shower', name: 'Cold Immersion', reason: restDay ? 'Rest day, no mTOR blunting risk' : 'Low recovery. Prioritize inflammation reduction', priority: 2 });
     else
       modalities.push({ icon: '🧊', id: 'cold_shower', name: 'Cold Immersion', reason: 'Wait 4h+ post-strength to avoid blunting adaptation', priority: 3 });
   }
@@ -8187,7 +8187,7 @@ function renderCoachRecoveryStack() {
     modalities.push({ icon: '🦶', id: 'jetboots', name: 'Jetboots Pro+', reason: 'Metabolite clearance, parasympathetic activation', priority: 2 });
 
   if (!todayTags.includes('powerdot'))
-    modalities.push({ icon: '⚡', id: 'powerdot', name: 'PowerDot EMS', reason: recovery >= 67 ? 'Pre-activation mode for PAP effect' : 'Recovery mode -- blood flow + clearance', priority: recovery >= 67 ? 3 : 2 });
+    modalities.push({ icon: '⚡', id: 'powerdot', name: 'PowerDot EMS', reason: recovery >= 67 ? 'Pre-activation mode for PAP effect' : 'Recovery mode. Blood flow + clearance', priority: recovery >= 67 ? 3 : 2 });
 
   if (!todayTags.includes('sauna'))
     modalities.push({ icon: '🧖', id: 'sauna', name: 'Sauna', reason: 'GH surge + HSP70. Best 3h+ post-training or rest days', priority: 3 });
@@ -8229,7 +8229,7 @@ function renderCoachSelfCare() {
   const lastBarberLog = (ST.logs || []).filter(l => l.tag === 'barber').sort((a,b) => b.date.localeCompare(a.date))[0];
   const barberDays = lastBarberLog ? Math.floor((Date.now() - new Date(lastBarberLog.date + 'T12:00:00').getTime()) / 86400000) : 999;
   const barberStatus = barberDays >= 23 ? 'overdue' : barberDays >= 20 ? 'due' : 'done';
-  const barberText = barberDays >= 999 ? 'Never logged' : barberDays >= 23 ? barberDays + 'd ago -- book now' : (23 - barberDays) + ' days until next';
+  const barberText = barberDays >= 999 ? 'Never logged' : barberDays >= 23 ? barberDays + 'd ago, book now' : (23 - barberDays) + ' days until next';
 
   // Skincare tracking
   const skAm = todayTags.includes('skincare_am');
@@ -8283,7 +8283,7 @@ function renderCoachInsights() {
     if (pct >= 70) {
       insights.push({ icon: '🟢', text: `Sleep consistency ${pct}% this week (${consistency}/${last7sleep.length} nights ≥${(target - 0.5).toFixed(1)}h). This is driving your recovery.`, type: 'good' });
     } else {
-      insights.push({ icon: '🔴', text: `Sleep consistency only ${pct}% this week. Inconsistent sleep is your #1 limiter — even one short night drops next-day HRV.`, type: 'bad' });
+      insights.push({ icon: '🔴', text: `Sleep consistency only ${pct}% this week. Inconsistent sleep is your #1 limiter. Even one short night drops next-day HRV.`, type: 'bad' });
     }
   }
 
@@ -8298,7 +8298,7 @@ function renderCoachInsights() {
     if (delta > 3) {
       insights.push({ icon: '📈', text: `HRV trending up +${delta}ms this week. Your training load and recovery are well balanced.`, type: 'good' });
     } else if (delta < -3) {
-      insights.push({ icon: '📉', text: `HRV trending down ${delta}ms. You may be accumulating fatigue — consider a deload or extra sleep.`, type: 'warn' });
+      insights.push({ icon: '📉', text: `HRV trending down ${delta}ms. You may be accumulating fatigue. Consider a deload or extra sleep.`, type: 'warn' });
     }
   }
 
@@ -8309,7 +8309,7 @@ function renderCoachInsights() {
   const weekWorkouts = (ST._workouts || []).filter(w => w.date >= weekStartStr && w.date <= today);
   const dayOfWeek = (now.getDay() + 6) % 7 + 1; // Mon=1
   if (weekWorkouts.length >= 4 && dayOfWeek <= 5) {
-    insights.push({ icon: '⚡', text: `${weekWorkouts.length} sessions in ${dayOfWeek} days. Training volume is high — watch for accumulated strain.`, type: 'warn' });
+    insights.push({ icon: '⚡', text: `${weekWorkouts.length} sessions in ${dayOfWeek} days. Training volume is high. Watch for accumulated strain.`, type: 'warn' });
   } else if (weekWorkouts.length === 0 && dayOfWeek >= 3) {
     insights.push({ icon: '⚠️', text: `No training logged this week yet. Detraining risk increases after 72h without stimulus.`, type: 'bad' });
   } else if (weekWorkouts.length >= 2) {
@@ -8330,13 +8330,13 @@ function renderCoachInsights() {
 
   // 5. Recovery score context
   if (recovery >= 85) {
-    insights.push({ icon: '🔋', text: `Recovery at ${recovery}% — this is a peak day. Don't waste it on easy training. Go hard.`, type: 'good' });
+    insights.push({ icon: '🔋', text: `Recovery at ${recovery}%. This is a peak day. Don't waste it on easy training. Go hard.`, type: 'good' });
   } else if (recovery < 50) {
     insights.push({ icon: '🪫', text: `Recovery at ${recovery}%. Your body is telling you to back off. Active recovery or rest only.`, type: 'bad' });
   }
 
   if (!insights.length) {
-    insights.push({ icon: '📊', text: 'Keep syncing data — insights get sharper with 7+ days of history.', type: 'neutral' });
+    insights.push({ icon: '📊', text: 'Keep syncing data. Insights get sharper with 7+ days of history.', type: 'neutral' });
   }
 
   el.innerHTML = `
@@ -9473,9 +9473,9 @@ const BREATHING_PATTERNS = {
   'recovery': { inhale: 5, hold: 0, exhale: 5, rounds: 6, label: 'Recovery 6bpm',
     explain: '6 breaths/min synchronizes heart rate with breathing (resonance). Outperforms box breathing for post-exercise recovery (PLOS ONE 2025). Maximizes HRV during the session.' },
   'box':      { inhale: 4, hold: 4, exhale: 4, holdOut: 4, rounds: 4, label: 'Box',
-    explain: 'Equal-phase breathing (4-4-4-4) balances sympathetic + parasympathetic drive. Builds composure under pressure. Use before competition or heavy lifts — not for recovery.' },
+    explain: 'Equal-phase breathing (4-4-4-4) balances sympathetic + parasympathetic drive. Builds composure under pressure. Use before competition or heavy lifts, not for recovery.' },
   '478':      { inhale: 4, hold: 7, exhale: 8, rounds: 3, label: '4-7-8 Sleep',
-    explain: 'Extended exhale (8s) maximizes vagal tone. The 7s hold increases CO2 tolerance and calms the brainstem. Use in bed with lights off — most potent sleep-onset protocol.' }
+    explain: 'Extended exhale (8s) maximizes vagal tone. The 7s hold increases CO2 tolerance and calms the brainstem. Use in bed with lights off. Most potent sleep-onset protocol.' }
 };
 let breathingActive = false;
 let breathingPattern = 'sigh';
