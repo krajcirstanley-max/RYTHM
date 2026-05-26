@@ -2863,10 +2863,6 @@ section { padding: 0 16px; margin-bottom: 8px; }
       <div class="ring-detail hidden" id="ringDetail"></div>
     </section>
 
-    <section>
-      <div class="day-banner" id="dayBanner"></div>
-    </section>
-
     <section id="sicknessSection" class="hidden">
       <div class="sickness-warning" id="sicknessWarning"></div>
     </section>
@@ -3408,7 +3404,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v109';
+const APP_VERSION = 'v110';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -8573,12 +8569,23 @@ function renderDailyCoach() {
   const badgeColor = recovery >= 67 ? 'var(--energy)' : recovery >= 50 ? 'var(--warn)' : 'var(--danger)';
   const badgeBg = recovery >= 67 ? 'rgba(48,217,138,0.12)' : recovery >= 50 ? 'rgba(255,181,71,0.12)' : 'rgba(255,84,112,0.12)';
 
-  // Training guidance
+  // Training guidance - time-aware
+  const currentPhaseCoach = phaseAt(now.getHours() + now.getMinutes() / 60);
+  const isNight = ['WIND-DOWN', 'NIGHT', 'SLEEP'].includes(currentPhaseCoach.name);
+  const isInertia = currentPhaseCoach.name === 'INERTIA';
   let guidance;
-  if (recovery >= 80) guidance = 'Green light. Max jumps, heavy plyometrics, full sprint volume.';
-  else if (recovery >= 67) guidance = 'Technique focus. Sub-max intensity, drills, moderate volume.';
-  else if (recovery >= 50) guidance = 'Light day. Mobility, stretching, film review only.';
-  else guidance = 'Rest day. Active recovery, walk, sleep early.';
+  if (isNight) {
+    if (recovery >= 67) guidance = 'Good recovery day. Wind down, protect tonight\'s sleep for tomorrow\'s gains.';
+    else if (recovery >= 50) guidance = 'Moderate recovery. Prioritize sleep quality tonight, extend by 30min if possible.';
+    else guidance = 'Recovery is low. Get to bed early, no screens, dark and cool room.';
+  } else if (isInertia) {
+    guidance = 'Wake-up phase. Hydrate, get sunlight, let cortisol rise before any decisions.';
+  } else {
+    if (recovery >= 80) guidance = 'Green light. Max jumps, heavy plyometrics, full sprint volume.';
+    else if (recovery >= 67) guidance = 'Technique focus. Sub-max intensity, drills, moderate volume.';
+    else if (recovery >= 50) guidance = 'Light day. Mobility, stretching, film review only.';
+    else guidance = 'Rest day. Active recovery, walk, sleep early.';
+  }
 
   // #1 Priority - data-driven
   const sleepTarget = ST.health?.sleepTarget || 8;
@@ -12268,6 +12275,25 @@ document.querySelectorAll('[data-view]').forEach(el => {
   el.addEventListener('click', () => showView(el.dataset.view));
 });
 
+// iOS PWA back-button fix: prevent rubber-band overscroll from swallowing touches
+// On iOS standalone, scrolling past boundaries triggers system gestures that block the header
+document.querySelectorAll('.fullpage-scroll').forEach(el => {
+  el.addEventListener('touchstart', function(e) {
+    // Nudge 1px away from boundary so iOS doesn't start its own gesture
+    if (this.scrollTop <= 0) this.scrollTop = 1;
+    if (this.scrollTop + this.clientHeight >= this.scrollHeight) {
+      this.scrollTop = this.scrollHeight - this.clientHeight - 1;
+    }
+  }, { passive: true });
+});
+// Ensure back buttons always respond on iOS (touchend fires even when scroll gesture ate touchstart)
+document.querySelectorAll('.fp-back').forEach(btn => {
+  btn.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    this.click();
+  }, { passive: false });
+});
+
 // ========================================
 //  LIVE ACTIVITIES (timer-based tracking)
 // ========================================
@@ -12987,7 +13013,7 @@ function renderSuggestions() {
     sugs.push({ icon: '🧘', title: 'Breathing session recommended', sub: `HRV ${m.hrv}ms  - ${Math.round((1 - m.hrv/hrvBase)*100)}% below your baseline. Slow breathing (6/min) activates vagal tone in 5-10min`, action: 'Breathe', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `showView('coach');setTimeout(()=>document.getElementById('breathingCard')?.scrollIntoView({behavior:'smooth'}),300)`, pri: 2 });
   }
 
-  // Strain + recovery mismatch
+  // Strain + recovery mismatch (no training suggestions at night)
   const noWorkoutPhases = ['WIND-DOWN', 'NIGHT', 'SLEEP', 'INERTIA'];
   if (recovery >= 67 && strain < 8 && hwake > 2 && !noWorkoutPhases.includes(currentPhase.name) && !activeSessions.includes('workout')) {
     sugs.push({ icon: '🏋️', title: 'Your body can handle intensity', sub: `Recovery ${recovery}%, strain only ${strain}. Unused capacity = missed adaptation. Push today.`, action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('workout')`, pri: 3 });
@@ -13013,8 +13039,8 @@ function renderSuggestions() {
     sugs.push({ icon: '💡', title: 'Creative window open', sub: 'Prefrontal cortex loosens in the 2nd peak  - ideal for brainstorming, pitch decks, content creation. Analytical + creative overlap.', action: 'Focus', cls: 'blue', bg: 'rgba(91,154,255,0.1)', onclick: `startLiveActivity('deep_work')`, pri: 5 });
   }
 
-  // High recovery + low strain = optimal day for both training AND business
-  if (recovery >= 80 && strain < 5 && hwake > 1 && hwake < 6) {
+  // High recovery + low strain = optimal day for both training AND business (daytime only)
+  if (recovery >= 80 && strain < 5 && hwake > 1 && hwake < 6 && !noWorkoutPhases.includes(currentPhase.name)) {
     sugs.push({ icon: '🔥', title: 'High-leverage day', sub: `Recovery ${recovery}%  - your body and mind are primed. Stack your hardest training session AND your most important business task today.`, action: 'Plan', cls: 'green', bg: 'rgba(48,217,138,0.08)', pri: 4 });
   }
 
@@ -13069,8 +13095,10 @@ function renderSuggestions() {
     massage_gun: { icon: '🔫', title: 'Massage gun recovery', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('massage_gun')` },
     infrapanel: { icon: '🔴', title: 'Infrared therapy for joints', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('infrapanel')` },
   };
-  // Only suggest 1 discovery item, and only if we have room
-  if (sugs.length < 4) {
+  // Only suggest 1 discovery item, and only if we have room + it's daytime
+  const nightPhases = ['WIND-DOWN', 'NIGHT', 'SLEEP'];
+  const isNightSug = nightPhases.includes(currentPhase.name);
+  if (sugs.length < 4 && !isNightSug) {
     for (const und of patterns.underused) {
       if (discoverySugs[und]) {
         const s = discoverySugs[und];
