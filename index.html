@@ -13467,6 +13467,27 @@ function checkNotifications() {
       delete ST.notifications.fired[k];
     }
   }
+
+  // Upload schedule to Supabase for server-side push delivery
+  uploadPushSchedule(schedule);
+}
+
+let _lastScheduleUpload = 0;
+async function uploadPushSchedule(schedule) {
+  if (!sb) return;
+  // Throttle: upload at most once per 10 minutes
+  const now = Date.now();
+  if (now - _lastScheduleUpload < 600000) return;
+  _lastScheduleUpload = now;
+  try {
+    const key = getSyncKey();
+    await sb.from('push_schedules').upsert({
+      id: key,
+      schedule: JSON.stringify(schedule),
+      timezone: ST.profile?.timezone || 'Europe/Prague',
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'id' });
+  } catch(e) { console.warn('push schedule upload failed', e); }
 }
 </script>
 <!-- Floating Live Activities (pinned above nav bar) -->
