@@ -12101,6 +12101,12 @@ async function fetchHealthData() {
       const yesterdayKey = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
       const hasSleepToday = data.sleep && (data.sleep.date === todayKey || data.sleep.date === yesterdayKey) && ST.sleep.totalH > 0;
 
+      // If we have fresh sleep data but recovery was locked with stale data, unlock it
+      if (hasSleepToday && recoveryLockedToday) {
+        ST._recoveryLockedDate = null;
+        ST._recoveryLockedScore = null;
+      }
+
       if (data.sleep_hrv) {
         const sleepHrvVal = +Number(data.sleep_hrv.value).toFixed(1);
         ST.metrics.sleepHrv = sleepHrvVal;
