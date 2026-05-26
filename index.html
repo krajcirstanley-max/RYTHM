@@ -3614,10 +3614,11 @@ const ENERGY_CURVE_PCT = [
   [0.08,  62],   // inertia clearing, Process S pressure dropping
   [0.16,  82],   // PEAK 1 ramp  - alerting signal rising
   [0.23,  88],   // PEAK 1 max  - cognitive peak (Dijk & Czeisler 1995)
-  [0.33,  80],   // pre-lunch  - mild circadian dip only (no food yet)
-  [0.39,  72],   // lunch time ~16:00  - eating begins
-  [0.45,  48],   // post-prandial trough  - food coma ~30-60min after eating
-  [0.52,  55],   // DIP exit  - alerting signal recovering
+  [0.33,  84],   // extended peak 1 tail  - still productive
+  [0.37,  78],   // pre-meal  - mild circadian dip begins
+  [0.42,  65],   // eating window (~6h post-wake)  - digestion starts
+  [0.48,  48],   // post-prandial trough  - parasympathetic shift ~45min after eating
+  [0.54,  55],   // DIP exit  - alerting signal recovering
   [0.60,  70],   // RECOVERY ramp  - second wind
   [0.67,  85],   // PEAK 2 ramp  - CBT rising
   [0.73,  90],   // PEAK 2 max  - core body temp peak (Refinetti 2006)
@@ -3925,9 +3926,9 @@ function getActiveBehaviorMods() {
 // Phases scale to any awake-window length (e.g., 14h early bird → 17h night owl)
 const PHASE_PCTS = [
   { name:'INERTIA',   cls:'phase-inertia',  barCls:'inertia',  pctStart:0,    pctEnd:0.10 },
-  { name:'PEAK 1',    cls:'phase-peak',     barCls:'peak',     pctStart:0.10, pctEnd:0.33 },
-  { name:'DIP',       cls:'phase-dip',      barCls:'dip',      pctStart:0.33, pctEnd:0.48 },
-  { name:'RECOVERY',  cls:'phase-recovery', barCls:'recovery', pctStart:0.48, pctEnd:0.62 },
+  { name:'PEAK 1',    cls:'phase-peak',     barCls:'peak',     pctStart:0.10, pctEnd:0.37 },
+  { name:'DIP',       cls:'phase-dip',      barCls:'dip',      pctStart:0.37, pctEnd:0.52 },
+  { name:'RECOVERY',  cls:'phase-recovery', barCls:'recovery', pctStart:0.52, pctEnd:0.62 },
   { name:'PEAK 2',    cls:'phase-peak',     barCls:'peak',     pctStart:0.62, pctEnd:0.78 },
   { name:'WIND-DOWN', cls:'phase-wind',     barCls:'wind',     pctStart:0.78, pctEnd:0.93 },
   { name:'NIGHT',     cls:'phase-night',    barCls:'night',    pctStart:0.93, pctEnd:1.0  },
