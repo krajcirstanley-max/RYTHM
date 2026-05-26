@@ -1062,63 +1062,68 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .nutri-nodata { text-align: center; padding: 24px 16px; color: var(--text-4); font-size: 12px; line-height: 1.6; }
 .nutri-nodata b { color: var(--text-2); }
 
-/* ========== GUIDED BREATHING ========== */
+/* ========== GUIDED BREATHING (expanding dot) ========== */
 .breathing-card {
   background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
   border: 1px solid var(--card-border);
-  border-radius: var(--radius); padding: 24px 16px; text-align: center;
+  border-radius: var(--radius); padding: 28px 16px; text-align: center;
   position: relative; overflow: hidden;
   box-shadow: 0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
 }
-.breathing-orb-wrap {
-  position: relative; width: 200px; height: 200px; margin: 0 auto 16px;
-}
-.breathing-orb {
-  width: 200px; height: 200px; border-radius: 50%; position: relative;
+.breath-dot-wrap {
+  position: relative; width: 220px; height: 220px; margin: 0 auto 20px;
   display: flex; align-items: center; justify-content: center;
 }
-.breathing-orb svg.br-ring {
-  position: absolute; inset: 0; width: 100%; height: 100%;
-  transition: opacity 0.5s;
+.breath-dot {
+  width: 70px; height: 70px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 40%, rgba(167,121,247,0.9), rgba(100,140,255,0.6));
+  box-shadow: 0 0 30px rgba(167,121,247,0.25), 0 0 60px rgba(100,140,255,0.1);
+  transition-property: transform, box-shadow, opacity;
+  transition-timing-function: ease-in-out;
+  will-change: transform;
 }
-.breathing-orb .br-glow {
-  position: absolute; inset: 10px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(167,121,247,0.08) 0%, transparent 70%);
-  transition: all 2s ease-in-out;
+.breath-dot.inhale {
+  transform: scale(2.6);
+  box-shadow: 0 0 50px rgba(167,121,247,0.45), 0 0 100px rgba(100,180,255,0.15);
 }
-.breathing-orb.inhale .br-glow {
-  inset: -10px;
-  background: radial-gradient(circle, rgba(167,121,247,0.2) 0%, rgba(100,223,223,0.08) 50%, transparent 70%);
+.breath-dot.hold {
+  transform: scale(2.6);
+  box-shadow: 0 0 45px rgba(167,121,247,0.35), 0 0 90px rgba(100,180,255,0.1);
 }
-.breathing-orb.hold .br-glow {
-  inset: -10px;
-  background: radial-gradient(circle, rgba(167,121,247,0.18) 0%, rgba(167,121,247,0.05) 50%, transparent 70%);
+.breath-dot.exhale {
+  transform: scale(1);
+  box-shadow: 0 0 20px rgba(167,121,247,0.15), 0 0 40px rgba(100,140,255,0.05);
 }
-.breathing-orb.exhale .br-glow {
-  inset: 15px;
-  background: radial-gradient(circle, rgba(147,161,196,0.1) 0%, transparent 70%);
+.breath-dot.idle {
+  animation: breathIdle 4s ease-in-out infinite;
 }
-.breathing-orb .br-progress {
-  transition: stroke-dashoffset 1s linear;
+@keyframes breathIdle {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(167,121,247,0.25); }
+  50% { transform: scale(1.15); box-shadow: 0 0 40px rgba(167,121,247,0.35); }
 }
-.breathing-inner {
-  position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center;
+.breath-label {
+  position: absolute; bottom: 0; left: 0; right: 0; text-align: center;
 }
 .breathing-instruction {
-  font-size: 14px; font-weight: 700; letter-spacing: 2px;
+  font-size: 12px; font-weight: 700; letter-spacing: 2.5px;
   color: var(--text-3); text-transform: uppercase;
 }
 .breathing-timer {
-  font-size: 24px; font-weight: 800; letter-spacing: -1px;
-  color: var(--purple); line-height: 1; margin-top: 2px;
+  font-size: 28px; font-weight: 800; letter-spacing: -1px;
+  color: var(--purple); line-height: 1.2;
 }
-.breathing-orb.inhale .breathing-timer { color: var(--sleep); }
-.breathing-orb.hold .breathing-timer { color: var(--purple); }
-.breathing-orb.exhale .breathing-timer { color: #93a1c4; }
 .breathing-sub {
-  font-size: 11px; color: var(--text-4); margin-top: 4px;
+  font-size: 11px; color: var(--text-4); margin-top: 2px;
   font-family: 'DM Mono', monospace;
 }
+.breath-rec {
+  background: rgba(167,121,247,0.06); border: 1px solid rgba(167,121,247,0.15);
+  border-radius: 10px; padding: 10px 14px; margin-bottom: 16px;
+  text-align: left; display: flex; align-items: center; gap: 10px;
+}
+.breath-rec-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--purple); flex-shrink: 0; }
+.breath-rec-text { font-size: 12px; color: var(--text-2); line-height: 1.4; }
+.breath-rec-text b { color: var(--purple); }
 .breathing-controls { margin-top: 16px; display: flex; gap: 8px; justify-content: center; }
 .breathing-btn {
   padding: 12px 28px; border: none; border-radius: 100px;
@@ -1133,10 +1138,10 @@ section { padding: 0 16px; margin-bottom: 8px; }
   background: rgba(255,255,255,0.08); color: #fff;
 }
 .breathing-presets {
-  display: flex; gap: 6px; justify-content: center; margin-top: 14px;
+  display: flex; gap: 6px; justify-content: center; margin-top: 14px; flex-wrap: wrap;
 }
 .breathing-preset {
-  padding: 6px 14px; border-radius: 100px;
+  padding: 6px 12px; border-radius: 100px;
   background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
   font-size: 11px; font-weight: 600; color: var(--text-3);
   cursor: pointer; font-family: inherit; transition: all 0.2s;
@@ -3021,49 +3026,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
       <div class="trend-grid" id="trendGrid"></div>
     </section>
 
-    <section>
-      <div class="section-head"><div class="section-title">Guided Breathing</div></div>
-      <div class="breathing-card" id="breathingCard">
-        <div class="breathing-orb-wrap">
-          <div class="breathing-orb" id="breathingOrb">
-            <svg class="br-ring" viewBox="0 0 200 200">
-              <defs>
-                <linearGradient id="brGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style="stop-color:var(--sleep);stop-opacity:0.3"/>
-                  <stop offset="100%" style="stop-color:#c77dff;stop-opacity:0.3"/>
-                </linearGradient>
-                <linearGradient id="brGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style="stop-color:var(--sleep);stop-opacity:0.8"/>
-                  <stop offset="100%" style="stop-color:#a779f7;stop-opacity:0.8"/>
-                </linearGradient>
-              </defs>
-              <circle cx="100" cy="100" r="92" fill="none" stroke="url(#brGrad1)" stroke-width="3"/>
-              <circle cx="100" cy="100" r="82" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1.5"/>
-              <circle class="br-progress" id="brProgress" cx="100" cy="100" r="92" fill="none"
-                stroke="url(#brGrad2)" stroke-width="3" stroke-linecap="round"
-                stroke-dasharray="578.05" stroke-dashoffset="0"
-                transform="rotate(-90 100 100)"/>
-            </svg>
-            <div class="br-glow"></div>
-            <div class="breathing-inner">
-              <div class="breathing-instruction" id="breathingInstruction">READY</div>
-              <div class="breathing-timer" id="breathingTimer">4-7-8</div>
-              <div class="breathing-sub" id="breathingSub">tap start to begin</div>
-            </div>
-          </div>
-        </div>
-        <div class="breathing-presets" id="breathingPresets">
-          <button class="breathing-preset active" data-pattern="4-7-8" onclick="setBreathingPattern('4-7-8',this)">4-7-8</button>
-          <button class="breathing-preset" data-pattern="box" onclick="setBreathingPattern('box',this)">Box</button>
-          <button class="breathing-preset" data-pattern="calm" onclick="setBreathingPattern('calm',this)">Calm</button>
-        </div>
-        <div class="breathing-controls">
-          <button class="breathing-btn start" id="breathingStartBtn" onclick="toggleBreathing()">Start</button>
-        </div>
-        <div class="breathing-rounds" id="breathingRounds">3 rounds ~ 2 min</div>
-        <div class="breathing-desc" id="breathingDesc">Activates your parasympathetic nervous system. The extended exhale (8s) triggers the vagus nerve, lowering heart rate and boosting HRV. Best before sleep or after high-strain sessions.</div>
-      </div>
-    </section>
+    <!-- Breathing moved to Coach tab -->
 
     <section>
       <div class="sync-status" id="syncStatus">
@@ -3083,22 +3046,10 @@ section { padding: 0 16px; margin-bottom: 8px; }
       <div id="coachTraining"></div>
     </section>
     <section>
+      <div id="coachBreathwork"></div>
+    </section>
+    <section>
       <div id="coachRecoveryStack"></div>
-    </section>
-    <section>
-      <div id="coachSelfCare"></div>
-    </section>
-    <section>
-      <div id="coachAccountability"></div>
-    </section>
-    <section>
-      <div id="coachWeekGrade"></div>
-    </section>
-    <section>
-      <div id="coachPotential"></div>
-    </section>
-    <section style="text-align:center;padding:8px 0 0;">
-      <button class="coach-week-link" onclick="showView('week')">View Full Week Analytics</button>
     </section>
   </div>
 
@@ -3369,7 +3320,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v92';
+const APP_VERSION = 'v93';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -7828,11 +7779,8 @@ function renderDailyCoach() {
 // ========================================
 function renderCoachView() {
   renderCoachTraining();
+  renderCoachBreathwork();
   renderCoachRecoveryStack();
-  renderCoachSelfCare();
-  renderCoachAccountability();
-  renderCoachWeekGrade();
-  renderCoachPotential();
 }
 
 function renderCoachTraining() {
@@ -9247,39 +9195,108 @@ function renderNutrition() {
 }
 
 // ========================================
-//  GUIDED BREATHING
+//  GUIDED BREATHING — research-based protocols
 // ========================================
+// Sources: Balban et al 2023 (Cell Reports Medicine) — cyclic sighing
+//          PLOS ONE 2025 — 6bpm recovery vs box breathing
+//          Lehrer & Gevirtz 2014 — resonance frequency breathing
 const BREATHING_PATTERNS = {
-  '4-7-8': { inhale: 4, hold: 7, exhale: 8, rounds: 3, desc: '4-7-8 Relaxation',
-    explain: 'Activates your parasympathetic nervous system. The extended exhale (8s) triggers the vagus nerve, lowering heart rate and boosting HRV. Best before sleep or after high-strain sessions.' },
-  'box':   { inhale: 4, hold: 4, exhale: 4, holdOut: 4, rounds: 4, desc: 'Box Breathing',
-    explain: 'Used by Navy SEALs for focus under pressure. Equal phases (4-4-4-4) balance the autonomic nervous system. Great before competition, heavy lifts, or stressful situations.' },
-  'calm':  { inhale: 4, hold: 0, exhale: 6, rounds: 5, desc: 'Calm Breathing',
-    explain: 'Simple and gentle. The longer exhale (6s vs 4s inhale) shifts your nervous system toward rest. Good for daily stress relief and winding down. Lowest intensity of the three.' }
+  'sigh':     { inhale: 3, inhale2: 1, hold: 0, exhale: 6, rounds: 5, label: 'Cyclic Sigh',
+    explain: 'Stanford study (2023): 5 min/day improved mood more than meditation. Double inhale through nose, long exhale through mouth. Reduces respiratory rate for hours after.' },
+  'recovery': { inhale: 5, hold: 0, exhale: 5, rounds: 6, label: 'Recovery 6bpm',
+    explain: '6 breaths/min synchronizes heart rate with breathing (resonance). Outperforms box breathing for post-exercise recovery (PLOS ONE 2025). Maximizes HRV during the session.' },
+  'box':      { inhale: 4, hold: 4, exhale: 4, holdOut: 4, rounds: 4, label: 'Box',
+    explain: 'Equal-phase breathing (4-4-4-4) balances sympathetic + parasympathetic drive. Builds composure under pressure. Use before competition or heavy lifts — not for recovery.' },
+  '478':      { inhale: 4, hold: 7, exhale: 8, rounds: 3, label: '4-7-8 Sleep',
+    explain: 'Extended exhale (8s) maximizes vagal tone. The 7s hold increases CO2 tolerance and calms the brainstem. Use in bed with lights off — most potent sleep-onset protocol.' }
 };
 let breathingActive = false;
-let breathingPattern = '4-7-8';
+let breathingPattern = 'sigh';
 let breathingInterval = null;
 let breathingRound = 0;
 
-function setBreathingPattern(key, el) {
+// Context-aware: recommend the best protocol right now
+function getBreathingRecommendation() {
+  const WAKE = profileWakeHour();
+  const now = new Date();
+  const hrsAwake = ((now.getHours() + now.getMinutes() / 60) - WAKE + 24) % 24;
+  const strain = computeStrain();
+  const recovery = computeReadiness();
+  const todayWorkouts = (ST._workouts || []).filter(w => w.date === now.toISOString().slice(0, 10));
+  const trained = todayWorkouts.length > 0;
+  const SLEEP = profileSleepHour();
+  const hrsToSleep = ((SLEEP - (now.getHours() + now.getMinutes() / 60)) + 24) % 24;
+
+  // Evening wind-down (< 2h to sleep)
+  if (hrsToSleep < 2) return { key: '478', reason: 'Wind-down window. 4-7-8 maximizes vagal tone for sleep onset.' };
+  // Post-training recovery
+  if (trained && hrsAwake > 3) return { key: 'recovery', reason: 'Post-training. 6bpm breathing boosts HRV recovery faster than box breathing.' };
+  // High strain day
+  if (strain > 12) return { key: 'recovery', reason: 'High strain day (' + strain + '). Resonance breathing accelerates parasympathetic recovery.' };
+  // Low recovery morning
+  if (hrsAwake < 3 && recovery < 60) return { key: 'sigh', reason: 'Low recovery morning. Cyclic sighing resets your baseline faster than meditation.' };
+  // Afternoon dip
+  if (hrsAwake > 5 && hrsAwake < 9) return { key: 'sigh', reason: 'Afternoon reset. 5 min cyclic sighing lifts mood and lowers respiratory rate for hours.' };
+  // Morning default
+  if (hrsAwake < 3) return { key: 'sigh', reason: 'Morning practice. Stanford RCT: 5 min/day cyclic sighing beats meditation for mood.' };
+  // Pre-competition / focus
+  return { key: 'box', reason: 'Build focus and composure. Box breathing balances your autonomic nervous system.' };
+}
+
+function renderCoachBreathwork() {
+  const el = document.getElementById('coachBreathwork');
+  if (!el) return;
+
+  const rec = getBreathingRecommendation();
+  breathingPattern = rec.key;
+  const p = BREATHING_PATTERNS[breathingPattern];
+  const totalSec = (p.inhale + (p.inhale2 || 0) + p.hold + p.exhale + (p.holdOut || 0)) * p.rounds;
+
+  el.innerHTML = `
+    <div class="coach-section">
+      <div class="coach-section-label" style="margin-bottom:12px;">BREATHWORK</div>
+      <div class="breath-rec" id="breathRec">
+        <div class="breath-rec-dot"></div>
+        <div class="breath-rec-text"><b>Recommended now:</b> ${rec.reason}</div>
+      </div>
+      <div class="breathing-card" id="breathingCard">
+        <div class="breath-dot-wrap">
+          <div class="breath-dot idle" id="breathDot"></div>
+        </div>
+        <div class="breathing-instruction" id="breathingInstruction">READY</div>
+        <div class="breathing-timer" id="breathingTimer">${p.label}</div>
+        <div class="breathing-sub" id="breathingSub">tap start to begin</div>
+        <div class="breathing-presets" id="breathingPresets">
+          ${Object.entries(BREATHING_PATTERNS).map(([k, v]) =>
+            `<button class="breathing-preset${k === breathingPattern ? ' active' : ''}" onclick="setBreathingPattern('${k}',this)">${v.label}</button>`
+          ).join('')}
+        </div>
+        <div class="breathing-controls">
+          <button class="breathing-btn start" id="breathingStartBtn" onclick="toggleBreathing()">Start</button>
+        </div>
+        <div class="breathing-rounds" id="breathingRounds">${p.rounds} rounds ~ ${Math.ceil(totalSec / 60)} min</div>
+        <div class="breathing-desc" id="breathingDesc">${p.explain}</div>
+      </div>
+    </div>`;
+}
+
+function setBreathingPattern(key, btn) {
   if (breathingActive) return;
   breathingPattern = key;
   document.querySelectorAll('.breathing-preset').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
+  if (btn) btn.classList.add('active');
   const p = BREATHING_PATTERNS[key];
-  const totalSec = (p.inhale + p.hold + p.exhale + (p.holdOut || 0)) * p.rounds;
-  document.getElementById('breathingTimer').textContent = key === 'box' ? '4-4-4-4' : key === 'calm' ? '4-0-6' : '4-7-8';
+  const totalSec = (p.inhale + (p.inhale2 || 0) + p.hold + p.exhale + (p.holdOut || 0)) * p.rounds;
+  document.getElementById('breathingTimer').textContent = p.label;
   document.getElementById('breathingRounds').textContent = p.rounds + ' rounds ~ ' + Math.ceil(totalSec / 60) + ' min';
   document.getElementById('breathingDesc').textContent = p.explain;
+  const dot = document.getElementById('breathDot');
+  if (dot) { dot.className = 'breath-dot idle'; }
 }
 
 function toggleBreathing() {
-  if (breathingActive) {
-    stopBreathing();
-  } else {
-    startBreathing();
-  }
+  if (breathingActive) stopBreathing();
+  else startBreathing();
 }
 
 function startBreathing() {
@@ -9288,6 +9305,8 @@ function startBreathing() {
   const btn = document.getElementById('breathingStartBtn');
   btn.textContent = 'Stop';
   btn.className = 'breathing-btn stop';
+  const dot = document.getElementById('breathDot');
+  dot.classList.remove('idle');
   runBreathingCycle();
 }
 
@@ -9297,85 +9316,84 @@ function stopBreathing() {
   const btn = document.getElementById('breathingStartBtn');
   btn.textContent = 'Start';
   btn.className = 'breathing-btn start';
-  const orb = document.getElementById('breathingOrb');
-  orb.className = 'breathing-orb';
+  const dot = document.getElementById('breathDot');
+  dot.className = 'breath-dot idle';
   document.getElementById('breathingInstruction').textContent = 'READY';
-  const p = BREATHING_PATTERNS[breathingPattern];
-  document.getElementById('breathingTimer').textContent = breathingPattern === 'box' ? '4-4-4-4' : breathingPattern === 'calm' ? '4-0-6' : '4-7-8';
+  document.getElementById('breathingTimer').textContent = BREATHING_PATTERNS[breathingPattern].label;
   document.getElementById('breathingSub').textContent = 'tap start to begin';
-  // Reset progress ring
-  const prog = document.getElementById('brProgress');
-  if (prog) { prog.style.transition = 'none'; prog.setAttribute('stroke-dashoffset', '0'); }
 }
 
 function runBreathingCycle() {
   if (!breathingActive) return;
   const p = BREATHING_PATTERNS[breathingPattern];
   if (breathingRound >= p.rounds) {
+    // Done
     document.getElementById('breathingInstruction').textContent = 'DONE';
     document.getElementById('breathingTimer').textContent = '';
     document.getElementById('breathingSub').textContent = breathingRound + ' rounds complete';
-    document.getElementById('breathingOrb').className = 'breathing-orb';
-    const prog = document.getElementById('brProgress');
-    if (prog) { prog.style.transition = 'stroke-dashoffset 0.5s'; prog.setAttribute('stroke-dashoffset', '0'); }
+    const dot = document.getElementById('breathDot');
+    dot.className = 'breath-dot idle';
     breathingActive = false;
     const btn = document.getElementById('breathingStartBtn');
     btn.textContent = 'Start';
     btn.className = 'breathing-btn start';
+    // Log the breathing session
+    if (breathingRound >= 2) {
+      logBehavior('breathwork');
+    }
     return;
   }
 
   breathingRound++;
-  const orb = document.getElementById('breathingOrb');
+  const dot = document.getElementById('breathDot');
   const instr = document.getElementById('breathingInstruction');
   const timer = document.getElementById('breathingTimer');
   const sub = document.getElementById('breathingSub');
-  const prog = document.getElementById('brProgress');
-  const circ = 2 * Math.PI * 92; // 578.05
   sub.textContent = 'round ' + breathingRound + ' of ' + p.rounds;
 
-  // Update progress ring for overall progress
-  const totalPhases = p.rounds * (2 + (p.hold > 0 ? 1 : 0) + (p.holdOut ? 1 : 0));
-  const donePhases = (breathingRound - 1) * (2 + (p.hold > 0 ? 1 : 0) + (p.holdOut ? 1 : 0));
-
-  function setProgress(phase) {
-    const pct = (donePhases + phase) / totalPhases;
-    prog.style.transition = 'stroke-dashoffset 0.5s linear';
-    prog.setAttribute('stroke-dashoffset', String(circ - circ * pct));
-  }
-
-  // Inhale
-  orb.className = 'breathing-orb inhale';
-  instr.textContent = 'INHALE';
-  setProgress(0);
+  // Inhale (dot expands)
+  dot.style.transitionDuration = p.inhale + 's';
+  dot.className = 'breath-dot inhale';
+  instr.textContent = p.inhale2 ? 'INHALE (nose)' : 'INHALE';
   runCountdown(timer, p.inhale, () => {
     if (!breathingActive) return;
-    setProgress(1);
+    // Double inhale for cyclic sigh
+    if (p.inhale2) {
+      instr.textContent = 'SIP IN';
+      runCountdown(timer, p.inhale2, () => {
+        if (!breathingActive) return;
+        afterInhale();
+      });
+    } else {
+      afterInhale();
+    }
+  });
+
+  function afterInhale() {
     if (p.hold > 0) {
-      orb.className = 'breathing-orb hold';
+      dot.style.transitionDuration = '0.3s';
+      dot.className = 'breath-dot hold';
       instr.textContent = 'HOLD';
       runCountdown(timer, p.hold, () => {
         if (!breathingActive) return;
-        setProgress(2);
         doExhale();
       });
     } else {
       doExhale();
     }
-  });
+  }
 
   function doExhale() {
-    orb.className = 'breathing-orb exhale';
-    instr.textContent = 'EXHALE';
+    dot.style.transitionDuration = p.exhale + 's';
+    dot.className = 'breath-dot exhale';
+    instr.textContent = p.inhale2 ? 'EXHALE (mouth)' : 'EXHALE';
     runCountdown(timer, p.exhale, () => {
       if (!breathingActive) return;
-      const exPhase = 1 + (p.hold > 0 ? 1 : 0) + 1;
-      setProgress(exPhase);
       if (p.holdOut > 0) {
-        orb.className = 'breathing-orb';
+        dot.style.transitionDuration = '0.3s';
+        dot.className = 'breath-dot exhale';
         instr.textContent = 'HOLD';
         runCountdown(timer, p.holdOut, () => {
-          setProgress(exPhase + 1);
           runBreathingCycle();
         });
       } else {
