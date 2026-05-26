@@ -3302,7 +3302,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v101';
+const APP_VERSION = 'v102';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -6597,27 +6597,53 @@ function addWorkoutsToMyDay() {
   }).sort((a, b) => a.startTime - b.startTime);
 
   // Match Hero workouts by overlapping time window
-  function getHeroName(w) {
-    if (!w.startDate || !heroToday.length) return null;
-    const sd = new Date(w.startDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
-    if (isNaN(sd.getTime())) return null;
-    const wStart = sd.getTime();
-    for (const h of heroToday) {
-      // Match if Apple Health workout started within 30min of Hero workout
-      if (Math.abs(wStart - h.startTime) < 30 * 60000) {
-        return h.tag?.name || null;
+  function getHeroName(w, idx) {
+    if (!heroToday.length) return null;
+
+    // If we have startDate, match by time proximity
+    if (w.startDate) {
+      let sd;
+      const fmt1 = w.startDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3');
+      sd = new Date(fmt1);
+      if (isNaN(sd.getTime())) sd = new Date(w.startDate);
+      if (!isNaN(sd.getTime())) {
+        const wStart = sd.getTime();
+        let bestMatch = null, bestDiff = Infinity;
+        for (const h of heroToday) {
+          const diff = Math.abs(wStart - h.startTime);
+          if (diff < 90 * 60000 && diff < bestDiff) {
+            bestDiff = diff;
+            bestMatch = h;
+          }
+        }
+        if (bestMatch?.tag?.name) return bestMatch.tag.name;
       }
     }
+
+    // Fallback: if same number of workouts, match by index (sorted by time)
+    if (heroToday.length === workouts.length && idx < heroToday.length) {
+      return heroToday[idx]?.tag?.name || null;
+    }
+
+    // Last fallback: if only 1 Hero workout today, use it for any unmatched workout
+    if (heroToday.length === 1 && workouts.length === 1) {
+      return heroToday[0]?.tag?.name || null;
+    }
+
     return null;
   }
 
   let added = false;
   const genericTypes = ['Workout', 'Traditional Strength Training', 'Other', 'Functional Strength Training', 'Mixed Cardio'];
 
-  for (const w of workouts) {
+  // Sort Apple Health workouts by startDate for index-based matching
+  const sortedWorkouts = [...workouts].sort((a, b) => (a.startDate || '').localeCompare(b.startDate || ''));
+
+  for (let wi = 0; wi < sortedWorkouts.length; wi++) {
+    const w = sortedWorkouts[wi];
     // Use startDate as unique key (two workouts at different times = different entries)
     const wKey = w.startDate || (w.type + '-' + (w.durMin || 0) + '-' + (w.cal || 0));
-    const heroName = getHeroName(w);
+    const heroName = getHeroName(w, wi);
 
     const durStr = w.durMin > 0 ? (w.durMin >= 60 ? Math.floor(w.durMin / 60) + 'h ' + (w.durMin % 60) + 'min' : w.durMin + 'min') : '';
     const calStr = w.cal > 0 ? w.cal + ' kcal' : '';
