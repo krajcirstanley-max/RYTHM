@@ -3404,7 +3404,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v110';
+const APP_VERSION = 'v111';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -4173,7 +4173,7 @@ function computeReadiness() {
   hrvScore = Math.max(0, Math.min(100, hrvScore));
 
   // === RHR Component (15%)  - lower is better for athletes ===
-  const rhrBase = m.rhrBaseline || 63;
+  const rhrBase = m.rhrBaseline || 57;
   const rhrNow = m.rhr || 0;
   let rhrScore;
   if (rhrNow <= 0) {
@@ -4273,7 +4273,7 @@ function computeReadiness() {
   // === Previous-day behavior modifiers ===
   let behaviorMod = 0;
   const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
-  const yesterdayEntry = ST.journal.find(j => j.date === yesterday);
+  const yesterdayEntry = (ST.journal || []).find(j => j.date === yesterday);
   if (yesterdayEntry) {
     const yb = yesterdayEntry.behaviors || [];
     // Late shisha hammers recovery
@@ -6100,6 +6100,14 @@ function computeStrain() {
     if (liveCal > todayCal) todayCal = liveCal;
   }
 
+  // Estimate from workout duration when cal data seems too low
+  const todayW = (ST._workouts || []).filter(w => w.date === today);
+  const totalWorkMin = todayW.reduce((s, w) => s + (w.durMin || 0), 0);
+  if (totalWorkMin > 0 && todayCal < totalWorkMin * 5) {
+    const estCal = Math.round(totalWorkMin * 9); // ~9 cal/min for strength/power athlete
+    if (estCal > todayCal) todayCal = estCal;
+  }
+
   // HR zone-weighted strain (Edwards TRIMP) when zone data available
   // Edwards' weights: Z1x1, Z2x2, Z3x3, Z4x4, Z5x5
   const zones = ST.health?.hrZones;
@@ -6107,9 +6115,7 @@ function computeStrain() {
   if (zones) {
     if (Array.isArray(zones)) {
       // Array format: [{zone:1, pct:33}, {zone:2, pct:35}, ...]
-      // Convert pct to estimated minutes using total workout duration
-      const todayW = (ST._workouts || []).filter(w => w.date === today);
-      const totalMin = todayW.reduce((s, w) => s + (w.durMin || 0), 0) || 60;
+      const totalMin = totalWorkMin || todayW.reduce((s, w) => s + (w.durMin || 0), 0) || 60;
       for (const z of zones) {
         const mins = Math.round((z.pct || 0) / 100 * totalMin);
         if (z.zone === 1) z1 = mins;
@@ -6130,15 +6136,6 @@ function computeStrain() {
     // Use whichever method gives higher fidelity - prefer zone data
     const calStrain = todayCal > 0 ? Math.min(21, Math.round(3 + Math.sqrt(todayCal) * 0.42)) : 3;
     return Math.max(zoneStrain, calStrain);
-  }
-
-  // Also estimate from workout duration when no cal/zone data
-  const todayW = (ST._workouts || []).filter(w => w.date === today);
-  const totalWorkMin = todayW.reduce((s, w) => s + (w.durMin || 0), 0);
-  if (totalWorkMin > 0 && todayCal < totalWorkMin * 5) {
-    // ~9 cal/min for strength/power athlete
-    const estCal = Math.round(totalWorkMin * 9);
-    if (estCal > todayCal) todayCal = estCal;
   }
 
   // Fallback: calorie-based approximation
@@ -6174,7 +6171,9 @@ function computeTrainingLoad() {
 
   // Acute:Chronic ratio  - 0.8-1.3 is optimal zone (Gabbett 2016)
   // Below 0.6 = detraining, above 1.5 = injury risk spike
-  const acr = avg21 > 50 ? avg7 / avg21 : 1.0;
+  // If no meaningful data, return neutral (avoid false "optimal" on empty data)
+  const hasData = avg21 > 50;
+  const acr = hasData ? avg7 / avg21 : 1.0;
 
   // Training readiness: 100 at sweet spot (ACR 0.8-1.3), drops outside
   let readiness;
@@ -6186,7 +6185,7 @@ function computeTrainingLoad() {
     readiness = Math.max(20, 80 - (acr - 1.3) * 150); // overreaching penalty
   }
 
-  return { readiness: Math.round(Math.min(100, Math.max(0, readiness))), acr: +acr.toFixed(2), avg7: Math.round(avg7), avg21: Math.round(avg21) };
+  return { readiness: Math.round(Math.min(100, Math.max(0, readiness))), acr: parseFloat(acr.toFixed(2)), avg7: Math.round(avg7), avg21: Math.round(avg21), hasData };
 }
 
 // Training load modifier - reduces energy curve after heavy training days
@@ -8212,8 +8211,8 @@ function renderSleepNeedBanner() {
   const today = new Date().toISOString().slice(0, 10);
 
   // Strain-based sleep surcharge (peer-reviewed: Fullagar 2015, Halson 2014)
-  // Higher strain = more sleep needed for full recovery
-  const strainAdd = strain > 16 ? 1.5 : strain > 14 ? 1.0 : strain > 10 ? 0.5 : strain > 6 ? 0.25 : 0;
+  // Smooth curve instead of step function: 0h at strain 3, ~1.5h at strain 21
+  const strainAdd = strain <= 3 ? 0 : +Math.min(1.5, ((strain - 3) / 18) * 1.5).toFixed(2);
 
   // Sleep debt surcharge (Banks & Dinges 2007: accumulated debt requires payback)
   const todayDebt = (ST.sleepDebt || []).find(d => d.date === today);
@@ -8295,16 +8294,16 @@ function renderPerformanceForecast() {
     if (i === 0) {
       predicted = recovery;
     } else {
-      // Recovery naturally trends toward baseline (mean reversion)
-      // Modified by: sleep quality, strain, HRV trend
-      const baseline = 65; // population mean recovery
-      const strainDecay = Math.max(0, (strain - 10) * 2); // high strain today drags tomorrow
-      const sleepBoost = (sleepQuality - 0.85) * 20; // sleep above/below target
-      const hrvTrend = hrvSlope * 2; // HRV trend extrapolation (dampened)
-      const meanReversion = (baseline - recovery) * 0.15 * i; // regress toward mean
+      // Recovery naturally trends toward personal baseline (mean reversion)
+      // Modified by: sleep quality, strain decay, HRV trend
+      const baseline = m.recoveryBaseline || (hrvBase >= 50 ? 72 : 65);
+      const strainPenalty = Math.max(0, (strain - 10) * 2) * Math.pow(0.6, i - 1); // decays each day
+      const sleepBoost = (sleepQuality - 0.85) * 20 * Math.min(i, 2); // sleep effect caps at day 2
+      const hrvTrend = hrvSlope * 1.5 * Math.min(i, 3); // HRV trend, capped at 3 days
+      const meanReversion = (baseline - recovery) * 0.15 * i; // regress toward personal mean
 
       predicted = Math.round(Math.max(20, Math.min(100,
-        recovery + meanReversion + sleepBoost * i - strainDecay / i + hrvTrend * i
+        recovery + meanReversion + sleepBoost - strainPenalty + hrvTrend
       )));
     }
 
@@ -8379,13 +8378,13 @@ function renderRecoveryBaselines() {
   const rhrTrend = trendArrow(hist.rhr, true);
   const sleepTrend = trendArrow(hist.sleep, false);
 
-  // Build sparklines
-  function miniSparkline(arr, color, invert) {
+  // Build sparklines with baseline reference line
+  function miniSparkline(arr, color, invert, baseline) {
     if (!arr || arr.length < 3) return '';
     const pts = arr.slice(-14);
     const vals = pts.map(p => p.value);
-    const min = Math.min(...vals);
-    const max = Math.max(...vals);
+    const min = Math.min(...vals, baseline || Infinity);
+    const max = Math.max(...vals, baseline || -Infinity);
     const range = max - min || 1;
     const w = 80, h = 24;
     const points = pts.map((p, i) => {
@@ -8393,18 +8392,27 @@ function renderRecoveryBaselines() {
       const y = h - 2 - ((p.value - min) / range) * (h - 4);
       return `${x.toFixed(1)},${y.toFixed(1)}`;
     }).join(' ');
-    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="opacity:0.7"><polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    // Dashed baseline reference line
+    let baseLine = '';
+    if (baseline != null) {
+      const by = h - 2 - ((baseline - min) / range) * (h - 4);
+      baseLine = `<line x1="0" y1="${by.toFixed(1)}" x2="${w}" y2="${by.toFixed(1)}" stroke="${color}" stroke-width="0.5" stroke-dasharray="2,2" opacity="0.4"/>`;
+    }
+    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="opacity:0.7">${baseLine}<polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   }
 
+  const hrvBaseline = m.hrvBaseline || 42;
+  const rhrBaseline = m.rhrBaseline || 57;
+  const sleepBaseline = ST.health?.sleepTarget || 8;
   const rows = [
-    { name: 'HRV', val: m.hrv || 0, unit: 'ms', baseline: m.hrvBaseline || 42, spark: miniSparkline(hist.hrv, '#00ec7f', false), trend: hrvTrend },
-    { name: 'RHR', val: m.rhr || 0, unit: 'bpm', baseline: m.rhrBaseline || 57, spark: miniSparkline(hist.rhr, '#ff5470', true), trend: rhrTrend },
-    { name: 'Sleep', val: (ST.sleep?.totalH || 0).toFixed(1), unit: 'h', baseline: ST.health?.sleepTarget || 8, spark: miniSparkline(hist.sleep, '#93a1c4', false), trend: sleepTrend },
+    { name: 'HRV', val: m.hrv || 0, unit: 'ms', baseline: hrvBaseline, spark: miniSparkline(hist.hrv, '#00ec7f', false, hrvBaseline), trend: hrvTrend },
+    { name: 'RHR', val: m.rhr || 0, unit: 'bpm', baseline: rhrBaseline, spark: miniSparkline(hist.rhr, '#ff5470', true, rhrBaseline), trend: rhrTrend },
+    { name: 'Sleep', val: (ST.sleep?.totalH || 0).toFixed(1), unit: 'h', baseline: sleepBaseline, spark: miniSparkline(hist.sleep, '#93a1c4', false, sleepBaseline), trend: sleepTrend },
   ];
 
   el.innerHTML = `
     <div class="rb-card">
-      <div class="rb-label">Recovery Baselines (30-day)</div>
+      <div class="rb-label">Recovery Baselines (14-day)</div>
       ${rows.map(r => `
         <div class="rb-row">
           <div class="rb-metric">
@@ -14315,6 +14323,13 @@ function bootApp() {
     renderSuggestions();
   }, 60000);
 
+  // Periodic health + workout refresh every 5 min (keeps data fresh while app is open)
+  setInterval(() => {
+    if (document.hidden) return;
+    fetchHealthData();
+    fetchHeroWorkouts();
+  }, 300000);
+
   // Auto-enable notifications if permission already granted, or prompt on first visit
   (async () => {
     if (!ST.notifications) ST.notifications = { enabled: false, fired: {} };
@@ -14432,9 +14447,9 @@ if ('serviceWorker' in navigator) {
     reg.update();
     // Re-check on every focus and visibility change (instant freshness)
     document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) { reg.update(); syncFromCloud(); }
+      if (!document.hidden) { reg.update(); syncFromCloud(); fetchHealthData(); fetchHeroWorkouts(); }
     });
-    window.addEventListener('focus', () => { reg.update(); syncFromCloud(); });
+    window.addEventListener('focus', () => { reg.update(); syncFromCloud(); fetchHealthData(); fetchHeroWorkouts(); });
     // Also poll every 60s when visible
     setInterval(() => { if (!document.hidden) reg.update(); }, 60000);
     // If a new SW is already waiting, reload immediately
