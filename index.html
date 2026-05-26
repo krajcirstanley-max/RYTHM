@@ -884,6 +884,81 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .strain-msg { font-size: 13px; color: var(--text-2); margin-top: 14px; line-height: 1.55; }
 .strain-msg b { color: #fff; font-weight: 700; }
 
+/* STRAIN TARGET (Today view) */
+.strain-target-card {
+  background: var(--card); border: 1px solid var(--card-border);
+  border-radius: var(--radius); padding: 16px 18px; overflow: hidden;
+}
+.st-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.st-label { font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--text-3); text-transform: uppercase; }
+.st-zone { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px; }
+.st-main { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+.st-current { font-family: 'DM Mono', monospace; font-size: 32px; font-weight: 900; letter-spacing: -1px; }
+.st-target { font-size: 13px; color: var(--text-3); }
+.st-bar-wrap { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.04); position: relative; overflow: visible; margin-bottom: 6px; }
+.st-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+.st-bar-zone { position: absolute; top: -2px; height: 12px; border-radius: 6px; border: 1.5px solid rgba(255,255,255,0.2); background: transparent; }
+.st-msg { font-size: 12px; color: var(--text-2); line-height: 1.5; margin-top: 8px; }
+
+/* SLEEP NEED BANNER */
+.sleep-need-card {
+  background: linear-gradient(135deg, rgba(147,161,196,0.08), rgba(167,139,250,0.06));
+  border: 1px solid rgba(147,161,196,0.15); border-radius: var(--radius); padding: 14px 18px;
+}
+.sn-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+.sn-label { font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--sleep); text-transform: uppercase; }
+.sn-main { display: flex; align-items: baseline; gap: 8px; }
+.sn-val { font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 900; color: var(--sleep); letter-spacing: -1px; }
+.sn-unit { font-size: 13px; color: var(--text-3); }
+.sn-detail { font-size: 11px; color: var(--text-3); margin-top: 6px; line-height: 1.5; font-family: 'DM Mono', monospace; }
+.sn-breakdown { display: flex; gap: 12px; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(147,161,196,0.1); }
+.sn-bp { font-size: 11px; color: var(--text-3); }
+.sn-bp b { color: var(--text-2); font-weight: 600; }
+
+/* PERFORMANCE FORECAST */
+.pf-card {
+  background: var(--card); border: 1px solid var(--card-border);
+  border-radius: var(--radius); padding: 16px 18px;
+}
+.pf-label { font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--text-3); text-transform: uppercase; margin-bottom: 12px; }
+.pf-days { display: flex; gap: 4px; }
+.pf-day {
+  flex: 1; text-align: center; padding: 10px 2px; border-radius: 10px;
+  background: rgba(255,255,255,0.02); border: 1px solid transparent; cursor: default;
+}
+.pf-day.best { border-color: rgba(48,217,138,0.3); background: rgba(48,217,138,0.06); }
+.pf-day-name { font-size: 9px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-4); text-transform: uppercase; }
+.pf-day-score { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 800; margin: 4px 0 2px; }
+.pf-day-bar { height: 3px; border-radius: 2px; background: rgba(255,255,255,0.04); margin: 6px 4px 0; overflow: hidden; }
+.pf-day-bar-fill { height: 100%; border-radius: 2px; }
+.pf-day-label { font-size: 9px; color: var(--text-4); margin-top: 4px; }
+.pf-advice { font-size: 12px; color: var(--text-2); margin-top: 12px; line-height: 1.5; padding-top: 10px; border-top: 1px solid var(--border); }
+
+/* RECOVERY BASELINES */
+.rb-card {
+  background: var(--card); border: 1px solid var(--card-border);
+  border-radius: var(--radius); padding: 16px 18px;
+}
+.rb-label { font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--text-3); text-transform: uppercase; margin-bottom: 12px; }
+.rb-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.rb-row:last-child { border-bottom: none; }
+.rb-metric { display: flex; align-items: center; gap: 8px; }
+.rb-metric-name { font-size: 12px; font-weight: 600; color: var(--text-2); }
+.rb-metric-val { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 700; }
+.rb-trend { font-size: 10px; font-family: 'DM Mono', monospace; }
+
+/* NEXT-DAY IMPACT */
+.ndi-card {
+  background: var(--card); border: 1px solid var(--card-border);
+  border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px;
+}
+.ndi-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.ndi-row:last-child { border-bottom: none; }
+.ndi-icon { font-size: 18px; flex-shrink: 0; }
+.ndi-info { flex: 1; }
+.ndi-text { font-size: 12px; color: var(--text-2); line-height: 1.4; }
+.ndi-delta { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 700; text-align: right; min-width: 50px; }
+
 /* SLEEP PERFORMANCE */
 .sleep-perf {
   background: var(--card);
@@ -2776,6 +2851,14 @@ section { padding: 0 16px; margin-bottom: 8px; }
     </section>
 
     <section>
+      <div id="strainTarget"></div>
+    </section>
+
+    <section>
+      <div id="sleepNeedBanner"></div>
+    </section>
+
+    <section>
       <div class="day-banner" id="dayBanner"></div>
     </section>
 
@@ -2944,6 +3027,11 @@ section { padding: 0 16px; margin-bottom: 8px; }
       <div id="habitAccountability"></div>
     </section>
 
+    <section>
+      <div class="section-head"><div class="section-title">Next-Day Impact</div></div>
+      <div id="nextDayImpact"></div>
+    </section>
+
     <section id="habitImpactSection">
       <div class="section-head"><div class="section-title">Habit Impact</div></div>
       <div id="habitImpact"></div>
@@ -3032,6 +3120,12 @@ section { padding: 0 16px; margin-bottom: 8px; }
   <div class="view" id="view-coach">
     <section>
       <div id="coachRecoveryPlan"></div>
+    </section>
+    <section>
+      <div id="performanceForecast"></div>
+    </section>
+    <section>
+      <div id="recoveryBaselines"></div>
     </section>
     <section>
       <div id="coachTraining"></div>
@@ -3302,7 +3396,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v103';
+const APP_VERSION = 'v104';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -3473,6 +3567,8 @@ function fullRerender() {
   rebuildWeekScores();
   renderReadiness();
   renderThreeRings();
+  renderStrainTarget();
+  renderSleepNeedBanner();
   renderStrainCoach();
   renderDailyCoach();
   renderDayBanner();
@@ -7791,6 +7887,431 @@ function renderStrainCoach() {
 }
 
 // ========================================
+//  STRAIN TARGET (Today view - WHOOP-style)
+// ========================================
+function renderStrainTarget() {
+  const el = document.getElementById('strainTarget');
+  if (!el) return;
+
+  const recovery = computeReadiness();
+  const strain = computeStrain();
+  const strainPct = Math.min(100, Math.round(((strain - 3) / 18) * 100));
+
+  // Optimal strain target based on recovery (Gabbett 2016 ACWR + WHOOP methodology)
+  // Green recovery (67+): target 14-18 strain (high output day)
+  // Yellow recovery (50-66): target 8-12 strain (moderate, technique focus)
+  // Red recovery (<50): target 4-8 strain (active recovery only)
+  let targetLow, targetHigh, zone, zoneColor, zoneBg;
+  if (recovery >= 75) {
+    targetLow = 14; targetHigh = 18;
+    zone = 'PUSH'; zoneColor = 'var(--energy)'; zoneBg = 'rgba(48,217,138,0.12)';
+  } else if (recovery >= 60) {
+    targetLow = 10; targetHigh = 14;
+    zone = 'MAINTAIN'; zoneColor = 'var(--warn)'; zoneBg = 'rgba(255,181,71,0.12)';
+  } else if (recovery >= 45) {
+    targetLow = 6; targetHigh = 10;
+    zone = 'EASY'; zoneColor = 'var(--warn)'; zoneBg = 'rgba(255,181,71,0.12)';
+  } else {
+    targetLow = 3; targetHigh = 6;
+    zone = 'REST'; zoneColor = 'var(--danger)'; zoneBg = 'rgba(255,84,112,0.12)';
+  }
+
+  const targetMid = (targetLow + targetHigh) / 2;
+  const barPct = Math.min(100, Math.round((strain / 21) * 100));
+  const zoneLPct = Math.round((targetLow / 21) * 100);
+  const zoneHPct = Math.round((targetHigh / 21) * 100);
+
+  // Status message
+  let msg;
+  if (strain >= targetHigh) {
+    msg = 'You hit your strain target. More effort will cost you recovery tomorrow. Prioritize rest now.';
+  } else if (strain >= targetLow) {
+    msg = 'You are in the optimal zone. ' + (recovery >= 67 ? 'Push harder if you feel good, or bank the gains.' : 'Solid work. Wrap up and focus on recovery.');
+  } else if (strain >= targetLow - 2) {
+    msg = 'Almost there. ' + (recovery >= 60 ? 'A short session would hit your target.' : 'Light movement will get you there.');
+  } else {
+    const now = new Date();
+    const phase = phaseAt(now.getHours() + now.getMinutes() / 60);
+    if (phase.name === 'PEAK 2' || phase.name === 'RECOVERY') {
+      msg = recovery >= 60 ? 'Your body can handle more. A training session now would be optimal.' : 'Keep it light today. Mobility, stretching, or a walk.';
+    } else if (phase.name === 'WIND-DOWN' || phase.name === 'NIGHT') {
+      msg = strain <= 4 ? 'Rest day. Recovery is the priority tonight.' : 'Day is winding down. Recovery focus now.';
+    } else {
+      msg = 'Training still ahead. ' + (recovery >= 67 ? 'Your body is primed for a hard session today.' : 'Stay sub-maximal today.');
+    }
+  }
+
+  const strainColor = strain >= targetHigh ? 'var(--warn)' : strain >= targetLow ? 'var(--energy)' : 'var(--text-2)';
+
+  el.innerHTML = `
+    <div class="strain-target-card">
+      <div class="st-top">
+        <div class="st-label">Strain Target</div>
+        <div class="st-zone" style="background:${zoneBg};color:${zoneColor}">${zone}</div>
+      </div>
+      <div class="st-main">
+        <div class="st-current" style="color:${strainColor}">${strain}</div>
+        <div class="st-target">/ ${targetLow}-${targetHigh} optimal</div>
+      </div>
+      <div class="st-bar-wrap">
+        <div class="st-bar-fill" style="width:${barPct}%;background:${strainColor}"></div>
+        <div class="st-bar-zone" style="left:${zoneLPct}%;width:${zoneHPct - zoneLPct}%"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-4);font-family:'DM Mono',monospace;">
+        <span>0</span>
+        <span>7</span>
+        <span>14</span>
+        <span>21</span>
+      </div>
+      <div class="st-msg">${msg}</div>
+    </div>`;
+}
+
+// ========================================
+//  SLEEP NEED BANNER (WHOOP-style dynamic)
+// ========================================
+function renderSleepNeedBanner() {
+  const el = document.getElementById('sleepNeedBanner');
+  if (!el) return;
+
+  const sl = ST.sleep || {};
+  const strain = computeStrain();
+  const target = ST.health?.sleepTarget || 8;
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Strain-based sleep surcharge (peer-reviewed: Fullagar 2015, Halson 2014)
+  // Higher strain = more sleep needed for full recovery
+  const strainAdd = strain > 16 ? 1.5 : strain > 14 ? 1.0 : strain > 10 ? 0.5 : strain > 6 ? 0.25 : 0;
+
+  // Sleep debt surcharge (Banks & Dinges 2007: accumulated debt requires payback)
+  const todayDebt = (ST.sleepDebt || []).find(d => d.date === today);
+  const debtH = todayDebt ? todayDebt.debtH : Math.max(0, +(target - (sl.totalH || 0)).toFixed(1));
+  const debtAdd = Math.min(1.5, debtH > 0 ? debtH * 0.3 : 0);
+
+  const sleepNeeded = +(target + strainAdd + debtAdd).toFixed(1);
+
+  // Bedtime calculation
+  const wakeMin = ST.profile.wakeMin;
+  let idealBedMin = wakeMin - Math.round(sleepNeeded * 60) - 15; // 15min sleep onset
+  if (idealBedMin < 0) idealBedMin += 1440;
+  const bedtime = minToTime(idealBedMin);
+
+  // Last night's performance
+  const lastNightPct = sl.totalH > 0 ? Math.min(100, Math.round((sl.totalH / sleepNeeded) * 100)) : 0;
+  const lastColor = lastNightPct >= 90 ? 'var(--energy)' : lastNightPct >= 70 ? 'var(--warn)' : 'var(--danger)';
+
+  el.innerHTML = `
+    <div class="sleep-need-card">
+      <div class="sn-top">
+        <div class="sn-label">Sleep Need Tonight</div>
+        ${sl.totalH > 0 ? `<div style="font-size:11px;font-family:'DM Mono',monospace;color:${lastColor}">Last: ${sl.totalH.toFixed(1)}h (${lastNightPct}%)</div>` : ''}
+      </div>
+      <div class="sn-main">
+        <div class="sn-val">${fmtH(sleepNeeded)}</div>
+        <div class="sn-unit">needed for full recovery</div>
+      </div>
+      <div class="sn-detail">Bed by ${bedtime} to wake refreshed</div>
+      <div class="sn-breakdown">
+        <div class="sn-bp"><b>${target}h</b> base</div>
+        ${strainAdd > 0 ? `<div class="sn-bp">+ <b>${strainAdd}h</b> strain</div>` : ''}
+        ${debtAdd > 0 ? `<div class="sn-bp">+ <b>${debtAdd.toFixed(1)}h</b> debt</div>` : ''}
+      </div>
+    </div>`;
+}
+
+// ========================================
+//  PERFORMANCE FORECAST (Coach view)
+// ========================================
+function renderPerformanceForecast() {
+  const el = document.getElementById('performanceForecast');
+  if (!el) return;
+
+  const recovery = computeReadiness();
+  const strain = computeStrain();
+  const m = ST.metrics || {};
+  const hrvBase = m.hrvBaseline || 42;
+  const sl = ST.sleep || {};
+  const tl = computeTrainingLoad();
+
+  // Predict next 5 days recovery trajectory
+  // Based on: current recovery, strain trend, sleep consistency, HRV trend
+  const hrvHist = (ST._history?.hrv || []).slice(-7);
+  let hrvSlope = 0;
+  if (hrvHist.length >= 4) {
+    const n = hrvHist.length;
+    let sx = 0, sy = 0, sxy = 0, sx2 = 0;
+    for (let i = 0; i < n; i++) { sx += i; sy += hrvHist[i].value; sxy += i * hrvHist[i].value; sx2 += i * i; }
+    hrvSlope = (n * sxy - sx * sy) / (n * sx2 - sx * sx);
+  }
+
+  const sleepHist = (ST._history?.sleep || []).slice(-7);
+  const avgSleep = sleepHist.length ? sleepHist.reduce((s, h) => s + h.value, 0) / sleepHist.length : sl.totalH || 7;
+  const sleepTarget = ST.health?.sleepTarget || 8;
+  const sleepQuality = Math.min(1, avgSleep / sleepTarget);
+
+  const days = [];
+  const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  const now = new Date();
+
+  for (let i = 0; i < 5; i++) {
+    const d = new Date(now);
+    d.setDate(d.getDate() + i);
+    const dayName = i === 0 ? 'TODAY' : i === 1 ? 'TMR' : dayNames[d.getDay()];
+
+    // Predict recovery: today is actual, future days use trajectory model
+    let predicted;
+    if (i === 0) {
+      predicted = recovery;
+    } else {
+      // Recovery naturally trends toward baseline (mean reversion)
+      // Modified by: sleep quality, strain, HRV trend
+      const baseline = 65; // population mean recovery
+      const strainDecay = Math.max(0, (strain - 10) * 2); // high strain today drags tomorrow
+      const sleepBoost = (sleepQuality - 0.85) * 20; // sleep above/below target
+      const hrvTrend = hrvSlope * 2; // HRV trend extrapolation (dampened)
+      const meanReversion = (baseline - recovery) * 0.15 * i; // regress toward mean
+
+      predicted = Math.round(Math.max(20, Math.min(100,
+        recovery + meanReversion + sleepBoost * i - strainDecay / i + hrvTrend * i
+      )));
+    }
+
+    // Determine training recommendation
+    let label;
+    if (predicted >= 80) label = 'MAX';
+    else if (predicted >= 65) label = 'TRAIN';
+    else if (predicted >= 50) label = 'EASY';
+    else label = 'REST';
+
+    const color = predicted >= 75 ? 'var(--energy)' : predicted >= 55 ? 'var(--warn)' : 'var(--danger)';
+
+    days.push({ dayName, predicted, label, color });
+  }
+
+  // Find best day for competition jumps
+  const bestDay = days.reduce((best, d, i) => d.predicted > best.predicted ? { ...d, idx: i } : best, { predicted: 0, idx: 0 });
+  const bestDayLabel = bestDay.idx === 0 ? 'today' : bestDay.idx === 1 ? 'tomorrow' : days[bestDay.idx].dayName;
+
+  let advice;
+  if (bestDay.predicted >= 80) {
+    advice = `Best window for max-effort jumps: <b>${bestDayLabel}</b> (predicted ${bestDay.predicted}%). CNS will be primed for explosive output.`;
+  } else if (bestDay.predicted >= 65) {
+    advice = `${bestDayLabel} looks best at ${bestDay.predicted}%. Good for technique work and sub-maximal sessions. Full competition readiness may need another recovery day.`;
+  } else {
+    advice = `Recovery is trending low. Focus on sleep and recovery modalities. Consider reducing training volume for 2-3 days.`;
+  }
+
+  el.innerHTML = `
+    <div class="pf-card">
+      <div class="pf-label">5-Day Performance Forecast</div>
+      <div class="pf-days">
+        ${days.map((d, i) => `
+          <div class="pf-day ${i === bestDay.idx ? 'best' : ''}">
+            <div class="pf-day-name">${d.dayName}</div>
+            <div class="pf-day-score" style="color:${d.color}">${d.predicted}</div>
+            <div class="pf-day-bar"><div class="pf-day-bar-fill" style="width:${d.predicted}%;background:${d.color}"></div></div>
+            <div class="pf-day-label">${d.label}</div>
+          </div>`).join('')}
+      </div>
+      <div class="pf-advice">${advice}</div>
+    </div>`;
+}
+
+// ========================================
+//  RECOVERY BASELINES (Coach view)
+// ========================================
+function renderRecoveryBaselines() {
+  const el = document.getElementById('recoveryBaselines');
+  if (!el) return;
+
+  const m = ST.metrics || {};
+  const hist = ST._history || {};
+
+  function trendArrow(arr, invertBetter) {
+    if (!arr || arr.length < 5) return { arrow: '', color: 'var(--text-4)', text: '' };
+    const recent = arr.slice(-7);
+    const firstHalf = recent.slice(0, Math.floor(recent.length / 2));
+    const secondHalf = recent.slice(Math.floor(recent.length / 2));
+    const avg1 = firstHalf.reduce((s, h) => s + h.value, 0) / firstHalf.length;
+    const avg2 = secondHalf.reduce((s, h) => s + h.value, 0) / secondHalf.length;
+    const delta = avg2 - avg1;
+    const pct = avg1 > 0 ? Math.round((delta / avg1) * 100) : 0;
+    const improving = invertBetter ? delta < 0 : delta > 0;
+    const color = Math.abs(pct) < 2 ? 'var(--text-4)' : improving ? 'var(--energy)' : 'var(--danger)';
+    const arrow = delta > 0.5 ? '&#9650;' : delta < -0.5 ? '&#9660;' : '&#8212;';
+    const sign = pct > 0 ? '+' : '';
+    return { arrow, color, text: `${sign}${pct}% 7d` };
+  }
+
+  const hrvTrend = trendArrow(hist.hrv, false);
+  const rhrTrend = trendArrow(hist.rhr, true);
+  const sleepTrend = trendArrow(hist.sleep, false);
+
+  // Build sparklines
+  function miniSparkline(arr, color, invert) {
+    if (!arr || arr.length < 3) return '';
+    const pts = arr.slice(-14);
+    const vals = pts.map(p => p.value);
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    const range = max - min || 1;
+    const w = 80, h = 24;
+    const points = pts.map((p, i) => {
+      const x = (i / (pts.length - 1)) * w;
+      const y = h - 2 - ((p.value - min) / range) * (h - 4);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="opacity:0.7"><polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  }
+
+  const rows = [
+    { name: 'HRV', val: m.hrv || 0, unit: 'ms', baseline: m.hrvBaseline || 42, spark: miniSparkline(hist.hrv, '#00ec7f', false), trend: hrvTrend },
+    { name: 'RHR', val: m.rhr || 0, unit: 'bpm', baseline: m.rhrBaseline || 57, spark: miniSparkline(hist.rhr, '#ff5470', true), trend: rhrTrend },
+    { name: 'Sleep', val: (ST.sleep?.totalH || 0).toFixed(1), unit: 'h', baseline: ST.health?.sleepTarget || 8, spark: miniSparkline(hist.sleep, '#93a1c4', false), trend: sleepTrend },
+  ];
+
+  el.innerHTML = `
+    <div class="rb-card">
+      <div class="rb-label">Recovery Baselines (30-day)</div>
+      ${rows.map(r => `
+        <div class="rb-row">
+          <div class="rb-metric">
+            <div>
+              <div class="rb-metric-name">${r.name}</div>
+              <div style="font-size:10px;color:var(--text-4)">baseline: ${r.baseline}${r.unit}</div>
+            </div>
+          </div>
+          <div style="flex-shrink:0">${r.spark}</div>
+          <div style="text-align:right">
+            <div class="rb-metric-val">${r.val}<span style="font-size:10px;color:var(--text-4)">${r.unit}</span></div>
+            <div class="rb-trend" style="color:${r.trend.color}">${r.trend.arrow} ${r.trend.text}</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+// ========================================
+//  NEXT-DAY IMPACT (Week view - WHOOP-style correlation)
+// ========================================
+function renderNextDayImpact() {
+  const el = document.getElementById('nextDayImpact');
+  if (!el) return;
+
+  const journal = ST.journal || [];
+  const hist = ST._history || {};
+  const hrvHist = hist.hrv || [];
+  const sleepHist = hist.sleep || [];
+
+  if (journal.length < 7 || hrvHist.length < 7) {
+    el.innerHTML = `<div class="ndi-card" style="text-align:center;padding:20px;color:var(--text-3);font-size:13px;">
+      <div style="font-size:24px;margin-bottom:8px;">🔗</div>
+      Log ${Math.max(0, 7 - journal.length)} more days to unlock next-day correlations.
+    </div>`;
+    return;
+  }
+
+  // Build date-keyed maps
+  const hrvMap = {};
+  for (const h of hrvHist) hrvMap[h.date] = h.value;
+  const sleepMap = {};
+  for (const s of sleepHist) sleepMap[s.date] = s.value;
+
+  // For each behavior, compare NEXT-MORNING HRV on days WITH vs WITHOUT
+  const journalMap = {};
+  for (const j of journal) journalMap[j.date] = j;
+
+  const allBehaviors = new Set();
+  for (const j of journal) {
+    for (const b of (j.behaviors || [])) allBehaviors.add(b);
+  }
+
+  const BEHAVIOR_LABELS = {};
+  if (typeof JOURNAL_BEHAVIORS !== 'undefined') {
+    for (const b of JOURNAL_BEHAVIORS) BEHAVIOR_LABELS[b.id] = { label: b.label, icon: b.icon };
+  }
+
+  const correlations = [];
+
+  for (const bId of allBehaviors) {
+    const withDates = [];
+    const withoutDates = [];
+    for (const j of journal) {
+      if ((j.behaviors || []).includes(bId)) withDates.push(j.date);
+      else withoutDates.push(j.date);
+    }
+    if (withDates.length < 3 || withoutDates.length < 3) continue;
+
+    // Get NEXT-DAY HRV (the morning after)
+    function nextDay(dateStr) {
+      const d = new Date(dateStr + 'T12:00:00');
+      d.setDate(d.getDate() + 1);
+      return d.toISOString().slice(0, 10);
+    }
+
+    const hrvAfterWith = withDates.map(d => hrvMap[nextDay(d)]).filter(v => v != null && v > 0);
+    const hrvAfterWithout = withoutDates.map(d => hrvMap[nextDay(d)]).filter(v => v != null && v > 0);
+
+    if (hrvAfterWith.length < 2 || hrvAfterWithout.length < 2) continue;
+
+    const avgWith = hrvAfterWith.reduce((s, v) => s + v, 0) / hrvAfterWith.length;
+    const avgWithout = hrvAfterWithout.reduce((s, v) => s + v, 0) / hrvAfterWithout.length;
+    const delta = avgWith - avgWithout;
+    const pct = avgWithout > 0 ? Math.round((delta / avgWithout) * 100) : 0;
+
+    if (Math.abs(pct) < 1) continue; // filter noise
+
+    // Sleep impact
+    const sleepAfterWith = withDates.map(d => sleepMap[nextDay(d)]).filter(v => v != null && v > 0);
+    const sleepAfterWithout = withoutDates.map(d => sleepMap[nextDay(d)]).filter(v => v != null && v > 0);
+    let sleepDelta = null;
+    if (sleepAfterWith.length >= 2 && sleepAfterWithout.length >= 2) {
+      const avgSW = sleepAfterWith.reduce((s, v) => s + v, 0) / sleepAfterWith.length;
+      const avgSWO = sleepAfterWithout.reduce((s, v) => s + v, 0) / sleepAfterWithout.length;
+      sleepDelta = Math.round((avgSW - avgSWO) * 60); // in minutes
+    }
+
+    const beh = BEHAVIOR_LABELS[bId] || { label: bId.replace(/_/g, ' '), icon: '.' };
+    correlations.push({
+      id: bId,
+      icon: beh.icon,
+      label: beh.label,
+      hrvPct: pct,
+      sleepMin: sleepDelta,
+      samples: withDates.length,
+      absImpact: Math.abs(pct)
+    });
+  }
+
+  correlations.sort((a, b) => b.absImpact - a.absImpact);
+  const top = correlations.slice(0, 8);
+
+  if (!top.length) {
+    el.innerHTML = `<div class="ndi-card" style="text-align:center;padding:20px;color:var(--text-3);font-size:13px;">
+      <div style="font-size:24px;margin-bottom:8px;">📊</div>
+      Need more data points. Keep logging daily.
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = `<div class="ndi-card">
+    <div style="font-size:10px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);margin-bottom:8px;">HOW YOUR HABITS AFFECT NEXT-MORNING RECOVERY</div>
+    ${top.map(c => {
+      const isGood = c.hrvPct > 0;
+      const color = isGood ? 'var(--energy)' : 'var(--danger)';
+      const sign = c.hrvPct > 0 ? '+' : '';
+      return `<div class="ndi-row">
+        <div class="ndi-icon">${c.icon}</div>
+        <div class="ndi-info">
+          <div class="ndi-text"><b style="color:var(--text)">${c.label}</b> ${isGood ? 'boosts' : 'drops'} next-morning HRV${c.sleepMin ? (c.sleepMin > 0 ? ', adds ' + c.sleepMin + 'min sleep' : ', cuts ' + Math.abs(c.sleepMin) + 'min sleep') : ''}</div>
+          <div style="font-size:10px;color:var(--text-4)">${c.samples} days tracked</div>
+        </div>
+        <div class="ndi-delta" style="color:${color}">${sign}${c.hrvPct}%</div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+// ========================================
 //  DAILY COACH (Today view)
 // ========================================
 function renderDailyCoach() {
@@ -7885,6 +8406,8 @@ function renderDailyCoach() {
 // ========================================
 function renderCoachView() {
   renderCoachRecoveryPlan();
+  renderPerformanceForecast();
+  renderRecoveryBaselines();
   renderCoachTraining();
   renderCoachBreathwork();
   renderCoachRecoveryStack();
@@ -11463,6 +11986,8 @@ function showView(name) {
   if (name === 'today') {
     drawCurve('curveSvg', false);
     updateCurveFoot('curveFoot');
+    renderStrainTarget();
+    renderSleepNeedBanner();
     renderWinddown();
     renderLiveActivities();
     renderDailyCoach();
@@ -11480,6 +12005,7 @@ function showView(name) {
     renderStreaks();
     renderSleepDebt();
     renderHabitAccountability();
+    renderNextDayImpact();
     renderHabitImpact();
     renderImpact();
     renderTrends();
@@ -12829,6 +13355,8 @@ async function fetchHealthData() {
       saveState();
       renderReadiness();
       renderThreeRings();
+      renderStrainTarget();
+      renderSleepNeedBanner();
       renderStrainCoach();
       renderDailyCoach();
       renderPrimaryInsight();
@@ -13388,6 +13916,8 @@ function bootApp() {
 
   renderReadiness();
   renderThreeRings();
+  renderStrainTarget();
+  renderSleepNeedBanner();
   renderStrainCoach();
   renderDailyCoach();
   renderDayBanner();
