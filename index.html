@@ -1474,6 +1474,18 @@ section { padding: 0 16px; margin-bottom: 8px; }
 }
 .refresh-btn svg { width: 18px; height: 18px; }
 .refresh-btn.spinning svg { animation: spin 0.8s linear infinite; }
+.last-synced {
+  text-align: center; font-size: 10px; letter-spacing: 0.6px;
+  color: var(--text-4); padding: 0 0 4px;
+  font-weight: 500;
+}
+.last-synced .sync-dot {
+  display: inline-block; width: 5px; height: 5px;
+  border-radius: 50%; background: var(--energy); margin-right: 4px;
+  vertical-align: middle; opacity: 0.7;
+}
+.last-synced.stale .sync-dot { background: var(--warn); }
+.last-synced.offline .sync-dot { background: var(--danger); }
 
 /* ========== HEALTH VIEW ========== */
 .health-hero {
@@ -2769,6 +2781,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
     </button>
   </div>
 
+  <div class="last-synced" id="lastSynced"></div>
   <div class="brand" style="display:none">R Y T H M</div>
 
   <!-- ============ TODAY ============ -->
@@ -3326,7 +3339,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v96';
+const APP_VERSION = 'v97';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -3535,7 +3548,40 @@ async function syncFromCloud() {
         console.log('[RYTHM] Cloud sync: updated to', new Date(rt).toISOString());
       }
     }
+    markSynced();
   } catch(e) { console.warn("cloud sync failed", e); }
+}
+
+let _lastSyncedAt = 0;
+function markSynced() {
+  _lastSyncedAt = Date.now();
+  renderLastSynced();
+}
+function renderLastSynced() {
+  const el = document.getElementById('lastSynced');
+  if (!el) return;
+  if (!_lastSyncedAt) {
+    el.innerHTML = '<span class="sync-dot"></span>NOT SYNCED';
+    el.className = 'last-synced offline';
+    return;
+  }
+  const ago = Date.now() - _lastSyncedAt;
+  const sec = Math.floor(ago / 1000);
+  let txt;
+  if (sec < 10) txt = 'JUST NOW';
+  else if (sec < 60) txt = sec + 's AGO';
+  else if (sec < 3600) txt = Math.floor(sec / 60) + 'm AGO';
+  else txt = Math.floor(sec / 3600) + 'h AGO';
+
+  const d = new Date(_lastSyncedAt);
+  const time = d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+
+  let cls = 'last-synced';
+  if (ago > 3600000) cls += ' stale';
+  else if (ago > 7200000) cls += ' offline';
+
+  el.innerHTML = '<span class="sync-dot"></span>SYNCED ' + txt + ' · ' + time;
+  el.className = cls;
 }
 
 function saveState() {
@@ -5805,6 +5851,7 @@ async function manualRefresh() {
     renderEnergy();
     renderLiveActivities();
     renderSuggestions();
+    markSynced();
     console.log('[RYTHM] Manual refresh complete');
   } catch (e) {
     console.warn('[RYTHM] Manual refresh failed:', e);
@@ -12373,6 +12420,7 @@ async function fetchHealthData() {
 
     // Mark last sync
     ST.health.lastSyncAt = new Date().toISOString();
+    markSynced();
 
     // Store daily readiness for trend tracking
     if (!ST._dailyReadiness) ST._dailyReadiness = {};
@@ -13005,6 +13053,14 @@ function bootApp() {
   renderOutOfBed();
   updateNotifToggleUI();
   updateSettingsLatitude();
+
+  // Init last synced display from stored health sync time
+  if (ST.health && ST.health.lastSyncAt) {
+    _lastSyncedAt = new Date(ST.health.lastSyncAt).getTime();
+  }
+  renderLastSynced();
+  // Update relative time every 30s
+  setInterval(renderLastSynced, 30000);
 
   // Store today's readiness for weekly view
   const todayKey = new Date().toISOString().slice(0, 10);
