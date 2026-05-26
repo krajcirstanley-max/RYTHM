@@ -3345,7 +3345,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v98';
+const APP_VERSION = 'v99';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -6657,7 +6657,8 @@ function addWorkoutsToMyDay() {
   let added = false;
   for (const w of workouts) {
     // Use startDate as unique key (two workouts at different times = different entries)
-    const wKey = w.startDate || (w.type + '-' + (w.durMin || 0));
+    const wKey = w.startDate || (w.type + '-' + (w.durMin || 0) + '-' + (w.cal || 0));
+    const heroName = getHeroName(w);
     const exists = ST.tasks.find(t => t._workout && t._workoutKey === wKey && t._workoutDate === today);
     if (exists) {
       // Update title if Hero name became available
@@ -6665,24 +6666,34 @@ function addWorkoutsToMyDay() {
         const durStr2 = w.durMin > 0 ? (w.durMin >= 60 ? Math.floor(w.durMin / 60) + 'h ' + (w.durMin % 60) + 'min' : w.durMin + 'min') : '';
         const calStr2 = w.cal > 0 ? w.cal + ' kcal' : '';
         const detail2 = [durStr2, calStr2].filter(Boolean).join(' · ');
-        exists.title = `🏋️ ${heroName}${detail2 ? '  - ' + detail2 : ''}`;
+        exists.title = `🏋️ ${heroName}${detail2 ? '  · ' + detail2 : ''}`;
       }
       continue;
     }
 
     // Get name: Hero tag name > Apple Health type > fallback
-    const heroName = getHeroName(w);
-    const name = heroName || (w.type && w.type !== 'Workout' && w.type !== 'Traditional Strength Training' ? w.type : 'Workout');
+    const genericTypes = ['Workout', 'Traditional Strength Training', 'Other', 'Functional Strength Training', 'Mixed Cardio'];
+    const name = heroName || (w.type && !genericTypes.includes(w.type) ? w.type : null);
     const durStr = w.durMin > 0 ? (w.durMin >= 60 ? Math.floor(w.durMin / 60) + 'h ' + (w.durMin % 60) + 'min' : w.durMin + 'min') : '';
     const calStr = w.cal > 0 ? w.cal + ' kcal' : '';
     const detail = [durStr, calStr].filter(Boolean).join(' · ');
-    const title = `🏋️ ${name}${detail ? '  - ' + detail : ''}`;
 
+    // Build title: use name if available, otherwise just show time info
+    let displayName = name || 'Workout';
+    // Try to extract time for context if no name
     let time = null;
     if (w.startDate) {
       const d = new Date(w.startDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
-      if (!isNaN(d.getTime())) time = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+      if (!isNaN(d.getTime())) {
+        time = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+        // If no specific name, label by time of day
+        if (!name) {
+          const h = d.getHours();
+          displayName = h < 12 ? 'Morning Session' : h < 17 ? 'Afternoon Session' : 'Evening Session';
+        }
+      }
     }
+    const title = `🏋️ ${displayName}${detail ? '  · ' + detail : ''}`;
 
     ST.tasks.push({ title, time, done: true, created: Date.now(), _workout: true, _workoutKey: wKey, _workoutDate: today });
     added = true;
@@ -7937,11 +7948,37 @@ function renderCoachRecoveryPlan() {
   }
 
   // Afternoon/evening block
+  // Cold immersion: must be 2h+ before bed (raises core temp, delays sleep onset)
+  // and 4h+ after strength training (blunts mTOR/adaptation)
+  const bedHour = profileSleepHour();
+  const bedAdjusted = bedHour < 6 ? bedHour + 24 : bedHour; // handle past-midnight bedtimes
+  const hourAdj = hour; // current hour
+  const coldCutoff = bedAdjusted - 2; // last safe time for cold
+  const coldTooLate = hourAdj >= coldCutoff;
+
   if (hour >= 12 || !trainedToday) {
-    if (recovery < 50 && !todayTags.includes('cold_shower')) {
-      steps.push({ time: hour >= 16 ? 'EVENING' : 'AFTERNOON', icon: '🧊', action: 'Cold immersion 2-3min', why: `Recovery ${recovery}%. Norepinephrine spike reduces inflammation. Safe on rest/low days.`, done: false });
-    } else if (trainedToday && !todayTags.includes('cold_shower')) {
-      steps.push({ time: 'EVENING', icon: '🧊', action: 'Cold immersion (wait 4h+ post-training)', why: 'Blunts mTOR if done too soon after strength. Evening is better.', done: false });
+    if (!todayTags.includes('cold_shower')) {
+      if (coldTooLate) {
+        // Too late for cold today
+        steps.push({ time: 'SKIP TODAY', icon: '🧊', action: 'Cold immersion: too late today', why: `Bed at ${Math.floor(bedHour)}:${String(Math.round((bedHour % 1) * 60)).padStart(2, '0')}. Cold raises core temp and needs 2h+ to normalize. Do it earlier tomorrow.`, done: true });
+      } else if (trainedToday) {
+        // Find last workout end time
+        const lastW = todayWorkouts[todayWorkouts.length - 1];
+        let wEndHour = null;
+        if (lastW?.startDate) {
+          const sd = new Date(lastW.startDate.replace ? lastW.startDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3') : lastW.startDate);
+          if (!isNaN(sd.getTime())) wEndHour = sd.getHours() + (sd.getMinutes() / 60) + ((lastW.durMin || 60) / 60);
+        }
+        const earliestCold = wEndHour ? Math.ceil(wEndHour + 4) : hour + 2;
+        if (earliestCold >= coldCutoff) {
+          steps.push({ time: 'SKIP TODAY', icon: '🧊', action: 'Cold immersion: window closed', why: `Trained too late. Need 4h post-training + 2h before bed. Tomorrow, train earlier or cold on rest day.`, done: true });
+        } else {
+          const coldTime = String(Math.floor(earliestCold)).padStart(2, '0') + ':00';
+          steps.push({ time: 'EVENING', icon: '🧊', action: `Cold immersion 2-3min (after ${coldTime})`, why: `4h post-training gap protects strength adaptation. Before ${Math.floor(coldCutoff)}:00 so it doesn't hurt your sleep.`, done: false });
+        }
+      } else if (recovery < 60) {
+        steps.push({ time: hour >= 16 ? 'EVENING' : 'AFTERNOON', icon: '🧊', action: `Cold immersion 2-3min (before ${Math.floor(coldCutoff)}:00)`, why: `Recovery ${recovery}%. Rest day so no mTOR concern. Norepinephrine spike reduces inflammation. Finish 2h before bed.`, done: false });
+      }
     }
 
     if (!todayTags.includes('jetboots') && (strain > 8 || trainedToday)) {
@@ -8173,14 +8210,21 @@ function renderCoachRecoveryStack() {
   if (!todayTags.includes('foam_roll'))
     modalities.push({ icon: '🧱', id: 'foam_roll', name: 'Foam Roll', reason: 'ROM without power loss, target hip flexors + IT band', priority: strain > 8 ? 1 : 2 });
 
-  // Cold only on rest days or 4h+ post-training
+  // Cold: 4h+ post-training, 2h+ before bed
   const lastWorkout = (ST._workouts || []).filter(w => w.date === today);
   const restDay = !lastWorkout.length;
+  const bedH = profileSleepHour();
+  const bedAdj = bedH < 6 ? bedH + 24 : bedH;
+  const coldCut = bedAdj - 2;
+  const nowH = new Date().getHours();
   if (!todayTags.includes('cold_shower')) {
-    if (restDay || recovery < 60)
-      modalities.push({ icon: '🧊', id: 'cold_shower', name: 'Cold Immersion', reason: restDay ? 'Rest day, no mTOR blunting risk' : 'Low recovery. Prioritize inflammation reduction', priority: 2 });
-    else
-      modalities.push({ icon: '🧊', id: 'cold_shower', name: 'Cold Immersion', reason: 'Wait 4h+ post-strength to avoid blunting adaptation', priority: 3 });
+    if (nowH >= coldCut) {
+      modalities.push({ icon: '🧊', id: 'cold_shower', name: 'Cold Immersion', reason: 'Too late today. Raises core temp, needs 2h before bed', priority: 4 });
+    } else if (restDay || recovery < 60) {
+      modalities.push({ icon: '🧊', id: 'cold_shower', name: 'Cold Immersion', reason: `${restDay ? 'Rest day, no mTOR risk' : 'Low recovery, reduce inflammation'}. Before ${Math.floor(coldCut)}:00`, priority: 2 });
+    } else {
+      modalities.push({ icon: '🧊', id: 'cold_shower', name: 'Cold Immersion', reason: `Wait 4h+ post-strength. Before ${Math.floor(coldCut)}:00 for sleep`, priority: 3 });
+    }
   }
 
   if (!todayTags.includes('jetboots'))
@@ -12592,17 +12636,24 @@ async function fetchHealthData() {
       }
       const wType = wd.type || wd.workoutType || 'Workout';
       const wCal = wd.cal || wd.calories || wd.activeCalories || 0;
-      const exists = ST._workouts.find(x => x.date === wDate && x.type === wType && Math.abs((x.durMin || 0) - durMin) < 5);
+      // Dedup by startDate if available, otherwise by type+duration
+      const startDateStr = wd.startDate || null;
+      const exists = startDateStr
+        ? ST._workouts.find(x => x.startDate === startDateStr)
+        : ST._workouts.find(x => x.date === wDate && x.type === wType && Math.abs((x.durMin || 0) - durMin) < 5);
       if (!exists && (durMin > 0 || wCal > 10)) {
-        ST._workouts.push({ date: wDate, type: wType, durMin, cal: wCal, startDate: wd.startDate || null });
+        ST._workouts.push({ date: wDate, type: wType, durMin, cal: wCal, startDate: startDateStr });
       }
     }
     if (data.workouts && Array.isArray(data.workouts)) {
       if (!ST._workouts) ST._workouts = [];
       for (const w of data.workouts) {
         const wDate = w.date || todayKey;
-        const exists = ST._workouts.find(x => x.date === wDate && x.type === w.type && x.durMin === w.durMin);
-        if (!exists) ST._workouts.push({ date: wDate, type: w.type || 'Workout', durMin: w.durMin || 0, cal: w.cal || 0 });
+        const wStart = w.startDate || null;
+        const exists = wStart
+          ? ST._workouts.find(x => x.startDate === wStart)
+          : ST._workouts.find(x => x.date === wDate && x.type === w.type && x.durMin === w.durMin);
+        if (!exists) ST._workouts.push({ date: wDate, type: w.type || 'Workout', durMin: w.durMin || 0, cal: w.cal || 0, startDate: wStart });
       }
       // Keep last 30 days
       const cutoff = new Date(Date.now() - 30*86400000).toISOString().slice(0,10);
