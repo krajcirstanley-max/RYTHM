@@ -1412,6 +1412,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .fullpage-scroll {
   flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
   position: relative; z-index: 1;
+  overscroll-behavior: contain;
 }
 .fullpage-inner { max-width: 440px; margin: 0 auto; padding: 0 16px 100px; }
 .fp-back {
@@ -2864,7 +2865,6 @@ section { padding: 0 16px; margin-bottom: 8px; }
 
     <section>
       <div id="strainTarget"></div>
-      <div id="strainTimeline"></div>
     </section>
 
     <section>
@@ -3409,7 +3409,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v107';
+const APP_VERSION = 'v108';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -3581,7 +3581,7 @@ function fullRerender() {
   renderReadiness();
   renderThreeRings();
   renderStrainTarget();
-  renderStrainTimeline();
+  if (activeRingDetail === 'strain') renderStrainTimeline();
   renderSleepNeedBanner();
   renderStrainCoach();
   renderDailyCoach();
@@ -4563,6 +4563,8 @@ function toggleRingDetail(key) {
   el.innerHTML = buildRingDetail(key);
   el.classList.remove('hidden');
   requestAnimationFrame(() => el.classList.add('open'));
+  // Render strain timeline into the detail panel if strain was opened
+  if (key === 'strain') renderStrainTimeline();
   renderThreeRings();
 }
 
@@ -4773,6 +4775,7 @@ function buildStrainDetail() {
     <div class="rd-row" style="margin-top:6px;padding-top:8px;border-top:1px solid var(--card-border)"><span class="rd-row-label">7-Day Volume</span><span class="rd-row-val">${weekSessions} sessions</span></div>
     <div class="rd-row"><span class="rd-row-label">7-Day Calories</span><span class="rd-row-val">${weekCal.toLocaleString()} kcal</span></div>
     <div class="rd-msg" style="font-size:12px;line-height:1.6">${msg}</div>
+    <div id="strainTimeline" style="margin-top:10px;"></div>
     <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--card-border);">
       <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-4);text-transform:uppercase;margin-bottom:6px;">Strain Zones</div>
       <div style="font-size:11px;color:var(--text-3);line-height:1.6;">
@@ -6103,16 +6106,44 @@ function computeStrain() {
   }
 
   // HR zone-weighted strain (Edwards TRIMP) when zone data available
-  // Edwards' weights: Z1×1, Z2×2, Z3×3, Z4×4, Z5×5
+  // Edwards' weights: Z1x1, Z2x2, Z3x3, Z4x4, Z5x5
   const zones = ST.health?.hrZones;
-  if (zones && (zones.z1 || zones.z2 || zones.z3 || zones.z4 || zones.z5)) {
-    const trimp = (zones.z1 || 0) * 1 + (zones.z2 || 0) * 2 +
-                  (zones.z3 || 0) * 3 + (zones.z4 || 0) * 4 + (zones.z5 || 0) * 5;
+  let z1 = 0, z2 = 0, z3 = 0, z4 = 0, z5 = 0;
+  if (zones) {
+    if (Array.isArray(zones)) {
+      // Array format: [{zone:1, pct:33}, {zone:2, pct:35}, ...]
+      // Convert pct to estimated minutes using total workout duration
+      const todayW = (ST._workouts || []).filter(w => w.date === today);
+      const totalMin = todayW.reduce((s, w) => s + (w.durMin || 0), 0) || 60;
+      for (const z of zones) {
+        const mins = Math.round((z.pct || 0) / 100 * totalMin);
+        if (z.zone === 1) z1 = mins;
+        else if (z.zone === 2) z2 = mins;
+        else if (z.zone === 3) z3 = mins;
+        else if (z.zone === 4) z4 = mins;
+        else if (z.zone === 5) z5 = mins;
+      }
+    } else {
+      z1 = zones.z1 || 0; z2 = zones.z2 || 0; z3 = zones.z3 || 0;
+      z4 = zones.z4 || 0; z5 = zones.z5 || 0;
+    }
+  }
+  if (z1 || z2 || z3 || z4 || z5) {
+    const trimp = z1 * 1 + z2 * 2 + z3 * 3 + z4 * 4 + z5 * 5;
     // Scale TRIMP minutes to 0-21 strain score
     const zoneStrain = Math.min(21, Math.round(3 + Math.log2(1 + trimp) * 2.8));
-    // Use whichever method gives higher fidelity  - prefer zone data
+    // Use whichever method gives higher fidelity - prefer zone data
     const calStrain = todayCal > 0 ? Math.min(21, Math.round(3 + Math.sqrt(todayCal) * 0.42)) : 3;
     return Math.max(zoneStrain, calStrain);
+  }
+
+  // Also estimate from workout duration when no cal/zone data
+  const todayW = (ST._workouts || []).filter(w => w.date === today);
+  const totalWorkMin = todayW.reduce((s, w) => s + (w.durMin || 0), 0);
+  if (totalWorkMin > 0 && todayCal < totalWorkMin * 5) {
+    // ~9 cal/min for strength/power athlete
+    const estCal = Math.round(totalWorkMin * 9);
+    if (estCal > todayCal) todayCal = estCal;
   }
 
   // Fallback: calorie-based approximation
@@ -6555,16 +6586,20 @@ function renderTasks() {
     events.push({ time: time || minToTime((WAKE + 3) * 60 % 1440), title: wName, sub, icon: '🏋️', dot: 'strain', type: 'workout', workoutIdx: origIdx });
   }
 
-  // 3. Logged activities (quick logs)
+  // 3. Logged activities - only show significant activities, not journal habits
+  // Journal behaviors (breathwork, skincare, creatine, etc.) belong in Journal tab
+  const significantTags = new Set(['workout', 'sauna', 'cold_shower', 'nap', 'walk', 'deep_work']);
   const todayLogs = (ST.logs || []).filter(l => l.date === today);
   const tagIcons = { shisha: '💨', shisha_late: '🌙', workout: '🏋️', sauna: '🧖', alcohol: '🍷', stress: '😤', nap: '😴', meditation: '🧘', sunlight: '☀️', screen: '📱', cold_shower: '🧊', sugar: '🍬', deep_work: '📊', walk: '🚶', sun_exposure: '☀️', energy_caps: '⚡', creatine: '🧪', foam_roll: '🧱', powerdot: '⚡', jetboots: '🦶', massage_gun: '🔫', infrapanel: '🔴' };
   const tagDots = { shisha: 'shisha', shisha_late: 'shisha', workout: 'strain', sauna: 'warn', alcohol: 'warn', stress: 'warn', nap: 'sleep', meditation: 'active', sunlight: 'active', cold_shower: 'active', deep_work: 'active', walk: 'active', sun_exposure: 'active', foam_roll: 'active', powerdot: 'active', jetboots: 'active', massage_gun: 'active', infrapanel: 'active' };
   for (let li = 0; li < todayLogs.length; li++) {
     const log = todayLogs[li];
-    const d = new Date(log.ts);
-    const time = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
     const tags = log.tags || [];
     const mainTag = tags[0] || 'log';
+    // Skip journal habit logs - they clutter My Day
+    if (!tags.some(t => significantTags.has(t))) continue;
+    const d = new Date(log.ts);
+    const time = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
     const title = tags.map(t => t.replace(/_/g, ' ')).join(', ');
     const displayTitle = title.charAt(0).toUpperCase() + title.slice(1);
     const icon = tagIcons[mainTag] || '📝';
@@ -14177,7 +14212,7 @@ function bootApp() {
   renderReadiness();
   renderThreeRings();
   renderStrainTarget();
-  renderStrainTimeline();
+  if (activeRingDetail === 'strain') renderStrainTimeline();
   renderSleepNeedBanner();
   renderStrainCoach();
   renderDailyCoach();
