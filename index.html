@@ -909,53 +909,44 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .sleep-bar-fg { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
 
 /* JOURNAL  - redesigned */
-.journal-today-card {
-  background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius); padding: 18px 16px 16px;
-  backdrop-filter: blur(20px) saturate(1.6);
-  -webkit-backdrop-filter: blur(20px) saturate(1.6);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
-}
-.journal-card {
-  background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius); padding: 20px 16px 16px; margin-bottom: 8px;
-  backdrop-filter: blur(20px) saturate(1.6);
-  -webkit-backdrop-filter: blur(20px) saturate(1.6);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
-}
+/* ========== JOURNAL ========== */
 .journal-date {
   font-size: 10px; font-weight: 800; letter-spacing: 2px;
-  color: var(--text-3); text-transform: uppercase; margin-bottom: 14px;
+  color: var(--text-3); text-transform: uppercase;
 }
-/* Category headers inside journal */
 .journal-cat {
-  font-size: 10px; font-weight: 800; letter-spacing: 1.5px;
-  color: var(--text-4); text-transform: uppercase; margin: 14px 0 8px;
+  font-size: 9px; font-weight: 800; letter-spacing: 1.5px;
+  color: var(--text-4); text-transform: uppercase; margin: 16px 0 8px;
   padding-left: 2px;
 }
-.journal-cat:first-child { margin-top: 0; }
-.journal-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+.journal-cat:first-child { margin-top: 4px; }
+.journal-grid { display: flex; flex-direction: column; gap: 0; }
 .journal-item {
-  display: flex; align-items: center; gap: 8px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.05);
-  border-radius: 100px; padding: 8px 14px 8px 10px;
-  cursor: pointer; transition: all 0.2s ease;
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 2px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  cursor: pointer; transition: background 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
-.journal-item:active { transform: scale(0.96); }
-.journal-item.active {
-  border-color: rgba(0,236,127,0.35);
-  background: rgba(0,236,127,0.08);
-  box-shadow: 0 0 8px rgba(0,236,127,0.1);
+.journal-item:active { background: rgba(255,255,255,0.03); }
+.journal-item .ji-check {
+  width: 30px; height: 30px; border-radius: 8px;
+  border: 2px solid rgba(255,255,255,0.12);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: transparent; flex-shrink: 0;
+  transition: all 0.2s;
 }
-.journal-item .ji-icon { font-size: 16px; line-height: 1; flex-shrink: 0; }
-.journal-item .ji-label { font-size: 12px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
+.journal-item.active .ji-check {
+  border-color: var(--energy);
+  background: linear-gradient(135deg, var(--energy), #00b85e);
+  color: #000;
+  box-shadow: 0 2px 8px rgba(0,236,127,0.2);
+}
+.journal-item .ji-icon { font-size: 18px; line-height: 1; flex-shrink: 0; }
+.journal-item .ji-label { font-size: 14px; font-weight: 600; color: var(--text-2); }
 .journal-item.active .ji-label { color: #fff; }
 .journal-save {
-  width: 100%; padding: 13px; border: none; border-radius: 100px;
+  width: 100%; padding: 14px; border: none; border-radius: 12px;
   background: rgba(255,255,255,0.06); color: #fff; font-weight: 700;
   font-size: 13px; cursor: pointer; font-family: inherit;
   letter-spacing: 0.3px; margin-top: 12px;
@@ -964,40 +955,6 @@ section { padding: 0 16px; margin-bottom: 8px; }
 }
 .journal-save:active { background: rgba(0,236,127,0.15); border-color: rgba(0,236,127,0.3); }
 .journal-save.saved { background: rgba(0,236,127,0.12); border-color: rgba(0,236,127,0.3); color: #00ec7f; }
-.journal-history { margin-top: 8px; }
-.jh-entry {
-  background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius); padding: 14px 16px; margin-bottom: 6px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.04);
-  position: relative; overflow: hidden;
-}
-.jh-entry::before {
-  content: ''; position: absolute; left: 0; top: 10px; bottom: 10px;
-  width: 3px; border-radius: 0 2px 2px 0;
-  background: var(--jh-accent, var(--text-4));
-  box-shadow: 0 0 8px color-mix(in srgb, var(--jh-accent, transparent) 40%, transparent);
-}
-.jh-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.jh-date { font-size: 10px; font-weight: 800; letter-spacing: 1.5px; color: var(--text-3); }
-.jh-score { font-size: 14px; font-weight: 800; font-family: 'DM Mono', monospace; }
-.jh-tags { display: flex; flex-wrap: wrap; gap: 5px; }
-.jh-tag {
-  font-size: 10px; padding: 4px 10px; border-radius: 100px;
-  background: rgba(255,255,255,0.04); color: var(--text-2);
-  font-weight: 600; letter-spacing: 0.2px;
-}
-/* Journal streak row */
-.journal-streak {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 16px; margin-bottom: 8px;
-  background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
-  border: 1px solid var(--card-border); border-radius: var(--radius);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
-}
-.journal-streak-label { font-size: 11px; font-weight: 600; color: var(--text-3); }
-.journal-streak-val { font-size: 18px; font-weight: 800; font-family: 'DM Mono', monospace; color: #00ec7f; }
-/* Journal selected count */
 .journal-sel-count {
   font-size: 11px; font-weight: 600; color: var(--text-4);
   text-align: right; padding: 4px 0 0;
@@ -3345,7 +3302,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v99';
+const APP_VERSION = 'v100';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -7898,6 +7855,118 @@ function renderCoachView() {
   renderCoachInsights();
 }
 
+// Exercise -> body system mapping for targeted recovery
+// Maps exercise names/keywords to affected systems
+function analyzeTrainingLoad() {
+  const today = new Date().toISOString().slice(0, 10);
+  const heroWorkouts = (ST._heroWorkouts || []).filter(w => {
+    const d = new Date(w.startTime).toISOString().slice(0, 10);
+    return d === today && w.athletes && w.athletes[HERO_ATHLETE_ID];
+  });
+  const exercises = ST._heroExercises || {};
+
+  const systems = {
+    quads: { load: 0, label: 'Quads', tendons: ['patellar'] },
+    hamstrings: { load: 0, label: 'Hamstrings', tendons: ['proximal hamstring'] },
+    glutes: { load: 0, label: 'Glutes', tendons: [] },
+    calves: { load: 0, label: 'Calves', tendons: ['achilles'] },
+    hipFlexors: { load: 0, label: 'Hip Flexors', tendons: ['hip flexor'] },
+    back: { load: 0, label: 'Back', tendons: [] },
+    shoulders: { load: 0, label: 'Shoulders', tendons: ['rotator cuff'] },
+    core: { load: 0, label: 'Core', tendons: [] },
+    cns: { load: 0, label: 'CNS' },
+    tendonStress: { load: 0, label: 'Tendon Stress' },
+  };
+
+  // Keywords that map exercises to systems
+  const patterns = {
+    quads: /squat|leg press|leg ext|lunge|split squat|step.?up|pistol|wall sit|sissy/i,
+    hamstrings: /rdl|deadlift|nordic|hamstring|leg curl|good morning|hip hinge|glute.ham/i,
+    glutes: /hip thrust|glute|bridge|clamshell|abduct|kickback|fire hydrant/i,
+    calves: /calf|soleus|tibialis|ankle|gastrocnemius/i,
+    hipFlexors: /hip flexor|psoas|march|knee drive|a.skip|b.skip/i,
+    back: /row|pull.?up|chin.?up|lat|deadlift|clean|snatch|back ext/i,
+    shoulders: /press|overhead|push.?up|delt|lateral raise|shoulder|military|jerk/i,
+    core: /plank|crunch|ab|oblique|pallof|anti.rot|roll.?out|hollow|v.?up|sit.?up/i,
+  };
+
+  // High CNS exercises (explosive, heavy compound, plyometric)
+  const cnsPatterns = /clean|snatch|jerk|depth jump|drop jump|bound|sprint|max|heavy|1rm|plyom|reactive|hurdle hop|box jump|broad jump|approach|takeoff/i;
+  // High tendon-stress exercises
+  const tendonPatterns = /depth jump|drop jump|bound|sprint|plyom|jump|hop|skip|reactive|approach|takeoff|box jump|hurdle|calf raise|nordic/i;
+
+  for (const w of heroWorkouts) {
+    const ath = w.athletes[HERO_ATHLETE_ID];
+    const sets = ath.sets || {};
+    const rpe = ath.rpe || 7;
+    const rpeMultiplier = rpe >= 9 ? 1.5 : rpe >= 7 ? 1.0 : 0.7;
+
+    for (const [eid, setArr] of Object.entries(sets)) {
+      const ex = exercises[eid.split('__')[0]] || exercises[eid];
+      if (!ex) continue;
+      const name = ex.name || '';
+      const group = (ex.group || '').toLowerCase();
+      const completedSets = Array.isArray(setArr) ? setArr.filter(s => s.completed && !s.warmup).length : 0;
+      if (completedSets === 0) continue;
+
+      const volume = completedSets * rpeMultiplier;
+
+      // Match by name patterns
+      for (const [sys, regex] of Object.entries(patterns)) {
+        if (regex.test(name) || regex.test(group)) {
+          systems[sys].load += volume;
+        }
+      }
+
+      // CNS load
+      if (cnsPatterns.test(name) || cnsPatterns.test(group) || rpe >= 9) {
+        systems.cns.load += volume * 1.5;
+      }
+
+      // Tendon stress
+      if (tendonPatterns.test(name) || tendonPatterns.test(group)) {
+        systems.tendonStress.load += volume * 1.2;
+      }
+
+      // Fallback: if exercise group contains body part keywords
+      if (group.includes('leg') || group.includes('lower')) {
+        systems.quads.load += volume * 0.5;
+        systems.hamstrings.load += volume * 0.3;
+        systems.glutes.load += volume * 0.3;
+      }
+      if (group.includes('upper') || group.includes('push') || group.includes('pull')) {
+        systems.back.load += volume * 0.3;
+        systems.shoulders.load += volume * 0.3;
+      }
+    }
+
+    // Session-level CNS load based on duration and RPE
+    const durMin = w.endTime ? Math.round((w.endTime - w.startTime) / 60000) : 0;
+    if (durMin > 60 && rpe >= 8) systems.cns.load += 5;
+    if (rpe >= 9) systems.cns.load += 8;
+  }
+
+  // Normalize and categorize
+  const loaded = Object.entries(systems)
+    .filter(([k, v]) => v.load > 0 && k !== 'cns' && k !== 'tendonStress')
+    .sort((a, b) => b[1].load - a[1].load)
+    .map(([k, v]) => ({ id: k, ...v, level: v.load >= 8 ? 'high' : v.load >= 4 ? 'moderate' : 'light' }));
+
+  const tendonAreas = [];
+  for (const s of loaded) {
+    if (s.tendons) tendonAreas.push(...s.tendons);
+  }
+
+  return {
+    muscles: loaded,
+    cnsLoad: systems.cns.load >= 10 ? 'high' : systems.cns.load >= 5 ? 'moderate' : 'low',
+    tendonStress: systems.tendonStress.load >= 8 ? 'high' : systems.tendonStress.load >= 4 ? 'moderate' : 'low',
+    tendonAreas: [...new Set(tendonAreas)],
+    sessionCount: heroWorkouts.length,
+    hasData: heroWorkouts.length > 0 && Object.keys(ST._heroExercises || {}).length > 0,
+  };
+}
+
 function renderCoachRecoveryPlan() {
   const el = document.getElementById('coachRecoveryPlan');
   if (!el) return;
@@ -7933,17 +8002,47 @@ function renderCoachRecoveryPlan() {
     }
   }
 
-  // Post-training block
+  // Post-training block: exercise-specific recovery
+  const tLoad = analyzeTrainingLoad();
   if (trainedToday) {
-    const wName = todayWorkouts[0]?.tag?.name || todayWorkouts[0]?.type || 'session';
+    const topMuscles = tLoad.muscles.slice(0, 3);
+    const muscleNames = topMuscles.map(m => m.label.toLowerCase());
+    const foamTargets = muscleNames.length ? muscleNames.join(', ') : 'hip flexors, quads, IT band';
+
     if (!todayTags.includes('foam_roll')) {
-      steps.push({ time: 'POST-TRAINING', icon: '🧱', action: 'Foam roll for 10min', why: `After ${wName}: target hip flexors, quads, IT band. Maintain ROM without blunting adaptation.`, done: false });
+      steps.push({ time: 'POST-TRAINING', icon: '🧱', action: `Foam roll: ${foamTargets} (10min)`, why: tLoad.hasData
+        ? `Loaded today: ${topMuscles.map(m => m.label + ' (' + m.level + ')').join(', ')}. Target these areas to maintain ROM.`
+        : 'Target the muscles you trained. Maintain ROM without blunting adaptation.', done: false });
     }
-    if (!todayTags.includes('massage_gun') && strain > 10) {
-      steps.push({ time: 'POST-TRAINING', icon: '🔫', action: 'Massage gun on calves + quads (5min)', why: `Strain is ${strain}. Percussive therapy reduces DOMS onset by clearing metabolites.`, done: false });
+
+    if (!todayTags.includes('massage_gun')) {
+      const gunTargets = tLoad.hasData && muscleNames.length ? muscleNames.slice(0, 2).join(' + ') : 'calves + quads';
+      if (strain > 10 || (tLoad.hasData && tLoad.muscles.some(m => m.level === 'high'))) {
+        steps.push({ time: 'POST-TRAINING', icon: '🔫', action: `Massage gun: ${gunTargets} (5min)`, why: tLoad.hasData
+          ? `High load on ${topMuscles[0]?.label || 'legs'}. Percussive therapy clears metabolites and reduces DOMS.`
+          : `Strain is ${strain}. Percussive therapy reduces DOMS onset.`, done: false });
+      }
     }
-    if (recovery < 60 && !todayTags.includes('infrapanel')) {
-      steps.push({ time: 'POST-TRAINING', icon: '🔴', action: 'Infrapanel on patellar + Achilles (15min)', why: `Recovery at ${recovery}%. NIR penetrates 2-3cm to accelerate tendon repair.`, done: false });
+
+    // Tendon-specific recovery
+    if (tLoad.tendonStress !== 'low' && tLoad.tendonAreas.length > 0) {
+      const tendonList = tLoad.tendonAreas.join(' + ');
+      if (!todayTags.includes('infrapanel')) {
+        steps.push({ time: 'POST-TRAINING', icon: '🔴', action: `Infrapanel: ${tendonList} (15min)`, why: `${tLoad.tendonStress === 'high' ? 'High' : 'Moderate'} tendon stress from today's session. NIR penetrates 2-3cm to accelerate collagen synthesis and repair.`, done: false });
+      }
+    } else if (recovery < 60 && !todayTags.includes('infrapanel')) {
+      steps.push({ time: 'POST-TRAINING', icon: '🔴', action: 'Infrapanel: patellar + achilles (15min)', why: `Recovery at ${recovery}%. NIR therapy supports tendon health on low-recovery days.`, done: false });
+    }
+
+    // CNS recovery
+    if (tLoad.cnsLoad === 'high') {
+      steps.push({ time: 'POST-TRAINING', icon: '🧠', action: 'CNS recovery: no screens for 20min', why: 'High CNS load from explosive/heavy work. Sensory downregulation helps parasympathetic recovery. Lie down, close eyes, breathe slowly.', done: false });
+    }
+
+    // EMS based on what was trained
+    if (!todayTags.includes('powerdot') && tLoad.muscles.length > 0) {
+      const emsTarget = muscleNames[0] || 'quads';
+      steps.push({ time: 'POST-TRAINING', icon: '⚡', action: `PowerDot EMS: ${emsTarget} recovery mode (20min)`, why: `Active recovery on your most loaded muscle group. Increases blood flow without additional mechanical stress.`, done: false });
     }
   }
 
@@ -7982,7 +8081,11 @@ function renderCoachRecoveryPlan() {
     }
 
     if (!todayTags.includes('jetboots') && (strain > 8 || trainedToday)) {
-      steps.push({ time: hour >= 16 ? 'EVENING' : 'AFTERNOON', icon: '🦶', action: 'Jetboots Pro+ (20-30min)', why: 'Pneumatic compression clears metabolites and activates parasympathetic system.', done: false });
+      const legLoad = tLoad.muscles.filter(m => ['quads', 'hamstrings', 'calves', 'glutes'].includes(m.id));
+      const legReason = legLoad.length > 0
+        ? `Loaded ${legLoad.map(m => m.label.toLowerCase()).join(', ')} today. Pneumatic compression flushes metabolites from lower body.`
+        : 'Pneumatic compression clears metabolites and activates parasympathetic system.';
+      steps.push({ time: hour >= 16 ? 'EVENING' : 'AFTERNOON', icon: '🦶', action: 'Jetboots Pro+ (20-30min)', why: legReason, done: false });
     }
   }
 
@@ -10268,7 +10371,7 @@ function initJournal() {
 
   document.getElementById('journalDate').textContent = new Date().toLocaleDateString('en', { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase();
 
-  // Render categorized grid
+  // Render categorized list with checkboxes
   const gridEl = document.getElementById('journalGrid');
   const behaviorMap = {};
   for (const b of JOURNAL_BEHAVIORS) behaviorMap[b.id] = b;
@@ -10279,6 +10382,7 @@ function initJournal() {
       .map(id => {
         const b = behaviorMap[id];
         return `<div class="journal-item ${selectedBehaviors.has(b.id) ? 'active' : ''}" data-id="${b.id}" onclick="toggleBehavior('${b.id}', this)">
+          <div class="ji-check">${selectedBehaviors.has(b.id) ? '✓' : ''}</div>
           <div class="ji-icon">${b.icon}</div>
           <div class="ji-label">${b.label}</div>
         </div>`;
@@ -10324,12 +10428,15 @@ function renderJournalStreak() {
 }
 
 function toggleBehavior(id, el) {
+  const check = el.querySelector('.ji-check');
   if (selectedBehaviors.has(id)) {
     selectedBehaviors.delete(id);
     el.classList.remove('active');
+    if (check) check.textContent = '';
   } else {
     selectedBehaviors.add(id);
     el.classList.add('active');
+    if (check) { check.textContent = '✓'; check.style.animation = 'checkPop 0.3s ease'; }
     // Auto-start live activity for trackable behaviors
     const trackable = ['shisha', 'shisha_late', 'energy_caps', 'workout', 'meditation', 'alcohol', 'sauna', 'deep_work', 'walk', 'sun_exposure'];
     if (trackable.includes(id)) {
@@ -10477,33 +10584,39 @@ function renderJournalHistory() {
     el.innerHTML = '';
     return;
   }
-  el.innerHTML = `<div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);text-transform:uppercase;margin-bottom:10px;">RECENT ENTRIES</div>` +
-  entries.map(j => {
-    const d = new Date(j.date + 'T12:00:00');
-    const isToday = j.date === new Date().toISOString().slice(0,10);
-    const dateStr = isToday ? 'TODAY' : d.toLocaleDateString('en', { weekday: 'short', day: 'numeric' }).toUpperCase();
-    const interp = readinessInterpretation(j.readiness || 0);
-    const behaviors = (j.behaviors || []);
-    const icons = behaviors.map(b => {
-      const beh = JOURNAL_BEHAVIORS.find(x => x.id === b);
-      return beh ? beh.icon : '';
-    }).filter(Boolean).slice(0, 8).join(' ');
-    const extra = behaviors.length > 8 ? ' +' + (behaviors.length - 8) : '';
-    const ctxParts = [];
-    if (j.sleep) ctxParts.push(j.sleep.toFixed(1) + 'h');
-    if (j.hrv) ctxParts.push(j.hrv + 'ms');
-    if (j.strain != null) ctxParts.push('S' + j.strain);
-    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
-      <div style="width:36px;flex-shrink:0;text-align:center;">
-        <div style="font-size:16px;font-weight:800;color:${interp.color};font-family:'DM Mono',monospace;">${j.readiness != null ? Math.round(j.readiness) : '--'}</div>
-        <div style="font-size:8px;font-weight:700;letter-spacing:0.5px;color:var(--text-4);margin-top:1px;">${dateStr}</div>
-      </div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:14px;line-height:1.3;letter-spacing:1px;">${icons}${extra}</div>
-        <div style="font-size:10px;color:var(--text-4);font-family:'DM Mono',monospace;margin-top:2px;">${ctxParts.join(' · ')}</div>
-      </div>
+  const todayStr = new Date().toISOString().slice(0,10);
+  el.innerHTML = `
+    <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);text-transform:uppercase;margin-bottom:12px;">HISTORY</div>
+    <div style="position:relative;padding-left:28px;">
+      <div style="position:absolute;left:9px;top:6px;bottom:6px;width:2px;background:rgba(255,255,255,0.06);border-radius:2px;"></div>
+      ${entries.map(j => {
+        const d = new Date(j.date + 'T12:00:00');
+        const isToday = j.date === todayStr;
+        const dateStr = isToday ? 'Today' : d.toLocaleDateString('en', { weekday: 'short', day: 'numeric' });
+        const interp = readinessInterpretation(j.readiness || 0);
+        const behaviors = (j.behaviors || []);
+        const tags = behaviors.slice(0, 6).map(b => {
+          const beh = JOURNAL_BEHAVIORS.find(x => x.id === b);
+          return beh ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:3px 8px;border-radius:6px;background:rgba(255,255,255,0.04);color:var(--text-2);font-weight:600;">${beh.icon} ${beh.label}</span>` : '';
+        }).join('');
+        const extra = behaviors.length > 6 ? `<span style="font-size:11px;color:var(--text-4);font-weight:600;">+${behaviors.length - 6}</span>` : '';
+        const ctxParts = [];
+        if (j.sleep) ctxParts.push(j.sleep.toFixed(1) + 'h sleep');
+        if (j.hrv) ctxParts.push('HRV ' + j.hrv);
+        if (j.strain != null) ctxParts.push('Strain ' + j.strain);
+        return `<div style="position:relative;margin-bottom:10px;">
+          <div style="position:absolute;left:-22px;top:8px;width:10px;height:10px;border-radius:5px;background:${interp.color};border:2px solid var(--bg);z-index:1;box-shadow:0 0 6px ${interp.color}44;"></div>
+          <div style="background:linear-gradient(145deg,rgba(26,26,32,0.85),rgba(18,18,22,0.9));border:1px solid var(--card-border);border-radius:12px;padding:12px 14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+              <span style="font-size:13px;font-weight:700;">${dateStr}</span>
+              <span style="font-size:14px;font-weight:800;color:${interp.color};font-family:'DM Mono',monospace;">${j.readiness != null ? Math.round(j.readiness) + '%' : ''}</span>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:${ctxParts.length ? '6' : '0'}px;">${tags}${extra}</div>
+            ${ctxParts.length ? `<div style="font-size:10px;color:var(--text-4);font-family:'DM Mono',monospace;">${ctxParts.join(' · ')}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('')}
     </div>`;
-  }).join('');
 }
 
 function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
