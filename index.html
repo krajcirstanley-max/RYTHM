@@ -12098,7 +12098,8 @@ async function fetchHealthData() {
     // Priority 2: use today's HRV ONLY if sleep data confirms we slept (don't lock from pre-sleep readings)
     // Recovery is locked once after sleep data + HRV are both available
     if (!recoveryLockedToday) {
-      const hasSleepToday = data.sleep && data.sleep.date === todayKey && ST.sleep.totalH > 0;
+      const yesterdayKey = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      const hasSleepToday = data.sleep && (data.sleep.date === todayKey || data.sleep.date === yesterdayKey) && ST.sleep.totalH > 0;
 
       if (data.sleep_hrv) {
         const sleepHrvVal = +Number(data.sleep_hrv.value).toFixed(1);
