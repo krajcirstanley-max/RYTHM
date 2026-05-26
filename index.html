@@ -3369,7 +3369,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v91';
+const APP_VERSION = 'v92';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -3551,6 +3551,7 @@ function fullRerender() {
   renderTasks();
   renderMetrics();
   renderSleepBreakdown();
+  renderNutrition();
   renderOutlook();
   renderStreaks();
   renderLiveActivities();
@@ -12317,6 +12318,7 @@ async function fetchHealthData() {
       renderMetrics();
       renderSleepBreakdown();
       renderHealthAge();
+      renderNutrition();
       console.log('[RYTHM] Health data synced:', Object.keys(data).filter(k => data[k] && !Array.isArray(data[k])).join(', '));
     }
   } catch (e) {
