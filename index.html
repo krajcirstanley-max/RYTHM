@@ -3409,7 +3409,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v106';
+const APP_VERSION = 'v107';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -3692,6 +3692,17 @@ function rebuildWeekScores() {
 // ========================================
 //  HELPERS
 // ========================================
+// Parse Apple Health style date: "2026-05-26 13:16:45 +0000" -> Date
+function parseHealthDate(str) {
+  if (!str) return null;
+  try {
+    // Insert colon in tz offset for Safari: +0000 -> +00:00, also handle +0000 Z shorthand
+    const fixed = str.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-])(\d{2})(\d{2})/, '$1T$2$3$4:$5');
+    const d = new Date(fixed);
+    return isNaN(d.getTime()) ? null : d;
+  } catch(_) { return null; }
+}
+
 function minToTime(m) {
   m = Math.round(m);
   const hh = Math.floor((m % 1440) / 60);
@@ -6525,8 +6536,8 @@ function renderTasks() {
     const w = workouts[wi];
     let time = null;
     if (w.startDate) {
-      const d = new Date(w.startDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
-      if (!isNaN(d.getTime())) time = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+      const d = parseHealthDate(w.startDate);
+      if (d) time = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
     }
     // Best name: Hero name > non-generic type > time-of-day label
     let wName = w._heroName || null;
@@ -6704,6 +6715,7 @@ function removeDayEvent(type, idx) {
 }
 
 function addWorkoutsToMyDay() {
+  try {
   const today = new Date().toISOString().slice(0, 10);
   // Remove old-format workout tasks (migrating from _workoutType to _workoutKey)
   ST.tasks = (ST.tasks || []).filter(t => !(t._workout && !t._workoutKey && t._workoutDate === today));
@@ -6711,8 +6723,10 @@ function addWorkoutsToMyDay() {
 
   // Cross-reference with Hero workouts to get real session names
   const heroToday = (ST._heroWorkouts || []).filter(w => {
-    const d = new Date(w.startTime).toISOString().slice(0, 10);
-    return d === today && w.athletes && w.athletes[HERO_ATHLETE_ID];
+    try {
+      const d = new Date(w.startTime).toISOString().slice(0, 10);
+      return d === today && w.athletes && w.athletes[HERO_ATHLETE_ID];
+    } catch(_) { return false; }
   }).sort((a, b) => a.startTime - b.startTime);
 
   // Match Hero workouts by overlapping time window
@@ -6722,9 +6736,7 @@ function addWorkoutsToMyDay() {
     // If we have startDate, match by time proximity
     if (w.startDate) {
       let sd;
-      const fmt1 = w.startDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3');
-      sd = new Date(fmt1);
-      if (isNaN(sd.getTime())) sd = new Date(w.startDate);
+      sd = parseHealthDate(w.startDate) || new Date(w.startDate);
       if (!isNaN(sd.getTime())) {
         const wStart = sd.getTime();
         let bestMatch = null, bestDiff = Infinity;
@@ -6776,8 +6788,8 @@ function addWorkoutsToMyDay() {
     let displayName = name || '';
     let time = null;
     if (w.startDate) {
-      const d = new Date(w.startDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
-      if (!isNaN(d.getTime())) {
+      const d = parseHealthDate(w.startDate);
+      if (d) {
         time = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
         if (!displayName) {
           const h = d.getHours();
@@ -6811,6 +6823,7 @@ function addWorkoutsToMyDay() {
     });
   }
   renderTasks();
+  } catch(e) { console.warn('[RYTHM] addWorkoutsToMyDay error:', e); renderTasks(); }
 }
 
 // ========================================
@@ -7988,6 +8001,7 @@ function renderStrainTimeline() {
   const el = document.getElementById('strainTimeline');
   if (!el) return;
 
+  try {
   const now = new Date();
   const todayKey = now.toISOString().slice(0, 10);
   const currentHour = now.getHours() + now.getMinutes() / 60;
@@ -7997,9 +8011,10 @@ function renderStrainTimeline() {
   const workouts = (ST._workouts || [])
     .filter(w => w.date === todayKey && w.startDate)
     .map(w => {
-      const sd = new Date(w.startDate.replace(' +0000', 'Z').replace(' ', 'T'));
+      const sd = parseHealthDate(w.startDate) || new Date(w.startDate);
+      if (!sd || isNaN(sd.getTime())) return null;
       const startH = sd.getHours() + sd.getMinutes() / 60;
-      const durH = (w.durMin || 60) / 60;
+      const durH = Math.max(0.1, (w.durMin || 60) / 60);
       return {
         startH,
         endH: Math.min(startH + durH, 24),
@@ -8009,6 +8024,7 @@ function renderStrainTimeline() {
         durMin: w.durMin || 60
       };
     })
+    .filter(Boolean)
     .sort((a, b) => a.startH - b.startH);
 
   // If no time-stamped workouts, hide the timeline
@@ -8017,38 +8033,44 @@ function renderStrainTimeline() {
   // Calculate strain contribution per workout proportional to calories
   const totalWorkoutCal = workouts.reduce((s, w) => s + w.cal, 0);
   const baseStrain = 3; // resting metabolic strain
-  const activityStrain = totalStrain - baseStrain;
+  const activityStrain = Math.max(0, totalStrain - baseStrain);
 
-  // Distribute strain: workouts get proportional share, rest is NEAT/steps
-  const workoutFraction = totalWorkoutCal > 0 ? 0.85 : 0;
+  // Distribute strain: workouts split by duration when no cal data, by cal when available
+  const hasCalData = totalWorkoutCal > 0;
+  const totalDurH = workouts.reduce((s, w) => s + w.durH, 0) || 1;
+  const workoutFraction = 0.85;
   const neatStrain = activityStrain * (1 - workoutFraction);
 
   // Build hourly strain accumulation curve
   const points = [];
-  const maxH = Math.min(Math.ceil(currentHour) + 1, 24);
   const startH = Math.max(0, Math.floor(workouts[0].startH) - 2);
+  const maxH = Math.min(Math.max(Math.ceil(currentHour) + 1, Math.ceil(workouts[workouts.length - 1].endH) + 1), 24);
 
   let accumulated = baseStrain;
   // NEAT strain per hour (distributed across waking hours, ~6am-now)
   const wakingHours = Math.max(1, currentHour - 6);
   const neatPerHour = neatStrain / wakingHours;
 
-  for (let h = startH; h <= currentHour; h += 0.25) {
+  // Loop from startH to max of currentHour or last workout end
+  const loopEnd = Math.max(currentHour, workouts[workouts.length - 1].endH);
+  for (let h = startH; h <= loopEnd; h += 0.25) {
     // Add NEAT for this quarter hour
-    if (h >= 6) accumulated += neatPerHour * 0.25;
+    if (h >= 6 && h <= currentHour) accumulated += neatPerHour * 0.25;
 
     // Check if any workout is active at this time
     for (const w of workouts) {
       if (h >= w.startH && h < w.endH) {
-        // Workout strain per hour
-        const wStrain = totalWorkoutCal > 0
-          ? (activityStrain * workoutFraction * (w.cal / totalWorkoutCal)) / w.durH
-          : activityStrain / w.durH;
+        // Workout strain per hour, proportional to cal or duration
+        const wShare = hasCalData ? (w.cal / totalWorkoutCal) : (w.durH / totalDurH);
+        const wStrain = (activityStrain * workoutFraction * wShare) / w.durH;
         accumulated += wStrain * 0.25;
       }
     }
     points.push({ h, strain: Math.min(21, accumulated) });
   }
+
+  // Safety: must have at least 1 point
+  if (points.length === 0) { el.innerHTML = ''; return; }
 
   // SVG dimensions
   const W = 420, H = 140, pad = { t: 12, r: 16, b: 24, l: 30 };
@@ -8057,9 +8079,9 @@ function renderStrainTimeline() {
 
   // Scales
   const xMin = startH, xMax = maxH;
-  const yMin = 0, yMax = 21;
-  const x = h => pad.l + ((h - xMin) / (xMax - xMin)) * gW;
-  const y = s => pad.t + gH - (s / yMax) * gH;
+  const xRange = Math.max(1, xMax - xMin);
+  const x = h => pad.l + ((h - xMin) / xRange) * gW;
+  const y = s => pad.t + gH - (s / 21) * gH;
 
   // Build path
   let pathD = '';
@@ -8069,9 +8091,11 @@ function renderStrainTimeline() {
   });
 
   // Area fill path
+  const last = points[points.length - 1];
+  const first = points[0];
   const areaD = pathD
-    + 'L' + x(points[points.length - 1].h).toFixed(1) + ',' + y(0).toFixed(1)
-    + 'L' + x(points[0].h).toFixed(1) + ',' + y(0).toFixed(1) + 'Z';
+    + 'L' + x(last.h).toFixed(1) + ',' + y(0).toFixed(1)
+    + 'L' + x(first.h).toFixed(1) + ',' + y(0).toFixed(1) + 'Z';
 
   // Workout highlight zones
   const workoutZones = workouts.map((w, i) => {
@@ -8103,9 +8127,9 @@ function renderStrainTimeline() {
     yLabels += `<line x1="${pad.l}" y1="${y(s)}" x2="${W - pad.r}" y2="${y(s)}" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>`;
   }
 
-  // Current position dot
-  const lastPt = points[points.length - 1];
-  const dotCx = x(lastPt.h), dotCy = y(lastPt.strain);
+  // Current position dot - use the point closest to current time
+  const dotPt = last;
+  const dotCx = x(dotPt.h), dotCy = y(dotPt.strain);
 
   // Strain color
   const strainColor = totalStrain >= 14 ? '#30d98a' : totalStrain >= 8 ? '#4da9ff' : 'var(--text-3)';
@@ -8142,6 +8166,7 @@ function renderStrainTimeline() {
       </svg>
       <div class="strain-tl-legend">${legend}</div>
     </div>`;
+  } catch(e) { console.warn('[RYTHM] Strain timeline render error:', e); el.innerHTML = ''; }
 }
 
 // ========================================
@@ -8801,7 +8826,7 @@ function renderCoachRecoveryPlan() {
         const lastW = todayWorkouts[todayWorkouts.length - 1];
         let wEndHour = null;
         if (lastW?.startDate) {
-          const sd = new Date(lastW.startDate.replace ? lastW.startDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3') : lastW.startDate);
+          const sd = parseHealthDate(lastW.startDate) || new Date(lastW.startDate);
           if (!isNaN(sd.getTime())) wEndHour = sd.getHours() + (sd.getMinutes() / 60) + ((lastW.durMin || 60) / 60);
         }
         const earliestCold = wEndHour ? Math.ceil(wEndHour + 4) : hour + 2;
@@ -13487,8 +13512,8 @@ async function fetchHealthData() {
       const det = wd.details || wd;
       let durMin = det.durMin || det.duration || wd.value || 0;
       if (durMin === 0 && det.startDate && det.endDate) {
-        const s = new Date(det.startDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
-        const e = new Date(det.endDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
+        const s = parseHealthDate(det.startDate) || new Date(det.startDate);
+        const e = parseHealthDate(det.endDate) || new Date(det.endDate);
         if (!isNaN(s.getTime()) && !isNaN(e.getTime())) {
           const calc = (e - s) / 60000;
           if (calc > 0 && calc < 1440) durMin = Math.round(calc);
@@ -13829,25 +13854,36 @@ async function fetchHeroWorkouts() {
     if (ST._heroWorkouts?.length) {
       if (!ST._workouts) ST._workouts = [];
       const today = new Date().toISOString().slice(0, 10);
+      let backfilled = false;
       for (const hw of ST._heroWorkouts) {
         const hDate = new Date(hw.startTime).toISOString().slice(0, 10);
         if (!hw.endTime) continue;
         const durMin = Math.round((hw.endTime - hw.startTime) / 60000);
-        // Build a startDate string that matches Apple Health format
+        // Build startDate in UTC (offset is +0000, so use UTC methods)
         const sd = new Date(hw.startTime);
-        const startDateStr = sd.getFullYear() + '-' + String(sd.getMonth()+1).padStart(2,'0') + '-' + String(sd.getDate()).padStart(2,'0') + ' ' + String(sd.getHours()).padStart(2,'0') + ':' + String(sd.getMinutes()).padStart(2,'0') + ':' + String(sd.getSeconds()).padStart(2,'0') + ' +0000';
-        // Check if a matching workout already exists (by time proximity)
+        const startDateStr = sd.getUTCFullYear() + '-' + String(sd.getUTCMonth()+1).padStart(2,'0') + '-' + String(sd.getUTCDate()).padStart(2,'0') + ' ' + String(sd.getUTCHours()).padStart(2,'0') + ':' + String(sd.getUTCMinutes()).padStart(2,'0') + ':' + String(sd.getUTCSeconds()).padStart(2,'0') + ' +0000';
+        // Check if a matching workout already exists (by time proximity, 3h window)
         const exists = ST._workouts.find(w => {
           if (w.date !== hDate) return false;
           if (w.startDate) {
-            const ws = new Date(w.startDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
-            return Math.abs(ws.getTime() - hw.startTime) < 120 * 60000; // 2h window
+            try {
+              const ws = parseHealthDate(w.startDate);
+              if (!ws) return false;
+              return Math.abs(ws.getTime() - hw.startTime) <= 180 * 60000;
+            } catch(_) { return false; }
           }
           return false;
         });
-        if (!exists) {
+        if (exists) {
+          // Update existing entry with Hero name if missing
+          if (!exists._heroName && hw.tag?.name) {
+            exists._heroName = hw.tag.name;
+            exists.type = hw.tag.name;
+            backfilled = true;
+          }
+        } else {
           // Remove any generic active_cal-based entry for this date if we have real data
-          const genericIdx = ST._workouts.findIndex(w => w.date === hDate && !w.startDate && w.type === 'Workout');
+          const genericIdx = ST._workouts.findIndex(w => w.date === hDate && !w.startDate);
           if (genericIdx >= 0) ST._workouts.splice(genericIdx, 1);
           ST._workouts.push({
             date: hDate,
@@ -13857,13 +13893,18 @@ async function fetchHeroWorkouts() {
             startDate: startDateStr,
             _heroName: hw.tag?.name || null
           });
+          backfilled = true;
         }
       }
-      console.log('[RYTHM] After Hero backfill:', ST._workouts.filter(w => w.date === today).length, 'workouts today');
+      const todayCount = ST._workouts.filter(w => w.date === today).length;
+      console.log('[RYTHM] After Hero backfill:', todayCount, 'workouts today');
+      // Persist Hero-backfilled workouts so they survive reload
+      if (backfilled) saveState();
     }
 
-    // Re-add workouts to My Day now that Hero names are available
-    addWorkoutsToMyDay();
+    // Re-render My Day with updated workouts and Hero names
+    renderTasks();
+    renderStrainTimeline();
     // Re-render coach if visible
     if (document.getElementById('view-coach')?.classList.contains('active')) {
       renderCoachView();
