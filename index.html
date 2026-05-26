@@ -3396,7 +3396,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v104';
+const APP_VERSION = 'v105';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -12857,10 +12857,10 @@ function renderSuggestions() {
   }
 
   // Skincare coaching - remind if not logged today
-  if (hwake > 0.5 && hwake < 2 && !todayBehaviors.includes('skincare_am')) {
+  if (hwake > 0.5 && hwake < 2 && !patterns.todayBehaviors.includes('skincare_am')) {
     sugs.push({ icon: '🧴', title: 'Morning skincare', sub: 'SPF + moisturizer. UV protection is the #1 anti-aging intervention.', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('skincare_am')`, pri: 6 });
   }
-  if (hwake > 12 && !todayBehaviors.includes('skincare_pm')) {
+  if (hwake > 12 && !patterns.todayBehaviors.includes('skincare_pm')) {
     sugs.push({ icon: '✨', title: 'Evening skincare', sub: 'Cleanse + retinol/moisturize. Skin repair peaks during sleep.', action: 'Log', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `logBehavior('skincare_pm')`, pri: 6 });
   }
 
@@ -13643,6 +13643,46 @@ async function fetchHeroWorkouts() {
     }
 
     // Don't saveState() - _heroWorkouts is transient, fetched fresh each session
+
+    // Backfill _workouts from Hero data (covers cases where Health Auto Export
+    // doesn't send workout metrics, which means _workouts only has generic
+    // entries from active_cal backfill with no startDate for time matching)
+    if (ST._heroWorkouts?.length) {
+      if (!ST._workouts) ST._workouts = [];
+      const today = new Date().toISOString().slice(0, 10);
+      for (const hw of ST._heroWorkouts) {
+        const hDate = new Date(hw.startTime).toISOString().slice(0, 10);
+        if (!hw.endTime) continue;
+        const durMin = Math.round((hw.endTime - hw.startTime) / 60000);
+        // Build a startDate string that matches Apple Health format
+        const sd = new Date(hw.startTime);
+        const startDateStr = sd.getFullYear() + '-' + String(sd.getMonth()+1).padStart(2,'0') + '-' + String(sd.getDate()).padStart(2,'0') + ' ' + String(sd.getHours()).padStart(2,'0') + ':' + String(sd.getMinutes()).padStart(2,'0') + ':' + String(sd.getSeconds()).padStart(2,'0') + ' +0000';
+        // Check if a matching workout already exists (by time proximity)
+        const exists = ST._workouts.find(w => {
+          if (w.date !== hDate) return false;
+          if (w.startDate) {
+            const ws = new Date(w.startDate.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{4})/, '$1T$2$3'));
+            return Math.abs(ws.getTime() - hw.startTime) < 120 * 60000; // 2h window
+          }
+          return false;
+        });
+        if (!exists) {
+          // Remove any generic active_cal-based entry for this date if we have real data
+          const genericIdx = ST._workouts.findIndex(w => w.date === hDate && !w.startDate && w.type === 'Workout');
+          if (genericIdx >= 0) ST._workouts.splice(genericIdx, 1);
+          ST._workouts.push({
+            date: hDate,
+            type: hw.tag?.name || 'Workout',
+            durMin,
+            cal: 0,
+            startDate: startDateStr,
+            _heroName: hw.tag?.name || null
+          });
+        }
+      }
+      console.log('[RYTHM] After Hero backfill:', ST._workouts.filter(w => w.date === today).length, 'workouts today');
+    }
+
     // Re-add workouts to My Day now that Hero names are available
     addWorkoutsToMyDay();
     // Re-render coach if visible
