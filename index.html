@@ -2864,14 +2864,6 @@ section { padding: 0 16px; margin-bottom: 8px; }
     </section>
 
     <section>
-      <div id="strainTarget"></div>
-    </section>
-
-    <section>
-      <div id="sleepNeedBanner"></div>
-    </section>
-
-    <section>
       <div class="day-banner" id="dayBanner"></div>
     </section>
 
@@ -2916,35 +2908,6 @@ section { padding: 0 16px; margin-bottom: 8px; }
         <div class="energy-mods" id="energyMods" style="display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 8px;"></div>
         <div class="energy-msg" id="energyMsg"></div>
       </div>
-    </section>
-
-    <section>
-      <div class="monitor-row">
-        <div class="monitor" onclick="showView('health')">
-          <div class="monitor-top">HEALTH MONITOR <svg class="arr" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
-          <div class="monitor-val-row" id="healthMonitorSummary">
-            <svg class="monitor-check" viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5l3 3 6-6.5" stroke="var(--energy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <div class="monitor-val-text">
-              <div class="monitor-val" style="color:var(--energy)">Within Range</div>
-              <div class="monitor-sub">4/4 Metrics</div>
-            </div>
-          </div>
-        </div>
-        <div class="monitor" onclick="openStressFullPage()">
-          <div class="monitor-top">STRESS MONITOR <svg class="arr" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
-          <div class="monitor-val-row" id="stressMonitorSummary">
-            <div class="monitor-dot green"></div>
-            <div class="monitor-val-text">
-              <div class="monitor-val">Low</div>
-              <div class="monitor-sub">Based on HRV</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <div class="metric-grid" id="metricsGrid"></div>
     </section>
 
     <section>
@@ -3128,17 +3091,53 @@ section { padding: 0 16px; margin-bottom: 8px; }
     </section>
   </div>
 
-  <!-- ============ JOURNAL ============ -->
-  <!-- ============ COACH ============ -->
-  <div class="view" id="view-coach">
+  <!-- ============ BODY ============ -->
+  <div class="view" id="view-body">
     <section>
-      <div id="coachRecoveryPlan"></div>
+      <div id="strainTarget"></div>
+    </section>
+    <section>
+      <div id="sleepNeedBanner"></div>
+    </section>
+    <section>
+      <div class="monitor-row">
+        <div class="monitor" onclick="showView('health')">
+          <div class="monitor-top">HEALTH MONITOR <svg class="arr" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+          <div class="monitor-val-row" id="healthMonitorSummary">
+            <svg class="monitor-check" viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5l3 3 6-6.5" stroke="var(--energy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div class="monitor-val-text">
+              <div class="monitor-val" style="color:var(--energy)">Within Range</div>
+              <div class="monitor-sub">4/4 Metrics</div>
+            </div>
+          </div>
+        </div>
+        <div class="monitor" onclick="openStressFullPage()">
+          <div class="monitor-top">STRESS MONITOR <svg class="arr" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+          <div class="monitor-val-row" id="stressMonitorSummary">
+            <div class="monitor-dot green"></div>
+            <div class="monitor-val-text">
+              <div class="monitor-val">Low</div>
+              <div class="monitor-sub">Based on HRV</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section>
+      <div class="metric-grid" id="metricsGrid"></div>
     </section>
     <section>
       <div id="performanceForecast"></div>
     </section>
     <section>
       <div id="recoveryBaselines"></div>
+    </section>
+  </div>
+
+  <!-- ============ COACH ============ -->
+  <div class="view" id="view-coach">
+    <section>
+      <div id="coachRecoveryPlan"></div>
     </section>
     <section>
       <div id="coachTraining"></div>
@@ -3380,9 +3379,9 @@ section { padding: 0 16px; margin-bottom: 8px; }
     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span class="nav-label">Now</span>
   </button>
-  <button class="nav-btn" data-view="health">
-    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <span class="nav-label">Health</span>
+  <button class="nav-btn" data-view="body">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span class="nav-label">Body</span>
   </button>
   <div class="nav-center" onclick="openLog()">+</div>
   <button class="nav-btn" data-view="coach">
@@ -3409,7 +3408,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v108';
+const APP_VERSION = 'v109';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -8643,8 +8642,6 @@ function renderDailyCoach() {
 // ========================================
 function renderCoachView() {
   renderCoachRecoveryPlan();
-  renderPerformanceForecast();
-  renderRecoveryBaselines();
   renderCoachTraining();
   renderCoachBreathwork();
   renderCoachRecoveryStack();
@@ -12223,13 +12220,18 @@ function showView(name) {
   if (name === 'today') {
     drawCurve('curveSvg', false);
     updateCurveFoot('curveFoot');
-    renderStrainTarget();
-    renderStrainTimeline();
-    renderSleepNeedBanner();
     renderWinddown();
     renderLiveActivities();
     renderDailyCoach();
     renderSuggestions();
+  }
+  if (name === 'body') {
+    renderStrainTarget();
+    if (activeRingDetail === 'strain') renderStrainTimeline();
+    renderSleepNeedBanner();
+    renderMetrics();
+    renderPerformanceForecast();
+    renderRecoveryBaselines();
   }
   if (name === 'plan') {
     drawCurve('curveOverlay', true);
@@ -13594,7 +13596,7 @@ async function fetchHealthData() {
       renderReadiness();
       renderThreeRings();
       renderStrainTarget();
-      renderStrainTimeline();
+      if (activeRingDetail === 'strain') renderStrainTimeline();
       renderSleepNeedBanner();
       renderStrainCoach();
       renderDailyCoach();
@@ -13939,7 +13941,7 @@ async function fetchHeroWorkouts() {
 
     // Re-render My Day with updated workouts and Hero names
     renderTasks();
-    renderStrainTimeline();
+    if (activeRingDetail === 'strain') renderStrainTimeline();
     // Re-render coach if visible
     if (document.getElementById('view-coach')?.classList.contains('active')) {
       renderCoachView();
