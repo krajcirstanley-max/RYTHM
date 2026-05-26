@@ -900,6 +900,18 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .st-bar-zone { position: absolute; top: -2px; height: 12px; border-radius: 6px; border: 1.5px solid rgba(255,255,255,0.2); background: transparent; }
 .st-msg { font-size: 12px; color: var(--text-2); line-height: 1.5; margin-top: 8px; }
 
+/* STRAIN TIMELINE */
+.strain-tl-card {
+  background: var(--card); border: 1px solid var(--card-border);
+  border-radius: var(--radius); padding: 16px 18px; overflow: hidden;
+  margin-top: 8px;
+}
+.strain-tl-label { font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--text-3); text-transform: uppercase; margin-bottom: 12px; }
+.strain-tl-svg { width: 100%; display: block; }
+.strain-tl-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.strain-tl-leg-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--text-3); }
+.strain-tl-leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
 /* SLEEP NEED BANNER */
 .sleep-need-card {
   background: linear-gradient(135deg, rgba(147,161,196,0.08), rgba(167,139,250,0.06));
@@ -2852,6 +2864,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
 
     <section>
       <div id="strainTarget"></div>
+      <div id="strainTimeline"></div>
     </section>
 
     <section>
@@ -3396,7 +3409,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v105';
+const APP_VERSION = 'v106';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -3568,6 +3581,7 @@ function fullRerender() {
   renderReadiness();
   renderThreeRings();
   renderStrainTarget();
+  renderStrainTimeline();
   renderSleepNeedBanner();
   renderStrainCoach();
   renderDailyCoach();
@@ -7968,6 +7982,169 @@ function renderStrainTarget() {
 }
 
 // ========================================
+//  STRAIN ACCUMULATION TIMELINE
+// ========================================
+function renderStrainTimeline() {
+  const el = document.getElementById('strainTimeline');
+  if (!el) return;
+
+  const now = new Date();
+  const todayKey = now.toISOString().slice(0, 10);
+  const currentHour = now.getHours() + now.getMinutes() / 60;
+  const totalStrain = computeStrain();
+
+  // Gather today's workouts with time info
+  const workouts = (ST._workouts || [])
+    .filter(w => w.date === todayKey && w.startDate)
+    .map(w => {
+      const sd = new Date(w.startDate.replace(' +0000', 'Z').replace(' ', 'T'));
+      const startH = sd.getHours() + sd.getMinutes() / 60;
+      const durH = (w.durMin || 60) / 60;
+      return {
+        startH,
+        endH: Math.min(startH + durH, 24),
+        durH,
+        cal: w.cal || 0,
+        name: w._heroName || w.type || 'Workout',
+        durMin: w.durMin || 60
+      };
+    })
+    .sort((a, b) => a.startH - b.startH);
+
+  // If no time-stamped workouts, hide the timeline
+  if (workouts.length === 0) { el.innerHTML = ''; return; }
+
+  // Calculate strain contribution per workout proportional to calories
+  const totalWorkoutCal = workouts.reduce((s, w) => s + w.cal, 0);
+  const baseStrain = 3; // resting metabolic strain
+  const activityStrain = totalStrain - baseStrain;
+
+  // Distribute strain: workouts get proportional share, rest is NEAT/steps
+  const workoutFraction = totalWorkoutCal > 0 ? 0.85 : 0;
+  const neatStrain = activityStrain * (1 - workoutFraction);
+
+  // Build hourly strain accumulation curve
+  const points = [];
+  const maxH = Math.min(Math.ceil(currentHour) + 1, 24);
+  const startH = Math.max(0, Math.floor(workouts[0].startH) - 2);
+
+  let accumulated = baseStrain;
+  // NEAT strain per hour (distributed across waking hours, ~6am-now)
+  const wakingHours = Math.max(1, currentHour - 6);
+  const neatPerHour = neatStrain / wakingHours;
+
+  for (let h = startH; h <= currentHour; h += 0.25) {
+    // Add NEAT for this quarter hour
+    if (h >= 6) accumulated += neatPerHour * 0.25;
+
+    // Check if any workout is active at this time
+    for (const w of workouts) {
+      if (h >= w.startH && h < w.endH) {
+        // Workout strain per hour
+        const wStrain = totalWorkoutCal > 0
+          ? (activityStrain * workoutFraction * (w.cal / totalWorkoutCal)) / w.durH
+          : activityStrain / w.durH;
+        accumulated += wStrain * 0.25;
+      }
+    }
+    points.push({ h, strain: Math.min(21, accumulated) });
+  }
+
+  // SVG dimensions
+  const W = 420, H = 140, pad = { t: 12, r: 16, b: 24, l: 30 };
+  const gW = W - pad.l - pad.r;
+  const gH = H - pad.t - pad.b;
+
+  // Scales
+  const xMin = startH, xMax = maxH;
+  const yMin = 0, yMax = 21;
+  const x = h => pad.l + ((h - xMin) / (xMax - xMin)) * gW;
+  const y = s => pad.t + gH - (s / yMax) * gH;
+
+  // Build path
+  let pathD = '';
+  points.forEach((p, i) => {
+    const px = x(p.h), py = y(p.strain);
+    pathD += (i === 0 ? 'M' : 'L') + px.toFixed(1) + ',' + py.toFixed(1);
+  });
+
+  // Area fill path
+  const areaD = pathD
+    + 'L' + x(points[points.length - 1].h).toFixed(1) + ',' + y(0).toFixed(1)
+    + 'L' + x(points[0].h).toFixed(1) + ',' + y(0).toFixed(1) + 'Z';
+
+  // Workout highlight zones
+  const workoutZones = workouts.map((w, i) => {
+    const colors = ['#4da9ff', '#30d98a', '#a78bfa', '#ff7eb3', '#ffb547'];
+    const c = colors[i % colors.length];
+    return `<rect x="${x(w.startH)}" y="${pad.t}" width="${x(w.endH) - x(w.startH)}" height="${gH}" fill="${c}" opacity="0.08" rx="3"/>`;
+  }).join('');
+
+  // Workout labels
+  const workoutLabels = workouts.map((w, i) => {
+    const colors = ['#4da9ff', '#30d98a', '#a78bfa', '#ff7eb3', '#ffb547'];
+    const c = colors[i % colors.length];
+    const cx = x((w.startH + w.endH) / 2);
+    const labelY = pad.t + 14 + (i % 2) * 14;
+    return `<text x="${cx}" y="${labelY}" text-anchor="middle" fill="${c}" font-size="9" font-weight="700" font-family="'DM Mono',monospace">${w.name}</text>`;
+  }).join('');
+
+  // X-axis hour labels
+  const hourStep = (xMax - xMin) > 12 ? 3 : (xMax - xMin) > 6 ? 2 : 1;
+  let xLabels = '';
+  for (let h = Math.ceil(xMin); h <= xMax; h += hourStep) {
+    xLabels += `<text x="${x(h)}" y="${H - 4}" text-anchor="middle" fill="var(--text-4)" font-size="9" font-family="'DM Mono',monospace">${h}:00</text>`;
+  }
+
+  // Y-axis labels
+  let yLabels = '';
+  for (const s of [0, 7, 14, 21]) {
+    yLabels += `<text x="${pad.l - 6}" y="${y(s) + 3}" text-anchor="end" fill="var(--text-4)" font-size="9" font-family="'DM Mono',monospace">${s}</text>`;
+    yLabels += `<line x1="${pad.l}" y1="${y(s)}" x2="${W - pad.r}" y2="${y(s)}" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>`;
+  }
+
+  // Current position dot
+  const lastPt = points[points.length - 1];
+  const dotCx = x(lastPt.h), dotCy = y(lastPt.strain);
+
+  // Strain color
+  const strainColor = totalStrain >= 14 ? '#30d98a' : totalStrain >= 8 ? '#4da9ff' : 'var(--text-3)';
+
+  // Legend
+  const legend = workouts.map((w, i) => {
+    const colors = ['#4da9ff', '#30d98a', '#a78bfa', '#ff7eb3', '#ffb547'];
+    const c = colors[i % colors.length];
+    const dur = w.durMin >= 60 ? Math.floor(w.durMin / 60) + 'h ' + (w.durMin % 60) + 'm' : w.durMin + 'm';
+    return `<div class="strain-tl-leg-item"><div class="strain-tl-leg-dot" style="background:${c}"></div>${w.name} (${dur})</div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="strain-tl-card">
+      <div class="strain-tl-label">Strain Timeline</div>
+      <svg class="strain-tl-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id="strainGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${strainColor}" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="${strainColor}" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        ${yLabels}
+        ${workoutZones}
+        <path d="${areaD}" fill="url(#strainGrad)"/>
+        <path d="${pathD}" fill="none" stroke="${strainColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        ${workoutLabels}
+        ${xLabels}
+        <circle cx="${dotCx}" cy="${dotCy}" r="4" fill="${strainColor}" stroke="#1a1a2e" stroke-width="2"/>
+        <circle cx="${dotCx}" cy="${dotCy}" r="7" fill="none" stroke="${strainColor}" opacity="0.4">
+          <animate attributeName="r" values="5;9;5" dur="2s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.4;0.1;0.4" dur="2s" repeatCount="indefinite"/>
+        </circle>
+      </svg>
+      <div class="strain-tl-legend">${legend}</div>
+    </div>`;
+}
+
+// ========================================
 //  SLEEP NEED BANNER (WHOOP-style dynamic)
 // ========================================
 function renderSleepNeedBanner() {
@@ -11987,6 +12164,7 @@ function showView(name) {
     drawCurve('curveSvg', false);
     updateCurveFoot('curveFoot');
     renderStrainTarget();
+    renderStrainTimeline();
     renderSleepNeedBanner();
     renderWinddown();
     renderLiveActivities();
@@ -13356,6 +13534,7 @@ async function fetchHealthData() {
       renderReadiness();
       renderThreeRings();
       renderStrainTarget();
+      renderStrainTimeline();
       renderSleepNeedBanner();
       renderStrainCoach();
       renderDailyCoach();
@@ -13957,6 +14136,7 @@ function bootApp() {
   renderReadiness();
   renderThreeRings();
   renderStrainTarget();
+  renderStrainTimeline();
   renderSleepNeedBanner();
   renderStrainCoach();
   renderDailyCoach();
