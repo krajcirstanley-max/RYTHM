@@ -3523,7 +3523,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v121';
+const APP_VERSION = 'v122';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -9321,201 +9321,116 @@ function setDayPlan(field, value) {
 function getDayPlanRecs(todayPlan, tomorrowPlan, recovery, soreness, sessionType) {
   const recs = [];
   soreness = soreness || {};
-  const strain = computeStrain();
   const m = ST.metrics;
-  const now = new Date();
-  const nowH = now.getHours() + now.getMinutes() / 60;
-  const sl = ST.sleep || {};
   const debtH = m.sleepDebt || 0;
 
   const soreAreas = Object.entries(soreness).filter(([,v]) => v === 'sore').map(([k]) => k);
   const painAreas = Object.entries(soreness).filter(([,v]) => v === 'pain').map(([k]) => k);
-  const hasSoreness = soreAreas.length > 0 || painAreas.length > 0;
   const hasPain = painAreas.length > 0;
   const st = sessionType ? SESSION_TYPES.find(s => s.id === sessionType) : null;
 
-  // --- Intensity-based base recommendations ---
+  // --- ONE status line about the day ---
   if (todayPlan === 'rest') {
-    recs.push({ icon: '💤', text: '<b>No training.</b> Focus on recovery modalities: foam roll, stretching, walking.' });
-    recs.push({ icon: '🥗', text: '<b>Eat at maintenance.</b> Protein 1.6g/kg (105g), emphasize anti-inflammatory foods.' });
-    if (debtH > 1) {
-      recs.push({ icon: '😴', text: `<b>Catch up on sleep.</b> You have ${debtH.toFixed(1)}h of debt. Nap 20-30min or sleep early tonight.` });
-    }
-    recs.push({ icon: '🧊', text: '<b>Cold immersion optional.</b> Good for parasympathetic activation on rest days.' });
-    if (recovery < 50) {
-      recs.push({ icon: '🧖', text: '<b>Sauna 15-20min.</b> Heat shock proteins aid recovery when HRV is low.' });
-    }
-    recs.push({ icon: '☀️', text: '<b>Morning sunlight 10min.</b> Anchors circadian rhythm even on rest days.' });
+    recs.push({ icon: '💤', text: '<b>Rest day.</b> Recovery modalities only.' });
   } else if (todayPlan === 'easy') {
-    recs.push({ icon: '🚶', text: '<b>Light movement only.</b> Walk 30-45min, mobility work, or easy swimming.' });
-    recs.push({ icon: '⏱️', text: '<b>Keep intensity below zone 2.</b> HR under 130bpm. No explosive movements.' });
-    recs.push({ icon: '🥗', text: '<b>Slight caloric surplus.</b> Extra carbs to replenish glycogen from recent sessions.' });
-    if (recovery < 60) {
-      recs.push({ icon: '💤', text: '<b>Consider a 20min nap</b> between 13:00-15:00 to boost afternoon recovery.' });
-    }
-  } else if (todayPlan === 'moderate' || todayPlan === 'hard') {
-    // Recovery readiness check
-    if (todayPlan === 'hard') {
-      if (recovery >= 67) {
-        recs.push({ icon: '🔥', text: '<b>Green light for intensity.</b> Recovery supports max effort. Push it.' });
-      } else if (recovery >= 50) {
-        recs.push({ icon: '⚠️', text: `<b>Recovery is only ${recovery}%.</b> You can train hard but watch for warning signs. Reduce volume if needed.` });
-      } else {
-        recs.push({ icon: '🛑', text: `<b>Recovery is ${recovery}%.</b> Hard session not recommended today. Consider switching to moderate.` });
-      }
-    } else {
-      if (recovery >= 67) {
-        recs.push({ icon: '⚡', text: '<b>Your body can handle moderate load.</b> Recovery is green. Quality reps.' });
-      } else {
-        recs.push({ icon: '⚠️', text: `<b>Recovery is ${recovery}%.</b> Monitor how you feel. Cut short if fatigue builds.` });
-      }
-    }
-
-    // Session-type-specific recommendations
-    if (st) {
-      recs.push({ icon: st.icon, text: `<b>${st.label} session.</b> ${st.recovery}` });
-      recs.push({ icon: '🔥', text: `<b>Warm-up.</b> ${st.warmup}` });
-      recs.push({ icon: '🥗', text: `<b>Nutrition.</b> ${st.nutrition}` });
-      recs.push({ icon: '⛔', text: `<b>Post-session.</b> ${st.avoid}` });
-
-      // Check if pain areas conflict with session type
-      const stHighAreas = Object.entries(st.areas).filter(([,v]) => v === 'high').map(([k]) => k);
-      const conflictPain = painAreas.filter(a => stHighAreas.includes(a));
-      if (conflictPain.length > 0) {
-        const conflictLabels = conflictPain.map(a => BODY_PARTS.find(b => b.id === a)?.label || a);
-        recs.push({ icon: '🛑', text: `<b>Pain conflict.</b> ${st.label} heavily loads ${conflictLabels.join(', ')}, which you flagged as painful. Strongly consider a different session type or rest.` });
-      }
-      const conflictSore = soreAreas.filter(a => stHighAreas.includes(a));
-      if (conflictSore.length > 0 && !conflictPain.length) {
-        const soreLabels = conflictSore.map(a => BODY_PARTS.find(b => b.id === a)?.label || a);
-        recs.push({ icon: '⚠️', text: `<b>Sore areas overlap.</b> ${soreLabels.join(', ')} are sore and will be heavily loaded. Extra warm-up, reduce volume, and monitor closely.` });
-      }
-
-      // Timing
-      recs.push({ icon: '⏱️', text: '<b>Train during Peak 1 or Peak 2</b> for optimal neuromuscular performance.' });
-    } else {
-      // No session type selected yet
-      if (todayPlan === 'moderate') {
-        recs.push({ icon: '🏃', text: '<b>Sub-maximal training.</b> 70-80% intensity. Technique and volume focus.' });
-      }
-      recs.push({ icon: '⏱️', text: '<b>Train during Peak 1 or Peak 2</b> for optimal neuromuscular performance.' });
-      recs.push({ icon: '🥗', text: todayPlan === 'hard'
-        ? '<b>High-carb pre-fuel.</b> 1-1.5g/kg carbs 2-3h before. Post-training: protein + carbs within 30min.'
-        : '<b>Pre-fuel 2h before training.</b> Complex carbs + protein. 500ml water minimum.' });
-      recs.push({ icon: '👆', text: '<b>Select your session type above</b> for specific warm-up, nutrition, and recovery guidance.' });
-    }
-
-    recs.push({ icon: '💤', text: todayPlan === 'hard'
-      ? '<b>Prioritize sleep tonight.</b> Hard sessions require 9+ hours for full adaptation.'
-      : '<b>Sleep well tonight.</b> 8.5h+ for recovery from moderate training load.' });
+    recs.push({ icon: '🚶', text: '<b>Easy day.</b> Light movement, stay under zone 2.' });
+  } else if (todayPlan === 'hard') {
+    if (recovery >= 67) recs.push({ icon: '🔥', text: `<b>Green light.</b> Recovery ${recovery}%, push it.` });
+    else if (recovery >= 50) recs.push({ icon: '⚠️', text: `<b>Recovery only ${recovery}%.</b> Watch for warning signs, reduce volume if needed.` });
+    else recs.push({ icon: '🛑', text: `<b>Recovery ${recovery}%.</b> Hard session not recommended. Consider moderate or rest.` });
+  } else if (todayPlan === 'moderate') {
+    if (recovery >= 67) recs.push({ icon: '⚡', text: `<b>Recovery ${recovery}%.</b> Good for moderate load, quality reps.` });
+    else recs.push({ icon: '⚠️', text: `<b>Recovery ${recovery}%.</b> Monitor fatigue, cut short if it builds.` });
   }
 
-  // Tomorrow context
-  if (tomorrowPlan === 'hard' && todayPlan !== 'rest') {
-    recs.push({ icon: '📋', text: '<b>Hard session tomorrow.</b> Finish today early, prioritize sleep. No alcohol or late food tonight.' });
-  } else if (tomorrowPlan === 'hard' && todayPlan === 'rest') {
-    recs.push({ icon: '📋', text: '<b>Hard session tomorrow.</b> Perfect rest-day prep. Extra carbs tonight, early bed.' });
-  } else if (tomorrowPlan === 'rest') {
-    recs.push({ icon: '📋', text: '<b>Rest day tomorrow.</b> You can push a bit more today knowing recovery time is coming.' });
+  // Sleep debt only if significant
+  if (debtH > 1.5) {
+    recs.push({ icon: '😴', text: `<b>${debtH.toFixed(1)}h sleep debt.</b> Nap 20-30min or early bed tonight.` });
   }
 
-  // --- Body-part specific recommendations ---
-  if (hasSoreness) {
-    recs.push({ icon: '🗺️', text: '<b>Targeted recovery below</b> based on what you flagged.' });
-  }
+  // Session type: just warm-up + conflicts (skip nutrition/avoid/recovery prose)
+  if (st && (todayPlan === 'moderate' || todayPlan === 'hard')) {
+    recs.push({ icon: st.icon, text: `<b>${st.label}.</b> ${st.warmup}` });
 
-  // Pain areas: immediate warnings first
-  if (painAreas.includes('knees')) {
-    recs.push({ icon: '🛑', text: '<b>Knee pain.</b> Skip all plyometrics, jumping, and deep squats today. Ice 15min, isometric quad holds (wall sit 30s x 3), and patellar tendon self-massage. If sharp or locking, see physio.' });
-    if (todayPlan === 'hard' || todayPlan === 'moderate') {
-      recs.push({ icon: '⚠️', text: '<b>Modify training.</b> Replace jump work with upper body or pool work. No impact loading on sore knees.' });
+    // Pain conflicts with session demands
+    const stHighAreas = Object.entries(st.areas).filter(([,v]) => v === 'high').map(([k]) => k);
+    const conflictPain = painAreas.filter(a => stHighAreas.includes(a));
+    if (conflictPain.length > 0) {
+      const labels = conflictPain.map(a => BODY_PARTS.find(b => b.id === a)?.label || a);
+      recs.push({ icon: '🛑', text: `<b>Pain conflict.</b> ${st.label} heavily loads ${labels.join(', ')}. Consider switching session type or resting.` });
+    }
+    const conflictSore = soreAreas.filter(a => stHighAreas.includes(a));
+    if (conflictSore.length > 0 && !conflictPain.length) {
+      const labels = conflictSore.map(a => BODY_PARTS.find(b => b.id === a)?.label || a);
+      recs.push({ icon: '⚠️', text: `<b>Sore overlap.</b> ${labels.join(', ')} will be heavily loaded. Extra warm-up, reduce volume.` });
     }
   }
-  if (painAreas.includes('ankles')) {
-    recs.push({ icon: '🛑', text: '<b>Ankle pain.</b> No sprinting, jumping, or lateral work. Alphabet drills for mobility, resistance band inversion/eversion, ice 15min. Tape or brace if training.' });
-  }
-  if (painAreas.includes('calves')) {
-    recs.push({ icon: '🛑', text: '<b>Calf / Achilles pain.</b> No explosive push-off, hill sprints, or high-rep calf raises. Eccentric heel drops (3x15, slow 3s down), foam roll gastrocnemius only (not directly on Achilles), infrapanel if available.' });
-  }
-  if (painAreas.includes('hamstrings')) {
-    recs.push({ icon: '🛑', text: '<b>Hamstring pain.</b> No sprinting, RDLs, or hip-dominant plyometrics. Gentle neural flossing (sciatic glides), isometric holds at pain-free range, avoid sitting 60min+. High risk area for long jumpers.' });
-  }
-  if (painAreas.includes('lowerBack')) {
-    recs.push({ icon: '🛑', text: '<b>Lower back pain.</b> No deadlifts, heavy squats, or loaded flexion. Cat-cow 2x10, McGill big 3 (bird dog, side plank, curl-up), walk 20min. Avoid prolonged sitting.' });
-  }
-  if (painAreas.includes('hipFlexors')) {
-    recs.push({ icon: '🛑', text: '<b>Hip flexor pain.</b> No A-skips, knee drives, or deep lunges. Half-kneeling stretch 60s each side, glute activation (bridges 3x10), avoid sitting in hip flexion. Critical for takeoff mechanics.' });
-  }
-  if (painAreas.includes('shins')) {
-    recs.push({ icon: '🛑', text: '<b>Shin pain.</b> Potential periostitis. No running on hard surfaces. Tibialis raises 3x15, toe walks, ice massage along the tibia. If persistent, rule out stress fracture.' });
-  }
-  if (painAreas.includes('feet')) {
-    recs.push({ icon: '🛑', text: '<b>Foot / plantar pain.</b> Roll a frozen bottle under the arch 5min, calf stretches (tight calves pull on plantar fascia), toe spreads and towel scrunches. Avoid walking barefoot on hard floors.' });
-  }
-  if (painAreas.includes('shoulders')) {
-    recs.push({ icon: '🛑', text: '<b>Shoulder pain.</b> No overhead pressing or throwing. Band pull-aparts 3x15, external rotation drills, thoracic spine foam roll. Arm swing matters for jump distance, protect this.' });
+
+  // Tomorrow context - one line
+  if (tomorrowPlan === 'hard') {
+    recs.push({ icon: '📋', text: todayPlan === 'rest'
+      ? '<b>Hard session tomorrow.</b> Extra carbs tonight, early bed.'
+      : '<b>Hard session tomorrow.</b> Finish early, prioritize sleep.' });
+  } else if (tomorrowPlan === 'rest' && (todayPlan === 'moderate' || todayPlan === 'hard')) {
+    recs.push({ icon: '📋', text: '<b>Rest tomorrow.</b> You can push more today.' });
   }
 
-  // Sore areas: recovery-focused (less urgent than pain)
-  if (soreAreas.includes('quads')) {
-    recs.push({ icon: '🧱', text: '<b>Quads sore.</b> Foam roll 2min each side (avoid kneecap), couch stretch 60s, light cycling 10min to flush. Skip heavy squat loading if also training today.' });
-  }
-  if (soreAreas.includes('hamstrings')) {
-    recs.push({ icon: '🧱', text: '<b>Hamstrings sore.</b> Gentle Nordic holds (eccentric only, 3x5), foam roll posterior chain, standing hamstring stretch 60s. Good sign of adaptation if DOMS from yesterday.' });
-  }
-  if (soreAreas.includes('glutes')) {
-    recs.push({ icon: '🧱', text: '<b>Glutes sore.</b> Lacrosse ball piriformis release 2min each side, pigeon stretch 60s, light glute bridges to activate without loading. Common after sprint/plyometric sessions.' });
-  }
-  if (soreAreas.includes('calves')) {
-    recs.push({ icon: '🧱', text: '<b>Calves sore.</b> Eccentric heel drops on a step (3x12), foam roll gastrocnemius, downward dog stretch. Jetboots if available. Hydrate extra, calves respond well to blood flow.' });
-  }
-  if (soreAreas.includes('knees')) {
-    recs.push({ icon: '🧱', text: '<b>Knees sore.</b> Isometric quad holds (wall sit 3x20s), light spin 10min, patellar tendon self-massage. Reduce depth on squats today, no deep knee bends.' });
-  }
-  if (soreAreas.includes('ankles')) {
-    recs.push({ icon: '🧱', text: '<b>Ankles sore.</b> Ankle circles 20 each direction, band dorsiflexion mobilization, calf foam roll (tightness upstream causes ankle stress). Warm up extra before any training.' });
-  }
-  if (soreAreas.includes('hipFlexors')) {
-    recs.push({ icon: '🧱', text: '<b>Hip flexors sore.</b> Half-kneeling stretch 90s each, hip CARs (controlled articular rotations), foam roll TFL/psoas gently. Common after approach run sessions.' });
-  }
-  if (soreAreas.includes('lowerBack')) {
-    recs.push({ icon: '🧱', text: '<b>Lower back sore.</b> Dead hangs 3x20s, cat-cow 2x10, light walking 15min. Avoid sit-ups or crunches. Often a sign of hip tightness, stretch hip flexors first.' });
-  }
-  if (soreAreas.includes('shoulders')) {
-    recs.push({ icon: '🧱', text: '<b>Shoulders sore.</b> Band pull-aparts 2x15, arm circles, thoracic foam roll. Arm action is key in long jump, keep shoulders mobile.' });
-  }
-  if (soreAreas.includes('shins')) {
-    recs.push({ icon: '🧱', text: '<b>Shins sore.</b> Tibialis raises 2x15, toe walks, ice if warm to touch. Consider softer training surface today. Compression socks during training.' });
-  }
-  if (soreAreas.includes('feet')) {
-    recs.push({ icon: '🧱', text: '<b>Feet sore.</b> Arch rolls with golf/lacrosse ball 3min each, toe yoga (big toe up, others down, alternate), calf stretch 60s. Check spike fit if persistent.' });
-  }
-  if (soreAreas.includes('general') || painAreas.includes('general')) {
-    const isP = painAreas.includes('general');
-    recs.push({ icon: isP ? '🛑' : '🧱', text: isP
-      ? '<b>Full-body fatigue.</b> Strong signal to rest. Consider downgrading today to easy or rest. Walk only, emphasize sleep, magnesium before bed. Check HRV trend this week.'
-      : '<b>General fatigue.</b> Normal after high-volume blocks. Extra 30min sleep, 500mg magnesium glycinate before bed, avoid caffeine after noon. Light movement helps more than full rest.' });
+  // --- Pain areas: short, avoid-focused ---
+  const painAdvice = {
+    knees: 'Skip plyos and deep squats. Ice 15min, wall sits 3x30s.',
+    ankles: 'No sprinting or lateral work. Alphabet drills, ice, tape if training.',
+    calves: 'No explosive push-off. Eccentric heel drops 3x15, foam roll gastroc only.',
+    hamstrings: 'No sprinting or RDLs. Neural flossing, isometric holds at pain-free range.',
+    lowerBack: 'No deadlifts or loaded flexion. McGill big 3, walk 20min.',
+    hipFlexors: 'No A-skips or deep lunges. Half-kneeling stretch 60s, glute bridges 3x10.',
+    shins: 'No hard-surface running. Tibialis raises 3x15, ice along tibia.',
+    feet: 'Frozen bottle roll 5min, calf stretches. No barefoot on hard floors.',
+    shoulders: 'No overhead pressing. Band pull-aparts 3x15, external rotation drills.',
+    quads: 'No heavy squats. Foam roll 2min each side, couch stretch 60s.',
+    glutes: 'No heavy hip hinge. Lacrosse ball piriformis release, pigeon stretch.',
+    general: 'Strong signal to rest. Downgrade to easy or rest. Check HRV trend.',
+  };
+  for (const a of painAreas) {
+    const label = BODY_PARTS.find(b => b.id === a)?.label || a;
+    recs.push({ icon: '🛑', text: `<b>${label} pain.</b> ${painAdvice[a] || 'Avoid loading this area.'}` });
   }
 
-  // Cross-area patterns (connected chains)
-  if ((soreAreas.includes('calves') || painAreas.includes('calves')) &&
-      (soreAreas.includes('ankles') || painAreas.includes('ankles'))) {
-    recs.push({ icon: '🔗', text: '<b>Calf + ankle linked.</b> This chain takes heavy load at takeoff. Extra warm-up time, dynamic ankle mobility, and consider taping the ankle for support during training.' });
-  }
-  if ((soreAreas.includes('hipFlexors') || painAreas.includes('hipFlexors')) &&
-      (soreAreas.includes('lowerBack') || painAreas.includes('lowerBack'))) {
-    recs.push({ icon: '🔗', text: '<b>Hip flexor + lower back linked.</b> Anterior pelvic tilt pattern. Prioritize glute activation (bridges, clamshells) before any training. Consider dead bugs and bird dogs.' });
-  }
-  if ((soreAreas.includes('knees') || painAreas.includes('knees')) &&
-      (soreAreas.includes('quads') || painAreas.includes('quads'))) {
-    recs.push({ icon: '🔗', text: '<b>Quad + knee linked.</b> Quad tightness pulls on the patellar tendon. Extra quad foam rolling and rectus femoris stretching before training.' });
+  // --- Sore areas: short, what-to-do ---
+  const soreAdvice = {
+    quads: 'Foam roll, couch stretch, light spin to flush.',
+    hamstrings: 'Nordic holds eccentric 3x5, foam roll posterior chain.',
+    glutes: 'Lacrosse ball piriformis 2min each, pigeon stretch.',
+    calves: 'Eccentric heel drops 3x12, Jetboots if available.',
+    knees: 'Wall sits 3x20s, light spin 10min, patellar self-massage.',
+    ankles: 'Ankle circles, band dorsiflexion mob, extra warm-up.',
+    hipFlexors: 'Half-kneeling stretch 90s each, hip CARs.',
+    lowerBack: 'Dead hangs 3x20s, cat-cow 2x10. Stretch hip flexors first.',
+    shoulders: 'Band pull-aparts 2x15, thoracic foam roll.',
+    shins: 'Tibialis raises 2x15, toe walks. Softer surface today.',
+    feet: 'Arch rolls with lacrosse ball 3min each, toe yoga.',
+    general: 'Normal after high-volume blocks. Extra 30min sleep, light movement.',
+  };
+  for (const a of soreAreas) {
+    const label = BODY_PARTS.find(b => b.id === a)?.label || a;
+    recs.push({ icon: '🧱', text: `<b>${label} sore.</b> ${soreAdvice[a] || 'Light mobility work.'}` });
   }
 
-  // Training modification summary if pain areas overlap with training plan
+  // Cross-chain patterns (only show if relevant)
+  if ((soreness.calves || soreness.ankles) && soreness.calves && soreness.ankles) {
+    recs.push({ icon: '🔗', text: '<b>Calf + ankle chain.</b> Heavy takeoff load. Extra warm-up, consider taping.' });
+  }
+  if ((soreness.hipFlexors && soreness.lowerBack)) {
+    recs.push({ icon: '🔗', text: '<b>Hip flexor + lower back.</b> Anterior tilt pattern. Prioritize glute activation first.' });
+  }
+  if ((soreness.knees && soreness.quads)) {
+    recs.push({ icon: '🔗', text: '<b>Quad + knee linked.</b> Extra quad foam rolling before training.' });
+  }
+
+  // Multiple pain areas warning
   if (hasPain && (todayPlan === 'moderate' || todayPlan === 'hard')) {
     const lowerPain = painAreas.filter(a => ['quads','hamstrings','glutes','calves','knees','ankles','hipFlexors','shins','feet'].includes(a));
     if (lowerPain.length >= 2) {
-      recs.push({ icon: '🔄', text: `<b>Multiple lower-body pain areas.</b> Strongly consider switching to upper body only, pool session, or downgrading intensity. ${lowerPain.length} areas in pain is a yellow flag.` });
+      recs.push({ icon: '🔄', text: `<b>${lowerPain.length} lower-body pain areas.</b> Consider upper body only or pool session.` });
     }
   }
 
