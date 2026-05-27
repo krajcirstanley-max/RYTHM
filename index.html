@@ -3158,9 +3158,9 @@ section { padding: 0 16px; margin-bottom: 8px; }
           <div id="journalStreak" style="display:flex;align-items:center;gap:6px;"></div>
         </div>
         <div id="journalGrid"></div>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:14px;">
-          <button class="journal-save" id="journalSaveBtn" onclick="saveJournal()" style="flex:1;margin-top:0;">Save Entry</button>
-          <div class="journal-sel-count" id="journalSelCount" style="padding:0;min-width:50px;text-align:right;"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+          <div class="journal-sel-count" id="journalSelCount" style="padding:0;font-size:11px;color:var(--text-4);"></div>
+          <div id="journalAutoSaved" style="font-size:11px;color:var(--energy);opacity:0;transition:opacity 0.3s;margin-left:auto;"></div>
         </div>
       </div>
     </section>
@@ -3404,7 +3404,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v113';
+const APP_VERSION = 'v114';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -6051,8 +6051,16 @@ function renderSicknessWarning() {
   if (hrvDrop > 15) signals.push(`HRV ${Math.round(hrvDrop)}% below baseline`);
   if (rhrRise > 5) signals.push(`RHR elevated ${Math.round(rhrRise)}% above normal`);
 
-  if (signals.length >= 2) {
-    // Both HRV and RHR flagged - real physiological stress
+  // Check if yesterday was heavy training -- HRV drop + RHR rise is EXPECTED after
+  // hard sessions, not illness. Only flag illness if there was no heavy training.
+  const ydKey = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const ydWorkouts = (ST._workouts || []).filter(w => w.date === ydKey);
+  const ydMin = ydWorkouts.reduce((s, w) => s + (w.durMin || 0), 0);
+  const ydCal = ydWorkouts.reduce((s, w) => s + (w.cal || 0), 0);
+  const hadHeavyTraining = ydMin > 60 || ydCal > 400;
+
+  if (signals.length >= 2 && !hadHeavyTraining) {
+    // Both HRV and RHR flagged with no training explanation
     section.classList.remove('hidden');
     const tips = 'Extra sleep, vitamin C, zinc, reduce training intensity, avoid cold exposure.';
     el.innerHTML = `<div class="sickness-warning-icon">🛡️</div>
@@ -6060,14 +6068,24 @@ function renderSicknessWarning() {
         <div class="sickness-warning-title">Illness risk detected</div>
         <div class="sickness-warning-text"><b>${signals.join('. ')}.</b> Your immune system may be under stress. ${tips}</div>
       </div>`;
-  } else if (hrvDrop > 25 || rhrRise > 10) {
-    // Single extreme signal
+  } else if (signals.length >= 2 && hadHeavyTraining) {
+    // Both flagged but heavy training yesterday -- this is expected fatigue
+    section.classList.remove('hidden');
+    const sessionCount = ydWorkouts.length;
+    const durDesc = ydMin >= 180 ? `${Math.round(ydMin / 60 * 10) / 10}h` : `${ydMin}min`;
+    el.innerHTML = `<div class="sickness-warning-icon">💪</div>
+      <div class="sickness-warning-body">
+        <div class="sickness-warning-title">Post-training fatigue</div>
+        <div class="sickness-warning-text"><b>${sessionCount} session${sessionCount > 1 ? 's' : ''} yesterday (${durDesc}).</b> HRV and RHR shifts are expected. Prioritize hydration, protein, and easy movement today.</div>
+      </div>`;
+  } else if ((hrvDrop > 25 || rhrRise > 10) && !hadHeavyTraining) {
+    // Single extreme signal with no training explanation
     section.classList.remove('hidden');
     const sig = hrvDrop > 25 ? `HRV ${Math.round(hrvDrop)}% below baseline` : `RHR ${Math.round(rhrRise)}% above normal`;
     el.innerHTML = `<div class="sickness-warning-icon">⚠️</div>
       <div class="sickness-warning-body">
         <div class="sickness-warning-title">Watch your recovery</div>
-        <div class="sickness-warning-text"><b>${sig}.</b> Monitor how you feel - if this persists tomorrow, your body may be fighting something.</div>
+        <div class="sickness-warning-text"><b>${sig}.</b> If this persists tomorrow without heavy training, check how you feel.</div>
       </div>`;
   } else {
     section.classList.add('hidden');
@@ -6141,9 +6159,11 @@ function computeStrain() {
 
   // HR zone-weighted strain (Edwards TRIMP) when zone data available
   // Edwards' weights: Z1x1, Z2x2, Z3x3, Z4x4, Z5x5
+  // IMPORTANT: only use zones if there are actual workouts today (zones persist across days)
   const zones = ST.health?.hrZones;
+  const hasWorkoutsToday = todayW.length > 0 || loggedWorkoutMin > 0 || liveWorkout;
   let z1 = 0, z2 = 0, z3 = 0, z4 = 0, z5 = 0;
-  if (zones) {
+  if (zones && hasWorkoutsToday) {
     if (Array.isArray(zones)) {
       // Array format: [{zone:1, pct:33}, {zone:2, pct:35}, ...]
       const totalMin = totalWorkMin || todayW.reduce((s, w) => s + (w.durMin || 0), 0) || 60;
@@ -8634,6 +8654,13 @@ function renderDailyCoach() {
   const hadCold = todayBehaviors.includes('cold_shower');
   const activeSession = (ST.liveActivities || []).find(a => !a.endedAt);
 
+  // Yesterday's training context -- critical for morning guidance
+  const ydKey = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const ydWorkouts = (ST._workouts || []).filter(w => w.date === ydKey);
+  const ydSessions = ydWorkouts.length;
+  const ydMin = ydWorkouts.reduce((s, w) => s + (w.durMin || 0), 0);
+  const hadHeavyYesterday = ydMin > 90 || ydSessions >= 2;
+
   // Accent color
   let accentCls = 'green';
   if (recovery < 50) accentCls = 'red';
@@ -8665,11 +8692,18 @@ function renderDailyCoach() {
     directive = 'Sleep. Phone down. Every minute of screen time delays melatonin.';
   } else if (currentPhase.name === 'INERTIA') {
     directiveIcon = '☀️';
-    if (!hadSunlight) directive = 'Get outside for 10min sunlight. Hydrate 500ml. No caffeine for 90min after waking.';
+    if (hadHeavyYesterday && recovery < 50) {
+      const ydDesc = ydSessions >= 2 ? `${ydSessions} sessions (${ydMin}min)` : `${ydMin}min session`;
+      directive = `Heavy day yesterday (${ydDesc}). Expect fatigue. Sunlight + hydration + easy movement. No intensity today.`;
+    } else if (!hadSunlight) directive = 'Get outside for 10min sunlight. Hydrate 500ml. No caffeine for 90min after waking.';
     else directive = 'Sunlight done. Let cortisol rise naturally. Light movement, no big decisions yet.';
   } else if (currentPhase.name === 'PEAK 1') {
     directiveIcon = '⚡';
     if (trainedToday) directive = `Already trained ${totalTrainMin}min. Fuel recovery - protein + carbs within 2h post-training.`;
+    else if (hadHeavyYesterday && recovery < 50) {
+      const ydDesc = ydSessions >= 2 ? `${ydSessions} sessions` : 'heavy session';
+      directive = `${ydDesc} yesterday. Active recovery only: walk, mobility, foam roll. Save intensity for tomorrow.`;
+    }
     else if (recovery >= 80) directive = 'Peak energy zone. This is your window for max-effort jumps and heavy plyometrics.';
     else if (recovery >= 67) directive = 'Peak zone but moderate recovery. Technique work, sub-max drills.';
     else directive = 'Peak zone but body needs rest. Light mobility or film review only.';
@@ -8709,10 +8743,14 @@ function renderDailyCoach() {
   const hrvPctBelow = hrvBase > 0 ? Math.round((1 - (m.hrv || 0) / hrvBase) * 100) : 0;
 
   let priority, priorityIcon;
-  if (debtH > 3) {
+  if (hadHeavyYesterday && recovery < 50) {
+    priorityIcon = '🛌'; priority = `Recovery day. ${ydSessions} session${ydSessions > 1 ? 's' : ''} yesterday took a toll. Hydrate, move easy, sleep early.`;
+  } else if (debtH > 3) {
     priorityIcon = '😴'; priority = `Sleep debt: ${debtH.toFixed(1)}h. Add 30-60min tonight.`;
-  } else if (hrvPctBelow >= 15) {
+  } else if (hrvPctBelow >= 15 && !hadHeavyYesterday) {
     priorityIcon = '💓'; priority = `HRV ${hrvPctBelow}% below baseline. Prioritize recovery modalities.`;
+  } else if (hrvPctBelow >= 15 && hadHeavyYesterday) {
+    priorityIcon = '💓'; priority = `HRV suppressed from yesterday's training. Expected. Easy movement + protein.`;
   } else if (strain > 18 && recovery < 60) {
     priorityIcon = '⚠️'; priority = `High strain (${strain}) on low recovery (${recovery}%). Cut volume.`;
   } else if (trainedToday && !hadCold && recovery < 70 && !['WIND-DOWN','NIGHT','SLEEP'].includes(currentPhase.name)) {
@@ -11295,9 +11333,7 @@ function initJournal() {
 
   updateJournalSelCount();
 
-  const btn = document.getElementById('journalSaveBtn');
-  btn.textContent = existing ? 'Update Entry' : 'Save Entry';
-  btn.classList.remove('saved');
+  // Auto-save indicator (no manual save button needed)
 
   renderJournalStreak();
   renderCorrelations();
@@ -11330,6 +11366,7 @@ function renderJournalStreak() {
   }
 }
 
+let _journalSaveTimer = null;
 function toggleBehavior(id, el) {
   const check = el.querySelector('.ji-check');
   if (selectedBehaviors.has(id)) {
@@ -11347,6 +11384,17 @@ function toggleBehavior(id, el) {
     }
   }
   updateJournalSelCount();
+  // Auto-save after a short debounce (lets user toggle multiple items quickly)
+  clearTimeout(_journalSaveTimer);
+  _journalSaveTimer = setTimeout(() => {
+    saveJournal();
+    const indicator = document.getElementById('journalAutoSaved');
+    if (indicator) {
+      indicator.textContent = 'saved';
+      indicator.style.opacity = '1';
+      setTimeout(() => { indicator.style.opacity = '0'; }, 1500);
+    }
+  }, 800);
 }
 
 function saveJournal() {
@@ -12389,6 +12437,17 @@ document.querySelectorAll('.fp-back').forEach(btn => {
     this.click();
   }, { passive: false });
 });
+// Day picker arrows - also need touch handling for iOS PWA
+document.querySelectorAll('#dayNav .arrow').forEach(arrow => {
+  arrow.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    this.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  }, { passive: false });
+});
+document.getElementById('dayLabel')?.addEventListener('touchend', function(e) {
+  e.preventDefault();
+  changeDay(0);
+}, { passive: false });
 
 // ========================================
 //  LIVE ACTIVITIES (timer-based tracking)
