@@ -2090,28 +2090,6 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .sug-action.purple { background: rgba(167,121,247,0.12); color: var(--purple); border: 1px solid rgba(167,121,247,0.15); }
 
 /* Out of bed card */
-.oob-card {
-  background: linear-gradient(145deg, rgba(26,26,32,0.85), rgba(18,18,22,0.9));
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius); padding: 16px 18px;
-  display: flex; align-items: center; gap: 14px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
-}
-.oob-icon { font-size: 24px; flex-shrink: 0; }
-.oob-body { flex: 1; }
-.oob-title { font-size: 14px; font-weight: 700; color: #fff; }
-.oob-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; font-family: 'DM Mono', monospace; }
-.oob-btn {
-  padding: 8px 18px; border: none; border-radius: 100px;
-  background: rgba(167,121,247,0.12); color: var(--purple);
-  font-family: inherit; font-size: 12px; font-weight: 700;
-  cursor: pointer; white-space: nowrap; letter-spacing: 0.3px;
-}
-.oob-btn:active { background: rgba(167,121,247,0.25); }
-.oob-done { display: flex; align-items: center; gap: 10px; }
-.oob-done-icon { font-size: 20px; }
-.oob-done-text { font-size: 13px; color: var(--text-2); }
-.oob-done-val { font-size: 13px; font-weight: 700; color: var(--purple); font-family: 'DM Mono', monospace; }
 
 /* Calendar events in schedule */
 .cal-event-badge {
@@ -2875,9 +2853,6 @@ section { padding: 0 16px; margin-bottom: 8px; }
       <div class="suggestions" id="suggestions"></div>
     </section>
 
-    <section id="outOfBedSection" class="hidden">
-      <div class="oob-card" id="outOfBedCard"></div>
-    </section>
 
     <section id="winddownSection" class="hidden">
       <div class="winddown-card" id="winddownCard"></div>
@@ -3404,7 +3379,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v114';
+const APP_VERSION = 'v115';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -3594,7 +3569,6 @@ function fullRerender() {
   renderStreaks();
   renderLiveActivities();
   renderSuggestions();
-  renderOutOfBed();
   updateNotifToggleUI();
 }
 
@@ -13319,78 +13293,7 @@ function renderSuggestions() {
     </div>`).join('');
 }
 
-// ========================================
-//  OUT OF BED
-// ========================================
-function renderOutOfBed() {
-  const section = document.getElementById('outOfBedSection');
-  const card = document.getElementById('outOfBedCard');
-  if (!section || !card) return;
-
-  const now = new Date();
-  const nowH = now.getHours();
-  const today = now.toISOString().slice(0,10);
-
-  // Only show within 2h of wake time, and only if we have sleep data
-  const sl = ST.sleep || {};
-  const WAKE = profileWakeHour();
-  const hwake = ((nowH + now.getMinutes()/60) - WAKE + 24) % 24;
-  if (hwake >= 2 || !sl.totalH || sl.totalH <= 0) {
-    section.classList.add('hidden');
-    return;
-  }
-
-  // Check if already recorded today
-  const oob = ST.outOfBed || {};
-  if (oob.date === today && oob.time) {
-    // Show the recorded lay-in time briefly
-    const wakeMin = ST.profile?.wakeMin || 480;
-    const oobDate = new Date(oob.time);
-    const oobMin = oobDate.getHours() * 60 + oobDate.getMinutes();
-    const layIn = oobMin - wakeMin;
-    if (layIn > 0) {
-      section.classList.remove('hidden');
-      const layH = Math.floor(layIn / 60);
-      const layM = layIn % 60;
-      const layStr = layH > 0 ? layH + 'h ' + layM + 'm' : layM + 'm';
-      card.innerHTML = `
-        <div class="oob-done">
-          <div class="oob-done-icon">☀️</div>
-          <div class="oob-body">
-            <div class="oob-done-text">Out of bed at ${oobDate.toLocaleTimeString('en', {hour:'2-digit', minute:'2-digit'})}</div>
-            <div class="oob-done-val">Lay-in: ${layStr}</div>
-          </div>
-        </div>`;
-    } else {
-      section.classList.add('hidden');
-    }
-    return;
-  }
-
-  section.classList.remove('hidden');
-  card.innerHTML = `
-    <div class="oob-icon">🛏️</div>
-    <div class="oob-body">
-      <div class="oob-title">Still in bed?</div>
-      <div class="oob-sub">tap when you're actually up</div>
-    </div>
-    <button class="oob-btn" onclick="markOutOfBed()">I'm up!</button>`;
-}
-
-function markOutOfBed() {
-  const now = new Date();
-  const today = now.toISOString().slice(0,10);
-  ST.outOfBed = { date: today, time: now.toISOString() };
-  // Also set as actual wake time so circadian model uses Out of Bed time
-  if (!ST._actualWakeTimes) ST._actualWakeTimes = {};
-  ST._actualWakeTimes[today] = now.getHours() * 60 + now.getMinutes();
-  saveState();
-  renderOutOfBed();
-  // Recompute circadian schedule since wake time changed
-  renderSchedule();
-  renderEnergy();
-  renderSuggestions();
-}
+// Out of bed feature removed (v115)
 
 // ========================================
 //  CALENDAR SYNC
@@ -14414,7 +14317,6 @@ function bootApp() {
   renderStreaks();
   renderLiveActivities();
   renderSuggestions();
-  renderOutOfBed();
   updateNotifToggleUI();
   updateSettingsLatitude();
 
