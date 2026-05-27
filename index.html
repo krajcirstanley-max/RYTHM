@@ -3248,16 +3248,13 @@ section { padding: 0 16px; margin-bottom: 8px; }
       <div id="morningCheckin"></div>
     </section>
     <section>
-      <div id="coachRecoveryPlan"></div>
-    </section>
-    <section>
-      <div id="coachTraining"></div>
-    </section>
-    <section>
-      <div id="coachBreathwork"></div>
+      <div id="coachToday"></div>
     </section>
     <section>
       <div id="coachAccountability"></div>
+    </section>
+    <section>
+      <div id="coachBreathwork"></div>
     </section>
   </div>
 
@@ -3516,7 +3513,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v124';
+const APP_VERSION = 'v125';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -9456,10 +9453,9 @@ function getDayPlanRecs(todayPlan, tomorrowPlan, recovery, soreness, sessionType
 // ========================================
 function renderCoachView() {
   renderMorningCheckin();
-  renderCoachRecoveryPlan();
-  renderCoachTraining();
-  renderCoachBreathwork();
+  renderCoachToday();
   renderCoachInsights();
+  renderCoachBreathwork();
 }
 
 // Exercise -> body system mapping for targeted recovery
@@ -9574,8 +9570,8 @@ function analyzeTrainingLoad() {
   };
 }
 
-function renderCoachRecoveryPlan() {
-  const el = document.getElementById('coachRecoveryPlan');
+function renderCoachToday() {
+  const el = document.getElementById('coachToday');
   if (!el) return;
 
   const recovery = computeReadiness();
@@ -9765,33 +9761,51 @@ function renderCoachRecoveryPlan() {
     blocks[s.time].push(s);
   }
 
-  const interp = readinessInterpretation(recovery);
+  // --- Zone classification (merged from Training Protocol) ---
+  const tl = computeTrainingLoad();
+
+  let zone, zoneColor;
+  if (recovery >= 80) { zone = 'GREEN'; zoneColor = 'var(--energy)'; }
+  else if (recovery >= 67) { zone = 'YELLOW'; zoneColor = 'var(--warn)'; }
+  else if (recovery >= 50) { zone = 'ORANGE'; zoneColor = '#ff8c42'; }
+  else { zone = 'RED'; zoneColor = 'var(--danger)'; }
+
+  const acrColor = tl.acr >= 0.8 && tl.acr <= 1.3 ? 'var(--energy)' : tl.acr > 1.5 ? 'var(--danger)' : 'var(--warn)';
 
   el.innerHTML = `
-    <div class="coach-section" style="border-color:${interp.color}22;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-        <div class="coach-section-label" style="margin-bottom:0;">YOUR RECOVERY PLAN</div>
-        <div style="font-size:11px;color:var(--text-3);font-family:'DM Mono',monospace;">${doneCount}/${totalCount}</div>
+    <div class="coach-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div class="coach-section-label" style="margin-bottom:0;">TODAY</div>
+        <div class="coach-training-badge" style="background:${zoneColor}18;color:${zoneColor}">${zone}</div>
       </div>
-      <div style="font-size:12px;color:var(--text-2);margin-bottom:14px;line-height:1.4;">
-        ${recovery >= 80 ? 'Recovery is high. Use it. Train hard and recover smart tonight.'
-          : recovery >= 60 ? 'Moderate recovery. Do your session, then follow this stack to bounce back.'
-          : recovery >= 40 ? `Recovery at ${recovery}%. ${trainedToday ? 'You trained, so recovery work is critical now.' : 'Keep today light and focus on the stack below.'}`
-          : `Recovery is low (${recovery}%). Rest and recover. Every step below matters today.`}
+      <div style="display:flex;gap:12px;margin-bottom:12px;">
+        <div style="text-align:center;flex:1;">
+          <div style="font-size:20px;font-weight:800;color:${zoneColor};font-family:'DM Mono',monospace;">${recovery}%</div>
+          <div style="font-size:8px;color:var(--text-4);font-weight:700;letter-spacing:1px;">RECOVERY</div>
+        </div>
+        <div style="text-align:center;flex:1;">
+          <div style="font-size:20px;font-weight:800;color:var(--text-2);font-family:'DM Mono',monospace;">${strain}</div>
+          <div style="font-size:8px;color:var(--text-4);font-weight:700;letter-spacing:1px;">STRAIN</div>
+        </div>
+        <div style="text-align:center;flex:1;">
+          <div style="font-size:20px;font-weight:800;color:${acrColor};font-family:'DM Mono',monospace;">${tl.acr}x</div>
+          <div style="font-size:8px;color:var(--text-4);font-weight:700;letter-spacing:1px;">ACR</div>
+        </div>
       </div>
-      ${Object.entries(blocks).map(([time, items]) => `
-        <div style="margin-bottom:12px;">
-          <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);margin-bottom:8px;">${time}</div>
+      ${renderSorenessTrainingMods()}
+      ${steps.length ? Object.entries(blocks).map(([time, items]) => `
+        <div style="margin-bottom:10px;">
+          <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);margin-bottom:6px;margin-top:4px;">${time}</div>
           ${items.map(s => `
-            <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.03);${s.done ? 'opacity:0.4;' : ''}" onclick="${s.done ? '' : (s.icon === '🫁' ? "showView('coach');setTimeout(()=>document.getElementById('breathingCard')?.scrollIntoView({behavior:'smooth'}),300)" : '')}">
-              <div style="font-size:16px;width:24px;text-align:center;flex-shrink:0;padding-top:1px;">${s.done ? '✓' : s.icon}</div>
+            <div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.03);${s.done ? 'opacity:0.4;' : ''}">
+              <div style="font-size:15px;width:22px;text-align:center;flex-shrink:0;padding-top:1px;">${s.done ? '✓' : s.icon}</div>
               <div style="flex:1;min-width:0;">
-                <div style="font-size:13px;font-weight:600;color:${s.done ? 'var(--text-3)' : '#fff'};${s.done ? 'text-decoration:line-through;' : ''}">${s.action}</div>
-                <div style="font-size:11px;color:var(--text-3);margin-top:2px;line-height:1.35;">${s.why}</div>
+                <div style="font-size:12px;font-weight:600;color:${s.done ? 'var(--text-3)' : '#fff'};${s.done ? 'text-decoration:line-through;' : ''}">${s.action}</div>
+                <div style="font-size:10px;color:var(--text-4);margin-top:1px;line-height:1.3;">${s.why}</div>
               </div>
             </div>`).join('')}
-        </div>`).join('')}
-      ${!steps.length ? '<div style="text-align:center;padding:12px;color:var(--energy);font-size:13px;font-weight:600;">All recovery steps done. Nice work.</div>' : ''}
+        </div>`).join('') : '<div style="text-align:center;padding:12px;color:var(--energy);font-size:13px;font-weight:600;">All done. Nice work.</div>'}
+      <div style="text-align:right;font-size:10px;color:var(--text-4);margin-top:4px;font-family:'DM Mono',monospace;">${doneCount}/${totalCount} complete</div>
     </div>`;
 }
 
@@ -11308,14 +11322,23 @@ function renderCoachBreathwork() {
   const p = BREATHING_PATTERNS[breathingPattern];
   const totalSec = (p.inhale + (p.inhale2 || 0) + p.hold + p.exhale + (p.holdOut || 0)) * p.rounds;
 
+  const breathOpen = window._breathOpen === true || breathingActive;
+
   el.innerHTML = `
     <div class="coach-section">
-      <div class="coach-section-label" style="margin-bottom:12px;">BREATHWORK</div>
-      <div class="breath-rec" id="breathRec">
-        <div class="breath-rec-dot"></div>
-        <div class="breath-rec-text"><b>Recommended now:</b> ${rec.reason}</div>
+      <div class="checkin-header" onclick="window._breathOpen = !window._breathOpen; renderCoachBreathwork();" style="margin-bottom:${breathOpen ? '12px' : '0'};">
+        <div class="coach-section-label" style="margin-bottom:0;">BREATHWORK</div>
+        <div class="checkin-toggle">${breathOpen ? '▲' : '▼'}</div>
       </div>
-      <div class="breathing-card" id="breathingCard">
+      ${!breathOpen ? `<div style="display:flex;align-items:center;gap:10px;margin-top:10px;">
+        <div style="font-size:13px;color:var(--text-2);flex:1;">${p.label} - ${Math.ceil(totalSec / 60)} min</div>
+        <button class="breathing-btn start" style="padding:6px 20px;font-size:11px;" onclick="event.stopPropagation();window._breathOpen=true;renderCoachBreathwork();setTimeout(()=>startBreathing(),300);">Start</button>
+      </div>` : ''}
+      <div id="breathingCard" class="breathing-card" style="${breathOpen ? '' : 'display:none'}">
+        <div class="breath-rec" id="breathRec" style="margin-bottom:12px;">
+          <div class="breath-rec-dot"></div>
+          <div class="breath-rec-text"><b>Recommended:</b> ${rec.reason}</div>
+        </div>
         <div class="breath-dot-wrap">
           <div class="breath-dot idle" id="breathDot"></div>
         </div>
