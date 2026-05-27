@@ -3404,7 +3404,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v112';
+const APP_VERSION = 'v113';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -4155,7 +4155,7 @@ function computeReadiness() {
   const sl = ST.sleep || DEFAULT_STATE.sleep;
   const m = ST.metrics;
 
-  // === HRV Component (35%)  - most important recovery indicator ===
+  // === HRV Component (30%)  - most important recovery indicator ===
   // Score HRV relative to personal baseline (from Apple Health calibration)
   const hrvBase = m.hrvBaseline || 42;
   const hrvNow = m.hrv || 0;
@@ -4163,10 +4163,11 @@ function computeReadiness() {
   if (hrvNow <= 0) {
     hrvScore = r.hrv || 50; // fallback to manual input
   } else {
-    // Score: 100 at 120%+ of baseline, 50 at baseline, 0 at 50% of baseline
+    // Score: 100 at 140%+ of baseline, 50 at baseline, 0 at 50% of baseline
+    // Wider range than before so HRV doesn't max out too easily
     const ratio = hrvNow / hrvBase;
-    if (ratio >= 1.2) hrvScore = 100;
-    else if (ratio >= 1.0) hrvScore = 50 + (ratio - 1.0) * 250; // 50-100 range
+    if (ratio >= 1.4) hrvScore = 100;
+    else if (ratio >= 1.0) hrvScore = 50 + (ratio - 1.0) / 0.4 * 50; // 50-100 over 1.0-1.4
     else if (ratio >= 0.5) hrvScore = (ratio - 0.5) / 0.5 * 50;  // 0-50 range (linear)
     else hrvScore = 0;
   }
@@ -4234,10 +4235,39 @@ function computeReadiness() {
     sleepScore = Math.max(0, Math.min(100, durationPct + stageBonus + effBonus + consistBonus + debtPenalty));
   }
 
-  // === Training Load Component (10%) ===
+  // === Training Load Component (15%) ===
   const tl = computeTrainingLoad();
   const training = tl.readiness;
   ST.readiness.training = training;
+
+  // === Previous-day Strain Penalty (direct impact) ===
+  // Heavy training yesterday MUST lower recovery -- this is the most
+  // noticeable gap athletes feel. ACR alone is too smoothed over 7/21d
+  // to capture a single brutal day. Scale: strain 15+ starts penalizing,
+  // strain 21 = -18 pts. Also factor duration for extra-long sessions.
+  let strainPenalty = 0;
+  const yesterdayStrain = (() => {
+    const yd = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    const yw = (ST._workouts || []).filter(w => w.date === yd);
+    let yCal = yw.reduce((s, w) => s + (w.cal || 0), 0);
+    const syncedYd = (ST._history?.active_cal || []).find(x => x.date === yd);
+    if (syncedYd && syncedYd.value > yCal) yCal = syncedYd.value;
+    // Also estimate from duration
+    const yMin = yw.reduce((s, w) => s + (w.durMin || 0), 0);
+    if (yMin > 0 && yCal < yMin * 5) yCal = Math.round(yMin * 9);
+    // Compute strain same as computeStrain but for yesterday
+    if (yCal === 0 && yMin === 0) return 3;
+    return Math.min(21, Math.round(3 + Math.sqrt(yCal) * 0.42));
+  })();
+  // Penalty curve: ramps from strain 12 to 21
+  // strain 12 = -2, strain 15 = -6, strain 18 = -12, strain 21 = -18
+  if (yesterdayStrain >= 12) {
+    strainPenalty = -Math.round(2 + (yesterdayStrain - 12) / 9 * 16);
+  }
+  // Extra penalty for very long sessions (>180min) -- muscular fatigue
+  const ydWorkouts = (ST._workouts || []).filter(w => w.date === new Date(Date.now() - 86400000).toISOString().slice(0, 10));
+  const ydTotalMin = ydWorkouts.reduce((s, w) => s + (w.durMin || 0), 0);
+  if (ydTotalMin > 180) strainPenalty -= Math.round((ydTotalMin - 180) / 60 * 3); // -3 per extra hour
 
   // === Nighttime Biometrics Modifiers ===
   // Respiratory rate (bonus/penalty)
@@ -4293,16 +4323,17 @@ function computeReadiness() {
   }
 
   // Weighted combination  - heavier on HRV and sleep (nighttime data)
-  // HRV 35% + Sleep 30% + RHR 15% + Training 10% + modifiers
-  const base = hrvScore * 0.35 + sleepScore * 0.30 + rhrScore * 0.15 + training * 0.10;
-  const modifiers = respBonus + spo2Bonus + skinTempBonus + behaviorMod;
+  // HRV 30% + Sleep 30% + RHR 15% + Training 15% + modifiers + strain penalty
+  const base = hrvScore * 0.30 + sleepScore * 0.30 + rhrScore * 0.15 + training * 0.15;
+  const modifiers = respBonus + spo2Bonus + skinTempBonus + behaviorMod + strainPenalty;
   const final = Math.max(0, Math.min(100, Math.round(base + modifiers)));
 
   // Cache breakdown for display
   ST._readinessBreakdown = {
     hrv: Math.round(hrvScore), rhr: Math.round(rhrScore),
     sleep: Math.round(sleepScore), training: Math.round(training),
-    modifiers: Math.round(modifiers)
+    modifiers: Math.round(modifiers), strainPenalty,
+    yesterdayStrain, ydTotalMin
   };
 
   return final;
@@ -14292,12 +14323,12 @@ function bootApp() {
     saveState();
   }
 
-  // One-time migration: clear stale recovery lock so it recomputes with nighttime-based algorithm (v51)
-  if (ST._recoveryMigration !== 'v51') {
+  // One-time migration: clear stale recovery lock so it recomputes with strain-aware formula (v113)
+  if (ST._recoveryMigration !== 'v113') {
     ST._recoveryLockedDate = null;
     ST._recoveryLockedScore = null;
     ST._readinessBreakdown = null;
-    ST._recoveryMigration = 'v51';
+    ST._recoveryMigration = 'v113';
     saveState();
   }
 
