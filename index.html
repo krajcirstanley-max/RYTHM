@@ -1986,46 +1986,67 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .checkin-rec-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
 .checkin-rec b { color: #fff; font-weight: 600; }
 
-/* Body Map Soreness Selector */
+/* Body Map SVG Silhouette */
 .bodymap-wrap { margin-bottom: 18px; }
 .bodymap-label {
   font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 10px;
 }
-.bodymap-sub {
-  font-size: 11px; color: var(--text-3); margin-bottom: 12px;
-  font-family: 'DM Mono', monospace;
+.bodymap-toggle {
+  display: flex; gap: 0; margin-bottom: 12px; border-radius: 8px;
+  overflow: hidden; border: 1px solid rgba(255,255,255,0.1);
+  width: fit-content;
 }
-.bodymap-grid {
-  display: flex; flex-wrap: wrap; gap: 6px;
-}
-.bodymap-part {
-  padding: 8px 12px; border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.04);
-  color: var(--text-3); font-size: 11px; font-weight: 700;
+.bodymap-toggle-btn {
+  padding: 6px 18px; font-size: 10px; font-weight: 800;
+  letter-spacing: 1.2px; font-family: 'DM Mono', monospace;
+  color: var(--text-4); background: transparent;
   cursor: pointer; transition: all 0.2s;
-  letter-spacing: 0.3px; font-family: 'DM Mono', monospace;
-  display: flex; align-items: center; gap: 6px;
   user-select: none; -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
-.bodymap-part:active { transform: scale(0.95); }
-.bodymap-part.sore {
+.bodymap-toggle-btn.active {
+  color: #fff; background: rgba(255,255,255,0.1);
+}
+.bodymap-svg {
+  width: 100%; max-width: 320px; margin: 0 auto; display: block;
+}
+.bodymap-svg .bm-zone {
+  cursor: pointer; transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.bodymap-svg .bm-zone:active { opacity: 0.7; }
+.bodymap-svg .bm-label {
+  fill: rgba(255,255,255,0.3); font-size: 7px; font-weight: 700;
+  letter-spacing: 0.8px; font-family: 'DM Mono', monospace;
+  pointer-events: none;
+}
+.bodymap-general {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: 10px; margin-top: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-3); font-size: 11px; font-weight: 700;
+  font-family: 'DM Mono', monospace; cursor: pointer;
+  user-select: none; -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent; transition: all 0.2s;
+}
+.bodymap-general:active { transform: scale(0.95); }
+.bodymap-general.sore {
   border-color: var(--warn); color: var(--warn);
   background: rgba(255,181,71,0.1);
 }
-.bodymap-part.pain {
+.bodymap-general.pain {
   border-color: var(--danger); color: var(--danger);
   background: rgba(255,84,112,0.1);
 }
-.bodymap-part .bp-dot {
+.bodymap-general .bp-dot {
   width: 6px; height: 6px; border-radius: 50%;
   background: var(--text-4); transition: background 0.2s;
 }
-.bodymap-part.sore .bp-dot { background: var(--warn); }
-.bodymap-part.pain .bp-dot { background: var(--danger); }
+.bodymap-general.sore .bp-dot { background: var(--warn); }
+.bodymap-general.pain .bp-dot { background: var(--danger); }
 .bodymap-legend {
-  display: flex; gap: 14px; margin-top: 8px;
+  display: flex; gap: 14px; margin-top: 10px;
   font-size: 10px; color: var(--text-4); font-family: 'DM Mono', monospace;
   letter-spacing: 0.5px;
 }
@@ -2033,21 +2054,13 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .bodymap-legend .leg-dot {
   width: 6px; height: 6px; border-radius: 50%; display: inline-block;
 }
-.bodymap-severity-recs {
-  margin-top: 12px; padding: 10px 12px; border-radius: 10px;
-  background: rgba(255,84,112,0.06); border: 1px solid rgba(255,84,112,0.15);
+.bodymap-doms-note {
+  font-size: 11px; color: #a78bfa; margin-bottom: 10px;
+  font-family: 'DM Mono', monospace; display: flex;
+  align-items: center; gap: 6px; line-height: 1.3;
 }
-.bodymap-severity-recs.warn-level {
-  background: rgba(255,181,71,0.06); border-color: rgba(255,181,71,0.15);
-}
-.bodymap-severity-recs .severity-title {
-  font-size: 11px; font-weight: 800; letter-spacing: 1px;
-  text-transform: uppercase; margin-bottom: 6px;
-}
-.bodymap-severity-recs.warn-level .severity-title { color: var(--warn); }
-.bodymap-severity-recs .severity-title { color: var(--danger); }
-.bodymap-severity-recs .severity-item {
-  font-size: 12px; color: var(--text-2); padding: 3px 0; line-height: 1.4;
+.bodymap-doms-note .doms-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: #a78bfa; flex-shrink: 0;
 }
 
 /* Session type selector */
@@ -2067,22 +2080,6 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .session-type-opt.active {
   border-color: var(--energy); color: var(--energy);
   background: rgba(0,236,127,0.1);
-}
-
-/* DOMS badge on body map parts */
-.bodymap-part .doms-badge {
-  font-size: 8px; font-weight: 800; letter-spacing: 0.5px;
-  padding: 1px 5px; border-radius: 4px; margin-left: auto;
-  background: rgba(167,139,250,0.2); color: #a78bfa;
-  font-family: 'DM Mono', monospace;
-}
-.bodymap-doms-note {
-  font-size: 11px; color: #a78bfa; margin-bottom: 10px;
-  font-family: 'DM Mono', monospace; display: flex;
-  align-items: center; gap: 6px;
-}
-.bodymap-doms-note .doms-dot {
-  width: 6px; height: 6px; border-radius: 50%; background: #a78bfa;
 }
 
 /* Coach Tab */
@@ -3526,7 +3523,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v120';
+const APP_VERSION = 'v121';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -9072,18 +9069,139 @@ function renderMorningCheckin() {
   // DOMS detection from yesterday's Hero workouts
   const doms = detectYesterdayDOMS();
 
-  // Body map: tap once = sore (yellow), tap again = pain (red), tap again = clear
+  // SVG body silhouette with tappable muscle zones
   function renderBodyMap() {
-    const parts = BODY_PARTS.map(bp => {
-      const state = soreness[bp.id] || ''; // '', 'sore', 'pain'
-      const domsLevel = doms.areas[bp.id] || '';
-      const domsBadge = domsLevel && !state ? `<span class="doms-badge">DOMS</span>` : '';
-      return `<div class="bodymap-part ${state}" onclick="toggleSoreness('${bp.id}')" style="${domsLevel && !state ? 'border-color:rgba(167,139,250,0.3);' : ''}">
-        <span class="bp-dot"></span>${bp.label}${domsBadge}
-      </div>`;
-    }).join('');
+    const view = window._bodyMapView || 'front';
 
-    // DOMS note from yesterday
+    // Zone styling based on soreness state + DOMS prediction
+    function zs(partId) {
+      const state = soreness[partId] || '';
+      const isDoms = !state && doms.areas[partId];
+      if (state === 'pain') return 'fill:rgba(255,84,112,0.35);stroke:rgba(255,84,112,0.8);stroke-width:1.5';
+      if (state === 'sore') return 'fill:rgba(255,181,71,0.3);stroke:rgba(255,181,71,0.7);stroke-width:1.5';
+      if (isDoms) return 'fill:rgba(167,139,250,0.18);stroke:rgba(167,139,250,0.45);stroke-width:1';
+      return 'fill:rgba(255,255,255,0.07);stroke:rgba(255,255,255,0.18);stroke-width:0.8';
+    }
+    const ns = 'fill:rgba(255,255,255,0.04);stroke:rgba(255,255,255,0.08);stroke-width:0.5';
+
+    function zRect(id, x, y, w, h, rx) {
+      return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx||6}" class="bm-zone" style="${zs(id)}" onclick="toggleSoreness('${id}')" />`;
+    }
+    function zEllipse(id, cx, cy, rx, ry) {
+      return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" class="bm-zone" style="${zs(id)}" onclick="toggleSoreness('${id}')" />`;
+    }
+    function nRect(x, y, w, h, rx) { return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx||6}" style="${ns}" />`; }
+    function nCircle(cx, cy, r) { return `<circle cx="${cx}" cy="${cy}" r="${r}" style="${ns}" />`; }
+    function lbl(text, x, y, anchor) { return `<text x="${x}" y="${y}" class="bm-label" text-anchor="${anchor||'end'}">${text}</text>`; }
+
+    // State badge (shows sore/pain/doms indicator on the zone)
+    function badge(partId, cx, cy) {
+      const state = soreness[partId] || '';
+      const isDoms = !state && doms.areas[partId];
+      if (state === 'pain') return `<circle cx="${cx}" cy="${cy}" r="3" fill="rgba(255,84,112,0.9)" pointer-events="none"/>`;
+      if (state === 'sore') return `<circle cx="${cx}" cy="${cy}" r="3" fill="rgba(255,181,71,0.9)" pointer-events="none"/>`;
+      if (isDoms) return `<circle cx="${cx}" cy="${cy}" r="2.5" fill="rgba(167,139,250,0.8)" pointer-events="none"/>`;
+      return '';
+    }
+
+    let svg;
+    if (view === 'front') {
+      svg = `
+        <!-- Neutral: head, neck, chest, core, arms -->
+        ${nCircle(100, 26, 18)}
+        ${nRect(93, 44, 14, 10, 4)}
+        ${nRect(78, 56, 44, 28, 8)}
+        ${nRect(80, 86, 40, 22, 6)}
+        ${nRect(36, 62, 14, 36, 5)}
+        ${nRect(150, 62, 14, 36, 5)}
+        ${nRect(30, 100, 12, 34, 4)}
+        ${nRect(158, 100, 12, 34, 4)}
+
+        <!-- Tracked zones -->
+        ${zRect('shoulders', 52, 56, 24, 16, 6)}
+        ${zRect('shoulders', 124, 56, 24, 16, 6)}
+        ${zRect('hipFlexors', 74, 110, 20, 18, 6)}
+        ${zRect('hipFlexors', 106, 110, 20, 18, 6)}
+        ${zRect('quads', 70, 130, 24, 50, 8)}
+        ${zRect('quads', 106, 130, 24, 50, 8)}
+        ${zEllipse('knees', 83, 188, 11, 11)}
+        ${zEllipse('knees', 117, 188, 11, 11)}
+        ${zRect('shins', 73, 202, 20, 42, 6)}
+        ${zRect('shins', 107, 202, 20, 42, 6)}
+        ${zEllipse('ankles', 84, 250, 9, 8)}
+        ${zEllipse('ankles', 116, 250, 9, 8)}
+        ${zEllipse('feet', 81, 268, 13, 7)}
+        ${zEllipse('feet', 119, 268, 13, 7)}
+
+        <!-- Badges -->
+        ${badge('shoulders', 64, 60)}
+        ${badge('hipFlexors', 84, 116)}
+        ${badge('quads', 82, 148)}
+        ${badge('knees', 83, 188)}
+        ${badge('shins', 83, 220)}
+        ${badge('ankles', 84, 250)}
+        ${badge('feet', 81, 268)}
+
+        <!-- Labels -->
+        ${lbl('SHOULDERS', 30, 68)}
+        ${lbl('HIP FLEXORS', 30, 122)}
+        ${lbl('QUADS', 30, 158)}
+        ${lbl('KNEES', 30, 192)}
+        ${lbl('SHINS', 30, 226)}
+        ${lbl('ANKLES', 30, 254)}
+        ${lbl('FEET', 30, 272)}
+      `;
+    } else {
+      svg = `
+        <!-- Neutral: head, neck, upper back, arms -->
+        ${nCircle(100, 26, 18)}
+        ${nRect(93, 44, 14, 10, 4)}
+        ${nRect(78, 56, 44, 24, 8)}
+        ${nRect(36, 62, 14, 36, 5)}
+        ${nRect(150, 62, 14, 36, 5)}
+        ${nRect(30, 100, 12, 34, 4)}
+        ${nRect(158, 100, 12, 34, 4)}
+
+        <!-- Tracked zones -->
+        ${zRect('shoulders', 52, 56, 24, 16, 6)}
+        ${zRect('shoulders', 124, 56, 24, 16, 6)}
+        ${zRect('lowerBack', 80, 82, 40, 24, 6)}
+        ${zEllipse('glutes', 88, 118, 16, 13)}
+        ${zEllipse('glutes', 112, 118, 16, 13)}
+        ${zRect('hamstrings', 70, 134, 24, 48, 8)}
+        ${zRect('hamstrings', 106, 134, 24, 48, 8)}
+        ${zEllipse('knees', 83, 190, 11, 11)}
+        ${zEllipse('knees', 117, 190, 11, 11)}
+        ${zRect('calves', 72, 204, 22, 40, 7)}
+        ${zRect('calves', 106, 204, 22, 40, 7)}
+        ${zEllipse('ankles', 84, 250, 9, 8)}
+        ${zEllipse('ankles', 116, 250, 9, 8)}
+        ${zEllipse('feet', 81, 268, 13, 7)}
+        ${zEllipse('feet', 119, 268, 13, 7)}
+
+        <!-- Badges -->
+        ${badge('shoulders', 64, 60)}
+        ${badge('lowerBack', 100, 90)}
+        ${badge('glutes', 88, 118)}
+        ${badge('hamstrings', 82, 152)}
+        ${badge('knees', 83, 190)}
+        ${badge('calves', 83, 220)}
+        ${badge('ankles', 84, 250)}
+        ${badge('feet', 81, 268)}
+
+        <!-- Labels -->
+        ${lbl('SHOULDERS', 30, 68)}
+        ${lbl('LOWER BACK', 30, 98)}
+        ${lbl('GLUTES', 30, 122)}
+        ${lbl('HAMSTRINGS', 30, 162)}
+        ${lbl('KNEES', 30, 194)}
+        ${lbl('CALVES', 30, 228)}
+        ${lbl('ANKLES', 30, 254)}
+        ${lbl('FEET', 30, 272)}
+      `;
+    }
+
+    // DOMS note
     let domsNote = '';
     if (doms.hasData && Object.keys(doms.areas).length > 0) {
       const domsNames = Object.keys(doms.areas).slice(0, 4).map(id => BODY_PARTS.find(b => b.id === id)?.label || id);
@@ -9091,16 +9209,28 @@ function renderMorningCheckin() {
       domsNote = `<div class="bodymap-doms-note"><span class="doms-dot"></span>DOMS likely${sessionInfo}: ${domsNames.join(', ')}</div>`;
     }
 
+    // General fatigue (separate button, not on the body)
+    const genState = soreness['general'] || '';
+    const genCls = genState === 'pain' ? 'pain' : genState === 'sore' ? 'sore' : '';
+
     return `<div class="bodymap-wrap">
       <div class="bodymap-label">Anything sore or hurting?</div>
-      <div class="bodymap-sub">tap once = sore, twice = pain</div>
+      <div class="bodymap-toggle">
+        <div class="bodymap-toggle-btn ${view === 'front' ? 'active' : ''}" onclick="toggleBodyMapView('front')">FRONT</div>
+        <div class="bodymap-toggle-btn ${view === 'back' ? 'active' : ''}" onclick="toggleBodyMapView('back')">BACK</div>
+      </div>
       ${domsNote}
-      <div class="bodymap-grid">${parts}</div>
+      <svg viewBox="-40 0 260 282" class="bodymap-svg">${svg}</svg>
+      <div>
+        <div class="bodymap-general ${genCls}" onclick="toggleSoreness('general')">
+          <span class="bp-dot"></span>General Fatigue
+        </div>
+      </div>
       <div class="bodymap-legend">
         <span><span class="leg-dot" style="background:var(--text-4)"></span> fine</span>
         <span><span class="leg-dot" style="background:var(--warn)"></span> sore</span>
         <span><span class="leg-dot" style="background:var(--danger)"></span> pain</span>
-        ${doms.hasData && Object.keys(doms.areas).length ? '<span><span class="leg-dot" style="background:#a78bfa"></span> doms likely</span>' : ''}
+        ${doms.hasData && Object.keys(doms.areas).length ? '<span><span class="leg-dot" style="background:#a78bfa"></span> doms</span>' : ''}
       </div>
     </div>`;
   }
@@ -9129,6 +9259,13 @@ function renderMorningCheckin() {
       <div class="checkin-saved" id="checkinSaved"></div>
       ${recsHTML}
     </div>`;
+}
+
+// Body map view toggle (front/back) - UI state only, not persisted
+window._bodyMapView = 'front';
+function toggleBodyMapView(view) {
+  window._bodyMapView = view;
+  renderMorningCheckin();
 }
 
 function toggleSoreness(partId) {
