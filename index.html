@@ -3379,7 +3379,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v115';
+const APP_VERSION = 'v116';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -4214,35 +4214,6 @@ function computeReadiness() {
   const training = tl.readiness;
   ST.readiness.training = training;
 
-  // === Previous-day Strain Penalty (direct impact) ===
-  // Heavy training yesterday MUST lower recovery -- this is the most
-  // noticeable gap athletes feel. ACR alone is too smoothed over 7/21d
-  // to capture a single brutal day. Scale: strain 15+ starts penalizing,
-  // strain 21 = -18 pts. Also factor duration for extra-long sessions.
-  let strainPenalty = 0;
-  const yesterdayStrain = (() => {
-    const yd = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-    const yw = (ST._workouts || []).filter(w => w.date === yd);
-    let yCal = yw.reduce((s, w) => s + (w.cal || 0), 0);
-    const syncedYd = (ST._history?.active_cal || []).find(x => x.date === yd);
-    if (syncedYd && syncedYd.value > yCal) yCal = syncedYd.value;
-    // Also estimate from duration
-    const yMin = yw.reduce((s, w) => s + (w.durMin || 0), 0);
-    if (yMin > 0 && yCal < yMin * 5) yCal = Math.round(yMin * 9);
-    // Compute strain same as computeStrain but for yesterday
-    if (yCal === 0 && yMin === 0) return 3;
-    return Math.min(21, Math.round(3 + Math.sqrt(yCal) * 0.42));
-  })();
-  // Penalty curve: ramps from strain 12 to 21
-  // strain 12 = -2, strain 15 = -6, strain 18 = -12, strain 21 = -18
-  if (yesterdayStrain >= 12) {
-    strainPenalty = -Math.round(2 + (yesterdayStrain - 12) / 9 * 16);
-  }
-  // Extra penalty for very long sessions (>180min) -- muscular fatigue
-  const ydWorkouts = (ST._workouts || []).filter(w => w.date === new Date(Date.now() - 86400000).toISOString().slice(0, 10));
-  const ydTotalMin = ydWorkouts.reduce((s, w) => s + (w.durMin || 0), 0);
-  if (ydTotalMin > 180) strainPenalty -= Math.round((ydTotalMin - 180) / 60 * 3); // -3 per extra hour
-
   // === Nighttime Biometrics Modifiers ===
   // Respiratory rate (bonus/penalty)
   const resp = m.respiratory || 0;
@@ -4296,18 +4267,18 @@ function computeReadiness() {
     if (yb.includes('blue_light_glasses')) behaviorMod += 1;
   }
 
-  // Weighted combination  - heavier on HRV and sleep (nighttime data)
-  // HRV 30% + Sleep 30% + RHR 15% + Training 15% + modifiers + strain penalty
+  // Weighted combination  - pure physiology (WHOOP-style)
+  // HRV 30% + Sleep 30% + RHR 15% + Training 15% + biometric/behavior modifiers
+  // No direct strain penalty -- if yesterday was hard, HRV/RHR/sleep will reflect it
   const base = hrvScore * 0.30 + sleepScore * 0.30 + rhrScore * 0.15 + training * 0.15;
-  const modifiers = respBonus + spo2Bonus + skinTempBonus + behaviorMod + strainPenalty;
+  const modifiers = respBonus + spo2Bonus + skinTempBonus + behaviorMod;
   const final = Math.max(0, Math.min(100, Math.round(base + modifiers)));
 
   // Cache breakdown for display
   ST._readinessBreakdown = {
     hrv: Math.round(hrvScore), rhr: Math.round(rhrScore),
     sleep: Math.round(sleepScore), training: Math.round(training),
-    modifiers: Math.round(modifiers), strainPenalty,
-    yesterdayStrain, ydTotalMin
+    modifiers: Math.round(modifiers)
   };
 
   return final;
@@ -14285,12 +14256,12 @@ function bootApp() {
     saveState();
   }
 
-  // One-time migration: clear stale recovery lock so it recomputes with strain-aware formula (v113)
-  if (ST._recoveryMigration !== 'v113') {
+  // One-time migration: clear recovery lock for pure-physiology formula (v116)
+  if (ST._recoveryMigration !== 'v116') {
     ST._recoveryLockedDate = null;
     ST._recoveryLockedScore = null;
     ST._readinessBreakdown = null;
-    ST._recoveryMigration = 'v113';
+    ST._recoveryMigration = 'v116';
     saveState();
   }
 
