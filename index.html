@@ -1947,10 +1947,23 @@ section { padding: 0 16px; margin-bottom: 8px; }
   border: 1px solid var(--card-border);
   border-radius: var(--radius); padding: 20px;
 }
+.checkin-header {
+  display: flex; justify-content: space-between; align-items: center;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.checkin-header:active { opacity: 0.7; }
 .checkin-title {
   font-size: 13px; font-weight: 800; letter-spacing: 1.2px;
-  color: var(--text-3); text-transform: uppercase; margin-bottom: 16px;
+  color: var(--text-3); text-transform: uppercase; margin-bottom: 0;
 }
+.checkin-toggle {
+  font-size: 10px; color: var(--text-4); transition: transform 0.2s;
+}
+.checkin-summary {
+  font-size: 13px; color: var(--text-2); margin-top: 10px;
+  font-family: 'DM Mono', monospace; letter-spacing: 0.3px;
+}
+.checkin-body { margin-top: 16px; }
 .checkin-q { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 10px; }
 .checkin-opts { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
 .checkin-opt {
@@ -3503,7 +3516,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v123';
+const APP_VERSION = 'v124';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -9227,22 +9240,43 @@ function renderMorningCheckin() {
     }
   }
 
+  const isOpen = window._checkinOpen !== false;
+  const soreCount = Object.keys(soreness).length;
+  const painCount = Object.values(soreness).filter(v => v === 'pain').length;
+  const selSession = sessionType ? SESSION_TYPES.find(s => s.id === sessionType) : null;
+
+  // Collapsed summary line
+  let summary = '';
+  if (!isOpen && todayPlan) {
+    const planLabel = options.find(o => o.id === todayPlan);
+    const stLabel = selSession ? ` / ${selSession.label}` : '';
+    const soreInfo = soreCount ? ` / ${painCount ? painCount + ' pain' : ''}${painCount && (soreCount - painCount) ? ', ' : ''}${(soreCount - painCount) > 0 ? (soreCount - painCount) + ' sore' : ''}` : '';
+    summary = `<div class="checkin-summary">${planLabel ? planLabel.icon + ' ' + planLabel.label : ''}${stLabel}${soreInfo}</div>`;
+  }
+
   el.innerHTML = `
     <div class="checkin-card">
-      <div class="checkin-title">Morning Check-in</div>
-      <div class="checkin-q">What's your plan today?</div>
-      <div class="checkin-opts">${renderOpts('today', todayPlan)}</div>
-      ${renderSessionType()}
-      <div class="checkin-q">What about tomorrow?</div>
-      <div class="checkin-opts">${renderOpts('tomorrow', tomorrowPlan)}</div>
-      ${renderBodyMap()}
-      <div class="checkin-saved" id="checkinSaved"></div>
-      ${recsHTML}
+      <div class="checkin-header" onclick="window._checkinOpen = !window._checkinOpen; renderMorningCheckin();">
+        <div class="checkin-title">Morning Check-in</div>
+        <div class="checkin-toggle">${isOpen ? '▲' : '▼'}</div>
+      </div>
+      ${!isOpen ? summary : ''}
+      <div class="checkin-body" style="${isOpen ? '' : 'display:none'}">
+        <div class="checkin-q">What's your plan today?</div>
+        <div class="checkin-opts">${renderOpts('today', todayPlan)}</div>
+        ${renderSessionType()}
+        <div class="checkin-q">What about tomorrow?</div>
+        <div class="checkin-opts">${renderOpts('tomorrow', tomorrowPlan)}</div>
+        ${renderBodyMap()}
+        <div class="checkin-saved" id="checkinSaved"></div>
+        ${recsHTML}
+      </div>
     </div>`;
 }
 
-// Body map view toggle (front/back) - UI state only, not persisted
+// UI state - not persisted
 window._bodyMapView = 'front';
+if (window._checkinOpen === undefined) window._checkinOpen = true;
 function toggleBodyMapView(view) {
   window._bodyMapView = view;
   renderMorningCheckin();
