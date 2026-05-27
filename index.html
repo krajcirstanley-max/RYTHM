@@ -1986,6 +1986,70 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .checkin-rec-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
 .checkin-rec b { color: #fff; font-weight: 600; }
 
+/* Body Map Soreness Selector */
+.bodymap-wrap { margin-bottom: 18px; }
+.bodymap-label {
+  font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 10px;
+}
+.bodymap-sub {
+  font-size: 11px; color: var(--text-3); margin-bottom: 12px;
+  font-family: 'DM Mono', monospace;
+}
+.bodymap-grid {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.bodymap-part {
+  padding: 8px 12px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-3); font-size: 11px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+  letter-spacing: 0.3px; font-family: 'DM Mono', monospace;
+  display: flex; align-items: center; gap: 6px;
+  user-select: none; -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.bodymap-part:active { transform: scale(0.95); }
+.bodymap-part.sore {
+  border-color: var(--warn); color: var(--warn);
+  background: rgba(255,181,71,0.1);
+}
+.bodymap-part.pain {
+  border-color: var(--danger); color: var(--danger);
+  background: rgba(255,84,112,0.1);
+}
+.bodymap-part .bp-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--text-4); transition: background 0.2s;
+}
+.bodymap-part.sore .bp-dot { background: var(--warn); }
+.bodymap-part.pain .bp-dot { background: var(--danger); }
+.bodymap-legend {
+  display: flex; gap: 14px; margin-top: 8px;
+  font-size: 10px; color: var(--text-4); font-family: 'DM Mono', monospace;
+  letter-spacing: 0.5px;
+}
+.bodymap-legend span { display: flex; align-items: center; gap: 4px; }
+.bodymap-legend .leg-dot {
+  width: 6px; height: 6px; border-radius: 50%; display: inline-block;
+}
+.bodymap-severity-recs {
+  margin-top: 12px; padding: 10px 12px; border-radius: 10px;
+  background: rgba(255,84,112,0.06); border: 1px solid rgba(255,84,112,0.15);
+}
+.bodymap-severity-recs.warn-level {
+  background: rgba(255,181,71,0.06); border-color: rgba(255,181,71,0.15);
+}
+.bodymap-severity-recs .severity-title {
+  font-size: 11px; font-weight: 800; letter-spacing: 1px;
+  text-transform: uppercase; margin-bottom: 6px;
+}
+.bodymap-severity-recs.warn-level .severity-title { color: var(--warn); }
+.bodymap-severity-recs .severity-title { color: var(--danger); }
+.bodymap-severity-recs .severity-item {
+  font-size: 12px; color: var(--text-2); padding: 3px 0; line-height: 1.4;
+}
+
 /* Coach Tab */
 .coach-section {
   background: var(--card-bg); border: 1px solid var(--card-border);
@@ -3427,7 +3491,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v118';
+const APP_VERSION = 'v119';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -8783,6 +8847,15 @@ function renderDailyCoach() {
     priorityIcon = '✅'; priority = 'On track. Stay consistent with your routine.';
   }
 
+  // Override priority if pain areas flagged
+  const painCheck = Object.entries(dayPlan?.soreness || {}).filter(([,v]) => v === 'pain');
+  if (painCheck.length >= 2) {
+    priorityIcon = '🛑'; priority = `Multiple pain areas flagged. Consider modifying or skipping training. Address ${painCheck.map(([k])=>(BODY_PARTS.find(b=>b.id===k)?.label||k)).join(', ')} first.`;
+  } else if (painCheck.length === 1) {
+    const painLabel = BODY_PARTS.find(b=>b.id===painCheck[0][0])?.label || painCheck[0][0];
+    priorityIcon = '⚠️'; priority = `${painLabel} pain flagged. Warm up carefully, avoid loading that area, and listen to your body.`;
+  }
+
   // Next up line
   const nextPhaseClean = nextPhaseName.replace(/_/g, ' ').toLowerCase();
   const nextUp = minutesLeft > 0 ? `${nextPhaseClean} in ${timeLeftStr}` : '';
@@ -8803,6 +8876,22 @@ function renderDailyCoach() {
 // ========================================
 //  MORNING CHECK-IN
 // ========================================
+// Body parts relevant for a long jumper
+const BODY_PARTS = [
+  { id: 'quads', label: 'Quads', icon: '🦵' },
+  { id: 'hamstrings', label: 'Hamstrings', icon: '🦵' },
+  { id: 'glutes', label: 'Glutes', icon: '🍑' },
+  { id: 'calves', label: 'Calves / Achilles', icon: '🦶' },
+  { id: 'knees', label: 'Knees', icon: '🦿' },
+  { id: 'ankles', label: 'Ankles', icon: '🦶' },
+  { id: 'hipFlexors', label: 'Hip Flexors', icon: '🦴' },
+  { id: 'lowerBack', label: 'Lower Back', icon: '🔙' },
+  { id: 'shoulders', label: 'Shoulders', icon: '💪' },
+  { id: 'shins', label: 'Shins', icon: '🦵' },
+  { id: 'feet', label: 'Feet / Plantar', icon: '🦶' },
+  { id: 'general', label: 'General Fatigue', icon: '😮‍💨' },
+];
+
 function renderMorningCheckin() {
   const el = document.getElementById('morningCheckin');
   if (!el) return;
@@ -8812,6 +8901,7 @@ function renderMorningCheckin() {
   const isToday = plan.date === today;
   const todayPlan = isToday ? plan.today : null;
   const tomorrowPlan = isToday ? plan.tomorrow : null;
+  const soreness = isToday ? (plan.soreness || {}) : {};
   const recovery = computeReadiness();
 
   const options = [
@@ -8829,10 +8919,32 @@ function renderMorningCheckin() {
     ).join('');
   }
 
-  // Build recommendations based on selections
+  // Body map: tap once = sore (yellow), tap again = pain (red), tap again = clear
+  function renderBodyMap() {
+    const parts = BODY_PARTS.map(bp => {
+      const state = soreness[bp.id] || ''; // '', 'sore', 'pain'
+      return `<div class="bodymap-part ${state}" onclick="toggleSoreness('${bp.id}')">
+        <span class="bp-dot"></span>${bp.label}
+      </div>`;
+    }).join('');
+
+    const hasSoreness = Object.keys(soreness).length > 0;
+    return `<div class="bodymap-wrap">
+      <div class="bodymap-label">Anything sore or hurting?</div>
+      <div class="bodymap-sub">tap once = sore, twice = pain</div>
+      <div class="bodymap-grid">${parts}</div>
+      <div class="bodymap-legend">
+        <span><span class="leg-dot" style="background:var(--text-4)"></span> fine</span>
+        <span><span class="leg-dot" style="background:var(--warn)"></span> sore</span>
+        <span><span class="leg-dot" style="background:var(--danger)"></span> pain</span>
+      </div>
+    </div>`;
+  }
+
+  // Build recommendations based on selections + soreness
   let recsHTML = '';
-  if (todayPlan) {
-    const recs = getDayPlanRecs(todayPlan, tomorrowPlan, recovery);
+  if (todayPlan || Object.keys(soreness).length > 0) {
+    const recs = getDayPlanRecs(todayPlan, tomorrowPlan, recovery, soreness);
     if (recs.length) {
       recsHTML = `<div class="checkin-recs">
         <div class="checkin-rec-title">Your personalized plan</div>
@@ -8848,15 +8960,44 @@ function renderMorningCheckin() {
       <div class="checkin-opts">${renderOpts('today', todayPlan)}</div>
       <div class="checkin-q">What about tomorrow?</div>
       <div class="checkin-opts">${renderOpts('tomorrow', tomorrowPlan)}</div>
+      ${renderBodyMap()}
       <div class="checkin-saved" id="checkinSaved"></div>
       ${recsHTML}
     </div>`;
 }
 
+function toggleSoreness(partId) {
+  const today = new Date().toISOString().slice(0, 10);
+  if (!ST._dayPlan || ST._dayPlan.date !== today) {
+    ST._dayPlan = { date: today, today: null, tomorrow: null, soreness: {} };
+  }
+  if (!ST._dayPlan.soreness) ST._dayPlan.soreness = {};
+
+  const current = ST._dayPlan.soreness[partId] || '';
+  if (current === '') ST._dayPlan.soreness[partId] = 'sore';
+  else if (current === 'sore') ST._dayPlan.soreness[partId] = 'pain';
+  else delete ST._dayPlan.soreness[partId];
+
+  saveState();
+  renderMorningCheckin();
+  // Re-render dependent views
+  renderCoachRecoveryPlan();
+  renderCoachTraining();
+  renderDailyCoach();
+  renderSuggestions();
+  // Show saved indicator
+  const indicator = document.getElementById('checkinSaved');
+  if (indicator) {
+    indicator.textContent = 'saved';
+    indicator.style.opacity = '1';
+    setTimeout(() => { indicator.style.opacity = '0'; }, 1500);
+  }
+}
+
 function setDayPlan(field, value) {
   const today = new Date().toISOString().slice(0, 10);
   if (!ST._dayPlan || ST._dayPlan.date !== today) {
-    ST._dayPlan = { date: today, today: null, tomorrow: null };
+    ST._dayPlan = { date: today, today: null, tomorrow: null, soreness: {} };
   }
   ST._dayPlan[field] = value;
   saveState();
@@ -8875,8 +9016,9 @@ function setDayPlan(field, value) {
   }
 }
 
-function getDayPlanRecs(todayPlan, tomorrowPlan, recovery) {
+function getDayPlanRecs(todayPlan, tomorrowPlan, recovery, soreness) {
   const recs = [];
+  soreness = soreness || {};
   const strain = computeStrain();
   const m = ST.metrics;
   const now = new Date();
@@ -8884,6 +9026,12 @@ function getDayPlanRecs(todayPlan, tomorrowPlan, recovery) {
   const sl = ST.sleep || {};
   const debtH = m.sleepDebt || 0;
 
+  const soreAreas = Object.entries(soreness).filter(([,v]) => v === 'sore').map(([k]) => k);
+  const painAreas = Object.entries(soreness).filter(([,v]) => v === 'pain').map(([k]) => k);
+  const hasSoreness = soreAreas.length > 0 || painAreas.length > 0;
+  const hasPain = painAreas.length > 0;
+
+  // --- Intensity-based base recommendations ---
   if (todayPlan === 'rest') {
     recs.push({ icon: '💤', text: '<b>No training.</b> Focus on recovery modalities: foam roll, stretching, walking.' });
     recs.push({ icon: '🥗', text: '<b>Eat at maintenance.</b> Protein 1.6g/kg (105g), emphasize anti-inflammatory foods.' });
@@ -8931,6 +9079,106 @@ function getDayPlanRecs(todayPlan, tomorrowPlan, recovery) {
     recs.push({ icon: '📋', text: '<b>Hard session tomorrow.</b> Perfect rest-day prep. Extra carbs tonight, early bed.' });
   } else if (tomorrowPlan === 'rest') {
     recs.push({ icon: '📋', text: '<b>Rest day tomorrow.</b> You can push a bit more today knowing recovery time is coming.' });
+  }
+
+  // --- Body-part specific recommendations ---
+  if (hasSoreness) {
+    recs.push({ icon: '🗺️', text: '<b>Targeted recovery below</b> based on what you flagged.' });
+  }
+
+  // Pain areas: immediate warnings first
+  if (painAreas.includes('knees')) {
+    recs.push({ icon: '🛑', text: '<b>Knee pain.</b> Skip all plyometrics, jumping, and deep squats today. Ice 15min, isometric quad holds (wall sit 30s x 3), and patellar tendon self-massage. If sharp or locking, see physio.' });
+    if (todayPlan === 'hard' || todayPlan === 'moderate') {
+      recs.push({ icon: '⚠️', text: '<b>Modify training.</b> Replace jump work with upper body or pool work. No impact loading on sore knees.' });
+    }
+  }
+  if (painAreas.includes('ankles')) {
+    recs.push({ icon: '🛑', text: '<b>Ankle pain.</b> No sprinting, jumping, or lateral work. Alphabet drills for mobility, resistance band inversion/eversion, ice 15min. Tape or brace if training.' });
+  }
+  if (painAreas.includes('calves')) {
+    recs.push({ icon: '🛑', text: '<b>Calf / Achilles pain.</b> No explosive push-off, hill sprints, or high-rep calf raises. Eccentric heel drops (3x15, slow 3s down), foam roll gastrocnemius only (not directly on Achilles), infrapanel if available.' });
+  }
+  if (painAreas.includes('hamstrings')) {
+    recs.push({ icon: '🛑', text: '<b>Hamstring pain.</b> No sprinting, RDLs, or hip-dominant plyometrics. Gentle neural flossing (sciatic glides), isometric holds at pain-free range, avoid sitting 60min+. High risk area for long jumpers.' });
+  }
+  if (painAreas.includes('lowerBack')) {
+    recs.push({ icon: '🛑', text: '<b>Lower back pain.</b> No deadlifts, heavy squats, or loaded flexion. Cat-cow 2x10, McGill big 3 (bird dog, side plank, curl-up), walk 20min. Avoid prolonged sitting.' });
+  }
+  if (painAreas.includes('hipFlexors')) {
+    recs.push({ icon: '🛑', text: '<b>Hip flexor pain.</b> No A-skips, knee drives, or deep lunges. Half-kneeling stretch 60s each side, glute activation (bridges 3x10), avoid sitting in hip flexion. Critical for takeoff mechanics.' });
+  }
+  if (painAreas.includes('shins')) {
+    recs.push({ icon: '🛑', text: '<b>Shin pain.</b> Potential periostitis. No running on hard surfaces. Tibialis raises 3x15, toe walks, ice massage along the tibia. If persistent, rule out stress fracture.' });
+  }
+  if (painAreas.includes('feet')) {
+    recs.push({ icon: '🛑', text: '<b>Foot / plantar pain.</b> Roll a frozen bottle under the arch 5min, calf stretches (tight calves pull on plantar fascia), toe spreads and towel scrunches. Avoid walking barefoot on hard floors.' });
+  }
+  if (painAreas.includes('shoulders')) {
+    recs.push({ icon: '🛑', text: '<b>Shoulder pain.</b> No overhead pressing or throwing. Band pull-aparts 3x15, external rotation drills, thoracic spine foam roll. Arm swing matters for jump distance, protect this.' });
+  }
+
+  // Sore areas: recovery-focused (less urgent than pain)
+  if (soreAreas.includes('quads')) {
+    recs.push({ icon: '🧱', text: '<b>Quads sore.</b> Foam roll 2min each side (avoid kneecap), couch stretch 60s, light cycling 10min to flush. Skip heavy squat loading if also training today.' });
+  }
+  if (soreAreas.includes('hamstrings')) {
+    recs.push({ icon: '🧱', text: '<b>Hamstrings sore.</b> Gentle Nordic holds (eccentric only, 3x5), foam roll posterior chain, standing hamstring stretch 60s. Good sign of adaptation if DOMS from yesterday.' });
+  }
+  if (soreAreas.includes('glutes')) {
+    recs.push({ icon: '🧱', text: '<b>Glutes sore.</b> Lacrosse ball piriformis release 2min each side, pigeon stretch 60s, light glute bridges to activate without loading. Common after sprint/plyometric sessions.' });
+  }
+  if (soreAreas.includes('calves')) {
+    recs.push({ icon: '🧱', text: '<b>Calves sore.</b> Eccentric heel drops on a step (3x12), foam roll gastrocnemius, downward dog stretch. Jetboots if available. Hydrate extra, calves respond well to blood flow.' });
+  }
+  if (soreAreas.includes('knees')) {
+    recs.push({ icon: '🧱', text: '<b>Knees sore.</b> Isometric quad holds (wall sit 3x20s), light spin 10min, patellar tendon self-massage. Reduce depth on squats today, no deep knee bends.' });
+  }
+  if (soreAreas.includes('ankles')) {
+    recs.push({ icon: '🧱', text: '<b>Ankles sore.</b> Ankle circles 20 each direction, band dorsiflexion mobilization, calf foam roll (tightness upstream causes ankle stress). Warm up extra before any training.' });
+  }
+  if (soreAreas.includes('hipFlexors')) {
+    recs.push({ icon: '🧱', text: '<b>Hip flexors sore.</b> Half-kneeling stretch 90s each, hip CARs (controlled articular rotations), foam roll TFL/psoas gently. Common after approach run sessions.' });
+  }
+  if (soreAreas.includes('lowerBack')) {
+    recs.push({ icon: '🧱', text: '<b>Lower back sore.</b> Dead hangs 3x20s, cat-cow 2x10, light walking 15min. Avoid sit-ups or crunches. Often a sign of hip tightness, stretch hip flexors first.' });
+  }
+  if (soreAreas.includes('shoulders')) {
+    recs.push({ icon: '🧱', text: '<b>Shoulders sore.</b> Band pull-aparts 2x15, arm circles, thoracic foam roll. Arm action is key in long jump, keep shoulders mobile.' });
+  }
+  if (soreAreas.includes('shins')) {
+    recs.push({ icon: '🧱', text: '<b>Shins sore.</b> Tibialis raises 2x15, toe walks, ice if warm to touch. Consider softer training surface today. Compression socks during training.' });
+  }
+  if (soreAreas.includes('feet')) {
+    recs.push({ icon: '🧱', text: '<b>Feet sore.</b> Arch rolls with golf/lacrosse ball 3min each, toe yoga (big toe up, others down, alternate), calf stretch 60s. Check spike fit if persistent.' });
+  }
+  if (soreAreas.includes('general') || painAreas.includes('general')) {
+    const isP = painAreas.includes('general');
+    recs.push({ icon: isP ? '🛑' : '🧱', text: isP
+      ? '<b>Full-body fatigue.</b> Strong signal to rest. Consider downgrading today to easy or rest. Walk only, emphasize sleep, magnesium before bed. Check HRV trend this week.'
+      : '<b>General fatigue.</b> Normal after high-volume blocks. Extra 30min sleep, 500mg magnesium glycinate before bed, avoid caffeine after noon. Light movement helps more than full rest.' });
+  }
+
+  // Cross-area patterns (connected chains)
+  if ((soreAreas.includes('calves') || painAreas.includes('calves')) &&
+      (soreAreas.includes('ankles') || painAreas.includes('ankles'))) {
+    recs.push({ icon: '🔗', text: '<b>Calf + ankle linked.</b> This chain takes heavy load at takeoff. Extra warm-up time, dynamic ankle mobility, and consider taping the ankle for support during training.' });
+  }
+  if ((soreAreas.includes('hipFlexors') || painAreas.includes('hipFlexors')) &&
+      (soreAreas.includes('lowerBack') || painAreas.includes('lowerBack'))) {
+    recs.push({ icon: '🔗', text: '<b>Hip flexor + lower back linked.</b> Anterior pelvic tilt pattern. Prioritize glute activation (bridges, clamshells) before any training. Consider dead bugs and bird dogs.' });
+  }
+  if ((soreAreas.includes('knees') || painAreas.includes('knees')) &&
+      (soreAreas.includes('quads') || painAreas.includes('quads'))) {
+    recs.push({ icon: '🔗', text: '<b>Quad + knee linked.</b> Quad tightness pulls on the patellar tendon. Extra quad foam rolling and rectus femoris stretching before training.' });
+  }
+
+  // Training modification summary if pain areas overlap with training plan
+  if (hasPain && (todayPlan === 'moderate' || todayPlan === 'hard')) {
+    const lowerPain = painAreas.filter(a => ['quads','hamstrings','glutes','calves','knees','ankles','hipFlexors','shins','feet'].includes(a));
+    if (lowerPain.length >= 2) {
+      recs.push({ icon: '🔄', text: `<b>Multiple lower-body pain areas.</b> Strongly consider switching to upper body only, pool session, or downgrading intensity. ${lowerPain.length} areas in pain is a yellow flag.` });
+    }
   }
 
   return recs;
@@ -9095,23 +9343,47 @@ function renderCoachRecoveryPlan() {
     }
   }
 
-  // Post-training block: exercise-specific recovery
+  // Soreness data from morning check-in
+  const dayPlan = ST._dayPlan?.date === today ? ST._dayPlan : null;
+  const soreness = dayPlan?.soreness || {};
+  const soreList = Object.entries(soreness).filter(([,v]) => v === 'sore').map(([k]) => k);
+  const painList = Object.entries(soreness).filter(([,v]) => v === 'pain').map(([k]) => k);
+
+  // Soreness-driven morning recovery block (before training)
+  if (painList.length > 0 && hour < 14) {
+    const painLabels = painList.map(id => BODY_PARTS.find(b => b.id === id)?.label || id);
+    steps.push({ time: 'MORNING', icon: '🗺️', action: `Pain areas: ${painLabels.join(', ')}`, why: 'You flagged pain in these areas. Warm up extra, avoid explosive loading, and consider modifying your session. See check-in recs for specifics.', done: false });
+  }
+  if (soreList.length > 0 && hour < 14 && !todayTags.includes('foam_roll')) {
+    const soreLabels = soreList.map(id => BODY_PARTS.find(b => b.id === id)?.label || id);
+    steps.push({ time: 'MORNING', icon: '🧱', action: `Pre-session foam roll: ${soreLabels.slice(0,3).join(', ')} (8min)`, why: 'Sore areas benefit from pre-training foam rolling to restore ROM and reduce stiffness before loading.', done: false });
+  }
+
+  // Post-training block: exercise-specific recovery (merged with soreness)
   const tLoad = analyzeTrainingLoad();
   if (trainedToday) {
     const topMuscles = tLoad.muscles.slice(0, 3);
     const muscleNames = topMuscles.map(m => m.label.toLowerCase());
-    const foamTargets = muscleNames.length ? muscleNames.join(', ') : 'hip flexors, quads, IT band';
+    // Merge soreness areas with training-loaded areas for smarter targeting
+    const soreLabelsLc = soreList.concat(painList).map(id => (BODY_PARTS.find(b => b.id === id)?.label || id).toLowerCase());
+    const allTargets = [...new Set([...muscleNames, ...soreLabelsLc])];
+    const foamTargets = allTargets.length ? allTargets.slice(0, 4).join(', ') : 'hip flexors, quads, IT band';
 
     if (!todayTags.includes('foam_roll')) {
-      steps.push({ time: 'POST-TRAINING', icon: '🧱', action: `Foam roll: ${foamTargets} (10min)`, why: tLoad.hasData
+      const hasSorenessInput = soreLabelsLc.length > 0;
+      steps.push({ time: 'POST-TRAINING', icon: '🧱', action: `Foam roll: ${foamTargets} (10min)`, why: tLoad.hasData && hasSorenessInput
+        ? `Loaded today + sore areas from check-in. Prioritize these to maintain ROM and flush metabolites.`
+        : tLoad.hasData
         ? `Loaded today: ${topMuscles.map(m => m.label + ' (' + m.level + ')').join(', ')}. Target these areas to maintain ROM.`
         : 'Target the muscles you trained. Maintain ROM without blunting adaptation.', done: false });
     }
 
     if (!todayTags.includes('massage_gun')) {
-      const gunTargets = tLoad.hasData && muscleNames.length ? muscleNames.slice(0, 2).join(' + ') : 'calves + quads';
-      if (strain > 10 || (tLoad.hasData && tLoad.muscles.some(m => m.level === 'high'))) {
-        steps.push({ time: 'POST-TRAINING', icon: '🔫', action: `Massage gun: ${gunTargets} (5min)`, why: tLoad.hasData
+      const gunTargets = allTargets.length >= 2 ? allTargets.slice(0, 2).join(' + ') : (tLoad.hasData && muscleNames.length ? muscleNames.slice(0, 2).join(' + ') : 'calves + quads');
+      if (strain > 10 || (tLoad.hasData && tLoad.muscles.some(m => m.level === 'high')) || painList.length > 0) {
+        steps.push({ time: 'POST-TRAINING', icon: '🔫', action: `Massage gun: ${gunTargets} (5min)`, why: painList.length > 0
+          ? `Pain areas flagged. Percussive therapy at low intensity around (not directly on) pain sites to increase blood flow.`
+          : tLoad.hasData
           ? `High load on ${topMuscles[0]?.label || 'legs'}. Percussive therapy clears metabolites and reduces DOMS.`
           : `Strain is ${strain}. Percussive therapy reduces DOMS onset.`, done: false });
       }
@@ -9343,7 +9615,63 @@ function renderCoachTraining() {
             <div class="coach-protocol-text">${p.detail}</div>
           </div>
         </div>`).join('')}
+      ${renderSorenessTrainingMods()}
       ${renderHeroRecentBlock()}
+    </div>`;
+}
+
+function renderSorenessTrainingMods() {
+  const today = new Date().toISOString().slice(0, 10);
+  const dayPlan = ST._dayPlan?.date === today ? ST._dayPlan : null;
+  const soreness = dayPlan?.soreness || {};
+  const painList = Object.entries(soreness).filter(([,v]) => v === 'pain').map(([k]) => k);
+  const soreList = Object.entries(soreness).filter(([,v]) => v === 'sore').map(([k]) => k);
+  if (!painList.length && !soreList.length) return '';
+
+  const mods = [];
+
+  // Pain-based: things to avoid
+  const avoidMap = {
+    knees: 'deep squats, jumping, plyometrics',
+    ankles: 'sprints, lateral cuts, jumping',
+    calves: 'hill sprints, explosive push-off, calf raises',
+    hamstrings: 'sprints, RDLs, hip-dominant plyos',
+    hipFlexors: 'A-skips, knee drives, deep lunges',
+    lowerBack: 'deadlifts, heavy squats, loaded flexion',
+    shins: 'hard-surface running, high-impact drills',
+    feet: 'barefoot work, long standing drills',
+    shoulders: 'overhead pressing, heavy arm swing drills',
+    quads: 'heavy squats, leg press, plyometrics',
+    glutes: 'heavy hip thrusts, loaded bridges',
+  };
+
+  for (const p of painList) {
+    const avoid = avoidMap[p];
+    if (avoid) mods.push(`<span style="color:var(--danger);font-weight:700;">Avoid</span> ${avoid} (${(BODY_PARTS.find(b=>b.id===p)?.label||p)} pain)`);
+  }
+
+  // Sore-based: modification suggestions
+  const modMap = {
+    knees: 'reduce squat depth, lighter plyometrics',
+    calves: 'extra warm-up, avoid cold starts on sprints',
+    hamstrings: 'thorough warm-up, reduce sprint volume',
+    hipFlexors: 'extra hip mobility, reduce knee drive drills',
+    lowerBack: 'lighter loads, focus on neutral spine',
+    quads: 'reduce volume on squats, more rest between sets',
+    glutes: 'lighter activation work before loading',
+  };
+
+  for (const s of soreList) {
+    const mod = modMap[s];
+    if (mod) mods.push(`<span style="color:var(--warn);font-weight:700;">Modify</span> ${mod} (${(BODY_PARTS.find(b=>b.id===s)?.label||s)} sore)`);
+  }
+
+  if (!mods.length) return '';
+
+  return `
+    <div style="margin-top:12px;padding:10px 12px;border-radius:10px;background:${painList.length ? 'rgba(255,84,112,0.06)' : 'rgba(255,181,71,0.06)'};border:1px solid ${painList.length ? 'rgba(255,84,112,0.15)' : 'rgba(255,181,71,0.15)'};">
+      <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:${painList.length ? 'var(--danger)' : 'var(--warn)'};margin-bottom:6px;">SESSION MODIFICATIONS</div>
+      ${mods.map(m => `<div style="font-size:12px;color:var(--text-2);padding:3px 0;line-height:1.4;">${m}</div>`).join('')}
     </div>`;
 }
 
@@ -13358,6 +13686,20 @@ function renderSuggestions() {
     sugs.push({ icon: '🏋️', title: 'Your body can handle intensity', sub: `Recovery ${recovery}%, strain only ${strain}. Unused capacity = missed adaptation. Push today.`, action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('workout')`, pri: 3 });
   } else if (recovery < 34 && strain > 12) {
     sugs.push({ icon: '⚠️', title: 'Recovery deficit  - active rest only', sub: `Recovery ${recovery}% with strain ${strain}. High acute:chronic workload spikes increase injury risk significantly (Gabbett, BJSM, 2016)`, action: 'Note', cls: 'purple', bg: 'rgba(255,84,112,0.1)', pri: 3 });
+  }
+
+  // === PRIORITY 3.5: Soreness-driven ===
+  const sugSoreness = sugDayPlan?.soreness || {};
+  const sugPainParts = Object.entries(sugSoreness).filter(([,v]) => v === 'pain').map(([k]) => k);
+  const sugSoreParts = Object.entries(sugSoreness).filter(([,v]) => v === 'sore').map(([k]) => k);
+
+  if (sugPainParts.length >= 2 && (sugPlannedIntensity === 'hard' || sugPlannedIntensity === 'moderate')) {
+    sugs.push({ icon: '🛑', title: 'Consider downgrading session', sub: `${sugPainParts.length} pain areas flagged. Training through multiple pain points increases injury risk. Switch to mobility or upper body.`, action: 'Note', cls: 'purple', bg: 'rgba(255,84,112,0.1)', pri: 3 });
+  }
+
+  if ((sugSoreParts.length > 0 || sugPainParts.length > 0) && !patterns.todayBehaviors.includes('foam_roll') && hwake > 0.5) {
+    const targetLabels = [...sugPainParts, ...sugSoreParts].slice(0, 3).map(id => BODY_PARTS.find(b=>b.id===id)?.label || id);
+    sugs.push({ icon: '🧱', title: `Foam roll: ${targetLabels.join(', ')}`, sub: 'Target your flagged sore/pain areas. 2min per area, moderate pressure, avoid directly rolling over joints.', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('foam_roll')`, pri: 3 });
   }
 
   // === PRIORITY 4: Circadian-aware ===
