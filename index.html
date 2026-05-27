@@ -2050,6 +2050,41 @@ section { padding: 0 16px; margin-bottom: 8px; }
   font-size: 12px; color: var(--text-2); padding: 3px 0; line-height: 1.4;
 }
 
+/* Session type selector */
+.session-type-opts { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
+.session-type-opt {
+  padding: 8px 12px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-3); font-size: 10px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+  letter-spacing: 0.5px; font-family: 'DM Mono', monospace;
+  display: flex; align-items: center; gap: 5px;
+  user-select: none; -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.session-type-opt:active { transform: scale(0.95); }
+.session-type-opt.active {
+  border-color: var(--energy); color: var(--energy);
+  background: rgba(0,236,127,0.1);
+}
+
+/* DOMS badge on body map parts */
+.bodymap-part .doms-badge {
+  font-size: 8px; font-weight: 800; letter-spacing: 0.5px;
+  padding: 1px 5px; border-radius: 4px; margin-left: auto;
+  background: rgba(167,139,250,0.2); color: #a78bfa;
+  font-family: 'DM Mono', monospace;
+}
+.bodymap-doms-note {
+  font-size: 11px; color: #a78bfa; margin-bottom: 10px;
+  font-family: 'DM Mono', monospace; display: flex;
+  align-items: center; gap: 6px;
+}
+.bodymap-doms-note .doms-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: #a78bfa;
+}
+
 /* Coach Tab */
 .coach-section {
   background: var(--card-bg); border: 1px solid var(--card-border);
@@ -3491,7 +3526,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v119';
+const APP_VERSION = 'v120';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -8892,6 +8927,107 @@ const BODY_PARTS = [
   { id: 'general', label: 'General Fatigue', icon: '😮‍💨' },
 ];
 
+// Training session types with body-area impact profiles
+const SESSION_TYPES = [
+  { id: 'longjump', label: 'LONG JUMP', icon: '🏅',
+    areas: { quads: 'high', calves: 'high', ankles: 'high', knees: 'high', hipFlexors: 'moderate', glutes: 'moderate', hamstrings: 'moderate', feet: 'moderate', shins: 'moderate' },
+    recovery: 'Takeoff leg takes massive eccentric load. Patellar + achilles tendons under peak stress. Landing forces hit ankles and knees.',
+    nutrition: 'High-carb pre-fuel + creatine. Post: protein + carbs within 30min for tendon collagen synthesis.',
+    avoid: 'No cold immersion within 4h (blunts tendon adaptation). Skip heavy leg work tomorrow.',
+    warmup: 'Extended ankle + hip mobility, glute activation, progressive approach runs before full jumps.' },
+  { id: 'maxvelocity', label: 'MAX VELOCITY', icon: '💨',
+    areas: { hamstrings: 'high', glutes: 'high', hipFlexors: 'high', calves: 'moderate', quads: 'moderate', lowerBack: 'moderate' },
+    recovery: 'Hamstrings at extreme risk during top-speed deceleration. CNS heavily taxed. 48-72h recovery needed.',
+    nutrition: 'Extra protein tonight (1.8g/kg). Glycogen demands are high, replenish carbs immediately post.',
+    avoid: 'No hamstring-dominant lifts for 48h. No max velocity again within 72h. Monitor hamstring tightness closely.',
+    warmup: 'Extensive hamstring lengthening, A/B-skips progression, 3-4 sub-max build-ups before flying sprints.' },
+  { id: 'plyometrics', label: 'PLYOMETRICS', icon: '⚡',
+    areas: { calves: 'high', ankles: 'high', knees: 'high', quads: 'moderate', shins: 'moderate', feet: 'moderate', hipFlexors: 'moderate' },
+    recovery: 'Tendons absorb 6-8x bodyweight on depth jumps. Achilles and patellar tendons need 48h+ for collagen remodeling.',
+    nutrition: 'Vitamin C + gelatin 30min pre-session (collagen synthesis). Extra protein post.',
+    avoid: 'No plyometrics again within 48h. Avoid long jump session next day. Eccentric heel drops tonight for tendon health.',
+    warmup: 'Ankle stiffness drills, pogo hops building from low to high, joint-specific warm-up.' },
+  { id: 'strength', label: 'STRENGTH', icon: '🏋️',
+    areas: { quads: 'high', glutes: 'high', hamstrings: 'moderate', lowerBack: 'moderate', shoulders: 'moderate', core: 'moderate' },
+    recovery: 'Muscle protein synthesis peaks 24-48h post. Sleep 9h+ for growth hormone release. Foam roll loaded areas.',
+    nutrition: 'Protein bolus 40g within 1h. Leucine threshold matters, hit 3g+ per meal. Total protein 1.8g/kg today.',
+    avoid: 'No heavy compound lifts within 48h. Light plyometrics OK next day if recovery is green.',
+    warmup: 'Progressive loading sets, joint-specific mobility for target muscle groups, CNS priming with explosive warmup sets.' },
+  { id: 'tempo', label: 'TEMPO', icon: '🏃',
+    areas: { calves: 'moderate', quads: 'moderate', hamstrings: 'moderate', glutes: 'moderate', hipFlexors: 'moderate' },
+    recovery: 'Aerobic base work. Low tissue damage but accumulated fatigue. Good active recovery option.',
+    nutrition: 'Standard intake. Focus on hydration, electrolytes if session was 45min+.',
+    avoid: 'Can train again next day. Avoid max velocity within 24h though, fresh CNS needed for speed.',
+    warmup: 'Light jog, dynamic stretching, build into target pace gradually.' },
+];
+
+// Analyze yesterday's Hero workouts to detect likely DOMS areas
+function detectYesterdayDOMS() {
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const heroWorkouts = (ST._heroWorkouts || []).filter(w => {
+    const d = new Date(w.startTime).toISOString().slice(0, 10);
+    return d === yesterday && w.athletes && w.athletes[HERO_ATHLETE_ID];
+  });
+  const exercises = ST._heroExercises || {};
+  if (!heroWorkouts.length) return { areas: {}, sessionNames: [], hasData: false };
+
+  const domsMap = {};
+  const sessionNames = [];
+  const patterns = {
+    quads: /squat|leg press|leg ext|lunge|split squat|step.?up|pistol|wall sit|sissy/i,
+    hamstrings: /rdl|deadlift|nordic|hamstring|leg curl|good morning|hip hinge|glute.ham/i,
+    glutes: /hip thrust|glute|bridge|clamshell|abduct|kickback|fire hydrant/i,
+    calves: /calf|soleus|tibialis|ankle|gastrocnemius|bound|depth|hop|skip|sprint|approach/i,
+    hipFlexors: /hip flexor|psoas|march|knee drive|a.skip|b.skip/i,
+    lowerBack: /deadlift|good morning|back ext|clean|snatch|row/i,
+    shoulders: /press|overhead|push.?up|delt|lateral raise|shoulder|military|jerk|clean|snatch/i,
+    knees: /squat|lunge|jump|depth|bound|plyom|box jump/i,
+    ankles: /jump|depth|bound|hop|sprint|approach|takeoff|calf/i,
+    shins: /sprint|bound|hop|skip|hurdle/i,
+    feet: /sprint|jump|bound|approach|takeoff/i,
+  };
+
+  for (const w of heroWorkouts) {
+    if (w.name) sessionNames.push(w.name);
+    const ath = w.athletes[HERO_ATHLETE_ID];
+    const sets = ath.sets || {};
+    const rpe = ath.rpe || 7;
+    const intensity = rpe >= 9 ? 'high' : rpe >= 7 ? 'moderate' : 'light';
+
+    for (const [eid, setArr] of Object.entries(sets)) {
+      const ex = exercises[eid.split('__')[0]] || exercises[eid];
+      if (!ex) continue;
+      const name = ex.name || '';
+      const group = (ex.group || '').toLowerCase();
+      const completedSets = Array.isArray(setArr) ? setArr.filter(s => s.completed && !s.warmup).length : 0;
+      if (completedSets === 0) continue;
+
+      for (const [area, regex] of Object.entries(patterns)) {
+        if (regex.test(name) || regex.test(group)) {
+          const current = domsMap[area] || 0;
+          domsMap[area] = Math.max(current, completedSets * (rpe >= 8 ? 2 : 1));
+        }
+      }
+
+      // Fallback groups
+      if (group.includes('leg') || group.includes('lower')) {
+        domsMap.quads = (domsMap.quads || 0) + completedSets * 0.5;
+        domsMap.hamstrings = (domsMap.hamstrings || 0) + completedSets * 0.3;
+      }
+    }
+  }
+
+  // Convert to levels: high (>= 8), moderate (>= 3), light (>= 1)
+  const areas = {};
+  for (const [area, score] of Object.entries(domsMap)) {
+    if (score >= 6) areas[area] = 'high';
+    else if (score >= 3) areas[area] = 'moderate';
+    else if (score >= 1) areas[area] = 'light';
+  }
+
+  return { areas, sessionNames, hasData: heroWorkouts.length > 0 };
+}
+
 function renderMorningCheckin() {
   const el = document.getElementById('morningCheckin');
   if (!el) return;
@@ -8901,6 +9037,7 @@ function renderMorningCheckin() {
   const isToday = plan.date === today;
   const todayPlan = isToday ? plan.today : null;
   const tomorrowPlan = isToday ? plan.tomorrow : null;
+  const sessionType = isToday ? (plan.sessionType || null) : null;
   const soreness = isToday ? (plan.soreness || {}) : {};
   const recovery = computeReadiness();
 
@@ -8919,32 +9056,59 @@ function renderMorningCheckin() {
     ).join('');
   }
 
+  // Session type selector - only shown for moderate/hard days
+  function renderSessionType() {
+    if (!todayPlan || todayPlan === 'rest' || todayPlan === 'easy') return '';
+    return `<div class="checkin-q">What type of session?</div>
+      <div class="session-type-opts">
+        ${SESSION_TYPES.map(st =>
+          `<div class="session-type-opt ${sessionType === st.id ? 'active' : ''}" onclick="setDayPlan('sessionType','${st.id}')">
+            ${st.icon} ${st.label}
+          </div>`
+        ).join('')}
+      </div>`;
+  }
+
+  // DOMS detection from yesterday's Hero workouts
+  const doms = detectYesterdayDOMS();
+
   // Body map: tap once = sore (yellow), tap again = pain (red), tap again = clear
   function renderBodyMap() {
     const parts = BODY_PARTS.map(bp => {
       const state = soreness[bp.id] || ''; // '', 'sore', 'pain'
-      return `<div class="bodymap-part ${state}" onclick="toggleSoreness('${bp.id}')">
-        <span class="bp-dot"></span>${bp.label}
+      const domsLevel = doms.areas[bp.id] || '';
+      const domsBadge = domsLevel && !state ? `<span class="doms-badge">DOMS</span>` : '';
+      return `<div class="bodymap-part ${state}" onclick="toggleSoreness('${bp.id}')" style="${domsLevel && !state ? 'border-color:rgba(167,139,250,0.3);' : ''}">
+        <span class="bp-dot"></span>${bp.label}${domsBadge}
       </div>`;
     }).join('');
 
-    const hasSoreness = Object.keys(soreness).length > 0;
+    // DOMS note from yesterday
+    let domsNote = '';
+    if (doms.hasData && Object.keys(doms.areas).length > 0) {
+      const domsNames = Object.keys(doms.areas).slice(0, 4).map(id => BODY_PARTS.find(b => b.id === id)?.label || id);
+      const sessionInfo = doms.sessionNames.length ? ` from ${doms.sessionNames.join(', ')}` : '';
+      domsNote = `<div class="bodymap-doms-note"><span class="doms-dot"></span>DOMS likely${sessionInfo}: ${domsNames.join(', ')}</div>`;
+    }
+
     return `<div class="bodymap-wrap">
       <div class="bodymap-label">Anything sore or hurting?</div>
       <div class="bodymap-sub">tap once = sore, twice = pain</div>
+      ${domsNote}
       <div class="bodymap-grid">${parts}</div>
       <div class="bodymap-legend">
         <span><span class="leg-dot" style="background:var(--text-4)"></span> fine</span>
         <span><span class="leg-dot" style="background:var(--warn)"></span> sore</span>
         <span><span class="leg-dot" style="background:var(--danger)"></span> pain</span>
+        ${doms.hasData && Object.keys(doms.areas).length ? '<span><span class="leg-dot" style="background:#a78bfa"></span> doms likely</span>' : ''}
       </div>
     </div>`;
   }
 
-  // Build recommendations based on selections + soreness
+  // Build recommendations based on selections + soreness + session type
   let recsHTML = '';
   if (todayPlan || Object.keys(soreness).length > 0) {
-    const recs = getDayPlanRecs(todayPlan, tomorrowPlan, recovery, soreness);
+    const recs = getDayPlanRecs(todayPlan, tomorrowPlan, recovery, soreness, sessionType);
     if (recs.length) {
       recsHTML = `<div class="checkin-recs">
         <div class="checkin-rec-title">Your personalized plan</div>
@@ -8958,6 +9122,7 @@ function renderMorningCheckin() {
       <div class="checkin-title">Morning Check-in</div>
       <div class="checkin-q">What's your plan today?</div>
       <div class="checkin-opts">${renderOpts('today', todayPlan)}</div>
+      ${renderSessionType()}
       <div class="checkin-q">What about tomorrow?</div>
       <div class="checkin-opts">${renderOpts('tomorrow', tomorrowPlan)}</div>
       ${renderBodyMap()}
@@ -9016,7 +9181,7 @@ function setDayPlan(field, value) {
   }
 }
 
-function getDayPlanRecs(todayPlan, tomorrowPlan, recovery, soreness) {
+function getDayPlanRecs(todayPlan, tomorrowPlan, recovery, soreness, sessionType) {
   const recs = [];
   soreness = soreness || {};
   const strain = computeStrain();
@@ -9030,6 +9195,7 @@ function getDayPlanRecs(todayPlan, tomorrowPlan, recovery, soreness) {
   const painAreas = Object.entries(soreness).filter(([,v]) => v === 'pain').map(([k]) => k);
   const hasSoreness = soreAreas.length > 0 || painAreas.length > 0;
   const hasPain = painAreas.length > 0;
+  const st = sessionType ? SESSION_TYPES.find(s => s.id === sessionType) : null;
 
   // --- Intensity-based base recommendations ---
   if (todayPlan === 'rest') {
@@ -9050,26 +9216,61 @@ function getDayPlanRecs(todayPlan, tomorrowPlan, recovery, soreness) {
     if (recovery < 60) {
       recs.push({ icon: '💤', text: '<b>Consider a 20min nap</b> between 13:00-15:00 to boost afternoon recovery.' });
     }
-  } else if (todayPlan === 'moderate') {
-    recs.push({ icon: '🏃', text: '<b>Sub-maximal training.</b> 70-80% intensity. Technique and volume focus.' });
-    if (recovery >= 67) {
-      recs.push({ icon: '⚡', text: '<b>Your body can handle moderate load.</b> Recovery is green. Quality reps.' });
+  } else if (todayPlan === 'moderate' || todayPlan === 'hard') {
+    // Recovery readiness check
+    if (todayPlan === 'hard') {
+      if (recovery >= 67) {
+        recs.push({ icon: '🔥', text: '<b>Green light for intensity.</b> Recovery supports max effort. Push it.' });
+      } else if (recovery >= 50) {
+        recs.push({ icon: '⚠️', text: `<b>Recovery is only ${recovery}%.</b> You can train hard but watch for warning signs. Reduce volume if needed.` });
+      } else {
+        recs.push({ icon: '🛑', text: `<b>Recovery is ${recovery}%.</b> Hard session not recommended today. Consider switching to moderate.` });
+      }
     } else {
-      recs.push({ icon: '⚠️', text: `<b>Recovery is ${recovery}%.</b> Monitor how you feel. Cut short if fatigue builds.` });
+      if (recovery >= 67) {
+        recs.push({ icon: '⚡', text: '<b>Your body can handle moderate load.</b> Recovery is green. Quality reps.' });
+      } else {
+        recs.push({ icon: '⚠️', text: `<b>Recovery is ${recovery}%.</b> Monitor how you feel. Cut short if fatigue builds.` });
+      }
     }
-    recs.push({ icon: '🥗', text: '<b>Pre-fuel 2h before training.</b> Complex carbs + protein. 500ml water minimum.' });
-    recs.push({ icon: '🧊', text: '<b>Cold immersion after training</b> only if no strength session tomorrow.' });
-  } else if (todayPlan === 'hard') {
-    if (recovery >= 67) {
-      recs.push({ icon: '🔥', text: '<b>Green light for intensity.</b> Recovery supports max effort. Push it.' });
-    } else if (recovery >= 50) {
-      recs.push({ icon: '⚠️', text: `<b>Recovery is only ${recovery}%.</b> You can train hard but watch for warning signs. Reduce volume if needed.` });
+
+    // Session-type-specific recommendations
+    if (st) {
+      recs.push({ icon: st.icon, text: `<b>${st.label} session.</b> ${st.recovery}` });
+      recs.push({ icon: '🔥', text: `<b>Warm-up.</b> ${st.warmup}` });
+      recs.push({ icon: '🥗', text: `<b>Nutrition.</b> ${st.nutrition}` });
+      recs.push({ icon: '⛔', text: `<b>Post-session.</b> ${st.avoid}` });
+
+      // Check if pain areas conflict with session type
+      const stHighAreas = Object.entries(st.areas).filter(([,v]) => v === 'high').map(([k]) => k);
+      const conflictPain = painAreas.filter(a => stHighAreas.includes(a));
+      if (conflictPain.length > 0) {
+        const conflictLabels = conflictPain.map(a => BODY_PARTS.find(b => b.id === a)?.label || a);
+        recs.push({ icon: '🛑', text: `<b>Pain conflict.</b> ${st.label} heavily loads ${conflictLabels.join(', ')}, which you flagged as painful. Strongly consider a different session type or rest.` });
+      }
+      const conflictSore = soreAreas.filter(a => stHighAreas.includes(a));
+      if (conflictSore.length > 0 && !conflictPain.length) {
+        const soreLabels = conflictSore.map(a => BODY_PARTS.find(b => b.id === a)?.label || a);
+        recs.push({ icon: '⚠️', text: `<b>Sore areas overlap.</b> ${soreLabels.join(', ')} are sore and will be heavily loaded. Extra warm-up, reduce volume, and monitor closely.` });
+      }
+
+      // Timing
+      recs.push({ icon: '⏱️', text: '<b>Train during Peak 1 or Peak 2</b> for optimal neuromuscular performance.' });
     } else {
-      recs.push({ icon: '🛑', text: `<b>Recovery is ${recovery}%.</b> Hard session not recommended today. Consider switching to moderate.` });
+      // No session type selected yet
+      if (todayPlan === 'moderate') {
+        recs.push({ icon: '🏃', text: '<b>Sub-maximal training.</b> 70-80% intensity. Technique and volume focus.' });
+      }
+      recs.push({ icon: '⏱️', text: '<b>Train during Peak 1 or Peak 2</b> for optimal neuromuscular performance.' });
+      recs.push({ icon: '🥗', text: todayPlan === 'hard'
+        ? '<b>High-carb pre-fuel.</b> 1-1.5g/kg carbs 2-3h before. Post-training: protein + carbs within 30min.'
+        : '<b>Pre-fuel 2h before training.</b> Complex carbs + protein. 500ml water minimum.' });
+      recs.push({ icon: '👆', text: '<b>Select your session type above</b> for specific warm-up, nutrition, and recovery guidance.' });
     }
-    recs.push({ icon: '⏱️', text: '<b>Train during Peak 1 or Peak 2</b> for optimal neuromuscular performance.' });
-    recs.push({ icon: '🥗', text: '<b>High-carb pre-fuel.</b> 1-1.5g/kg carbs 2-3h before. Post-training: protein + carbs within 30min.' });
-    recs.push({ icon: '💤', text: '<b>Prioritize sleep tonight.</b> Hard sessions require 9+ hours for full adaptation.' });
+
+    recs.push({ icon: '💤', text: todayPlan === 'hard'
+      ? '<b>Prioritize sleep tonight.</b> Hard sessions require 9+ hours for full adaptation.'
+      : '<b>Sleep well tonight.</b> 8.5h+ for recovery from moderate training load.' });
   }
 
   // Tomorrow context
@@ -9541,26 +9742,50 @@ function renderCoachTraining() {
   const hrvBase = m.hrvBaseline || 42;
   const hrvPct = m.hrv ? Math.round(((m.hrv / hrvBase) - 1) * 100) : 0;
 
+  // Check if session type is selected from check-in
+  const today = new Date().toISOString().slice(0, 10);
+  const dayPlanT = ST._dayPlan?.date === today ? ST._dayPlan : null;
+  const sessType = dayPlanT?.sessionType || null;
+  const st = sessType ? SESSION_TYPES.find(s => s.id === sessType) : null;
+
   // Zone classification
   let zone, zoneColor, zoneBg, protocols;
   if (recovery >= 80) {
     zone = 'GREEN';
     zoneColor = 'var(--energy)';
     zoneBg = 'rgba(48,217,138,0.1)';
-    protocols = [
-      { icon: '🏃', name: 'Max Effort Sprints', detail: 'Full approach runs, competition-pace takeoffs. CNS is primed.' },
-      { icon: '💪', name: 'Heavy Plyometrics', detail: 'Depth jumps, bounding, reactive drills. Full ground contact forces.' },
-      { icon: '🏋️', name: 'Strength (85%+ 1RM)', detail: 'Squats, cleans, RDLs. High load, low rep. Chase PRs today.' },
-    ];
+    if (st) {
+      // Session-type-specific green zone protocols
+      const highAreas = Object.entries(st.areas).filter(([,v]) => v === 'high').map(([k]) => BODY_PARTS.find(b => b.id === k)?.label || k);
+      protocols = [
+        { icon: st.icon, name: `${st.label} - Full Intensity`, detail: st.warmup },
+        { icon: '🎯', name: 'Key Areas', detail: `High demand on: ${highAreas.join(', ')}. Extra warm-up for these.` },
+        { icon: '⚡', name: 'Recovery After', detail: st.avoid },
+      ];
+    } else {
+      protocols = [
+        { icon: '🏃', name: 'Max Effort Sprints', detail: 'Full approach runs, competition-pace takeoffs. CNS is primed.' },
+        { icon: '💪', name: 'Heavy Plyometrics', detail: 'Depth jumps, bounding, reactive drills. Full ground contact forces.' },
+        { icon: '🏋️', name: 'Strength (85%+ 1RM)', detail: 'Squats, cleans, RDLs. High load, low rep. Chase PRs today.' },
+      ];
+    }
   } else if (recovery >= 67) {
     zone = 'YELLOW';
     zoneColor = 'var(--warn)';
     zoneBg = 'rgba(255,181,71,0.1)';
-    protocols = [
-      { icon: '🎯', name: 'Technique Drills', detail: 'Short approach jumps at 70-80%. Focus on board accuracy and flight positions.' },
-      { icon: '🏋️', name: 'Moderate Strength (65-80%)', detail: 'Volume work, tempo sets. Build without draining.' },
-      { icon: '🤸', name: 'Mobility + Activation', detail: 'Hip flexor openers, ankle ROM, glute activation circuits.' },
-    ];
+    if (st) {
+      protocols = [
+        { icon: st.icon, name: `${st.label} - Moderate`, detail: 'Scale to 70-80% intensity. Focus on technique over output.' },
+        { icon: '🔄', name: 'Volume Adjustment', detail: `Recovery is yellow. Reduce sets or reps by 20%. Quality over quantity.` },
+        { icon: '🤸', name: 'Extended Warm-up', detail: st.warmup },
+      ];
+    } else {
+      protocols = [
+        { icon: '🎯', name: 'Technique Drills', detail: 'Short approach jumps at 70-80%. Focus on board accuracy and flight positions.' },
+        { icon: '🏋️', name: 'Moderate Strength (65-80%)', detail: 'Volume work, tempo sets. Build without draining.' },
+        { icon: '🤸', name: 'Mobility + Activation', detail: 'Hip flexor openers, ankle ROM, glute activation circuits.' },
+      ];
+    }
   } else if (recovery >= 50) {
     zone = 'ORANGE';
     zoneColor = '#ff8c42';
