@@ -1418,7 +1418,7 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .fp-back {
   display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 600;
   color: #fff; background: none; border: none; cursor: pointer; font-family: inherit;
-  padding: 10px 6px; min-height: 44px;
+  padding: 12px 16px 12px 8px; min-height: 44px;
 }
 .fp-back svg { width: 14px; height: 14px; }
 .fp-title-bar { flex: 1; font-size: 11px; font-weight: 800; letter-spacing: 2px; color: var(--text-3); text-transform: uppercase; text-align: center; }
@@ -1940,6 +1940,51 @@ section { padding: 0 16px; margin-bottom: 8px; }
 .dc-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px solid var(--border); }
 .dc-consistency-label { font-size: 9px; font-weight: 800; letter-spacing: 1px; color: var(--text-4); text-transform: uppercase; }
 .dc-consistency-val { font-size: 13px; font-weight: 700; font-family: 'DM Mono', monospace; }
+
+/* Morning Check-in */
+.checkin-card {
+  background: linear-gradient(145deg, rgba(26,26,32,0.95), rgba(18,18,22,0.95));
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius); padding: 20px;
+}
+.checkin-title {
+  font-size: 13px; font-weight: 800; letter-spacing: 1.2px;
+  color: var(--text-3); text-transform: uppercase; margin-bottom: 16px;
+}
+.checkin-q { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 10px; }
+.checkin-opts { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.checkin-opt {
+  flex: 1; min-width: 70px; padding: 10px 6px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04);
+  color: var(--text-3); font-size: 11px; font-weight: 700; text-align: center;
+  cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
+  font-family: 'DM Mono', monospace;
+}
+.checkin-opt.active {
+  border-color: var(--energy); color: var(--energy);
+  background: rgba(0,236,127,0.1);
+}
+.checkin-opt:active { transform: scale(0.95); }
+.checkin-icon { font-size: 18px; display: block; margin-bottom: 4px; }
+.checkin-saved {
+  font-size: 11px; color: var(--energy); opacity: 0;
+  transition: opacity 0.3s; margin-top: 8px; text-align: center;
+  font-family: 'DM Mono', monospace;
+}
+.checkin-recs {
+  margin-top: 16px; padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.checkin-rec-title {
+  font-size: 11px; font-weight: 700; letter-spacing: 1px;
+  color: var(--text-4); text-transform: uppercase; margin-bottom: 10px;
+}
+.checkin-rec {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 0; font-size: 13px; color: var(--text-2);
+}
+.checkin-rec-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.checkin-rec b { color: #fff; font-weight: 600; }
 
 /* Coach Tab */
 .coach-section {
@@ -3108,6 +3153,9 @@ section { padding: 0 16px; margin-bottom: 8px; }
   <!-- ============ COACH ============ -->
   <div class="view" id="view-coach">
     <section>
+      <div id="morningCheckin"></div>
+    </section>
+    <section>
       <div id="coachRecoveryPlan"></div>
     </section>
     <section>
@@ -3379,7 +3427,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v117';
+const APP_VERSION = 'v118';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -7968,6 +8016,13 @@ function renderStrainTarget() {
     zone = 'REST'; zoneColor = 'var(--danger)'; zoneBg = 'rgba(255,84,112,0.12)';
   }
 
+  // Override strain target if morning check-in was filled
+  const dayPlan = ST._dayPlan?.date === new Date().toISOString().slice(0, 10) ? ST._dayPlan : null;
+  if (dayPlan?.today === 'rest') { targetLow = 3; targetHigh = 5; zone = 'REST'; zoneColor = 'var(--text-3)'; zoneBg = 'rgba(255,255,255,0.06)'; }
+  else if (dayPlan?.today === 'easy') { targetLow = 5; targetHigh = 8; zone = 'EASY'; zoneColor = 'var(--energy)'; zoneBg = 'rgba(48,217,138,0.08)'; }
+  else if (dayPlan?.today === 'moderate') { targetLow = 8; targetHigh = 14; zone = 'MODERATE'; zoneColor = 'var(--warn)'; zoneBg = 'rgba(255,181,71,0.08)'; }
+  else if (dayPlan?.today === 'hard') { targetLow = 14; targetHigh = 21; zone = 'PUSH'; zoneColor = 'var(--energy)'; zoneBg = 'rgba(48,217,138,0.12)'; }
+
   const targetMid = (targetLow + targetHigh) / 2;
   const barPct = Math.min(100, Math.round((strain / 21) * 100));
   const zoneLPct = Math.round((targetLow / 21) * 100);
@@ -8599,6 +8654,10 @@ function renderDailyCoach() {
   const hadCold = todayBehaviors.includes('cold_shower');
   const activeSession = (ST.liveActivities || []).find(a => !a.endedAt);
 
+  // Day plan from morning check-in
+  const dayPlan = ST._dayPlan?.date === today ? ST._dayPlan : null;
+  const plannedIntensity = dayPlan?.today || null;
+
   // Yesterday's training context -- critical for morning guidance
   const ydKey = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
   const ydWorkouts = (ST._workouts || []).filter(w => w.date === ydKey);
@@ -8640,11 +8699,15 @@ function renderDailyCoach() {
     if (hadHeavyYesterday && recovery < 50) {
       const ydDesc = ydSessions >= 2 ? `${ydSessions} sessions (${ydMin}min)` : `${ydMin}min session`;
       directive = `Heavy day yesterday (${ydDesc}). Expect fatigue. Sunlight + hydration + easy movement. No intensity today.`;
-    } else if (!hadSunlight) directive = 'Get outside for 10min sunlight. Hydrate 500ml. No caffeine for 90min after waking.';
+    } else if (plannedIntensity === 'rest') directive = 'Rest day. Sunlight, hydration, light walk. No training.';
+    else if (plannedIntensity === 'easy') directive = 'Easy day planned. Sunlight first, then light movement. Stay below zone 2.';
+    else if (!hadSunlight) directive = 'Get outside for 10min sunlight. Hydrate 500ml. No caffeine for 90min after waking.';
     else directive = 'Sunlight done. Let cortisol rise naturally. Light movement, no big decisions yet.';
   } else if (currentPhase.name === 'PEAK 1') {
     directiveIcon = '⚡';
     if (trainedToday) directive = `Already trained ${totalTrainMin}min. Fuel recovery - protein + carbs within 2h post-training.`;
+    else if (plannedIntensity === 'rest') directive = 'Rest day. Use this peak for focused mental work instead.';
+    else if (plannedIntensity === 'easy') directive = 'Easy day. Light mobility or a walk. Save intensity for another day.';
     else if (hadHeavyYesterday && recovery < 50) {
       const ydDesc = ydSessions >= 2 ? `${ydSessions} sessions` : 'heavy session';
       directive = `${ydDesc} yesterday. Active recovery only: walk, mobility, foam roll. Save intensity for tomorrow.`;
@@ -8654,14 +8717,24 @@ function renderDailyCoach() {
     else directive = 'Peak zone but body needs rest. Light mobility or film review only.';
   } else if (currentPhase.name === 'DIP') {
     directiveIcon = '💤';
-    if (!trainedToday && recovery >= 67) directive = 'Dip zone. If you missed training this morning, do a light session now before Peak 2.';
+    if (plannedIntensity === 'rest') directive = 'Rest day. Afternoon dip is a perfect window for a 20min nap to pay off sleep debt.';
+    else if (plannedIntensity === 'easy') directive = 'Easy day. Dip phase. Light walk or nap 20min. No decisions, no intensity.';
+    else if (!trainedToday && recovery >= 67) directive = 'Dip zone. If you missed training this morning, do a light session now before Peak 2.';
     else directive = 'Afternoon dip - executive function drops. Power nap 20min or walk. No big decisions.';
   } else if (currentPhase.name === 'RECOVERY') {
     directiveIcon = '🔄';
-    directive = trainedToday ? 'Recovery phase. Foam roll, massage gun, or light stretching. Prep for evening peak.' : 'Transition phase. Energy rising toward your second peak.';
+    if (plannedIntensity === 'rest') directive = 'Rest day. Foam roll, stretching, or mobility work. Prep your body for tomorrow.';
+    else if (plannedIntensity === 'easy') directive = 'Easy day. Light movement if you haven\'t yet. Energy rising toward evening.';
+    else directive = trainedToday ? 'Recovery phase. Foam roll, massage gun, or light stretching. Prep for evening peak.' : 'Transition phase. Energy rising toward your second peak.';
   } else if (currentPhase.name === 'PEAK 2') {
     directiveIcon = '🔥';
-    if (trainedToday) directive = `Trained ${totalTrainMin}min today. Use Peak 2 for deep work, creative tasks, or business strategy.`;
+    if (plannedIntensity === 'rest') {
+      directiveIcon = '🧠';
+      directive = 'Rest day. Use this peak for deep work, creative projects, or business strategy instead.';
+    } else if (plannedIntensity === 'easy') {
+      directiveIcon = '🚶';
+      directive = 'Easy day. If you haven\'t moved yet, a 30min walk now. Otherwise, deep work or planning.';
+    } else if (trainedToday) directive = `Trained ${totalTrainMin}min today. Use Peak 2 for deep work, creative tasks, or business strategy.`;
     else if (recovery >= 67) directive = 'Strongest window of the day. Train now if you haven\'t - or do your hardest deep work.';
     else directive = 'Second peak. Best used for focused work. Training not recommended at this recovery level.';
   } else if (currentPhase.name === 'WIND-DOWN') {
@@ -8700,8 +8773,12 @@ function renderDailyCoach() {
     priorityIcon = '⚠️'; priority = `High strain (${strain}) on low recovery (${recovery}%). Cut volume.`;
   } else if (trainedToday && !hadCold && recovery < 70 && !['WIND-DOWN','NIGHT','SLEEP'].includes(currentPhase.name)) {
     priorityIcon = '🧊'; priority = 'Post-training recovery. Cold immersion or breathing session.';
-  } else if (!trainedToday && recovery >= 67 && ['PEAK 1','PEAK 2'].includes(currentPhase.name)) {
+  } else if (!trainedToday && recovery >= 67 && ['PEAK 1','PEAK 2'].includes(currentPhase.name) && !plannedIntensity?.match(/rest|easy/)) {
     priorityIcon = '🏋️'; priority = 'You haven\'t trained yet. Recovery supports intensity.';
+  } else if (plannedIntensity === 'rest') {
+    priorityIcon = '🛌'; priority = 'Rest day. Recovery is the work. Hydrate, move easy, sleep well.';
+  } else if (plannedIntensity === 'easy') {
+    priorityIcon = '🚶'; priority = 'Easy day. Light movement + nutrition. Save energy for what\'s ahead.';
   } else {
     priorityIcon = '✅'; priority = 'On track. Stay consistent with your routine.';
   }
@@ -8724,9 +8801,146 @@ function renderDailyCoach() {
 }
 
 // ========================================
+//  MORNING CHECK-IN
+// ========================================
+function renderMorningCheckin() {
+  const el = document.getElementById('morningCheckin');
+  if (!el) return;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const plan = ST._dayPlan || {};
+  const isToday = plan.date === today;
+  const todayPlan = isToday ? plan.today : null;
+  const tomorrowPlan = isToday ? plan.tomorrow : null;
+  const recovery = computeReadiness();
+
+  const options = [
+    { id: 'rest', icon: '🛌', label: 'REST' },
+    { id: 'easy', icon: '🚶', label: 'EASY' },
+    { id: 'moderate', icon: '🏃', label: 'MODERATE' },
+    { id: 'hard', icon: '🔥', label: 'HARD' }
+  ];
+
+  function renderOpts(name, selected) {
+    return options.map(o =>
+      `<div class="checkin-opt ${selected === o.id ? 'active' : ''}" onclick="setDayPlan('${name}','${o.id}')">
+        <span class="checkin-icon">${o.icon}</span>${o.label}
+      </div>`
+    ).join('');
+  }
+
+  // Build recommendations based on selections
+  let recsHTML = '';
+  if (todayPlan) {
+    const recs = getDayPlanRecs(todayPlan, tomorrowPlan, recovery);
+    if (recs.length) {
+      recsHTML = `<div class="checkin-recs">
+        <div class="checkin-rec-title">Your personalized plan</div>
+        ${recs.map(r => `<div class="checkin-rec"><span class="checkin-rec-icon">${r.icon}</span><div>${r.text}</div></div>`).join('')}
+      </div>`;
+    }
+  }
+
+  el.innerHTML = `
+    <div class="checkin-card">
+      <div class="checkin-title">Morning Check-in</div>
+      <div class="checkin-q">What's your plan today?</div>
+      <div class="checkin-opts">${renderOpts('today', todayPlan)}</div>
+      <div class="checkin-q">What about tomorrow?</div>
+      <div class="checkin-opts">${renderOpts('tomorrow', tomorrowPlan)}</div>
+      <div class="checkin-saved" id="checkinSaved"></div>
+      ${recsHTML}
+    </div>`;
+}
+
+function setDayPlan(field, value) {
+  const today = new Date().toISOString().slice(0, 10);
+  if (!ST._dayPlan || ST._dayPlan.date !== today) {
+    ST._dayPlan = { date: today, today: null, tomorrow: null };
+  }
+  ST._dayPlan[field] = value;
+  saveState();
+  renderMorningCheckin();
+  // Re-render coach sections that depend on day plan
+  renderCoachRecoveryPlan();
+  renderCoachTraining();
+  renderDailyCoach();
+  renderSuggestions();
+  // Show saved indicator
+  const indicator = document.getElementById('checkinSaved');
+  if (indicator) {
+    indicator.textContent = 'saved';
+    indicator.style.opacity = '1';
+    setTimeout(() => { indicator.style.opacity = '0'; }, 1500);
+  }
+}
+
+function getDayPlanRecs(todayPlan, tomorrowPlan, recovery) {
+  const recs = [];
+  const strain = computeStrain();
+  const m = ST.metrics;
+  const now = new Date();
+  const nowH = now.getHours() + now.getMinutes() / 60;
+  const sl = ST.sleep || {};
+  const debtH = m.sleepDebt || 0;
+
+  if (todayPlan === 'rest') {
+    recs.push({ icon: '💤', text: '<b>No training.</b> Focus on recovery modalities: foam roll, stretching, walking.' });
+    recs.push({ icon: '🥗', text: '<b>Eat at maintenance.</b> Protein 1.6g/kg (105g), emphasize anti-inflammatory foods.' });
+    if (debtH > 1) {
+      recs.push({ icon: '😴', text: `<b>Catch up on sleep.</b> You have ${debtH.toFixed(1)}h of debt. Nap 20-30min or sleep early tonight.` });
+    }
+    recs.push({ icon: '🧊', text: '<b>Cold immersion optional.</b> Good for parasympathetic activation on rest days.' });
+    if (recovery < 50) {
+      recs.push({ icon: '🧖', text: '<b>Sauna 15-20min.</b> Heat shock proteins aid recovery when HRV is low.' });
+    }
+    recs.push({ icon: '☀️', text: '<b>Morning sunlight 10min.</b> Anchors circadian rhythm even on rest days.' });
+  } else if (todayPlan === 'easy') {
+    recs.push({ icon: '🚶', text: '<b>Light movement only.</b> Walk 30-45min, mobility work, or easy swimming.' });
+    recs.push({ icon: '⏱️', text: '<b>Keep intensity below zone 2.</b> HR under 130bpm. No explosive movements.' });
+    recs.push({ icon: '🥗', text: '<b>Slight caloric surplus.</b> Extra carbs to replenish glycogen from recent sessions.' });
+    if (recovery < 60) {
+      recs.push({ icon: '💤', text: '<b>Consider a 20min nap</b> between 13:00-15:00 to boost afternoon recovery.' });
+    }
+  } else if (todayPlan === 'moderate') {
+    recs.push({ icon: '🏃', text: '<b>Sub-maximal training.</b> 70-80% intensity. Technique and volume focus.' });
+    if (recovery >= 67) {
+      recs.push({ icon: '⚡', text: '<b>Your body can handle moderate load.</b> Recovery is green. Quality reps.' });
+    } else {
+      recs.push({ icon: '⚠️', text: `<b>Recovery is ${recovery}%.</b> Monitor how you feel. Cut short if fatigue builds.` });
+    }
+    recs.push({ icon: '🥗', text: '<b>Pre-fuel 2h before training.</b> Complex carbs + protein. 500ml water minimum.' });
+    recs.push({ icon: '🧊', text: '<b>Cold immersion after training</b> only if no strength session tomorrow.' });
+  } else if (todayPlan === 'hard') {
+    if (recovery >= 67) {
+      recs.push({ icon: '🔥', text: '<b>Green light for intensity.</b> Recovery supports max effort. Push it.' });
+    } else if (recovery >= 50) {
+      recs.push({ icon: '⚠️', text: `<b>Recovery is only ${recovery}%.</b> You can train hard but watch for warning signs. Reduce volume if needed.` });
+    } else {
+      recs.push({ icon: '🛑', text: `<b>Recovery is ${recovery}%.</b> Hard session not recommended today. Consider switching to moderate.` });
+    }
+    recs.push({ icon: '⏱️', text: '<b>Train during Peak 1 or Peak 2</b> for optimal neuromuscular performance.' });
+    recs.push({ icon: '🥗', text: '<b>High-carb pre-fuel.</b> 1-1.5g/kg carbs 2-3h before. Post-training: protein + carbs within 30min.' });
+    recs.push({ icon: '💤', text: '<b>Prioritize sleep tonight.</b> Hard sessions require 9+ hours for full adaptation.' });
+  }
+
+  // Tomorrow context
+  if (tomorrowPlan === 'hard' && todayPlan !== 'rest') {
+    recs.push({ icon: '📋', text: '<b>Hard session tomorrow.</b> Finish today early, prioritize sleep. No alcohol or late food tonight.' });
+  } else if (tomorrowPlan === 'hard' && todayPlan === 'rest') {
+    recs.push({ icon: '📋', text: '<b>Hard session tomorrow.</b> Perfect rest-day prep. Extra carbs tonight, early bed.' });
+  } else if (tomorrowPlan === 'rest') {
+    recs.push({ icon: '📋', text: '<b>Rest day tomorrow.</b> You can push a bit more today knowing recovery time is coming.' });
+  }
+
+  return recs;
+}
+
+// ========================================
 //  COACH VIEW (Coach tab)
 // ========================================
 function renderCoachView() {
+  renderMorningCheckin();
   renderCoachRecoveryPlan();
   renderCoachTraining();
   renderCoachBreathwork();
@@ -12394,6 +12608,26 @@ document.getElementById('dayLabel')?.addEventListener('touchend', function(e) {
   changeDay(0);
 }, { passive: false });
 
+// Swipe-right to close fullpage panels (iOS PWA back gesture)
+document.querySelectorAll('.fullpage').forEach(overlay => {
+  let startX = 0, startY = 0;
+  const scroll = overlay.querySelector('.fullpage-scroll');
+  if (!scroll) return;
+  scroll.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+  scroll.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = Math.abs(e.changedTouches[0].clientY - startY);
+    // Horizontal swipe right > 80px, not too vertical
+    if (dx > 80 && dy < 100) {
+      const backBtn = overlay.querySelector('.fp-back');
+      if (backBtn) backBtn.click();
+    }
+  }, { passive: true });
+});
+
 // ========================================
 //  LIVE ACTIVITIES (timer-based tracking)
 // ========================================
@@ -13067,6 +13301,11 @@ function renderSuggestions() {
 
   const sugs = [];
 
+  // Day plan from morning check-in
+  const todayDate = now.toISOString().slice(0, 10);
+  const sugDayPlan = ST._dayPlan?.date === todayDate ? ST._dayPlan : null;
+  const sugPlannedIntensity = sugDayPlan?.today || null;
+
   // === PRIORITY 1: Active warnings ===
 
   // Active shisha - warn about cutoff
@@ -13115,7 +13354,7 @@ function renderSuggestions() {
 
   // Strain + recovery mismatch (no training suggestions at night)
   const noWorkoutPhases = ['WIND-DOWN', 'NIGHT', 'SLEEP', 'INERTIA'];
-  if (recovery >= 67 && strain < 8 && hwake > 2 && !noWorkoutPhases.includes(currentPhase.name) && !activeSessions.includes('workout')) {
+  if (recovery >= 67 && strain < 8 && hwake > 2 && !noWorkoutPhases.includes(currentPhase.name) && !activeSessions.includes('workout') && sugPlannedIntensity !== 'rest') {
     sugs.push({ icon: '🏋️', title: 'Your body can handle intensity', sub: `Recovery ${recovery}%, strain only ${strain}. Unused capacity = missed adaptation. Push today.`, action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('workout')`, pri: 3 });
   } else if (recovery < 34 && strain > 12) {
     sugs.push({ icon: '⚠️', title: 'Recovery deficit  - active rest only', sub: `Recovery ${recovery}% with strain ${strain}. High acute:chronic workload spikes increase injury risk significantly (Gabbett, BJSM, 2016)`, action: 'Note', cls: 'purple', bg: 'rgba(255,84,112,0.1)', pri: 3 });
@@ -13140,7 +13379,7 @@ function renderSuggestions() {
   }
 
   // High recovery + low strain = optimal day for both training AND business (daytime only)
-  if (recovery >= 80 && strain < 5 && hwake > 1 && hwake < 6 && !noWorkoutPhases.includes(currentPhase.name)) {
+  if (recovery >= 80 && strain < 5 && hwake > 1 && hwake < 6 && !noWorkoutPhases.includes(currentPhase.name) && sugPlannedIntensity !== 'rest') {
     sugs.push({ icon: '🔥', title: 'High-leverage day', sub: `Recovery ${recovery}%  - your body and mind are primed. Stack your hardest training session AND your most important business task today.`, action: 'Plan', cls: 'green', bg: 'rgba(48,217,138,0.08)', pri: 4 });
   }
 
