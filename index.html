@@ -5476,6 +5476,18 @@ function buildSleepFullPage() {
   const deepH = stg.deep;
   const deepOk = deepPct >= 15, remOk = remPct >= 20;
 
+  // Restorative sleep: deep + REM percentage and score
+  const restorPct = deepPct + remPct; // raw % of total sleep
+  // Score: 100 at 40-50%, scales down outside that range
+  let restorScore;
+  if (restorPct >= 40 && restorPct <= 50) restorScore = 100;
+  else if (restorPct >= 35) restorScore = Math.round(80 + (restorPct - 35) * 4);
+  else if (restorPct >= 25) restorScore = Math.round(40 + (restorPct - 25) * 4);
+  else if (restorPct >= 15) restorScore = Math.round(restorPct - 15) * 4;
+  else restorScore = 0;
+  if (restorPct > 50) restorScore = Math.max(80, Math.round(100 - (restorPct - 50) * 3));
+  restorScore = Math.max(0, Math.min(100, restorScore));
+
   const cnsRecovery = deepH >= 1.8 ? 95 : deepH >= 1.4 ? 80 : deepH >= 1.0 ? 60 : 40;
   const muscleRepair = deepH >= 1.5 ? 90 : deepH >= 1.0 ? 70 : 50;
   const motorMemory = stg.rem >= 1.8 ? 95 : stg.rem >= 1.4 ? 75 : 55;
@@ -5525,7 +5537,7 @@ function buildSleepFullPage() {
   }
 
   return `
-    <div style="display:flex;align-items:center;gap:14px;padding:12px 16px 6px;">
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 16px 6px;">
       <div class="sleep-perf-ring">
         <svg viewBox="0 0 120 120">
           <circle cx="60" cy="60" r="52" fill="none" stroke="var(--bg-2)" stroke-width="8"/>
@@ -5535,13 +5547,25 @@ function buildSleepFullPage() {
         </svg>
         <div class="perf-val">
           <div class="perf-num" style="color:${perfColor}">${sleepPerf}%</div>
-          <div class="perf-label">PERFORMANCE</div>
+          <div class="perf-label">SLEEP</div>
+        </div>
+      </div>
+      <div class="sleep-perf-ring" style="width:80px;height:80px;">
+        <svg viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="52" fill="none" stroke="var(--bg-2)" stroke-width="8"/>
+          <circle cx="60" cy="60" r="52" fill="none" stroke="${restorPct >= 35 ? '#c77dff' : restorPct >= 25 ? 'var(--warn)' : 'var(--danger)'}" stroke-width="8"
+            stroke-dasharray="${2 * Math.PI * 52}" stroke-dashoffset="${2 * Math.PI * 52 * (1 - Math.min(100, restorScore) / 100)}"
+            stroke-linecap="round"/>
+        </svg>
+        <div class="perf-val">
+          <div class="perf-num" style="color:${restorPct >= 35 ? '#c77dff' : restorPct >= 25 ? 'var(--warn)' : 'var(--danger)'}; font-size:18px;">${restorScore}%</div>
+          <div class="perf-label" style="font-size:7px;">RESTORATIVE</div>
         </div>
       </div>
       <div style="flex:1;">
         <div style="font-size:22px;font-weight:900;letter-spacing:-0.5px;color:var(--sleep)">${fmtH(sl.totalH)}</div>
         <div style="font-size:10px;color:var(--text-3);margin-top:1px;">${fmtTime(sl.sleepStart)} – ${fmtTime(sl.sleepEnd)}</div>
-        <div style="display:flex;gap:14px;margin-top:6px;">
+        <div style="display:flex;gap:12px;margin-top:6px;">
           <div>
             <div style="font-size:8px;color:var(--text-4);letter-spacing:0.5px;">NEEDED</div>
             <div style="font-size:14px;font-weight:700;color:${sl.totalH >= sleepNeeded ? 'var(--energy)' : 'var(--warn)'}">${fmtH(sleepNeeded)}</div>
@@ -5629,6 +5653,31 @@ function buildSleepFullPage() {
         <div class="fp-row"><span class="fp-row-label" style="color:var(--text-4)">Base Need</span><span class="fp-row-val" style="color:var(--text-3)">${fmtH(target)}</span></div>
         ${strainAdd > 0 ? '<div class="fp-row"><span class="fp-row-label" style="color:var(--strain)">Recent Strain</span><span class="fp-row-val" style="color:var(--strain)">+' + fmtH(strainAdd) + '</span></div>' : ''}
         ${debtAdd > 0 ? '<div class="fp-row"><span class="fp-row-label" style="color:var(--text-4)">Sleep Debt</span><span class="fp-row-val" style="color:var(--text-3)">+' + fmtH(debtAdd) + '</span></div>' : ''}
+      </div>
+    </div>
+
+    <div class="fp-section">
+      <div class="fp-section-title">RESTORATIVE SLEEP</div>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
+        <div style="font-size:28px;font-weight:900;color:${restorPct >= 35 ? '#c77dff' : restorPct >= 25 ? 'var(--warn)' : 'var(--danger)'}">${restorScore}%</div>
+        <div style="flex:1;">
+          <div style="font-size:11px;color:var(--text-3);">${fmtH(stg.deep + stg.rem)} of deep + REM (${restorPct}% of total)</div>
+          <div style="font-size:10px;color:var(--text-4);margin-top:2px;">Typical athletes: 35-50%</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;background:var(--bg-2);border-radius:8px;padding:10px;">
+          <div style="font-size:9px;color:var(--text-4);letter-spacing:0.5px;">DEEP (SWS)</div>
+          <div style="font-size:16px;font-weight:800;color:#5e60ce;margin-top:2px;">${fmtH(stg.deep)}</div>
+          <div style="font-size:9px;color:${deepOk ? 'var(--energy)' : 'var(--warn)'};margin-top:2px;">${deepPct}% ${deepOk ? '- good' : '- low'}</div>
+          <div style="font-size:8px;color:var(--text-4);margin-top:4px;">HGH release, tissue repair</div>
+        </div>
+        <div style="flex:1;background:var(--bg-2);border-radius:8px;padding:10px;">
+          <div style="font-size:9px;color:var(--text-4);letter-spacing:0.5px;">REM</div>
+          <div style="font-size:16px;font-weight:800;color:#c77dff;margin-top:2px;">${fmtH(stg.rem)}</div>
+          <div style="font-size:9px;color:${remOk ? 'var(--energy)' : 'var(--warn)'};margin-top:2px;">${remPct}% ${remOk ? '- good' : '- low'}</div>
+          <div style="font-size:8px;color:var(--text-4);margin-top:4px;">Motor memory, skill retention</div>
+        </div>
       </div>
     </div>
 
