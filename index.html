@@ -5536,46 +5536,56 @@ function buildSleepFullPage() {
     </div>`;
   }
 
+  // Derived target info
+  const need = ST._derivedSleepNeed || {};
+  const targetLabel = need.source === 'hrv-derived' ? 'HRV-derived' : 'manual';
+  const restorColor = restorPct >= 35 ? '#c77dff' : restorPct >= 25 ? 'var(--warn)' : 'var(--danger)';
+
+  // Score bar helper
+  function scoreBar(label, score, color, weight) {
+    const barColor = score >= 75 ? 'var(--energy)' : score >= 50 ? 'var(--warn)' : 'var(--danger)';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;">
+      <span style="font-size:11px;color:var(--text-3);width:76px;">${label}</span>
+      <div style="flex:1;height:6px;background:var(--bg-2);border-radius:3px;overflow:hidden;">
+        <div style="width:${score}%;height:100%;background:${barColor};border-radius:3px;transition:width 0.4s;"></div>
+      </div>
+      <span style="font-size:12px;font-weight:700;color:${barColor};width:36px;text-align:right;">${score}%</span>
+      <span style="font-size:9px;color:var(--text-4);width:22px;text-align:right;">${weight}</span>
+    </div>`;
+  }
+
   return `
-    <div style="display:flex;align-items:center;gap:10px;padding:12px 16px 6px;">
-      <div class="sleep-perf-ring">
-        <svg viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r="52" fill="none" stroke="var(--bg-2)" stroke-width="8"/>
-          <circle cx="60" cy="60" r="52" fill="none" stroke="${perfColor}" stroke-width="8"
-            stroke-dasharray="${2 * Math.PI * 52}" stroke-dashoffset="${2 * Math.PI * 52 * (1 - sleepPerf / 100)}"
-            stroke-linecap="round"/>
-        </svg>
-        <div class="perf-val">
-          <div class="perf-num" style="color:${perfColor}">${sleepPerf}%</div>
-          <div class="perf-label">SLEEP</div>
+    <!-- HERO -->
+    <div style="text-align:center;padding:8px 16px 0;">
+      <div style="font-size:42px;font-weight:900;letter-spacing:-2px;color:#fff;line-height:1;">${fmtH(sl.totalH)}</div>
+      <div style="font-size:11px;color:var(--text-3);margin-top:4px;">${fmtTime(sl.sleepStart)} - ${fmtTime(sl.sleepEnd)}</div>
+      <div style="display:flex;justify-content:center;gap:8px;margin-top:14px;">
+        <div style="background:${perfColor}18;border:1px solid ${perfColor}40;border-radius:100px;padding:6px 14px;display:flex;align-items:center;gap:6px;">
+          <span style="font-size:15px;font-weight:800;color:${perfColor}">${sleepPerf}%</span>
+          <span style="font-size:9px;font-weight:700;letter-spacing:0.8px;color:${perfColor};opacity:0.8;">SLEEP</span>
+        </div>
+        <div style="background:${restorColor}18;border:1px solid ${restorColor}40;border-radius:100px;padding:6px 14px;display:flex;align-items:center;gap:6px;">
+          <span style="font-size:15px;font-weight:800;color:${restorColor}">${restorScore}%</span>
+          <span style="font-size:9px;font-weight:700;letter-spacing:0.8px;color:${restorColor};opacity:0.8;">RESTORATIVE</span>
         </div>
       </div>
-      <div class="sleep-perf-ring" style="width:80px;height:80px;">
-        <svg viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r="52" fill="none" stroke="var(--bg-2)" stroke-width="8"/>
-          <circle cx="60" cy="60" r="52" fill="none" stroke="${restorPct >= 35 ? '#c77dff' : restorPct >= 25 ? 'var(--warn)' : 'var(--danger)'}" stroke-width="8"
-            stroke-dasharray="${2 * Math.PI * 52}" stroke-dashoffset="${2 * Math.PI * 52 * (1 - Math.min(100, restorScore) / 100)}"
-            stroke-linecap="round"/>
-        </svg>
-        <div class="perf-val">
-          <div class="perf-num" style="color:${restorPct >= 35 ? '#c77dff' : restorPct >= 25 ? 'var(--warn)' : 'var(--danger)'}; font-size:18px;">${restorScore}%</div>
-          <div class="perf-label" style="font-size:7px;">RESTORATIVE</div>
+      <div style="display:flex;justify-content:center;gap:16px;margin-top:12px;">
+        <div style="text-align:center;">
+          <div style="font-size:8px;color:var(--text-4);letter-spacing:0.5px;">EFFICIENCY</div>
+          <div style="font-size:15px;font-weight:700;color:#fff;margin-top:1px;">${efficiency}%</div>
+        </div>
+        <div style="width:1px;background:var(--card-border);"></div>
+        <div style="text-align:center;">
+          <div style="font-size:8px;color:var(--text-4);letter-spacing:0.5px;">NEEDED</div>
+          <div style="font-size:15px;font-weight:700;color:${sl.totalH >= sleepNeeded ? 'var(--energy)' : 'var(--warn)'};margin-top:1px;">${fmtH(sleepNeeded)}</div>
+        </div>
+        <div style="width:1px;background:var(--card-border);"></div>
+        <div style="text-align:center;">
+          <div style="font-size:8px;color:var(--text-4);letter-spacing:0.5px;">DEBT</div>
+          <div style="font-size:15px;font-weight:700;color:${debtH > 1 ? 'var(--warn)' : 'var(--energy)'};margin-top:1px;">${fmtH(debtH)}</div>
         </div>
       </div>
-      <div style="flex:1;">
-        <div style="font-size:22px;font-weight:900;letter-spacing:-0.5px;color:var(--sleep)">${fmtH(sl.totalH)}</div>
-        <div style="font-size:10px;color:var(--text-3);margin-top:1px;">${fmtTime(sl.sleepStart)} – ${fmtTime(sl.sleepEnd)}</div>
-        <div style="display:flex;gap:12px;margin-top:6px;">
-          <div>
-            <div style="font-size:8px;color:var(--text-4);letter-spacing:0.5px;">NEEDED</div>
-            <div style="font-size:14px;font-weight:700;color:${sl.totalH >= sleepNeeded ? 'var(--energy)' : 'var(--warn)'}">${fmtH(sleepNeeded)}</div>
-          </div>
-          <div>
-            <div style="font-size:8px;color:var(--text-4);letter-spacing:0.5px;">EFFICIENCY</div>
-            <div style="font-size:14px;font-weight:700;">${efficiency}%</div>
-          </div>
-        </div>
-      </div>
+      <div style="font-size:10px;color:var(--text-4);margin-top:10px;">Your need: ${fmtH(target)} <span style="opacity:0.6">(${targetLabel})</span></div>
     </div>
 
     ${sl.totalH < 5 ? `
@@ -5610,30 +5620,18 @@ function buildSleepFullPage() {
       </div>
     </div>` : ''}
 
-    <div class="fp-insight-box ${insightClass}">
-      <div class="fp-insight-title">${insightTitle}</div>
-      <div class="fp-insight-text">${insightText}</div>
-    </div>
-
+    <!-- SCORE BREAKDOWN -->
     <div class="fp-section">
-      <div class="fp-section-title">ESTIMATED HR DURING SLEEP <span style="font-size:9px;font-weight:500;letter-spacing:0;color:var(--text-4);text-transform:none;margin-left:6px;">(modeled from stages)</span></div>
-      ${hrCurve}
-      <div class="sleep-tl-time-row" style="margin-top:4px;"><span>${fmtTime(sl.sleepStart)}</span><span>${fmtTime(sl.sleepEnd)}</span></div>
-      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-4);">
-        <span>TYPICAL RANGE</span>
-        <span>DURATION ${fmtH(sl.totalH)}</span>
-      </div>
+      <div class="fp-section-title">SCORE BREAKDOWN</div>
+      ${scoreBar('Duration', ss.duration, '', '35w')}
+      ${scoreBar('Efficiency', ss.efficiency, '', '25w')}
+      ${scoreBar('Quality', ss.quality, '', '25w')}
+      ${scoreBar('Consistency', ss.consistency, '', '15w')}
     </div>
 
-    <div class="fp-section" style="padding:12px 14px;">
-      ${stageBar('AWAKE', 'rgba(255,255,255,0.5)', stg.awake, awakePct, 2, 8, 'awake')}
-      ${stageBar('LIGHT', '#4da9ff', stg.core, corePct, 40, 55, 'light')}
-      ${stageBar('SWS (DEEP)', '#5e60ce', stg.deep, deepPct, 15, 25, 'deep')}
-      ${stageBar('REM', '#c77dff', stg.rem, remPct, 20, 30, 'rem')}
-    </div>
-
+    <!-- STAGES -->
     <div class="fp-section">
-      <div class="fp-section-title">SLEEP STAGES <span style="font-size:9px;font-weight:500;letter-spacing:0;color:var(--text-4);text-transform:none;margin-left:6px;">(estimated from totals)</span></div>
+      <div class="fp-section-title">SLEEP STAGES</div>
       <div class="sleep-timeline" id="sleepTimeline">${buildSleepTimeline(stg, sl.totalH)}</div>
       <div class="sleep-tl-legend" id="sleepTlLegend">
         <button class="sleep-tl-btn" style="color:#5e60ce" onclick="highlightSleepStage('deep')" data-stage="deep">Deep</button>
@@ -5642,65 +5640,78 @@ function buildSleepFullPage() {
         <button class="sleep-tl-btn" style="color:rgba(255,255,255,0.5)" onclick="highlightSleepStage('awake')" data-stage="awake">Awake</button>
         <button class="sleep-tl-btn active" style="color:var(--text-2)" onclick="highlightSleepStage(null)">All</button>
       </div>
-    </div>
-
-    <div class="fp-section">
-      <div class="fp-section-title">HOURS VS. NEEDED</div>
-      <div style="font-size:20px;font-weight:800;color:${pct >= 85 ? 'var(--energy)' : pct >= 70 ? 'var(--warn)' : 'var(--danger)'}">${pct}%</div>
-      <div class="fp-row" style="margin-top:8px;"><span class="fp-row-label">Hours of Sleep</span><span class="fp-row-val" style="color:var(--sleep)">${fmtH(sl.totalH)}</span></div>
-      <div class="fp-row"><span class="fp-row-label">Sleep Needed</span><span class="fp-row-val">${fmtH(sleepNeeded)}</span></div>
-      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
-        <div class="fp-row"><span class="fp-row-label" style="color:var(--text-4)">Base Need</span><span class="fp-row-val" style="color:var(--text-3)">${fmtH(target)}</span></div>
-        ${strainAdd > 0 ? '<div class="fp-row"><span class="fp-row-label" style="color:var(--strain)">Recent Strain</span><span class="fp-row-val" style="color:var(--strain)">+' + fmtH(strainAdd) + '</span></div>' : ''}
-        ${debtAdd > 0 ? '<div class="fp-row"><span class="fp-row-label" style="color:var(--text-4)">Sleep Debt</span><span class="fp-row-val" style="color:var(--text-3)">+' + fmtH(debtAdd) + '</span></div>' : ''}
-      </div>
-    </div>
-
-    <div class="fp-section">
-      <div class="fp-section-title">RESTORATIVE SLEEP</div>
-      <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
-        <div style="font-size:28px;font-weight:900;color:${restorPct >= 35 ? '#c77dff' : restorPct >= 25 ? 'var(--warn)' : 'var(--danger)'}">${restorScore}%</div>
-        <div style="flex:1;">
-          <div style="font-size:11px;color:var(--text-3);">${fmtH(stg.deep + stg.rem)} of deep + REM (${restorPct}% of total)</div>
-          <div style="font-size:10px;color:var(--text-4);margin-top:2px;">Typical athletes: 35-50%</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
+        <div style="background:var(--bg-2);border-radius:10px;padding:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <span style="font-size:10px;font-weight:700;color:#5e60ce;letter-spacing:0.5px;">DEEP</span>
+            <span style="font-size:16px;font-weight:800;color:#fff;">${Math.floor(stg.deep)}:${String(Math.round((stg.deep % 1) * 60)).padStart(2, '0')}</span>
+          </div>
+          <div style="height:4px;background:rgba(94,96,206,0.15);border-radius:2px;margin-top:8px;overflow:hidden;">
+            <div style="width:${Math.min(100, deepPct / 25 * 100)}%;height:100%;background:#5e60ce;border-radius:2px;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;">
+            <span style="font-size:9px;color:${deepOk ? 'var(--energy)' : 'var(--warn)'}">${deepPct}%</span>
+            <span style="font-size:9px;color:var(--text-4)">15-25%</span>
+          </div>
+        </div>
+        <div style="background:var(--bg-2);border-radius:10px;padding:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <span style="font-size:10px;font-weight:700;color:#c77dff;letter-spacing:0.5px;">REM</span>
+            <span style="font-size:16px;font-weight:800;color:#fff;">${Math.floor(stg.rem)}:${String(Math.round((stg.rem % 1) * 60)).padStart(2, '0')}</span>
+          </div>
+          <div style="height:4px;background:rgba(199,125,255,0.15);border-radius:2px;margin-top:8px;overflow:hidden;">
+            <div style="width:${Math.min(100, remPct / 30 * 100)}%;height:100%;background:#c77dff;border-radius:2px;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;">
+            <span style="font-size:9px;color:${remOk ? 'var(--energy)' : 'var(--warn)'}">${remPct}%</span>
+            <span style="font-size:9px;color:var(--text-4)">20-30%</span>
+          </div>
+        </div>
+        <div style="background:var(--bg-2);border-radius:10px;padding:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <span style="font-size:10px;font-weight:700;color:#4da9ff;letter-spacing:0.5px;">LIGHT</span>
+            <span style="font-size:16px;font-weight:800;color:#fff;">${Math.floor(stg.core)}:${String(Math.round((stg.core % 1) * 60)).padStart(2, '0')}</span>
+          </div>
+          <div style="height:4px;background:rgba(77,169,255,0.15);border-radius:2px;margin-top:8px;overflow:hidden;">
+            <div style="width:${Math.min(100, corePct / 55 * 100)}%;height:100%;background:#4da9ff;border-radius:2px;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;">
+            <span style="font-size:9px;color:var(--text-3)">${corePct}%</span>
+            <span style="font-size:9px;color:var(--text-4)">40-55%</span>
+          </div>
+        </div>
+        <div style="background:var(--bg-2);border-radius:10px;padding:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <span style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:0.5px;">AWAKE</span>
+            <span style="font-size:16px;font-weight:800;color:#fff;">${Math.floor(stg.awake)}:${String(Math.round((stg.awake % 1) * 60)).padStart(2, '0')}</span>
+          </div>
+          <div style="height:4px;background:rgba(255,255,255,0.06);border-radius:2px;margin-top:8px;overflow:hidden;">
+            <div style="width:${Math.min(100, awakePct / 8 * 100)}%;height:100%;background:rgba(255,255,255,0.25);border-radius:2px;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;">
+            <span style="font-size:9px;color:${awakePct <= 8 ? 'var(--text-3)' : 'var(--warn)'}">${awakePct}%</span>
+            <span style="font-size:9px;color:var(--text-4)">2-8%</span>
+          </div>
         </div>
       </div>
-      <div style="display:flex;gap:8px;">
-        <div style="flex:1;background:var(--bg-2);border-radius:8px;padding:10px;">
-          <div style="font-size:9px;color:var(--text-4);letter-spacing:0.5px;">DEEP (SWS)</div>
-          <div style="font-size:16px;font-weight:800;color:#5e60ce;margin-top:2px;">${fmtH(stg.deep)}</div>
-          <div style="font-size:9px;color:${deepOk ? 'var(--energy)' : 'var(--warn)'};margin-top:2px;">${deepPct}% ${deepOk ? '- good' : '- low'}</div>
-          <div style="font-size:8px;color:var(--text-4);margin-top:4px;">HGH release, tissue repair</div>
-        </div>
-        <div style="flex:1;background:var(--bg-2);border-radius:8px;padding:10px;">
-          <div style="font-size:9px;color:var(--text-4);letter-spacing:0.5px;">REM</div>
-          <div style="font-size:16px;font-weight:800;color:#c77dff;margin-top:2px;">${fmtH(stg.rem)}</div>
-          <div style="font-size:9px;color:${remOk ? 'var(--energy)' : 'var(--warn)'};margin-top:2px;">${remPct}% ${remOk ? '- good' : '- low'}</div>
-          <div style="font-size:8px;color:var(--text-4);margin-top:4px;">Motor memory, skill retention</div>
-        </div>
+    </div>
+
+    <!-- TONIGHT -->
+    <div class="fp-section">
+      <div class="fp-section-title">TONIGHT</div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px;">
+        <span style="font-size:28px;font-weight:900;color:var(--energy);">${minToTime(idealBedMin)}</span>
+        <span style="font-size:11px;color:var(--text-3);">asleep by</span>
       </div>
-    </div>
-
-    <div class="fp-section">
-      <div class="fp-section-title">ATHLETIC RECOVERY FROM SLEEP</div>
-      <div class="fp-system-card"><div class="fp-system-icon">&#129504;</div><div class="fp-system-info"><div class="fp-system-name">CNS Recovery</div><div class="fp-system-status" style="color:${cnsRecovery >= 80 ? 'var(--energy)' : cnsRecovery >= 60 ? 'var(--warn)' : 'var(--danger)'}">${cnsRecovery}%</div></div></div>
-      <div class="fp-system-card"><div class="fp-system-icon">&#128170;</div><div class="fp-system-info"><div class="fp-system-name">Muscle Repair</div><div class="fp-system-status" style="color:${muscleRepair >= 80 ? 'var(--energy)' : muscleRepair >= 60 ? 'var(--warn)' : 'var(--danger)'}">${muscleRepair}%</div></div></div>
-      <div class="fp-system-card"><div class="fp-system-icon">&#129460;</div><div class="fp-system-info"><div class="fp-system-name">Tendon Recovery</div><div class="fp-system-status" style="color:${tendonRecovery >= 80 ? 'var(--energy)' : tendonRecovery >= 60 ? 'var(--warn)' : 'var(--danger)'}">${tendonRecovery}%</div></div></div>
-      <div class="fp-system-card"><div class="fp-system-icon">&#127919;</div><div class="fp-system-info"><div class="fp-system-name">Motor Memory</div><div class="fp-system-status" style="color:${motorMemory >= 80 ? 'var(--energy)' : motorMemory >= 60 ? 'var(--warn)' : 'var(--danger)'}">${motorMemory}%</div></div></div>
-      <div class="fp-system-card"><div class="fp-system-icon">&#9889;</div><div class="fp-system-info"><div class="fp-system-name">Hormonal Balance</div><div class="fp-system-status" style="color:${hormonal >= 80 ? 'var(--energy)' : hormonal >= 60 ? 'var(--warn)' : 'var(--danger)'}">${hormonal}%</div></div></div>
-    </div>
-
-    <div class="fp-section">
-      <div class="fp-section-title">TONIGHT'S PLAN</div>
-      <div class="fp-row"><span class="fp-row-label">Asleep by</span><span class="fp-row-val" style="color:var(--energy);font-size:16px">${minToTime(idealBedMin)}</span></div>
       <div class="fp-row"><span class="fp-row-label">Target duration</span><span class="fp-row-val">${fmtH(sleepNeeded)}</span></div>
       <div class="fp-row"><span class="fp-row-label">Room temp</span><span class="fp-row-val">18-19C</span></div>
       <div class="fp-row"><span class="fp-row-label">Shisha cutoff</span><span class="fp-row-val">${minToTime(idealBedMin - 180 < 0 ? idealBedMin - 180 + 1440 : idealBedMin - 180)}</span></div>
-      <div class="fp-row"><span class="fp-row-label">Energy Caps cutoff</span><span class="fp-row-val">${minToTime(Math.round((ST.profile.wakeMin/60 + 6.5) % 24 * 60))}</span></div>
+      <div class="fp-row"><span class="fp-row-label">Caffeine cutoff</span><span class="fp-row-val">${minToTime(Math.round((ST.profile.wakeMin/60 + 6.5) % 24 * 60))}</span></div>
     </div>
 
+    <!-- COACHING -->
     <div class="fp-section">
-      <div class="fp-section-title">SLEEP COACHING</div>
+      <div class="fp-section-title">COACHING</div>
       ${buildSleepCoaching(sl, stg, debtH, pct)}
     </div>
   `;
