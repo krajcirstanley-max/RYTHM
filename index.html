@@ -5462,14 +5462,15 @@ function buildSleepFullPage() {
   const awakePct = Math.round(stg.awake / total * 100);
 
   const strain = computeStrain();
-  // Sleep need = baseline + strain surcharge + debt repayment
-  // WHOOP-style: high strain days need more sleep
   const strainAdd = strain > 14 ? 1.0 : strain > 10 ? 0.5 : strain > 6 ? 0.25 : 0;
-  const debtAdd = Math.min(1.0, debtH > 0 ? debtH * 0.3 : 0); // repay 30% of debt
+  const debtAdd = Math.min(1.0, debtH > 0 ? debtH * 0.3 : 0);
+  // "Needed" for display = HRV-derived target + adjustments (aspirational)
   const sleepNeeded = +(target + strainAdd + debtAdd).toFixed(1);
-  // Sleep performance = actual vs needed (Whoop's key metric)
-  const sleepPerf = pct; // composite score is the performance metric now
-  let idealBedMin = ST.profile.wakeMin - Math.round(sleepNeeded * 60) - 15;
+  const sleepPerf = pct;
+  // Bedtime uses manual target (realistic, matches your routine)
+  const manualTarget = (ST.health && ST.health.sleepTarget) || 8;
+  const bedtimeNeed = +(manualTarget + strainAdd + debtAdd).toFixed(1);
+  let idealBedMin = ST.profile.wakeMin - Math.round(bedtimeNeed * 60) - 15;
   if (idealBedMin < 0) idealBedMin += 1440;
 
   const efficiency = sl.efficiency || 89;
@@ -10825,10 +10826,10 @@ function renderSleepBreakdown() {
   const todayDebt = (ST.sleepDebt || []).find(d => d.date === today);
   const debtH = todayDebt ? todayDebt.debtH : 0;
 
-  // Tonight recommendation
-  const target = ss.personalTarget;
+  // Tonight recommendation - uses manual target for realistic bedtime
+  const manualTgt = (ST.health && ST.health.sleepTarget) || 8;
   const strain = computeStrain();
-  const sleepNeeded = +(target + (strain > 14 ? 1.0 : strain > 10 ? 0.5 : 0) + (debtH > 1 ? 0.5 : 0)).toFixed(1);
+  const sleepNeeded = +(manualTgt + (strain > 14 ? 1.0 : strain > 10 ? 0.5 : 0) + (debtH > 1 ? 0.5 : 0)).toFixed(1);
   let idealBedMin = ST.profile.wakeMin - Math.round(sleepNeeded * 60) - 15;
   if (idealBedMin < 0) idealBedMin += 1440;
   const idealBed = minToTime(idealBedMin);
