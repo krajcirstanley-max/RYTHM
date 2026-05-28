@@ -3513,7 +3513,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v126';
+const APP_VERSION = 'v127';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -3980,8 +3980,8 @@ function energyAt(h) {
   //    Short or poor sleep depresses the entire curve, especially peaks
   const sl = ST.sleep || {};
   if (sl.totalH > 0) {
-    const sleepTarget = ST.health?.sleepTarget || 8;
-    const deficit = sleepTarget - sl.totalH;
+    const sleepNeed = derivePersonalSleepNeed();
+    const deficit = sleepNeed - sl.totalH;
     if (deficit > 0) {
       // Each hour of sleep deficit costs 5-8% of energy (Van Dongen 2003)
       // Bigger impact on peaks (high energy) than on troughs
@@ -4249,6 +4249,156 @@ function phaseAt(h) {
 }
 
 // ========================================
+//  PERSONAL SLEEP NEED (HRV-derived)
+// ========================================
+function derivePersonalSleepNeed() {
+  // Cross-reference sleep duration with next-morning HRV to find YOUR optimal sleep
+  // Needs 14+ days of paired (sleep, next-morning HRV) data
+  const hrvHist = (ST._history && ST._history.hrv) || [];
+  const sleepHist = (ST._history && ST._history.sleep) || [];
+  const hrvBase = ST.metrics?.hrvBaseline || 42;
+  const fallback = (ST.health && ST.health.sleepTarget) || 8;
+
+  if (hrvHist.length < 14 || sleepHist.length < 14) {
+    ST._derivedSleepNeed = { hours: fallback, confidence: 'low', source: 'manual' };
+    return fallback;
+  }
+
+  // Build date-indexed lookups
+  const sleepByDate = {};
+  for (const s of sleepHist) sleepByDate[s.date] = s.value;
+  const hrvByDate = {};
+  for (const h of hrvHist) hrvByDate[h.date] = h.value;
+
+  // Pair each night's sleep with next morning's HRV
+  const pairs = [];
+  for (const s of sleepHist) {
+    if (!s.value || s.value < 3) continue; // skip bad data
+    const nextDay = new Date(s.date + 'T12:00:00');
+    nextDay.setDate(nextDay.getDate() + 1);
+    const nextStr = nextDay.toISOString().slice(0, 10);
+    const hrvVal = hrvByDate[nextStr];
+    if (hrvVal && hrvVal > 0) {
+      pairs.push({ sleepH: s.value, hrvRatio: hrvVal / hrvBase });
+    }
+  }
+
+  if (pairs.length < 10) {
+    ST._derivedSleepNeed = { hours: fallback, confidence: 'low', source: 'manual' };
+    return fallback;
+  }
+
+  // Bucket by 30-min intervals: 5.5, 6.0, 6.5 ... 10.0
+  const buckets = {};
+  for (const p of pairs) {
+    const bucket = Math.floor(p.sleepH * 2) / 2;
+    const key = bucket.toFixed(1);
+    if (!buckets[key]) buckets[key] = [];
+    buckets[key].push(p.hrvRatio);
+  }
+
+  // Find bucket with highest avg HRV ratio (need 3+ samples)
+  let bestH = fallback, bestRatio = 0;
+  for (const [hStr, ratios] of Object.entries(buckets)) {
+    if (ratios.length < 3) continue;
+    const avg = ratios.reduce((a, b) => a + b, 0) / ratios.length;
+    if (avg > bestRatio) {
+      bestRatio = avg;
+      bestH = parseFloat(hStr) + 0.25; // center of bucket
+    }
+  }
+
+  // Clamp to sane range (6-10h)
+  bestH = Math.max(6, Math.min(10, Math.round(bestH * 2) / 2));
+
+  const confidence = pairs.length >= 21 ? 'high' : 'moderate';
+  ST._derivedSleepNeed = { hours: bestH, confidence, source: 'hrv-derived', samples: pairs.length };
+  return bestH;
+}
+
+// ========================================
+//  COMPOSITE SLEEP SCORE
+// ========================================
+function computeSleepScore(sleepData) {
+  // Quality over quantity: Duration 35%, Efficiency 25%, Quality 25%, Consistency 15%
+  const sl = sleepData || ST.sleep || { totalH: 0 };
+  const stg = sl.stages || { deep: 0, rem: 0, core: 0, awake: 0 };
+  const target = derivePersonalSleepNeed();
+
+  // --- Duration sub-score (35%) ---
+  // Non-linear: 100 at target, small plateau above, drops for chronic oversleep
+  let durScore = 0;
+  if (sl.totalH > 0) {
+    const ratio = sl.totalH / target;
+    if (ratio >= 1.0) {
+      const excess = sl.totalH - target;
+      if (excess <= 1.0) durScore = 100;
+      else durScore = Math.max(70, 100 - (excess - 1.0) * 15);
+    } else {
+      // Below target: power curve (steeper penalty for bigger deficits)
+      durScore = Math.max(0, Math.round(100 * Math.pow(ratio, 1.5)));
+    }
+  }
+
+  // --- Efficiency sub-score (25%) ---
+  // Time in bed that was actual sleep. 85%+ is good, 90%+ is great
+  let effScore = 50; // default when no data
+  const eff = sl.efficiency || 0;
+  if (eff > 0) {
+    if (eff >= 95) effScore = 100;
+    else if (eff >= 90) effScore = 80 + (eff - 90) * 4;
+    else if (eff >= 85) effScore = 60 + (eff - 85) * 4;
+    else if (eff >= 75) effScore = 20 + (eff - 75) * 4;
+    else effScore = Math.max(0, (eff - 55) * 1.3);
+  }
+
+  // --- Quality sub-score (25%) ---
+  // Deep + REM combined. Ideal: 35-50% of total sleep
+  // Deep drives HGH/tissue repair, REM drives motor memory consolidation
+  let qualScore = 50;
+  const totalMin = stg.deep + stg.rem + stg.core + stg.awake;
+  if (totalMin > 0) {
+    const qualPct = (stg.deep + stg.rem) / totalMin * 100;
+    const deepPct = stg.deep / totalMin * 100;
+
+    // Combined quality curve
+    if (qualPct >= 40 && qualPct <= 50) qualScore = 100;
+    else if (qualPct >= 35) qualScore = 85 + (qualPct - 35) * 3;
+    else if (qualPct >= 30) qualScore = 65 + (qualPct - 30) * 4;
+    else if (qualPct >= 20) qualScore = 25 + (qualPct - 20) * 4;
+    else qualScore = Math.max(0, qualPct * 1.25);
+
+    // Athlete-specific: deep sleep 15%+ is critical for recovery
+    if (deepPct >= 20) qualScore = Math.min(100, qualScore + 5);
+    else if (deepPct < 12) qualScore = Math.max(0, qualScore - 10);
+
+    // Clip high end
+    if (qualPct > 50) qualScore = Math.max(80, qualScore - (qualPct - 50) * 2);
+  }
+
+  // --- Consistency sub-score (15%) ---
+  const cons = computeSleepConsistency();
+  const consScore = cons.score;
+
+  // Weighted composite
+  const total_score = Math.round(
+    durScore * 0.35 +
+    effScore * 0.25 +
+    qualScore * 0.25 +
+    consScore * 0.15
+  );
+
+  return {
+    total: Math.max(0, Math.min(100, total_score)),
+    duration: Math.round(durScore),
+    efficiency: Math.round(effScore),
+    quality: Math.round(qualScore),
+    consistency: Math.round(consScore),
+    personalTarget: target
+  };
+}
+
+// ========================================
 //  READINESS (nighttime-based recovery)
 // ========================================
 function computeReadiness(forDate) {
@@ -4293,50 +4443,12 @@ function computeReadiness(forDate) {
   }
   rhrScore = Math.max(0, Math.min(100, rhrScore));
 
-  // === Sleep Component (30%)  - multi-factor nighttime score ===
+  // === Sleep Component (30%) - composite multi-factor score ===
   let sleepScore = r.sleep || 0;
   if (sl.totalH > 0) {
-    const target = ST.health?.sleepTarget || 8;
-    // Duration score: % of target, capped at 100
-    const durationPct = Math.min(100, Math.round(sl.totalH / target * 100));
-
-    // Sleep stage quality bonus (deep + REM should be ~40% of total)
-    let stageBonus = 0;
-    if (sl.stages) {
-      const totalMin = sl.totalH * 60;
-      const deepMin = sl.stages.deep || 0;
-      const remMin = sl.stages.rem || 0;
-      if (totalMin > 0) {
-        const qualityPct = (deepMin + remMin) / totalMin;
-        if (qualityPct >= 0.40) stageBonus = 10;
-        else if (qualityPct >= 0.30) stageBonus = 5;
-        else if (qualityPct < 0.20) stageBonus = -10;
-      }
-    }
-
-    // Sleep efficiency bonus
-    let effBonus = 0;
-    if (sl.efficiency > 0) {
-      if (sl.efficiency >= 90) effBonus = 5;
-      else if (sl.efficiency >= 85) effBonus = 2;
-      else if (sl.efficiency < 75) effBonus = -5;
-    }
-
-    // Consistency bonus (did you go to bed on time?)
-    let consistBonus = 0;
-    if (sl.consistency > 0) {
-      if (sl.consistency >= 80) consistBonus = 3;
-      else if (sl.consistency < 50) consistBonus = -3;
-    }
-
-    // Sleep debt penalty (from accumulated debt)
-    let debtPenalty = 0;
-    const debt = m.sleepDebt || 0;
-    if (debt > 3) debtPenalty = -8;
-    else if (debt > 1.5) debtPenalty = -4;
-    else if (debt > 0.5) debtPenalty = -2;
-
-    sleepScore = Math.max(0, Math.min(100, durationPct + stageBonus + effBonus + consistBonus + debtPenalty));
+    const ss = computeSleepScore(sl);
+    sleepScore = ss.total;
+    ST._sleepScoreBreakdown = ss;
   }
 
   // === Training Load Component (15%) ===
@@ -4444,11 +4556,20 @@ function computeHistoricalReadiness(dateStr) {
     else rhrScore = 0;
   }
 
-  // Sleep score (30%)
+  // Sleep score (30%) - use composite where possible, duration-weighted fallback
   let sleepScore = 50;
   if (sleepEntry && sleepEntry.value > 0) {
-    const target = ST.health?.sleepTarget || 8;
-    sleepScore = Math.min(100, Math.round(sleepEntry.value / target * 100));
+    const target = derivePersonalSleepNeed();
+    const durRatio = sleepEntry.value / target;
+    let durScore;
+    if (durRatio >= 1.0) {
+      const excess = sleepEntry.value - target;
+      durScore = excess <= 1.0 ? 100 : Math.max(70, 100 - (excess - 1.0) * 15);
+    } else {
+      durScore = Math.max(0, Math.round(100 * Math.pow(durRatio, 1.5)));
+    }
+    // Historical: no stage/efficiency data, weight duration higher + assume moderate others
+    sleepScore = Math.round(durScore * 0.55 + 60 * 0.25 + 60 * 0.20);
   }
 
   // Training load score (15%) - use previous day's strain as proxy
@@ -4670,18 +4791,12 @@ function renderThreeRings() {
   const strain = computeStrain();
   const strainPct = Math.min(100, Math.round((strain / 21) * 100));
 
-  // Sleep performance: match sleep detail page (actual / needed including strain surcharge)
+  // Sleep performance: composite score (quality over quantity)
   const sl = ST.sleep || { totalH: 0 };
   let sleepPerf = r.sleep || 0;
   if (sl.totalH > 0) {
-    const target = ST.health?.sleepTarget || 8;
-    const strainAdd = strain > 14 ? 1.0 : strain > 10 ? 0.5 : strain > 6 ? 0.25 : 0;
-    const today = new Date().toISOString().slice(0, 10);
-    const todayDebt = (ST.sleepDebt || []).find(d => d.date === today);
-    const debtH = todayDebt ? todayDebt.debtH : Math.max(0, +(target - sl.totalH).toFixed(1));
-    const debtAdd = Math.min(1.0, debtH > 0 ? debtH * 0.3 : 0);
-    const sleepNeeded = target + strainAdd + debtAdd;
-    sleepPerf = Math.min(100, Math.round((sl.totalH / sleepNeeded) * 100));
+    const ss = ST._sleepScoreBreakdown || computeSleepScore(sl);
+    sleepPerf = ss.total;
   }
 
   const rings = [
@@ -5186,9 +5301,10 @@ function markWatchBatteryDied() {
   ST.sleep.watchDied = true;
   ST.sleep.estimated = true;
 
-  // Recalculate sleep score
-  const target = ST.health?.sleepTarget || 8;
-  ST.readiness.sleep = Math.min(100, Math.max(0, Math.round(estHours / target * 100)));
+  // Recalculate composite sleep score
+  const ss = computeSleepScore(ST.sleep);
+  ST.readiness.sleep = ss.total;
+  ST._sleepScoreBreakdown = ss;
   saveState();
 
   // Reopen with updated data
@@ -5206,7 +5322,7 @@ function buildSleepCoaching(sl, stg, debtH, pct) {
   const total = stg.deep + stg.rem + stg.core + stg.awake || 1;
   const deepPct = Math.round((stg.deep / total) * 100);
   const remPct = Math.round((stg.rem / total) * 100);
-  const target = (ST.health && ST.health.sleepTarget) || 8;
+  const target = derivePersonalSleepNeed();
   const journal = ST.journal || [];
   const todayStr = new Date().toISOString().slice(0, 10);
   const recent7 = journal.filter(j => {
@@ -5331,9 +5447,10 @@ function buildSleepFullPage() {
   const sl = ST.sleep || DEFAULT_STATE.sleep;
   const stg = sl.stages || { deep: 0, rem: 0, core: 0, awake: 0 };
   const total = (stg.deep + stg.rem + stg.core + stg.awake) || 1;
-  const target = (ST.health && ST.health.sleepTarget) || 8;
-  const pct = Math.min(100, Math.round((sl.totalH / target) * 100));
-  const perfColor = pct >= 85 ? 'var(--energy)' : pct >= 70 ? 'var(--warn)' : 'var(--danger)';
+  const ss = ST._sleepScoreBreakdown || computeSleepScore(sl);
+  const target = ss.personalTarget;
+  const pct = ss.total;
+  const perfColor = pct >= 75 ? 'var(--energy)' : pct >= 50 ? 'var(--warn)' : 'var(--danger)';
 
   const today = new Date().toISOString().slice(0,10);
   const todayDebt = (ST.sleepDebt || []).find(d => d.date === today);
@@ -5351,7 +5468,7 @@ function buildSleepFullPage() {
   const debtAdd = Math.min(1.0, debtH > 0 ? debtH * 0.3 : 0); // repay 30% of debt
   const sleepNeeded = +(target + strainAdd + debtAdd).toFixed(1);
   // Sleep performance = actual vs needed (Whoop's key metric)
-  const sleepPerf = Math.min(100, Math.round((sl.totalH / sleepNeeded) * 100));
+  const sleepPerf = pct; // composite score is the performance metric now
   let idealBedMin = ST.profile.wakeMin - Math.round(sleepNeeded * 60) - 15;
   if (idealBedMin < 0) idealBedMin += 1440;
 
@@ -5366,21 +5483,22 @@ function buildSleepFullPage() {
   const hormonal = (deepH >= 1.5 && sl.totalH >= 7.5) ? 90 : (deepH >= 1.0 && sl.totalH >= 7.0) ? 70 : 45;
 
   let insightClass = '', insightTitle = '', insightText = '';
-  if (pct >= 85 && deepOk && remOk) {
+  if (pct >= 75 && deepOk && remOk) {
     insightTitle = 'Excellent Sleep';
     insightText = `${fmtH(sl.totalH)} with ${deepPct}% deep and ${remPct}% REM. CNS is fresh for explosive work. Strong HGH release supports <b>muscle repair</b> and <b>tendon synthesis</b>.`;
-  } else if (pct >= 70) {
+  } else if (pct >= 50) {
     insightClass = 'warn';
     insightTitle = 'Adequate - Room to Improve';
     let factors = [];
     if (!deepOk) factors.push('deep sleep low (' + deepPct + '%)');
     if (!remOk) factors.push('REM under target (' + remPct + '%)');
+    if (ss.efficiency < 60) factors.push('low sleep efficiency');
     if (debtH > 1) factors.push('sleep debt ' + fmtH(debtH));
     insightText = factors.length ? factors.join(', ') + '. Aim for earlier bedtime tonight.' : 'Partial recovery. Earlier bedtime would help.';
   } else {
     insightClass = 'danger';
     insightTitle = 'Sleep is Limiting Performance';
-    insightText = `Only ${fmtH(sl.totalH)}. Athletes sleeping <8h have <b>1.7x higher injury risk</b> (Milewski et al., 2014). Power drops ~10%, reaction time slows 15%. Rest day or very light work only.`;
+    insightText = `Score ${pct}%. Athletes sleeping <8h have <b>1.7x higher injury risk</b> (Milewski et al., 2014). Power drops ~10%, reaction time slows 15%. Rest day or very light work only.`;
   }
 
   const hrCurve = buildSleepHRCurve(stg, sl.totalH);
@@ -5767,9 +5885,10 @@ function setActualWakeTime(wakeMin, btnEl) {
     if (dur < 0) dur += 1440;
     const actualH = +(dur / 60).toFixed(2);
     ST.sleep.totalH = actualH;
-    // Recalc sleep score
-    const target = (ST.health && ST.health.sleepTarget) || 8;
-    ST.readiness.sleep = Math.min(100, Math.max(0, Math.round((actualH / target) * 100)));
+    // Recalc sleep score using composite
+    const ss = computeSleepScore(ST.sleep);
+    ST.readiness.sleep = ss.total;
+    ST._sleepScoreBreakdown = ss;
   }
   ST.sleep.sleepEnd = minToTime(wakeMin);
   saveState();
@@ -10240,7 +10359,17 @@ function renderCoachWeekGrade() {
   // Sleep score (30%)
   const weekSleep = weekDates.map(d => (sleepHist.find(h => h.d === d) || {}).value).filter(v => v != null);
   const avgSleep = weekSleep.length ? weekSleep.reduce((s,v) => s+v, 0) / weekSleep.length : 0;
-  const sleepScore = Math.min(100, Math.round((avgSleep / sleepTarget) * 100));
+  // Non-linear duration scoring for weekly average
+  let sleepScore = 50;
+  if (avgSleep > 0) {
+    const sRatio = avgSleep / sleepTarget;
+    if (sRatio >= 1.0) {
+      const excess = avgSleep - sleepTarget;
+      sleepScore = excess <= 1.0 ? 100 : Math.max(70, 100 - (excess - 1.0) * 15);
+    } else {
+      sleepScore = Math.max(0, Math.round(100 * Math.pow(sRatio, 1.5)));
+    }
+  }
 
   // Recovery score (25%)
   const weekReadiness = weekDates.map(d => (ST._dailyReadiness || {})[d]).filter(v => v != null);
@@ -10384,7 +10513,17 @@ function renderWeeklyScorecard() {
   }
   if (sleepCount === 0 && ST.sleep && ST.sleep.totalH > 0) { sleepTotal = ST.sleep.totalH; sleepCount = 1; }
   const avgSleep = sleepCount > 0 ? sleepTotal / sleepCount : 0;
-  const sleepScore = Math.min(100, Math.round((avgSleep / sleepTarget) * 100));
+  // Non-linear sleep score
+  let sleepScore = 50;
+  if (avgSleep > 0) {
+    const slR = avgSleep / sleepTarget;
+    if (slR >= 1.0) {
+      const exc = avgSleep - sleepTarget;
+      sleepScore = exc <= 1.0 ? 100 : Math.max(70, 100 - (exc - 1.0) * 15);
+    } else {
+      sleepScore = Math.max(0, Math.round(100 * Math.pow(slR, 1.5)));
+    }
+  }
 
   // ---- Component 2: Recovery average (25%) ----
   const dailyR = ST._dailyReadiness || {};
@@ -10448,7 +10587,13 @@ function renderWeeklyScorecard() {
   for (const d of prevWeekDates) { if (dailyR[d]) { prevRecTotal += dailyR[d]; prevRecCount++; } }
   let prevHabits = 0;
   for (const d of prevWeekDates) { if (ST.journal.find(j => j.date === d)) prevHabits++; }
-  const prevSleepScore = prevSleepCount > 0 ? Math.min(100, Math.round((prevSleepTotal / prevSleepCount / sleepTarget) * 100)) : 0;
+  let prevSleepScore = 0;
+  if (prevSleepCount > 0) {
+    const prevAvg = prevSleepTotal / prevSleepCount;
+    const pR = prevAvg / sleepTarget;
+    if (pR >= 1.0) { const ex = prevAvg - sleepTarget; prevSleepScore = ex <= 1.0 ? 100 : Math.max(70, 100 - (ex - 1.0) * 15); }
+    else prevSleepScore = Math.max(0, Math.round(100 * Math.pow(pR, 1.5)));
+  }
   const prevRecoveryScore = prevRecCount > 0 ? Math.round(prevRecTotal / prevRecCount) : 0;
   const prevHabitScore = Math.min(100, Math.round((prevHabits / 7) * 100));
   const prevOverall = prevSleepCount > 0 || prevRecCount > 0
@@ -10606,26 +10751,33 @@ function renderSleepBreakdown() {
   if (!el) return;
 
   const sl = ST.sleep || { totalH: 0, sleepStart: null, sleepEnd: null, stages: { deep: 0, rem: 0, core: 0, awake: 0 }, efficiency: 0, consistency: 0 };
-  const target = (ST.health && ST.health.sleepTarget) || 8;
-  const pct = Math.min(100, Math.round((sl.totalH / target) * 100));
-  const perfColor = pct >= 85 ? 'var(--energy)' : pct >= 70 ? 'var(--warn)' : 'var(--danger)';
-  const perfTag = pct >= 85 ? 'Optimal' : pct >= 70 ? 'Adequate' : 'Low';
-  const perfTagBg = pct >= 85 ? 'rgba(0,236,127,0.10)' : pct >= 70 ? 'rgba(255,181,71,0.10)' : 'rgba(255,84,112,0.10)';
+  const ss = ST._sleepScoreBreakdown || computeSleepScore(sl);
+  const pct = ss.total;
+  const perfColor = pct >= 75 ? 'var(--energy)' : pct >= 50 ? 'var(--warn)' : 'var(--danger)';
+  const perfTag = pct >= 75 ? 'Optimal' : pct >= 50 ? 'Adequate' : 'Low';
+  const perfTagBg = pct >= 75 ? 'rgba(0,236,127,0.10)' : pct >= 50 ? 'rgba(255,181,71,0.10)' : 'rgba(255,84,112,0.10)';
 
   const stg = sl.stages || { deep: 0, rem: 0, core: 0, awake: 0 };
   const total = stg.deep + stg.rem + stg.core + stg.awake || 1;
 
   // Sleep debt from today
   const today = new Date().toISOString().slice(0,10);
-  const todayDebt = ST.sleepDebt.find(d => d.date === today);
+  const todayDebt = (ST.sleepDebt || []).find(d => d.date === today);
   const debtH = todayDebt ? todayDebt.debtH : 0;
 
   // Tonight recommendation
+  const target = ss.personalTarget;
   const strain = computeStrain();
   const sleepNeeded = +(target + (strain > 14 ? 1.0 : strain > 10 ? 0.5 : 0) + (debtH > 1 ? 0.5 : 0)).toFixed(1);
   let idealBedMin = ST.profile.wakeMin - Math.round(sleepNeeded * 60) - 15;
   if (idealBedMin < 0) idealBedMin += 1440;
   const idealBed = minToTime(idealBedMin);
+
+  // Sub-score colors
+  const sColor = v => v >= 75 ? 'var(--energy)' : v >= 50 ? 'var(--warn)' : 'var(--danger)';
+  // Derived target badge
+  const need = ST._derivedSleepNeed || {};
+  const targetLabel = need.source === 'hrv-derived' ? `${target}h (HRV-derived)` : `${target}h`;
 
   el.innerHTML = `
     <div class="sleep-bk-header">
@@ -10648,10 +10800,12 @@ function renderSleepBreakdown() {
       <div class="sleep-leg-item"><div class="sleep-leg-dot" style="background:rgba(255,255,255,0.3)"></div><span class="sleep-leg-label">Awake</span><span class="sleep-leg-val">${fmtH(stg.awake)}</span></div>
     </div>
     <div class="sleep-detail-rows">
-      <div class="sleep-detail-row"><span class="sleep-detail-rl">Sleep Needed</span><span class="sleep-detail-rv">${fmtH(sleepNeeded)}</span></div>
-      <div class="sleep-detail-row"><span class="sleep-detail-rl">Efficiency</span><span class="sleep-detail-rv">${sl.efficiency}%</span></div>
+      <div class="sleep-detail-row"><span class="sleep-detail-rl">Your Need</span><span class="sleep-detail-rv" style="font-size:11px;color:var(--text-2)">${targetLabel}</span></div>
+      <div class="sleep-detail-row"><span class="sleep-detail-rl">Duration</span><span class="sleep-detail-rv" style="color:${sColor(ss.duration)}">${ss.duration}%<span style="font-size:9px;color:var(--text-4);margin-left:4px;">35w</span></span></div>
+      <div class="sleep-detail-row"><span class="sleep-detail-rl">Efficiency</span><span class="sleep-detail-rv" style="color:${sColor(ss.efficiency)}">${ss.efficiency}%<span style="font-size:9px;color:var(--text-4);margin-left:4px;">25w</span></span></div>
+      <div class="sleep-detail-row"><span class="sleep-detail-rl">Quality</span><span class="sleep-detail-rv" style="color:${sColor(ss.quality)}">${ss.quality}%<span style="font-size:9px;color:var(--text-4);margin-left:4px;">25w</span></span></div>
+      <div class="sleep-detail-row"><span class="sleep-detail-rl">Consistency</span><span class="sleep-detail-rv" style="color:${sColor(ss.consistency)}">${ss.consistency}%<span style="font-size:9px;color:var(--text-4);margin-left:4px;">15w</span></span></div>
       <div class="sleep-detail-row"><span class="sleep-detail-rl">Sleep Debt</span><span class="sleep-detail-rv" style="color:${debtH > 1 ? 'var(--warn)' : 'var(--energy)'}">${fmtH(debtH)}</span></div>
-      <div class="sleep-detail-row"><span class="sleep-detail-rl">Consistency</span><span class="sleep-detail-rv">${sl.consistency}%</span></div>
       <div class="sleep-detail-row" style="border-top:1px solid var(--card-border);margin-top:4px;padding-top:12px;">
         <span class="sleep-detail-rl" style="color:#fff;font-weight:600;">Tonight: asleep by</span>
         <span class="sleep-detail-rv" style="color:var(--energy);font-size:15px;">${idealBed}</span>
@@ -13076,7 +13230,14 @@ function loadHistoricalDay(dateStr) {
 
   // Update three rings
   const sleepEntry = hist.sleep ? hist.sleep.find(d => d.date === dateStr) : null;
-  const sleepScore = sleepEntry ? Math.min(100, Math.round(sleepEntry.value / (ST.health?.sleepTarget || 8) * 100)) : null;
+  // Non-linear composite-style scoring for historical sleep
+  let sleepScore = null;
+  if (sleepEntry) {
+    const sTarget = derivePersonalSleepNeed();
+    const sR = sleepEntry.value / sTarget;
+    if (sR >= 1.0) { const ex = sleepEntry.value - sTarget; sleepScore = ex <= 1.0 ? 100 : Math.max(70, 100 - (ex - 1.0) * 15); }
+    else sleepScore = Math.max(0, Math.round(100 * Math.pow(sR, 1.5)));
+  }
   if (sleepScore != null) updateRingValue('sleep', sleepScore);
   updateRingValue('recovery', histReadiness);
   // Strain ring: scale 0-21 to 0-100 for the ring
@@ -14274,9 +14435,10 @@ async function fetchHealthData() {
       if (sd.inBed != null && data.sleep.value != null && Number(sd.inBed) > 0) {
         ST.sleep.efficiency = Math.min(100, Math.round((data.sleep.value / Number(sd.inBed)) * 100));
       }
-      // Update sleep readiness from real data
-      const sleepTarget = ST.health?.sleepTarget || 8;
-      ST.readiness.sleep = Math.min(100, Math.max(0, Math.round((ST.sleep.totalH / sleepTarget) * 100)));
+      // Update sleep readiness from composite score
+      const sleepSS = computeSleepScore(ST.sleep);
+      ST.readiness.sleep = sleepSS.total;
+      ST._sleepScoreBreakdown = sleepSS;
       // Store sleep history for trend-based estimation (watch died)
       if (!ST._sleepHistory) ST._sleepHistory = [];
       const todaySH = new Date().toISOString().slice(0, 10);
@@ -14576,9 +14738,16 @@ function computeSleepConsistency() {
 }
 
 // ========================================
-//  SLEEP DEBT (rolling 14-day tracker)
+//  SLEEP DEBT (non-linear model)
 // ========================================
 function buildSleepDebt() {
+  // Science-based debt model:
+  // - Deficit adds linearly (each lost hour matters)
+  // - Recovery: body clears ~25% of debt per adequate night (exponential decay)
+  // - Surplus payoff: sqrt-scaled diminishing returns (can't bank unlimited sleep)
+  // - Cap at 10h (chronic beyond this = lifestyle change needed, not more sleep)
+  // Note: debt uses manual target (your goal), not HRV-derived optimal
+  // The composite sleep SCORE uses the derived target for scoring quality
   const target = (ST.health && ST.health.sleepTarget) || 8;
   const hist = ST._history && ST._history.sleep ? ST._history.sleep : ST._sleepHistory || [];
   if (!hist.length) return;
@@ -14591,32 +14760,40 @@ function buildSleepDebt() {
     const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
     const entry = hist.find(h => h.date === d);
     let slept = entry ? (entry.totalH || entry.value || 0) : 0;
-    // For today, prefer live sleep data (history may not include it yet)
     if (d === today && slept === 0 && ST.sleep && ST.sleep.totalH > 0) {
       slept = ST.sleep.totalH;
     }
-    // No data ≠ 0 sleep. Skip days with no data (carry forward debt with decay only)
-    const hasData = slept > 0;
-    const deficit = hasData ? Math.max(0, target - slept) : 0;
-    days14.push({ date: d, sleptH: +slept.toFixed(1), deficitH: +deficit.toFixed(1), hasData });
+    days14.push({ date: d, sleptH: +slept.toFixed(1), hasData: slept > 0 });
   }
 
-  // Accumulate debt (decays 10% per day  - body partially repays)
-  // Days with no data: only apply decay (don't add deficit for missing data)
   let debt = 0;
   const debtArr = [];
   for (const day of days14) {
     if (day.hasData) {
-      debt = debt * 0.9 + day.deficitH; // 10% decay + new deficit
+      const diff = day.sleptH - target;
+      if (diff < 0) {
+        // Deficit: add linearly
+        debt += Math.abs(diff);
+      } else if (diff > 0 && debt > 0) {
+        // Surplus: diminishing returns payoff (sqrt-scaled)
+        // 1h extra repays ~0.8h, 4h extra only repays ~1.6h
+        const payoff = Math.sqrt(diff) * 0.8;
+        debt = Math.max(0, debt - payoff);
+      }
+      // Natural clearance: ~25% of remaining debt per adequate night
+      if (diff >= -0.5) {
+        debt *= 0.75;
+      }
     } else {
-      debt = debt * 0.9; // decay only  - no penalty for missing data
+      // No data: small passive decay
+      debt *= 0.95;
     }
+    debt = Math.min(10, Math.max(0, debt));
     debtArr.push({ date: day.date, debtH: +debt.toFixed(1), sleptH: day.sleptH });
   }
 
   ST.sleepDebt = debtArr;
 
-  // Sync metrics.sleepDebt with the computed value so health view matches week view
   if (debtArr.length >= 2) {
     const latest = debtArr[debtArr.length - 1];
     const prev = debtArr[debtArr.length - 2];
@@ -14645,7 +14822,7 @@ function backfillDailyReadiness() {
   const sleepHist = ST._history.sleep || [];
   const hrvBase = ST.metrics.hrvBaseline || 42;
   const rhrBase = ST.metrics.rhrBaseline || 57;
-  const sleepTarget = ST.profile.sleepTarget || 8;
+  const sleepTarget = ST.health?.sleepTarget || 8;
 
   // Build lookup maps by date
   const hrvByDate = {};
@@ -14670,7 +14847,19 @@ function backfillDailyReadiness() {
 
     const hrvScore = hrvVal ? Math.min(100, Math.max(0, Math.round(70 + ((hrvVal / hrvBase) - 1) * 150))) : 50;
     const rhrScore = rhrVal ? Math.min(100, Math.max(0, Math.round(65 + (rhrBase - rhrVal) * 5))) : 50;
-    const sleepScore = sleepVal ? Math.min(100, Math.max(0, Math.round((sleepVal / sleepTarget) * 100))) : 50;
+    // Use non-linear duration scoring (same curve as composite)
+    let sleepScore = 50;
+    if (sleepVal) {
+      const sRatio = sleepVal / sleepTarget;
+      if (sRatio >= 1.0) {
+        const excess = sleepVal - sleepTarget;
+        sleepScore = excess <= 1.0 ? 100 : Math.max(70, 100 - (excess - 1.0) * 15);
+      } else {
+        sleepScore = Math.max(0, Math.round(100 * Math.pow(sRatio, 1.5)));
+      }
+      // Duration-only: weight it more, assume moderate other factors
+      sleepScore = Math.round(sleepScore * 0.55 + 60 * 0.25 + 60 * 0.20);
+    }
     const training = 60; // default mid-range for historical (no live strain data)
 
     const score = Math.round(hrvScore * 0.35 + sleepScore * 0.3 + rhrScore * 0.2 + training * 0.15);
