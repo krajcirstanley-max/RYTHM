@@ -3447,7 +3447,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v130';
+const APP_VERSION = 'v131';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -13255,6 +13255,30 @@ function loadHistoricalDay(dateStr) {
   updateRingValue('recovery', histReadiness);
   // Strain ring: scale 0-21 to 0-100 for the ring
   updateRingValue('strain', Math.min(100, Math.round(histStrain / 21 * 100)));
+
+  // Update strain target card with historical strain
+  const stEl = document.getElementById('strainTarget');
+  if (stEl) {
+    const strainColor = histStrain > 14 ? 'var(--warn)' : histStrain > 6 ? 'var(--energy)' : 'var(--text-2)';
+    const barPct = Math.min(100, Math.round((histStrain / 21) * 100));
+    stEl.innerHTML = `
+      <div class="strain-target-card">
+        <div class="st-top">
+          <div class="st-label">Strain</div>
+          <div class="st-zone" style="background:rgba(255,255,255,0.06);color:var(--text-3)">${dateStr}</div>
+        </div>
+        <div class="st-main">
+          <div class="st-current" style="color:${strainColor}">${histStrain}</div>
+          <div class="st-target">/ 21 max</div>
+        </div>
+        <div class="st-bar-wrap">
+          <div class="st-bar-fill" style="width:${barPct}%;background:${strainColor}"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-4);font-family:'DM Mono',monospace;padding:0 2px;margin-top:4px;">
+          <span>0</span><span>7</span><span>14</span><span>21</span>
+        </div>
+      </div>`;
+  }
 
   // Update My Day timeline to show that day's logs
   const el = document.getElementById('dayTasks');
