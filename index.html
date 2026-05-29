@@ -3447,7 +3447,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v129';
+const APP_VERSION = 'v130';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -5370,11 +5370,15 @@ function openSleepFullPage() {
   document.getElementById('sleepFullContent').innerHTML = buildSleepFullPage();
   page.classList.add('open');
   document.body.style.overflow = 'hidden';
+  history.pushState({ overlay: 'sleep' }, '');
 }
 
-function closeSleepFullPage() {
-  document.getElementById('sleepFullPage').classList.remove('open');
+function closeSleepFullPage(fromPopstate) {
+  const el = document.getElementById('sleepFullPage');
+  if (!el.classList.contains('open')) return;
+  el.classList.remove('open');
   document.body.style.overflow = '';
+  if (!fromPopstate) history.back();
 }
 
 function buildSleepFullPage() {
@@ -5660,11 +5664,15 @@ function openRecoveryFullPage() {
   document.getElementById('recoveryFullContent').innerHTML = buildRecoveryFullPage();
   page.classList.add('open');
   document.body.style.overflow = 'hidden';
+  history.pushState({ overlay: 'recovery' }, '');
 }
 
-function closeRecoveryFullPage() {
-  document.getElementById('recoveryFullPage').classList.remove('open');
+function closeRecoveryFullPage(fromPopstate) {
+  const el = document.getElementById('recoveryFullPage');
+  if (!el.classList.contains('open')) return;
+  el.classList.remove('open');
   document.body.style.overflow = '';
+  if (!fromPopstate) history.back();
 }
 
 function buildRecoveryFullPage() {
@@ -5916,11 +5924,15 @@ function openStressFullPage() {
   document.getElementById('stressFullContent').innerHTML = buildStressFullPage();
   page.classList.add('open');
   document.body.style.overflow = 'hidden';
+  history.pushState({ overlay: 'stress' }, '');
 }
 
-function closeStressFullPage() {
-  document.getElementById('stressFullPage').classList.remove('open');
+function closeStressFullPage(fromPopstate) {
+  const el = document.getElementById('stressFullPage');
+  if (!el.classList.contains('open')) return;
+  el.classList.remove('open');
   document.body.style.overflow = '';
+  if (!fromPopstate) history.back();
 }
 
 function buildStressFullPage() {
@@ -6573,19 +6585,21 @@ function openEnergyFullPage() {
   document.getElementById('energyFullContent').innerHTML = buildEnergyFullPage();
   page.classList.add('open');
   document.body.style.overflow = 'hidden';
-  // Draw the large curve
+  history.pushState({ overlay: 'energy' }, '');
   setTimeout(() => {
     drawCurve('efpCurveSvg', false);
     updateCurveFoot('efpCurveFoot');
-    // Scroll the active phase card into view
     const active = document.querySelector('.efp-phase-card.efp-active');
     if (active) active.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, 50);
 }
 
-function closeEnergyFullPage() {
-  document.getElementById('energyFullPage').classList.remove('open');
+function closeEnergyFullPage(fromPopstate) {
+  const el = document.getElementById('energyFullPage');
+  if (!el.classList.contains('open')) return;
+  el.classList.remove('open');
   document.body.style.overflow = '';
+  if (!fromPopstate) history.back();
 }
 
 function buildEnergyFullPage() {
@@ -11729,11 +11743,15 @@ function openDetail(type) {
   content.innerHTML = buildDetailContent(type);
   overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
+  history.pushState({ overlay: 'detail' }, '');
 }
 
-function closeDetail() {
-  document.getElementById('detailOverlay').classList.remove('open');
+function closeDetail(fromPopstate) {
+  const el = document.getElementById('detailOverlay');
+  if (!el.classList.contains('open')) return;
+  el.classList.remove('open');
   document.body.style.overflow = '';
+  if (!fromPopstate) history.back();
 }
 
 function buildDetailContent(type) {
@@ -13012,8 +13030,8 @@ function toggleTag(tag, el) {
   else { selectedTags.add(tag); el.classList.add('selected'); }
 }
 
-function openLog() { document.getElementById('logModal').classList.add('open'); }
-function closeLog() { document.getElementById('logModal').classList.remove('open'); }
+function openLog() { document.getElementById('logModal').classList.add('open'); history.pushState({ overlay: 'log' }, ''); }
+function closeLog(fromPopstate) { const el = document.getElementById('logModal'); if (!el.classList.contains('open')) return; el.classList.remove('open'); if (!fromPopstate) history.back(); }
 
 function submitLog() {
   const timeInput = document.getElementById('logTimeInput').value;
@@ -13354,6 +13372,19 @@ function showView(name) {
 
 document.querySelectorAll('[data-view]').forEach(el => {
   el.addEventListener('click', () => showView(el.dataset.view));
+});
+
+// PWA back button: close overlays on system back gesture / hardware back
+window.addEventListener('popstate', function(e) {
+  // Close whichever overlay is open (check in order of likely stacking)
+  if (document.getElementById('trendFullPage')?.classList.contains('open')) { closeTrendDetail(true); return; }
+  if (document.getElementById('detailOverlay')?.classList.contains('open')) { closeDetail(true); return; }
+  if (document.getElementById('sleepFullPage')?.classList.contains('open')) { closeSleepFullPage(true); return; }
+  if (document.getElementById('recoveryFullPage')?.classList.contains('open')) { closeRecoveryFullPage(true); return; }
+  if (document.getElementById('stressFullPage')?.classList.contains('open')) { closeStressFullPage(true); return; }
+  if (document.getElementById('energyFullPage')?.classList.contains('open')) { closeEnergyFullPage(true); return; }
+  // Modal (quick log)
+  if (document.getElementById('logModal')?.classList.contains('open')) { closeLog(true); return; }
 });
 
 // iOS PWA back-button fix: prevent rubber-band overscroll from swallowing touches
@@ -15208,11 +15239,15 @@ function openTrendDetail(key) {
   document.getElementById('trendFullContent').innerHTML = buildTrendFullPage(key);
   page.classList.add('open');
   document.body.style.overflow = 'hidden';
+  history.pushState({ overlay: 'trend' }, '');
 }
 
-function closeTrendDetail() {
-  document.getElementById('trendFullPage').classList.remove('open');
+function closeTrendDetail(fromPopstate) {
+  const el = document.getElementById('trendFullPage');
+  if (!el.classList.contains('open')) return;
+  el.classList.remove('open');
   document.body.style.overflow = '';
+  if (!fromPopstate) history.back();
 }
 
 function buildTrendFullPage(key) {
