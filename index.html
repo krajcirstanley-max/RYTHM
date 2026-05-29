@@ -192,8 +192,8 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .ring-name-row {
   margin-top: 4px;
   display: flex; align-items: center; gap: 3px;
-  font-size: 9px; font-weight: 800; letter-spacing: 1.4px;
-  color: var(--text-3); text-transform: uppercase;
+  font-size: 9px; font-weight: 700; letter-spacing: 1.2px;
+  color: var(--text-3); text-transform: uppercase; 
 }
 .ring-name-row .arrow { width: 10px; height: 10px; opacity: 0.6; }
 .ring-pos { position: relative; }
@@ -217,7 +217,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   margin-bottom: 14px; padding-bottom: 12px;
   border-bottom: 1px solid var(--card-border);
 }
-.rd-title { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-3); text-transform: uppercase; }
+.rd-title { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-3);  }
 .rd-score { font-size: 24px; font-weight: 800; letter-spacing: -1px; }
 .rd-score .rd-unit { font-size: 12px; font-weight: 600; color: var(--text-4); }
 .rd-row {
@@ -225,7 +225,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   padding: 8px 0;
 }
 .rd-row-label { font-size: 13px; color: var(--text-3); display: flex; align-items: center; gap: 8px; }
-.rd-row-val { font-size: 14px; font-weight: 700; font-family: 'DM Mono', monospace; color: #fff; }
+.rd-row-val { font-size: 14px; font-weight: 700; color: #fff; }
 .rd-bar-wrap { flex: 1; margin: 0 14px; height: 4px; border-radius: 2px; background: var(--card-border); }
 .rd-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
 .rd-msg {
@@ -238,7 +238,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   padding: 7px 0;
 }
 .rd-sub-label { font-size: 12px; color: var(--text-3); }
-.rd-sub-val { font-size: 13px; font-weight: 700; font-family: 'DM Mono', monospace; text-align: right; }
+.rd-sub-val { font-size: 13px; font-weight: 700; text-align: right; }
 
 /* PRIMARY CARD */
 .primary-card {
@@ -280,7 +280,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .monitor-top {
   display: flex; justify-content: space-between; align-items: center;
   font-size: 9px; font-weight: 700; letter-spacing: 1px;
-  color: var(--text-3); text-transform: uppercase; margin-bottom: 10px;
+  color: var(--text-3);  margin-bottom: 10px;
 }
 .monitor-top .arr { width: 11px; height: 11px; opacity: 0.4; }
 .monitor-val-row { display: flex; align-items: center; gap: 10px; }
@@ -290,8 +290,8 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .monitor-dot.red { background: var(--danger); box-shadow: 0 0 8px rgba(255,84,112,0.45); }
 .monitor-check { width: 16px; height: 16px; flex-shrink: 0; }
 .monitor-val-text { display: flex; flex-direction: column; }
-.monitor-val { font-size: 12px; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.3px; }
-.monitor-sub { font-size: 10px; color: var(--text-3); margin-top: 1px; font-family: 'DM Mono', monospace; }
+.monitor-val { font-size: 12px; font-weight: 700; color: #fff;  letter-spacing: 0.3px; }
+.monitor-sub { font-size: 10px; color: var(--text-3); margin-top: 1px; }
 
 /* ENERGY HERO */
 .energy-hero {
@@ -305,10 +305,10 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .energy-hero-label {
   font-size: 10px; font-weight: 700; letter-spacing: 1px;
-  color: var(--text-3); text-transform: uppercase;
+  color: var(--text-3); 
 }
 .energy-hero-time {
-  font-family: 'DM Mono', monospace; font-size: 11px;
+  font-size: 11px;
   color: var(--text-3); font-weight: 500;
 }
 .energy-now-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
@@ -320,7 +320,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   position: absolute; top: 4px; right: 4px;
   background: rgba(0,0,0,0.88); border: 1px solid rgba(255,255,255,0.12);
   border-radius: 8px; padding: 4px 10px;
-  font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 700;
+  font-size: 12px; font-weight: 700;
   color: #fff; pointer-events: none; z-index: 5;
   backdrop-filter: blur(8px); white-space: nowrap;
   display: none;
@@ -331,7 +331,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .curve-foot {
   margin-top: 8px; display: flex; justify-content: space-between;
   font-size: 10px; color: var(--text-4); font-weight: 500;
-  font-family: 'DM Mono', monospace;
+ 
 }
 .energy-msg {
   margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
@@ -382,7 +382,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .tl-dot.strain { border-color: var(--strain); background: var(--strain); }
 .tl-dot.shisha { border-color: #e74c3c; background: #e74c3c; }
 .tl-time {
-  font-family: 'DM Mono', monospace; font-size: 11px;
+  font-size: 11px;
   color: var(--text-3); font-weight: 500; margin-bottom: 2px;
 }
 .tl-title { font-size: 14px; font-weight: 500; color: #fff; }
@@ -423,7 +423,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .day-block .l-side { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; }
 .db-time {
-  font-family: 'DM Mono', monospace; font-size: 13px;
+  font-size: 13px;
   color: #fff; font-weight: 500; min-width: 46px;
 }
 .db-bar { width: 3px; height: 32px; border-radius: 2px; }
@@ -441,7 +441,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .db-info .sub {
   font-size: 10px; letter-spacing: 1.2px; font-weight: 700;
-  color: var(--text-3); text-transform: uppercase; margin-top: 3px;
+  color: var(--text-3);  margin-top: 3px;
 }
 .db-info .sub.peak { color: var(--energy); }
 .db-info .sub.dip { color: var(--warn); }
@@ -461,7 +461,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .metric-delta {
   font-size: 10px; font-weight: 700;
   padding: 3px 8px; border-radius: 100px;
-  font-family: 'DM Mono', monospace;
+ 
 }
 .delta-up { background: rgba(0,236,127,0.1); color: var(--energy); }
 .delta-down { background: rgba(255,255,255,0.06); color: var(--text-3); }
@@ -475,10 +475,10 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .metric-val .u { font-size: 11px; color: var(--text-4); font-weight: 600; margin-left: 2px; letter-spacing: 0; }
 .metric-name {
   font-size: 9px; color: var(--text-4); letter-spacing: 1.5px;
-  font-weight: 800; text-transform: uppercase; margin-top: 8px;
+  font-weight: 800;  margin-top: 8px;
 }
 .metric-range {
-  font-size: 10px; color: var(--text-4); margin-top: 4px; font-family: 'DM Mono', monospace;
+  font-size: 10px; color: var(--text-4); margin-top: 4px;
 }
 .metric-range .in-range { color: var(--energy); }
 .metric-range .out-range { color: var(--warn); }
@@ -539,10 +539,10 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .debt-chart-label {
   font-size: 10px; font-weight: 700; letter-spacing: 1px;
-  color: var(--text-3); text-transform: uppercase;
+  color: var(--text-3); 
 }
 .debt-chart-val {
-  font-family: 'DM Mono', monospace; font-size: 13px;
+  font-size: 13px;
   color: var(--warn); font-weight: 700;
 }
 .debt-chart-val.debt-low { color: var(--energy); }
@@ -555,7 +555,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   display: flex; justify-content: space-between; margin-top: 6px; padding: 0 2px;
 }
 .debt-area-labels span {
-  font-family: 'DM Mono', monospace; font-size: 8px; font-weight: 600;
+  font-size: 8px; font-weight: 600;
   color: var(--text-4); letter-spacing: 0.3px;
 }
 .debt-scrub-dot {
@@ -573,7 +573,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   position: absolute; top: -34px; transform: translateX(-50%);
   background: rgba(0,0,0,0.92); border: 1px solid rgba(255,255,255,0.1);
   border-radius: 8px; padding: 4px 10px;
-  font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 700;
+  font-size: 12px; font-weight: 700;
   color: #fff; pointer-events: none; z-index: 5;
   backdrop-filter: blur(12px); white-space: nowrap;
   display: none;
@@ -610,12 +610,12 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .streak-cell .s-val {
   font-size: 20px; font-weight: 900; letter-spacing: -0.5px;
   color: #fff; line-height: 1;
-  font-family: 'DM Mono', monospace;
+ 
 }
 .streak-cell.on-fire .s-val { color: var(--energy); }
 .streak-cell .s-label {
   font-size: 8px; font-weight: 700; letter-spacing: 0.8px;
-  color: var(--text-4); text-transform: uppercase; text-align: center;
+  color: var(--text-4);  text-align: center;
 }
 .streak-cell .s-fire { font-size: 10px; color: var(--energy); font-weight: 800; }
 
@@ -632,12 +632,12 @@ section { padding: 0 14px; margin-bottom: 6px; }
   flex: 1; text-align: center;
 }
 .ha-summary-val {
-  font-size: 22px; font-weight: 900; font-family: 'DM Mono', monospace;
+  font-size: 22px; font-weight: 900;
   letter-spacing: -0.5px; line-height: 1.1;
 }
 .ha-summary-label {
   font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--text-4);
-  text-transform: uppercase; margin-top: 3px;
+   margin-top: 3px;
 }
 .ha-row {
   display: flex; align-items: center; gap: 10px;
@@ -652,7 +652,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .ha-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
 .ha-pct {
-  font-size: 11px; font-weight: 800; font-family: 'DM Mono', monospace;
+  font-size: 11px; font-weight: 800;
   width: 36px; text-align: right; flex-shrink: 0;
 }
 .ha-dots {
@@ -681,10 +681,10 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .hi-card-icon { font-size: 16px; }
 .hi-card-title {
   font-size: 11px; font-weight: 700; letter-spacing: 0.8px;
-  color: var(--text-3); text-transform: uppercase; flex: 1;
+  color: var(--text-3);  flex: 1;
 }
 .hi-card-badge {
-  font-size: 9px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+  font-size: 9px; font-weight: 800; letter-spacing: 1px; 
   padding: 3px 8px; border-radius: 6px;
   background: rgba(48,217,138,0.12); color: var(--energy);
 }
@@ -713,7 +713,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   min-width: 56px;
 }
 .hi-ba-metric-val {
-  font-size: 13px; font-weight: 900; font-family: 'DM Mono', monospace;
+  font-size: 13px; font-weight: 900;
   letter-spacing: -0.3px; line-height: 1.2;
 }
 .hi-ba-metric-val.pos { color: var(--energy); }
@@ -721,7 +721,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .hi-ba-metric-val.neutral { color: var(--text-3); }
 .hi-ba-metric-label {
   font-size: 8px; font-weight: 700; letter-spacing: 0.8px;
-  color: var(--text-4); text-transform: uppercase; margin-top: 1px;
+  color: var(--text-4);  margin-top: 1px;
 }
 
 /* Projected Gains */
@@ -732,7 +732,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .hi-proj-row:last-child { border-bottom: none; }
 .hi-proj-period {
   font-size: 10px; font-weight: 800; letter-spacing: 1px;
-  color: var(--text-4); text-transform: uppercase;
+  color: var(--text-4); 
   width: 36px; flex-shrink: 0;
 }
 .hi-proj-bar-wrap {
@@ -748,7 +748,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   display: flex; gap: 10px; flex-shrink: 0;
 }
 .hi-proj-val {
-  font-size: 12px; font-weight: 800; font-family: 'DM Mono', monospace;
+  font-size: 12px; font-weight: 800;
   min-width: 48px; text-align: right;
 }
 
@@ -771,7 +771,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   display: flex; align-items: center; gap: 4px; flex-shrink: 0;
 }
 .hi-streak-score {
-  font-size: 14px; font-weight: 900; font-family: 'DM Mono', monospace;
+  font-size: 14px; font-weight: 900;
   letter-spacing: -0.3px;
 }
 .hi-streak-score.high { color: var(--energy); }
@@ -780,7 +780,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .hi-streak-score.bad { color: var(--danger); }
 .hi-streak-unit {
   font-size: 9px; font-weight: 700; color: var(--text-4);
-  text-transform: uppercase; letter-spacing: 0.5px;
+   letter-spacing: 0.5px;
 }
 .hi-empty {
   text-align: center; padding: 24px 16px;
@@ -794,7 +794,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   align-items: center; margin-bottom: 10px; padding-bottom: 10px;
   border-bottom: 1px solid var(--border);
 }
-.impact-h-l { font-size: 10px; font-weight: 800; letter-spacing: 1.3px; color: var(--text-3); text-transform: uppercase; }
+.impact-h-l { font-size: 10px; font-weight: 800; letter-spacing: 1.3px; color: var(--text-3);  }
 .impact-h-l.warn-col { color: var(--warn); }
 .impact-h-l.good-col { color: var(--energy); text-align: right; }
 .impact-h-l.center { text-align: center; }
@@ -807,7 +807,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .impact-bar-fill { position: absolute; top: 0; height: 100%; border-radius: 4px; }
 .impact-bar-fill.good { background: var(--energy); }
 .impact-bar-fill.bad { background: var(--warn); }
-.impact-pct { text-align: right; font-size: 13px; font-weight: 800; font-family: 'DM Mono', monospace; }
+.impact-pct { text-align: right; font-size: 13px; font-weight: 800; }
 .impact-pct.good { color: var(--energy); }
 .impact-pct.bad { color: var(--warn); }
 
@@ -829,7 +829,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .insight-body { flex: 1; min-width: 0; }
 .insight-label {
   font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
-  color: var(--text-3); text-transform: uppercase; margin-bottom: 3px;
+  color: var(--text-3);  margin-bottom: 3px;
 }
 .insight-text { font-size: 13px; line-height: 1.5; color: var(--text-2); }
 .insight-text b { color: #fff; font-weight: 700; }
@@ -842,8 +842,8 @@ section { padding: 0 14px; margin-bottom: 6px; }
   position: relative; overflow: hidden;
 }
 .strain-coach-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
-.strain-coach-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-3); text-transform: uppercase; }
-.strain-coach-target { font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+.strain-coach-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-3);  }
+.strain-coach-target { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
 .strain-bar-bg {
   height: 6px; border-radius: 3px;
   background: var(--card-border); position: relative; overflow: visible;
@@ -862,10 +862,10 @@ section { padding: 0 14px; margin-bottom: 6px; }
   border-radius: var(--radius); padding: 16px 18px; overflow: hidden;
 }
 .st-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
-.st-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-3); text-transform: uppercase; }
-.st-zone { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px; }
+.st-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-3);  }
+.st-zone { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px; }
 .st-main { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
-.st-current { font-family: 'DM Mono', monospace; font-size: 32px; font-weight: 900; letter-spacing: -1px; }
+.st-current { font-size: 32px; font-weight: 900; letter-spacing: -1px; }
 .st-target { font-size: 13px; color: var(--text-3); }
 .st-bar-wrap { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.04); position: relative; overflow: visible; margin-bottom: 6px; }
 .st-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
@@ -878,7 +878,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   border-radius: var(--radius); padding: 16px 18px; overflow: hidden;
   margin-top: 8px;
 }
-.strain-tl-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-3); text-transform: uppercase; margin-bottom: 12px; }
+.strain-tl-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-3);  margin-bottom: 12px; }
 .strain-tl-svg { width: 100%; display: block; }
 .strain-tl-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
 .strain-tl-leg-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--text-3); }
@@ -890,11 +890,11 @@ section { padding: 0 14px; margin-bottom: 6px; }
   border: 1px solid rgba(147,161,196,0.15); border-radius: var(--radius); padding: 14px 18px;
 }
 .sn-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
-.sn-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--sleep); text-transform: uppercase; }
+.sn-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--sleep);  }
 .sn-main { display: flex; align-items: baseline; gap: 8px; }
-.sn-val { font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 900; color: var(--sleep); letter-spacing: -1px; }
+.sn-val { font-size: 28px; font-weight: 900; color: var(--sleep); letter-spacing: -1px; }
 .sn-unit { font-size: 13px; color: var(--text-3); }
-.sn-detail { font-size: 11px; color: var(--text-3); margin-top: 6px; line-height: 1.5; font-family: 'DM Mono', monospace; }
+.sn-detail { font-size: 11px; color: var(--text-3); margin-top: 6px; line-height: 1.5; }
 .sn-breakdown { display: flex; gap: 12px; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(147,161,196,0.1); }
 .sn-bp { font-size: 11px; color: var(--text-3); }
 .sn-bp b { color: var(--text-2); font-weight: 600; }
@@ -904,15 +904,15 @@ section { padding: 0 14px; margin-bottom: 6px; }
   background: var(--card); border: 1px solid var(--card-border);
   border-radius: var(--radius); padding: 16px 18px;
 }
-.pf-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-3); text-transform: uppercase; margin-bottom: 12px; }
+.pf-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-3);  margin-bottom: 12px; }
 .pf-days { display: flex; gap: 4px; }
 .pf-day {
   flex: 1; text-align: center; padding: 10px 2px; border-radius: 10px;
   background: rgba(255,255,255,0.02); border: 1px solid transparent; cursor: default;
 }
 .pf-day.best { border-color: rgba(48,217,138,0.3); background: rgba(48,217,138,0.06); }
-.pf-day-name { font-size: 9px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-4); text-transform: uppercase; }
-.pf-day-score { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 800; margin: 4px 0 2px; }
+.pf-day-name { font-size: 9px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-4);  }
+.pf-day-score { font-size: 18px; font-weight: 800; margin: 4px 0 2px; }
 .pf-day-bar { height: 3px; border-radius: 2px; background: rgba(255,255,255,0.04); margin: 6px 4px 0; overflow: hidden; }
 .pf-day-bar-fill { height: 100%; border-radius: 2px; }
 .pf-day-label { font-size: 9px; color: var(--text-4); margin-top: 4px; }
@@ -923,13 +923,13 @@ section { padding: 0 14px; margin-bottom: 6px; }
   background: var(--card); border: 1px solid var(--card-border);
   border-radius: var(--radius); padding: 16px 18px;
 }
-.rb-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-3); text-transform: uppercase; margin-bottom: 12px; }
+.rb-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-3);  margin-bottom: 12px; }
 .rb-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .rb-row:last-child { border-bottom: none; }
 .rb-metric { display: flex; align-items: center; gap: 8px; }
 .rb-metric-name { font-size: 12px; font-weight: 600; color: var(--text-2); }
-.rb-metric-val { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 700; }
-.rb-trend { font-size: 10px; font-family: 'DM Mono', monospace; }
+.rb-metric-val { font-size: 14px; font-weight: 700; }
+.rb-trend { font-size: 10px; }
 
 /* NEXT-DAY IMPACT */
 .ndi-card {
@@ -941,7 +941,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .ndi-icon { font-size: 18px; flex-shrink: 0; }
 .ndi-info { flex: 1; }
 .ndi-text { font-size: 12px; color: var(--text-2); line-height: 1.4; }
-.ndi-delta { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 700; text-align: right; min-width: 50px; }
+.ndi-delta { font-size: 13px; font-weight: 700; text-align: right; min-width: 50px; }
 
 /* SLEEP PERFORMANCE */
 .sleep-perf {
@@ -959,7 +959,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .sleep-row:last-child { border-bottom: none; }
 .sleep-row-l { font-size: 12px; color: var(--text-3); font-weight: 500; }
-.sleep-row-r { font-size: 13px; font-weight: 700; font-family: 'DM Mono', monospace; color: #fff; }
+.sleep-row-r { font-size: 13px; font-weight: 700; color: #fff; }
 .sleep-bar-row { margin-bottom: 6px; }
 .sleep-bar-bg {
   height: 5px; border-radius: 3px;
@@ -971,11 +971,11 @@ section { padding: 0 14px; margin-bottom: 6px; }
 /* ========== JOURNAL ========== */
 .journal-date {
   font-size: 11px; font-weight: 700; letter-spacing: 1px;
-  color: var(--text-3); text-transform: uppercase;
+  color: var(--text-3); 
 }
 .journal-cat {
   font-size: 9px; font-weight: 700; letter-spacing: 1px;
-  color: var(--text-4); text-transform: uppercase; margin: 14px 0 6px;
+  color: var(--text-4);  margin: 14px 0 6px;
   padding-left: 2px;
 }
 .journal-cat:first-child { margin-top: 2px; }
@@ -1022,7 +1022,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .corr-row:last-child { border-bottom: none; }
 .corr-name { font-size: 13px; font-weight: 600; color: #fff; }
-.corr-val { font-size: 14px; font-weight: 800; font-family: 'DM Mono', monospace; }
+.corr-val { font-size: 14px; font-weight: 800; }
 .corr-val.good { color: var(--energy); }
 .corr-val.bad { color: var(--warn); }
 
@@ -1033,8 +1033,8 @@ section { padding: 0 14px; margin-bottom: 6px; }
   position: relative; overflow: hidden;
 }
 .trend-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
-.trend-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-3); text-transform: uppercase; }
-.trend-val { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+.trend-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-3);  }
+.trend-val { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
 .trend-sub { font-size: 11px; color: var(--text-4); margin-bottom: 12px; }
 .trend-svg { width: 100%; height: 56px; touch-action: none; }
 .trend-line { fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
@@ -1045,7 +1045,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   position: absolute; top: 8px; right: 8px;
   background: rgba(0,0,0,0.85); border: 1px solid rgba(255,255,255,0.1);
   border-radius: 8px; padding: 4px 10px;
-  font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 700;
+  font-size: 12px; font-weight: 700;
   color: #fff; pointer-events: none; z-index: 5;
   backdrop-filter: blur(8px); white-space: nowrap;
 }
@@ -1075,7 +1075,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .nutri-macro {
   background: var(--bg-2); border-radius: 10px; padding: 10px 8px; text-align: center;
 }
-.nutri-macro-icon { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 4px; }
+.nutri-macro-icon { font-size: 11px; font-weight: 700; letter-spacing: 0.5px;  margin-bottom: 4px; }
 .nutri-macro-val { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
 .nutri-macro-unit { font-size: 11px; color: var(--text-3); }
 .nutri-macro-bar { height: 4px; background: var(--bg-3); border-radius: 2px; margin-top: 6px; overflow: hidden; }
@@ -1133,7 +1133,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .breathing-instruction {
   font-size: 12px; font-weight: 700; letter-spacing: 2.5px;
-  color: var(--text-3); text-transform: uppercase;
+  color: var(--text-3); 
 }
 .breathing-timer {
   font-size: 28px; font-weight: 800; letter-spacing: -1px;
@@ -1141,7 +1141,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .breathing-sub {
   font-size: 11px; color: var(--text-4); margin-top: 2px;
-  font-family: 'DM Mono', monospace;
+ 
 }
 .breath-rec {
   background: rgba(167,121,247,0.06); border: 1px solid rgba(167,121,247,0.15);
@@ -1179,7 +1179,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .breathing-rounds {
   font-size: 11px; color: var(--text-4); margin-top: 10px;
-  font-family: 'DM Mono', monospace;
+ 
 }
 .breathing-desc {
   font-size: 12px; color: var(--text-3); line-height: 1.5;
@@ -1200,7 +1200,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .sleep-tl-seg.dimmed { opacity: 0.2; filter: grayscale(0.8); }
 .sleep-tl-time-row {
   display: flex; justify-content: space-between;
-  font-size: 10px; color: var(--text-4); font-family: 'DM Mono', monospace;
+  font-size: 10px; color: var(--text-4);
   margin-bottom: 8px;
 }
 .sleep-tl-legend {
@@ -1225,13 +1225,13 @@ section { padding: 0 14px; margin-bottom: 6px; }
   display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
 }
 .sleep-stage-row .stage-name {
-  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+  font-size: 12px; font-weight: 700;  letter-spacing: 0.5px;
 }
 .sleep-stage-row .stage-pct {
   font-size: 11px; font-weight: 600; color: var(--text-3);
 }
 .sleep-stage-row .stage-time {
-  font-size: 18px; font-weight: 800; letter-spacing: -0.5px; font-family: 'DM Mono', monospace;
+  font-size: 18px; font-weight: 800; letter-spacing: -0.5px;
 }
 .sleep-stage-row .stage-bar-wrap {
   height: 6px; background: var(--bg-3); border-radius: 3px; overflow: visible;
@@ -1257,7 +1257,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .hr-curve-axis {
   position: absolute; left: 0; top: 0; bottom: 0; width: 28px;
   display: flex; flex-direction: column; justify-content: space-between; padding: 4px 0;
-  font-size: 9px; color: var(--text-4); font-family: 'DM Mono', monospace;
+  font-size: 9px; color: var(--text-4);
 }
 .hr-scrub-line {
   position: absolute; top: 0; width: 1px; height: 100%;
@@ -1276,13 +1276,13 @@ section { padding: 0 14px; margin-bottom: 6px; }
   backdrop-filter: blur(12px); text-align: center; white-space: nowrap;
 }
 .hr-scrub-tip-hr {
-  font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 700; color: #fff;
+  font-size: 14px; font-weight: 700; color: #fff;
 }
 .hr-scrub-tip-stage {
-  font-size: 9px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.5px; 
 }
 .hr-scrub-tip-time {
-  font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-4);
+  font-size: 9px; color: var(--text-4);
 }
 
 /* Sleep performance ring */
@@ -1299,7 +1299,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .sleep-perf-ring .perf-label {
   font-size: 7px; font-weight: 700; letter-spacing: 1.2px; color: var(--text-3);
-  text-transform: uppercase; margin-top: 2px;
+   margin-top: 2px;
 }
 
 /* ========== DETAIL OVERLAY ========== */
@@ -1332,7 +1332,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .detail-hero-label {
   font-size: 10px; font-weight: 700; letter-spacing: 1px;
-  color: var(--text-3); text-transform: uppercase; margin-bottom: 16px;
+  color: var(--text-3);  margin-bottom: 16px;
 }
 .detail-section {
   background: var(--card); border: 1px solid var(--card-border);
@@ -1340,7 +1340,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .detail-section-title {
   font-size: 10px; font-weight: 700; letter-spacing: 1px;
-  color: var(--text-3); text-transform: uppercase; margin-bottom: 10px;
+  color: var(--text-3);  margin-bottom: 10px;
 }
 .detail-row {
   display: flex; justify-content: space-between; align-items: center;
@@ -1348,7 +1348,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .detail-row:last-child { border-bottom: none; }
 .detail-row-label { font-size: 13px; color: var(--text-3); }
-.detail-row-val { font-size: 14px; font-weight: 700; font-family: 'DM Mono', monospace; }
+.detail-row-val { font-size: 14px; font-weight: 700; }
 .detail-explainer {
   font-size: 13px; color: var(--text-2); line-height: 1.6;
   padding: 14px 0 0;
@@ -1386,7 +1386,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   padding: 12px 16px 12px 8px; min-height: 44px;
 }
 .fp-back svg { width: 14px; height: 14px; }
-.fp-title-bar { flex: 1; font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--text-3); text-transform: uppercase; text-align: center; }
+.fp-title-bar { flex: 1; font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--text-3);  text-align: center; }
 
 .fp-hero { text-align: center; padding: 8px 0 20px; }
 .fp-hero-val {
@@ -1405,7 +1405,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .fp-section-title {
   font-size: 10px; font-weight: 700; letter-spacing: 1px;
-  color: var(--text-3); text-transform: uppercase; margin-bottom: 10px;
+  color: var(--text-3);  margin-bottom: 10px;
 }
 .fp-row {
   display: flex; justify-content: space-between; align-items: center;
@@ -1413,13 +1413,13 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .fp-row:last-child { border-bottom: none; }
 .fp-row-label { font-size: 13px; color: var(--text-3); display: flex; align-items: center; gap: 6px; }
-.fp-row-val { font-size: 14px; font-weight: 700; font-family: 'DM Mono', monospace; }
+.fp-row-val { font-size: 14px; font-weight: 700; }
 
 .fp-bar-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
 .fp-bar-label { font-size: 12px; color: var(--text-3); width: 70px; flex-shrink: 0; }
 .fp-bar-wrap { flex: 1; height: 6px; background: var(--card-border); border-radius: 3px; overflow: hidden; }
 .fp-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
-.fp-bar-val { font-size: 12px; font-weight: 700; font-family: 'DM Mono', monospace; width: 36px; text-align: right; }
+.fp-bar-val { font-size: 12px; font-weight: 700; width: 36px; text-align: right; }
 
 .fp-stage-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; gap: 2px; margin: 12px 0 8px; }
 .fp-stage-seg { height: 100%; border-radius: 4px; }
@@ -1427,7 +1427,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .fp-stage-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 16px; }
 .fp-stage-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-3); }
 .fp-stage-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.fp-stage-val { font-weight: 700; font-family: 'DM Mono', monospace; color: var(--text-1); }
+.fp-stage-val { font-weight: 700; color: var(--text-1); }
 
 .fp-score-ring {
   width: 80px; height: 80px; position: relative; flex-shrink: 0;
@@ -1435,7 +1435,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .fp-score-ring svg { width: 100%; height: 100%; }
 .fp-score-center {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  font-size: 24px; font-weight: 800; font-family: 'DM Mono', monospace;
+  font-size: 24px; font-weight: 800;
 }
 
 .fp-system-card {
@@ -1535,7 +1535,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .health-age-label {
   font-size: 9px; font-weight: 700; letter-spacing: 1px;
-  color: rgba(255,255,255,0.5); text-transform: uppercase; margin-top: 6px;
+  color: rgba(255,255,255,0.5);  margin-top: 6px;
 }
 .health-age-diff {
   font-size: 14px; font-weight: 700; margin-top: 4px;
@@ -1545,7 +1545,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .health-age-meta-label {
   font-size: 10px; font-weight: 700; letter-spacing: 1px;
-  color: var(--text-3); text-transform: uppercase; margin-bottom: 8px;
+  color: var(--text-3);  margin-bottom: 8px;
 }
 .pace-bar {
   position: relative; width: 100%; max-width: 260px; margin: 0 auto;
@@ -1572,7 +1572,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .pace-bar-val {
   text-align: center; margin-top: 8px;
-  font-size: 18px; font-weight: 800; font-family: 'DM Mono', monospace;
+  font-size: 18px; font-weight: 800;
   color: #fff; letter-spacing: -0.5px;
 }
 
@@ -1595,7 +1595,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .hm-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .hm-text {}
 .hm-name { font-size: 14px; font-weight: 600; color: #fff; line-height: 1.2; }
-.hm-sub { font-size: 11px; color: var(--text-4); margin-top: 2px; font-family: 'DM Mono', monospace; }
+.hm-sub { font-size: 11px; color: var(--text-4); margin-top: 2px; }
 .hm-right { text-align: right; display: flex; align-items: center; gap: 8px; }
 .hm-val { font-size: 24px; font-weight: 900; letter-spacing: -1px; line-height: 1; color: #fff; }
 .hm-unit { font-size: 11px; font-weight: 600; color: var(--text-4); }
@@ -1613,7 +1613,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   margin-bottom: 16px;
 }
 .hrz-title { font-size: 15px; font-weight: 600; color: #fff; }
-.hrz-summary { font-size: 12px; color: var(--text-3); font-family: 'DM Mono', monospace; }
+.hrz-summary { font-size: 12px; color: var(--text-3); }
 .hrz-stacked-bar {
   display: flex; height: 10px; border-radius: 5px; overflow: hidden;
   margin-bottom: 16px;
@@ -1627,7 +1627,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .hrz-leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .hrz-leg-label { font-size: 11px; color: var(--text-3); }
-.hrz-leg-pct { font-size: 11px; font-weight: 700; color: #fff; font-family: 'DM Mono', monospace; }
+.hrz-leg-pct { font-size: 11px; font-weight: 700; color: #fff; }
 
 /* Steps - WHOOP clean card */
 .steps-card {
@@ -1644,7 +1644,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .steps-hero-unit { font-size: 13px; font-weight: 600; color: var(--text-4); margin-left: 2px; }
 .steps-goal-tag {
   font-size: 10px; font-weight: 800; letter-spacing: 0.8px;
-  padding: 4px 10px; border-radius: 100px; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 100px; 
 }
 .steps-goal-tag.reached { background: rgba(0,236,127,0.10); color: var(--energy); }
 .steps-goal-tag.pending { background: rgba(77,169,255,0.08); color: var(--strain); }
@@ -1659,7 +1659,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .steps-progress-fill.complete { background: var(--energy); }
 .steps-goal-text {
   font-size: 11px; color: var(--text-4); margin-bottom: 16px;
-  font-family: 'DM Mono', monospace;
+ 
 }
 .steps-bars { display: flex; gap: 4px; align-items: flex-end; height: 44px; }
 .steps-bar {
@@ -1671,7 +1671,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .steps-bar-labels span {
   flex: 1; text-align: center;
-  font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-4);
+  font-size: 9px; color: var(--text-4);
 }
 
 /* Sleep Breakdown - WHOOP style */
@@ -1690,11 +1690,11 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .sleep-bk-label {
   font-size: 11px; color: var(--text-4); margin-top: 2px;
-  font-family: 'DM Mono', monospace;
+ 
 }
 .sleep-bk-perf {
   font-size: 10px; font-weight: 800; letter-spacing: 0.8px;
-  padding: 4px 10px; border-radius: 100px; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 100px; 
 }
 .sleep-stages-bar {
   display: flex; height: 12px; border-radius: 6px; overflow: hidden;
@@ -1707,7 +1707,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .sleep-leg-item { display: flex; align-items: center; gap: 6px; }
 .sleep-leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .sleep-leg-label { font-size: 11px; color: var(--text-3); }
-.sleep-leg-val { font-size: 11px; font-weight: 700; color: #fff; font-family: 'DM Mono', monospace; }
+.sleep-leg-val { font-size: 11px; font-weight: 700; color: #fff; }
 .sleep-detail-rows {}
 .sleep-detail-row {
   display: flex; justify-content: space-between; align-items: center;
@@ -1715,7 +1715,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .sleep-detail-row:first-child { border-top: none; }
 .sleep-detail-rl { font-size: 13px; color: var(--text-3); }
-.sleep-detail-rv { font-size: 13px; font-weight: 700; font-family: 'DM Mono', monospace; color: #fff; }
+.sleep-detail-rv { font-size: 13px; font-weight: 700; color: #fff; }
 
 /* Workout/Activity card */
 .activity-card {
@@ -1729,7 +1729,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .activity-title { font-size: 15px; font-weight: 600; color: #fff; }
 .activity-cal-tag {
   font-size: 10px; font-weight: 800; letter-spacing: 0.8px;
-  padding: 4px 10px; border-radius: 100px; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 100px; 
   background: rgba(77,169,255,0.10); color: var(--strain);
 }
 .activity-big-row {
@@ -1743,11 +1743,11 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .activity-progress-fill { height: 100%; border-radius: 3px; background: var(--strain); transition: width 0.5s; }
 .activity-progress-fill.over { background: var(--energy); }
-.activity-goal-text { font-size: 11px; color: var(--text-4); font-family: 'DM Mono', monospace; margin-bottom: 14px; }
+.activity-goal-text { font-size: 11px; color: var(--text-4); margin-bottom: 14px; }
 .activity-bars { display: flex; gap: 4px; align-items: flex-end; height: 36px; }
 .activity-bar { flex: 1; border-radius: 3px 3px 0 0; min-height: 3px; transition: height 0.4s; }
 .activity-bar-labels { display: flex; gap: 4px; margin-top: 6px; }
-.activity-bar-labels span { flex: 1; text-align: center; font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-4); }
+.activity-bar-labels span { flex: 1; text-align: center; font-size: 9px; color: var(--text-4); }
 .workout-list { margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 12px; }
 .workout-entry {
   display: flex; align-items: center; gap: 12px;
@@ -1762,7 +1762,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .workout-icon-wrap svg { width: 18px; height: 18px; color: var(--strain); }
 .workout-text { flex: 1; }
 .workout-name { font-size: 13px; font-weight: 600; color: #fff; }
-.workout-meta { font-size: 11px; color: var(--text-4); font-family: 'DM Mono', monospace; margin-top: 1px; }
+.workout-meta { font-size: 11px; color: var(--text-4); margin-top: 1px; }
 .workout-strain { font-size: 15px; font-weight: 800; color: var(--strain); }
 
 /* Week view metric cards */
@@ -1773,8 +1773,8 @@ section { padding: 0 14px; margin-bottom: 6px; }
   border-radius: var(--radius); padding: 14px 12px; text-align: center;
 }
 .wmc-val { font-size: 22px; font-weight: 900; letter-spacing: -1px; line-height: 1; }
-.wmc-label { font-size: 9px; font-weight: 700; letter-spacing: 0.8px; color: var(--text-3); text-transform: uppercase; margin-top: 6px; }
-.wmc-delta { font-size: 10px; font-weight: 600; font-family: 'DM Mono', monospace; margin-top: 4px; }
+.wmc-label { font-size: 9px; font-weight: 700; letter-spacing: 0.8px; color: var(--text-3);  margin-top: 6px; }
+.wmc-delta { font-size: 10px; font-weight: 600; margin-top: 4px; }
 .wmc-delta.up { color: var(--energy); }
 .wmc-delta.down { color: var(--text-3); }
 
@@ -1789,17 +1789,17 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .jctx-ring svg { width: 44px; height: 44px; }
 .jctx-ring-center {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 800; font-family: 'DM Mono', monospace;
+  font-size: 13px; font-weight: 800;
 }
 .jctx-info { flex: 1; }
-.jctx-label { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; color: var(--text-4); text-transform: uppercase; }
+.jctx-label { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; color: var(--text-4);  }
 .jctx-val { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); margin-top: 2px; line-height: 1.35; }
-.jctx-sub { font-size: 11px; color: var(--text-4); font-family: 'DM Mono', monospace; margin-top: 3px; }
+.jctx-sub { font-size: 11px; color: var(--text-4); margin-top: 3px; }
 
 /* Mood trend mini sparkline */
 .mood-trend { margin-top: 16px; }
 .mood-trend-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.mood-trend-label { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; color: var(--text-4); text-transform: uppercase; }
+.mood-trend-label { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; color: var(--text-4);  }
 .mood-trend svg { width: 100%; height: 40px; }
 
 /* Live Activities */
@@ -1829,7 +1829,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .live-act-badge {
   font-size: 9px; font-weight: 800; letter-spacing: 0.8px;
   padding: 3px 10px; border-radius: 100px;
-  text-transform: uppercase; animation: pulse-glow 2s infinite;
+   animation: pulse-glow 2s infinite;
 }
 @keyframes pulse-glow {
   0%, 100% { opacity: 1; }
@@ -1838,13 +1838,13 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .live-act-badge.active { background: rgba(0,236,127,0.12); color: var(--energy); }
 .live-act-timer {
   font-size: 28px; font-weight: 800; letter-spacing: -1.5px;
-  font-family: 'DM Mono', monospace; color: #fff;
+  color: #fff;
   margin-bottom: 6px;
 }
 .live-act-meta {
   display: flex; justify-content: space-between; align-items: center;
 }
-.live-act-sub { font-size: 11px; color: var(--text-4); font-family: 'DM Mono', monospace; }
+.live-act-sub { font-size: 11px; color: var(--text-4); }
 .live-act-warn { font-size: 11px; color: var(--warn); font-weight: 600; }
 .live-act-stop {
   padding: 8px 20px; border: none; border-radius: 100px;
@@ -1863,7 +1863,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   transition: width 1s linear;
 }
 .live-act-progress-label {
-  font-size: 10px; color: var(--text-4); font-family: 'DM Mono', monospace;
+  font-size: 10px; color: var(--text-4);
 }
 
 /* Daily Coach */
@@ -1880,9 +1880,9 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .daily-coach.amber::before { background: var(--warn); box-shadow: 0 0 12px rgba(255,181,71,0.3); }
 .daily-coach.red::before { background: var(--danger); box-shadow: 0 0 12px rgba(255,84,112,0.3); }
 .dc-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.dc-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-3); text-transform: uppercase; }
+.dc-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-3);  }
 .dc-badge {
-  font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 700;
+  font-size: 12px; font-weight: 700;
   padding: 3px 10px; border-radius: 100px;
 }
 .dc-guidance { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 10px; line-height: 1.5; }
@@ -1890,11 +1890,11 @@ section { padding: 0 14px; margin-bottom: 6px; }
   background: rgba(255,255,255,0.03); border-radius: var(--radius-sm);
   padding: 10px 14px; margin-bottom: 10px;
 }
-.dc-priority-label { font-size: 9px; font-weight: 700; letter-spacing: 0.8px; color: var(--text-4); text-transform: uppercase; margin-bottom: 4px; }
+.dc-priority-label { font-size: 9px; font-weight: 700; letter-spacing: 0.8px; color: var(--text-4);  margin-bottom: 4px; }
 .dc-priority-text { font-size: 12px; color: var(--text-2); line-height: 1.45; }
 .dc-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px solid var(--border); }
-.dc-consistency-label { font-size: 9px; font-weight: 800; letter-spacing: 1px; color: var(--text-4); text-transform: uppercase; }
-.dc-consistency-val { font-size: 13px; font-weight: 700; font-family: 'DM Mono', monospace; }
+.dc-consistency-label { font-size: 9px; font-weight: 800; letter-spacing: 1px; color: var(--text-4);  }
+.dc-consistency-val { font-size: 13px; font-weight: 700; }
 
 /* Morning Check-in */
 .checkin-card {
@@ -1909,14 +1909,14 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .checkin-header:active { opacity: 0.7; }
 .checkin-title {
   font-size: 13px; font-weight: 700; letter-spacing: 0.8px;
-  color: var(--text-3); text-transform: uppercase; margin-bottom: 0;
+  color: var(--text-3);  margin-bottom: 0;
 }
 .checkin-toggle {
   font-size: 10px; color: var(--text-4); transition: transform 0.2s;
 }
 .checkin-summary {
   font-size: 13px; color: var(--text-2); margin-top: 10px;
-  font-family: 'DM Mono', monospace; letter-spacing: 0.3px;
+  letter-spacing: 0.3px;
 }
 .checkin-body { margin-top: 16px; }
 .checkin-q { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 10px; }
@@ -1926,7 +1926,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04);
   color: var(--text-3); font-size: 11px; font-weight: 700; text-align: center;
   cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
-  font-family: 'DM Mono', monospace;
+ 
 }
 .checkin-opt.active {
   border-color: var(--energy); color: var(--energy);
@@ -1937,7 +1937,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .checkin-saved {
   font-size: 11px; color: var(--energy); opacity: 0;
   transition: opacity 0.3s; margin-top: 8px; text-align: center;
-  font-family: 'DM Mono', monospace;
+ 
 }
 .checkin-recs {
   margin-top: 16px; padding-top: 16px;
@@ -1945,7 +1945,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .checkin-rec-title {
   font-size: 11px; font-weight: 700; letter-spacing: 1px;
-  color: var(--text-4); text-transform: uppercase; margin-bottom: 10px;
+  color: var(--text-4);  margin-bottom: 10px;
 }
 .checkin-rec {
   display: flex; align-items: flex-start; gap: 10px;
@@ -1966,7 +1966,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .bodymap-toggle-btn {
   padding: 6px 18px; font-size: 10px; font-weight: 800;
-  letter-spacing: 1.2px; font-family: 'DM Mono', monospace;
+  letter-spacing: 1.2px;
   color: var(--text-4); background: transparent;
   cursor: pointer; transition: all 0.2s;
   user-select: none; -webkit-user-select: none;
@@ -1985,7 +1985,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .bodymap-svg .bm-zone:active { opacity: 0.7; }
 .bodymap-svg .bm-label {
   fill: rgba(255,255,255,0.3); font-size: 7px; font-weight: 700;
-  letter-spacing: 0.8px; font-family: 'DM Mono', monospace;
+  letter-spacing: 0.8px;
   pointer-events: none;
 }
 .bodymap-general {
@@ -1994,7 +1994,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   border: 1px solid rgba(255,255,255,0.08);
   background: rgba(255,255,255,0.04);
   color: var(--text-3); font-size: 11px; font-weight: 700;
-  font-family: 'DM Mono', monospace; cursor: pointer;
+  cursor: pointer;
   user-select: none; -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent; transition: all 0.2s;
 }
@@ -2015,7 +2015,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .bodymap-general.pain .bp-dot { background: var(--danger); }
 .bodymap-legend {
   display: flex; gap: 14px; margin-top: 10px;
-  font-size: 10px; color: var(--text-4); font-family: 'DM Mono', monospace;
+  font-size: 10px; color: var(--text-4);
   letter-spacing: 0.5px;
 }
 .bodymap-legend span { display: flex; align-items: center; gap: 4px; }
@@ -2024,7 +2024,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .bodymap-doms-note {
   font-size: 11px; color: #a78bfa; margin-bottom: 10px;
-  font-family: 'DM Mono', monospace; display: flex;
+  display: flex;
   align-items: center; gap: 6px; line-height: 1.3;
 }
 .bodymap-doms-note .doms-dot {
@@ -2039,7 +2039,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   background: rgba(255,255,255,0.04);
   color: var(--text-3); font-size: 10px; font-weight: 700;
   cursor: pointer; transition: all 0.2s;
-  letter-spacing: 0.5px; font-family: 'DM Mono', monospace;
+  letter-spacing: 0.5px;
   display: flex; align-items: center; gap: 5px;
   user-select: none; -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
@@ -2057,7 +2057,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .coach-section-label {
   font-size: 10px; font-weight: 700; letter-spacing: 1px;
-  color: var(--text-4); text-transform: uppercase; margin-bottom: 12px;
+  color: var(--text-4);  margin-bottom: 12px;
 }
 .coach-training-badge {
   display: inline-block; padding: 4px 10px; border-radius: 20px;
@@ -2094,7 +2094,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .coach-habit-row:last-child { border-bottom: none; }
 .coach-habit-icon { font-size: 14px; width: 22px; text-align: center; }
 .coach-habit-name { font-size: 12px; color: var(--text-2); flex: 1; }
-.coach-habit-streak { font-size: 11px; font-weight: 700; font-family: 'DM Mono', monospace; }
+.coach-habit-streak { font-size: 11px; font-weight: 700; }
 .coach-habit-check { font-size: 14px; width: 22px; text-align: center; }
 .coach-week-link {
   background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
@@ -2111,12 +2111,12 @@ section { padding: 0 14px; margin-bottom: 6px; }
   border-radius: var(--radius); padding: 16px 18px; margin-bottom: 8px;
 }
 .wk-score-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-.wk-score-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-3); text-transform: uppercase; }
+.wk-score-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-3);  }
 .wk-score-grade-wrap { display: flex; align-items: center; gap: 8px; }
 .wk-score-grade {
   font-size: 28px; font-weight: 900; letter-spacing: -1px; line-height: 1;
 }
-.wk-score-delta { font-size: 11px; font-weight: 600; font-family: 'DM Mono', monospace; }
+.wk-score-delta { font-size: 11px; font-weight: 600; }
 .wk-score-delta.up { color: var(--energy); }
 .wk-score-delta.down { color: var(--danger); }
 .wk-score-delta.flat { color: var(--text-3); }
@@ -2125,7 +2125,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .wk-score-row-label { font-size: 11px; font-weight: 500; color: var(--text-3); width: 100px; flex-shrink: 0; }
 .wk-score-row-bar { flex: 1; height: 4px; border-radius: 2px; background: var(--card-border); overflow: hidden; }
 .wk-score-row-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
-.wk-score-row-val { font-size: 11px; font-weight: 700; font-family: 'DM Mono', monospace; width: 32px; text-align: right; flex-shrink: 0; }
+.wk-score-row-val { font-size: 11px; font-weight: 700; width: 32px; text-align: right; flex-shrink: 0; }
 
 /* Genetic Potential */
 .gp-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
@@ -2134,8 +2134,8 @@ section { padding: 0 14px; margin-bottom: 6px; }
   border: 1px solid var(--card-border);
   border-radius: var(--radius); padding: 14px 12px; text-align: center;
 }
-.gp-card-label { font-size: 9px; font-weight: 800; letter-spacing: 1px; color: var(--text-3); text-transform: uppercase; margin-bottom: 6px; }
-.gp-card-val { font-size: 22px; font-weight: 900; letter-spacing: -1px; line-height: 1; font-family: 'DM Mono', monospace; }
+.gp-card-label { font-size: 9px; font-weight: 800; letter-spacing: 1px; color: var(--text-3);  margin-bottom: 6px; }
+.gp-card-val { font-size: 22px; font-weight: 900; letter-spacing: -1px; line-height: 1; }
 .gp-card-unit { font-size: 10px; color: var(--text-3); font-weight: 500; margin-top: 2px; }
 .gp-card-sub { font-size: 10px; font-weight: 600; margin-top: 6px; }
 
@@ -2161,7 +2161,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   font-size: 10px; font-weight: 800; letter-spacing: 0.6px;
   padding: 6px 14px; border-radius: 100px;
   border: none; cursor: pointer; font-family: inherit;
-  text-transform: uppercase; flex-shrink: 0; margin-top: 2px;
+   flex-shrink: 0; margin-top: 2px;
   transition: all 0.15s;
 }
 .sug-action:active { transform: scale(0.95); }
@@ -2177,7 +2177,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   font-size: 9px; font-weight: 700; letter-spacing: 0.5px;
   padding: 2px 8px; border-radius: 100px;
   background: rgba(77,169,255,0.10); color: var(--strain);
-  text-transform: uppercase; margin-left: 8px;
+   margin-left: 8px;
 }
 
 /* Health sync status */
@@ -2192,7 +2192,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .sync-dot.disconnected { background: var(--text-4); }
 .sync-info { flex: 1; }
 .sync-title { font-size: 13px; font-weight: 600; color: #fff; }
-.sync-sub { font-size: 10px; color: var(--text-4); margin-top: 2px; font-family: 'DM Mono', monospace; }
+.sync-sub { font-size: 10px; color: var(--text-4); margin-top: 2px; }
 
 /* ========== BOTTOM NAV ========== */
 .bottom-nav {
@@ -2266,7 +2266,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .modal-section-label {
   font-size: 10px; font-weight: 800; letter-spacing: 1.3px;
-  color: var(--text-3); text-transform: uppercase; margin-bottom: 10px;
+  color: var(--text-3);  margin-bottom: 10px;
 }
 .mood-row {
   display: flex; justify-content: space-between; gap: 6px;
@@ -2322,7 +2322,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .settings-group { margin-bottom: 28px; }
 .settings-group-label {
   font-size: 10px; font-weight: 800; letter-spacing: 1.3px;
-  color: var(--text-3); text-transform: uppercase; margin-bottom: 14px;
+  color: var(--text-3);  margin-bottom: 14px;
 }
 .settings-row {
   display: flex; justify-content: space-between; align-items: center;
@@ -2330,7 +2330,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .settings-row .sr-label { font-size: 14px; font-weight: 500; color: #fff; }
 .settings-row .sr-val {
-  font-family: 'DM Mono', monospace; font-size: 14px;
+  font-size: 14px;
   color: var(--text-3); font-weight: 500;
 }
 .settings-danger-btn {
@@ -2410,7 +2410,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   letter-spacing: -0.2px;
 }
 .winddown-progress {
-  font-family: 'DM Mono', monospace; font-size: 11px;
+  font-size: 11px;
   color: var(--text-3); font-weight: 500;
 }
 .winddown-step {
@@ -2478,7 +2478,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .efp-phase-name { font-size: 16px; font-weight: 800; letter-spacing: -0.5px; }
 .efp-phase-time {
-  font-family: 'DM Mono', monospace; font-size: 12px;
+  font-size: 12px;
   color: var(--text-3); font-weight: 500;
 }
 .efp-phase-energy {
@@ -2506,7 +2506,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .efp-now-label {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 9px; font-weight: 700; letter-spacing: 1px;
-  color: var(--energy); text-transform: uppercase;
+  color: var(--energy); 
 }
 .efp-now-label .live-dot { width: 5px; height: 5px; }
 .efp-curve-wrap {
@@ -2516,7 +2516,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .efp-curve-title {
   font-size: 11px; font-weight: 700; letter-spacing: 1px;
-  color: var(--text-3); text-transform: uppercase; margin-bottom: 12px;
+  color: var(--text-3);  margin-bottom: 12px;
 }
 .efp-summary {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
@@ -2530,7 +2530,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .efp-summary-val { font-size: 20px; font-weight: 900; letter-spacing: -1px; }
 .efp-summary-label {
   font-size: 9px; font-weight: 700; letter-spacing: 1px;
-  color: var(--text-3); text-transform: uppercase; margin-top: 2px;
+  color: var(--text-3);  margin-top: 2px;
 }
 
 /* ========== NOTIFICATION TOGGLE ========== */
@@ -2653,7 +2653,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .la-live {
   display: flex; align-items: center; gap: 5px;
   font-size: 9px; font-weight: 700; color: var(--la-accent, #00ec7f);
-  text-transform: uppercase; letter-spacing: 0.8px; margin-top: 1px;
+   letter-spacing: 0.8px; margin-top: 1px;
 }
 .la-live-dot {
   width: 5px; height: 5px; border-radius: 50%;
@@ -2669,7 +2669,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   background: rgba(255,84,112,0.1); color: rgba(255,84,112,0.8);
   font-size: 11px; font-weight: 800; cursor: pointer; font-family: inherit;
   border: 1px solid rgba(255,84,112,0.15); letter-spacing: 0.3px;
-  transition: all 0.15s; text-transform: uppercase;
+  transition: all 0.15s; 
 }
 .la-stop:active { background: rgba(255,84,112,0.25); color: #ff5470; transform: scale(0.95); }
 .la-pause {
@@ -2677,7 +2677,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5);
   font-size: 11px; font-weight: 800; cursor: pointer; font-family: inherit;
   border: 1px solid rgba(255,255,255,0.08); letter-spacing: 0.3px;
-  transition: all 0.15s; text-transform: uppercase;
+  transition: all 0.15s; 
 }
 .la-pause:active { background: rgba(91,154,255,0.2); color: #5b9aff; transform: scale(0.95); }
 .la-discard {
@@ -2685,7 +2685,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.3);
   font-size: 11px; font-weight: 800; cursor: pointer; font-family: inherit;
   border: 1px solid rgba(255,255,255,0.06); letter-spacing: 0.3px;
-  transition: all 0.15s; text-transform: uppercase;
+  transition: all 0.15s; 
 }
 .la-discard:active { background: rgba(255,84,112,0.15); color: rgba(255,84,112,0.6); transform: scale(0.95); }
 .la-paused-badge {
@@ -2700,7 +2700,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 
 /* Timer */
 .la-timer {
-  font-size: 28px; font-weight: 800; font-family: 'DM Mono', monospace;
+  font-size: 28px; font-weight: 800;
   color: var(--la-accent, #fff); letter-spacing: -1px; line-height: 1;
 }
 
@@ -2722,7 +2722,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   display: flex; justify-content: space-between; align-items: center;
   margin-top: 8px;
 }
-.la-meta-text { font-size: 11px; color: rgba(255,255,255,0.3); font-weight: 600; font-family: 'DM Mono', monospace; }
+.la-meta-text { font-size: 11px; color: rgba(255,255,255,0.3); font-weight: 600; }
 .la-meta-accent { color: var(--la-accent, #00ec7f); font-weight: 700; }
 
 /* ── Per-activity themes ── */
@@ -2795,7 +2795,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   flex: 1; background: rgba(255,255,255,0.04); border-radius: 8px; padding: 6px 8px;
   text-align: center;
 }
-.la-stat-label { font-size: 8px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: rgba(255,255,255,0.25); }
+.la-stat-label { font-size: 8px; font-weight: 600; letter-spacing: 0.5px;  color: rgba(255,255,255,0.25); }
 .la-stat-val { font-size: 14px; font-weight: 800; color: #fff; margin-top: 1px; }
 
 /* Deep Work: arc visualization */
@@ -2808,7 +2808,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .la-arc-labels { display: flex; justify-content: space-between; padding: 0 8px;
   font-size: 9px; font-weight: 600; color: rgba(255,255,255,0.25); letter-spacing: 0.3px; }
 .la-arc-optimal { position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
-  font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.3); letter-spacing: 0.5px; text-transform: uppercase; }
+  font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.3); letter-spacing: 0.5px;  }
 
 /* Shisha: meter ring */
 .la-meter { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
@@ -2819,7 +2819,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   transition: stroke-dashoffset 1s linear; }
 .la-meter-info { flex: 1; }
 .la-meter-label { font-size: 10px; color: rgba(255,255,255,0.35); font-weight: 500; }
-.la-meter-val { font-size: 15px; font-weight: 800; color: #fff; font-family: 'DM Mono', monospace; letter-spacing: -0.5px; }
+.la-meter-val { font-size: 15px; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
 
 /* Segments fallback */
 .la-segments { display: flex; gap: 2px; margin-top: 8px; }
@@ -2831,7 +2831,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .la-ring-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
 .la-ring-val {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 800; color: #fff; font-family: 'DM Mono', monospace;
+  font-size: 12px; font-weight: 800; color: #fff;
 }
 
 /* ========== TRENDS / SPARKLINES ========== */
@@ -2844,7 +2844,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .trend-card:active { transform: scale(0.97); }
 .trend-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
-.trend-card-label { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-3); }
+.trend-card-label { font-size: 10px; font-weight: 700; letter-spacing: 1.2px;  color: var(--text-3); }
 .trend-card-arrow { font-size: 11px; font-weight: 700; }
 .trend-card-val { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.2; }
 .trend-card-unit { font-size: 10px; color: var(--text-3); font-weight: 500; margin-left: 2px; }
@@ -2857,7 +2857,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   background: var(--card); border: 1px solid var(--card-border);
   border-radius: var(--radius-sm); padding: 12px 14px;
 }
-.trend-stat-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-3); margin-bottom: 2px; }
+.trend-stat-label { font-size: 10px; font-weight: 700; letter-spacing: 1px;  color: var(--text-3); margin-bottom: 2px; }
 .trend-stat-val { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
 
 /* ========== UTILS ========== */
@@ -2953,20 +2953,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
     </section>
 
     <section>
-      <div class="section-head">
-        <div class="section-title">My Day</div>
-        <div class="section-add" onclick="toggleTaskInput()"><svg viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
-      </div>
-      <div class="task-input-row hidden" id="taskInputRow">
-        <input type="text" id="taskInput" placeholder="Add a task..." onkeydown="if(event.key==='Enter')addTask()">
-        <button onclick="addTask()">+</button>
-      </div>
-      <div id="dayTasks"></div>
-    </section>
-
-    <section>
-      <div class="section-head"><div class="section-title">Daily Outlook</div></div>
-      <div id="outlookList"></div>
+      <div id="tonightCard"></div>
     </section>
   </div>
 
@@ -3390,7 +3377,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
         <span class="sr-label">Status</span>
         <span class="sr-val" id="settSyncStatus" style="color:var(--energy)">--</span>
       </div>
-      <div style="padding:6px 0;font-size:10px;color:var(--text-4);line-height:1.5;font-family:'DM Mono',monospace;word-break:break-all;" id="settSyncUrl">
+      <div style="padding:6px 0;font-size:10px;color:var(--text-4);line-height:1.5;word-break:break-all;" id="settSyncUrl">
         lqaeggkwhlqclkqhljlk.supabase.co/functions/v1/rythm-health-sync
       </div>
       <div style="padding:4px 0 0;font-size:11px;color:var(--text-4);line-height:1.6;">
@@ -3447,7 +3434,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v132';
+const APP_VERSION = 'v133';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -3629,11 +3616,10 @@ function fullRerender() {
   drawCurve('curveSvg', false);
   updateCurveFoot('curveFoot');
   renderWinddown();
-  renderTasks();
+  renderTonightCard();
   renderMetrics();
   renderSleepBreakdown();
   renderNutrition();
-  renderOutlook();
   renderStreaks();
   renderLiveActivities();
   renderSuggestions();
@@ -4848,7 +4834,7 @@ function buildSleepDetail() {
     <div class="rd-row"><span class="rd-row-label">7-Day Avg</span><span class="rd-row-val">${fmtH(avgSleep)}</span></div>
     <div class="rd-msg" style="font-size:12px;line-height:1.6">${msg}</div>
     <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--card-border);">
-      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-4);text-transform:uppercase;margin-bottom:6px;">Why this matters for athletes</div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-4);margin-bottom:6px;">Why this matters for athletes</div>
       <div style="font-size:11px;color:var(--text-3);line-height:1.5;">
         <b style="color:var(--text-2)">Deep sleep</b> = HGH release (muscle repair, tendon strength). Target: 15-20% of total.<br>
         <b style="color:var(--text-2)">REM</b> = Motor skill consolidation, reaction time. Target: 20-25% of total.<br>
@@ -4911,7 +4897,7 @@ function buildRecoveryDetail() {
     <div class="rd-row"><span class="rd-row-label"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${rhrColor};margin-right:4px;"></span> Resting HR</span><div class="rd-bar-wrap"><div class="rd-bar-fill" style="width:${rhrScore}%;background:${rhrColor}"></div></div><span class="rd-row-val" style="color:${rhrColor}">${rhrScore}%</span></div>
     <div class="rd-row"><span class="rd-row-label"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#93a1c4;margin-right:4px;"></span> Sleep Quality</span><div class="rd-bar-wrap"><div class="rd-bar-fill" style="width:${sleepScore}%;background:#93a1c4"></div></div><span class="rd-row-val">${sleepScore}%</span></div>
     <div class="rd-row"><span class="rd-row-label"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${trainColor};margin-right:4px;"></span> Training Load</span><div class="rd-bar-wrap"><div class="rd-bar-fill" style="width:${trainScore}%;background:${trainColor}"></div></div><span class="rd-row-val" style="color:${trainColor}">${trainScore}%</span></div>
-    <div class="rd-row" style="padding-left:12px;"><span class="rd-row-label" style="font-size:11px;color:var(--text-4)">ACR (7d/21d)</span><span class="rd-row-val" style="font-size:11px;color:var(--text-4);font-family:'DM Mono',monospace">${tl.acr}x (${tl.avg7}/${tl.avg21} cal)</span></div>
+    <div class="rd-row" style="padding-left:12px;"><span class="rd-row-label" style="font-size:11px;color:var(--text-4)">ACR (7d/21d)</span><span class="rd-row-val" style="font-size:11px;color:var(--text-4);">${tl.acr}x (${tl.avg7}/${tl.avg21} cal)</span></div>
     <div class="rd-row" style="margin-top:6px;padding-top:8px;border-top:1px solid var(--card-border)"><span class="rd-row-label">HRV</span><span class="rd-row-val">${ST.metrics.hrv}ms <span style="color:${ST.metrics.hrvDelta >= 0 ? 'var(--energy)' : 'var(--warn)'};">(${ST.metrics.hrvDelta >= 0 ? '+' : ''}${ST.metrics.hrvDelta})</span></span></div>
     <div class="rd-row"><span class="rd-row-label">Resting HR</span><span class="rd-row-val">${ST.metrics.rhr}bpm <span style="color:${ST.metrics.rhrDelta <= 0 ? 'var(--energy)' : 'var(--warn)'};">(${ST.metrics.rhrDelta > 0 ? '+' : ''}${ST.metrics.rhrDelta})</span></span></div>
     <div class="rd-row"><span class="rd-row-label">Baseline HRV</span><span class="rd-row-val" style="color:var(--text-3)">${ST.metrics.hrvBaseline || 42}ms <span style="font-size:10px;color:var(--text-4)">(50th %ile: 42ms)</span></span></div>
@@ -4920,7 +4906,7 @@ function buildRecoveryDetail() {
     ${hadShisha ? '<div class="rd-row"><span class="rd-row-label" style="color:var(--text-3)">Daily Shisha</span><span class="rd-row-val" style="color:var(--text-3)">CO clears in ~4h</span></div>' : ''}
     <div class="rd-msg" style="font-size:12px;line-height:1.6">${msg}</div>
     <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--card-border);">
-      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-4);text-transform:uppercase;margin-bottom:6px;">What drives recovery</div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-4);margin-bottom:6px;">What drives recovery</div>
       <div style="font-size:11px;color:var(--text-3);line-height:1.5;">
         <b style="color:var(--text-2)">HRV</b> (35%) = parasympathetic tone. Higher = more recovered. Your baseline: ${ST.metrics.hrvBaseline || 42}ms.<br>
         <b style="color:var(--text-2)">Sleep</b> (30%) = quality + duration. Deep sleep releases HGH for tissue repair.<br>
@@ -4992,7 +4978,7 @@ function buildStrainDetail() {
     <div class="rd-msg" style="font-size:12px;line-height:1.6">${msg}</div>
     <div id="strainTimeline" style="margin-top:10px;"></div>
     <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--card-border);">
-      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-4);text-transform:uppercase;margin-bottom:6px;">Strain Zones</div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-4);margin-bottom:6px;">Strain Zones</div>
       <div style="font-size:11px;color:var(--text-3);line-height:1.6;">
         <span style="color:var(--energy)">0-4 Light</span> - recovery day, mobility, walks<br>
         <span style="color:#4da9ff">5-9 Moderate</span> - technique work, tempo, light gym<br>
@@ -6049,7 +6035,7 @@ function buildStressFullPage() {
             const barColor = h.v >= hrvBase ? 'var(--energy)' : h.v >= hrvBase * 0.85 ? 'var(--warn)' : 'var(--danger)';
             const dayLabel = new Date(h.t).toLocaleDateString('en', { weekday: 'short' }).slice(0,2);
             return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">' +
-              '<div style="font-size:9px;color:var(--text-4);font-family:DM Mono,monospace;">' + Math.round(h.v) + '</div>' +
+              '<div style="font-size:9px;color:var(--text-4);">' + Math.round(h.v) + '</div>' +
               '<div style="width:100%;max-width:28px;height:' + Math.max(8, pct * 0.7) + 'px;background:' + barColor + ';border-radius:4px 4px 2px 2px;opacity:' + (i === recent.length - 1 ? '1' : '0.6') + '"></div>' +
               '<div style="font-size:8px;color:var(--text-4);margin-top:2px;">' + dayLabel + '</div></div>';
           }).join('')}
@@ -6377,8 +6363,13 @@ function getNextPeakTime() {
 }
 
 // Compute strain (0-21 scale like WHOOP) from today's active energy
+function localDateStr(d) {
+  d = d || new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
 function computeStrain() {
-  const today = new Date().toISOString().slice(0,10);
+  const today = localDateStr();
   const workouts = ST._workouts || [];
   let todayCal = 0;
   for (const w of workouts) {
@@ -6423,39 +6414,10 @@ function computeStrain() {
     if (estCal > todayCal) todayCal = estCal;
   }
 
-  // HR zone-weighted strain (Edwards TRIMP) when zone data available
-  // Edwards' weights: Z1x1, Z2x2, Z3x3, Z4x4, Z5x5
-  // IMPORTANT: only use zones if there are actual workouts today (zones persist across days)
-  const zones = ST.health?.hrZones;
-  const hasWorkoutsToday = todayW.length > 0 || loggedWorkoutMin > 0 || liveWorkout;
-  let z1 = 0, z2 = 0, z3 = 0, z4 = 0, z5 = 0;
-  if (zones && hasWorkoutsToday) {
-    if (Array.isArray(zones)) {
-      // Array format: [{zone:1, pct:33}, {zone:2, pct:35}, ...]
-      const totalMin = totalWorkMin || todayW.reduce((s, w) => s + (w.durMin || 0), 0) || 60;
-      for (const z of zones) {
-        const mins = Math.round((z.pct || 0) / 100 * totalMin);
-        if (z.zone === 1) z1 = mins;
-        else if (z.zone === 2) z2 = mins;
-        else if (z.zone === 3) z3 = mins;
-        else if (z.zone === 4) z4 = mins;
-        else if (z.zone === 5) z5 = mins;
-      }
-    } else {
-      z1 = zones.z1 || 0; z2 = zones.z2 || 0; z3 = zones.z3 || 0;
-      z4 = zones.z4 || 0; z5 = zones.z5 || 0;
-    }
-  }
-  if (z1 || z2 || z3 || z4 || z5) {
-    const trimp = z1 * 1 + z2 * 2 + z3 * 3 + z4 * 4 + z5 * 5;
-    // Scale TRIMP minutes to 0-21 strain score
-    const zoneStrain = Math.min(21, Math.round(Math.log2(1 + trimp) * 3.0));
-    // Use whichever method gives higher fidelity - prefer zone data
-    const calStrain = todayCal >= 20 ? Math.min(21, Math.round(Math.sqrt(todayCal) * 0.45)) : 0;
-    return Math.max(zoneStrain, calStrain);
-  }
+  // HR zone TRIMP removed - zones in DEFAULT_STATE are static/never synced,
+  // causing stale data to inflate strain. Use calorie + duration only.
 
-  // Fallback: calorie-based approximation
+  // Calorie-based strain
   if (todayCal < 20) return 0; // no meaningful activity
   // Scale: ~100cal=4, ~300cal=7, ~600cal=10, ~1000cal=13, ~1500cal=16, ~2000cal=19
   return Math.min(21, Math.round(Math.sqrt(todayCal) * 0.45));
@@ -6570,7 +6532,7 @@ function renderEnergy() {
     if (mods.length) {
       const tagLabels = { sauna: 'Sauna', shisha: 'Shisha', shisha_late: 'Shisha', workout: 'Workout', meditation: 'Meditation', alcohol: 'Alcohol', cold_shower: 'Cold', nap: 'Nap', energy_caps: 'Caffeine', sugar: 'Sugar', stress: 'Stress', deep_work: 'Focus', walk: 'Walk', stretching: 'Stretch', foam_roll: 'Foam Roll', powerdot: 'PowerDot', jetboots: 'JetBoots', mobility: 'Mobility', massage: 'Massage', massage_gun: 'Massage Gun', infrapanel: 'Infrapanel' };
       modsEl.innerHTML = mods.map(m =>
-        `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;font-size:11px;font-family:'DM Mono',monospace;background:${m.val >= 0 ? 'rgba(0,236,127,0.12)' : 'rgba(255,80,80,0.12)'};color:${m.val >= 0 ? 'var(--energy)' : 'var(--danger)'}">${m.icon} ${tagLabels[m.tag] || m.tag} ${m.val >= 0 ? '+' : ''}${m.val}%</span>`
+        `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;font-size:11px;background:${m.val >= 0 ? 'rgba(0,236,127,0.12)' : 'rgba(255,80,80,0.12)'};color:${m.val >= 0 ? 'var(--energy)' : 'var(--danger)'}">${m.icon} ${tagLabels[m.tag] || m.tag} ${m.val >= 0 ? '+' : ''}${m.val}%</span>`
       ).join('');
     } else {
       modsEl.innerHTML = '';
@@ -6726,7 +6688,7 @@ function buildEnergyFullPage() {
       <div class="curve-foot" id="efpCurveFoot"></div>
     </div>
 
-    <div style="font-size:11px;font-weight:800;letter-spacing:2px;color:var(--text-3);text-transform:uppercase;margin-bottom:12px">Phases Today</div>
+    <div style="font-size:11px;font-weight:800;letter-spacing:2px;color:var(--text-3);margin-bottom:12px">Phases Today</div>
     ${phaseCards}
   `;
 }
@@ -6807,6 +6769,51 @@ function renderMetrics() {
 function scrollToSection(id) {
   const el = document.getElementById(id);
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderTonightCard() {
+  const el = document.getElementById('tonightCard');
+  if (!el) return;
+
+  const now = new Date();
+  const nowH = now.getHours() + now.getMinutes() / 60;
+  const WAKE = profileWakeHour();
+  const hwake = (nowH - WAKE + 24) % 24;
+
+  // Only show in the evening (after 60% of waking hours)
+  if (hwake < 10) { el.innerHTML = ''; return; }
+
+  const manualTarget = (ST.health && ST.health.sleepTarget) || 8;
+  const strain = computeStrain();
+  const debtH = ST.metrics?.sleepDebt || 0;
+  const bedtimeNeed = manualTarget + (strain > 14 ? 1.0 : strain > 10 ? 0.5 : 0) + (debtH > 1 ? 0.5 : 0);
+  let idealBedMin = ST.profile.wakeMin - Math.round(bedtimeNeed * 60) - 15;
+  if (idealBedMin < 0) idealBedMin += 1440;
+  const bedtime = minToTime(idealBedMin);
+  let shishaCutMin = idealBedMin - 180;
+  if (shishaCutMin < 0) shishaCutMin += 1440;
+
+  el.innerHTML = `
+    <div style="background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:16px 18px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;">
+        <span style="font-size:12px;font-weight:700;color:var(--text-2);">Tonight</span>
+        <span style="font-size:20px;font-weight:800;color:var(--energy);">${bedtime}</span>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;background:var(--bg-2);border-radius:10px;padding:10px;">
+          <div style="font-size:10px;color:var(--text-4);">Target</div>
+          <div style="font-size:14px;font-weight:700;margin-top:2px;">${fmtH(bedtimeNeed)}</div>
+        </div>
+        <div style="flex:1;background:var(--bg-2);border-radius:10px;padding:10px;">
+          <div style="font-size:10px;color:var(--text-4);">Shisha by</div>
+          <div style="font-size:14px;font-weight:700;margin-top:2px;">${minToTime(shishaCutMin)}</div>
+        </div>
+        <div style="flex:1;background:var(--bg-2);border-radius:10px;padding:10px;">
+          <div style="font-size:10px;color:var(--text-4);">Room</div>
+          <div style="font-size:14px;font-weight:700;margin-top:2px;">18-19C</div>
+        </div>
+      </div>
+    </div>`;
 }
 
 function renderOutlook() {
@@ -7584,12 +7591,12 @@ function renderHabitAccountability() {
     </div>`;
 
   if (tracked.length) {
-    html += `<div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);text-transform:uppercase;margin-bottom:6px">Positive Habits</div>`;
+    html += `<div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);margin-bottom:6px">Positive Habits</div>`;
     html += tracked.map(([id, count]) => buildHabitRow(id, count)).join('');
   }
 
   if (negativeTracked.length) {
-    html += `<div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);text-transform:uppercase;margin:12px 0 6px">Negatives to Reduce</div>`;
+    html += `<div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);margin:12px 0 6px">Negatives to Reduce</div>`;
     html += negativeTracked.map(([id, count]) => buildHabitRow(id, count)).join('');
   }
 
@@ -8026,7 +8033,7 @@ function renderHabitImpact() {
     }
 
     if (negStreaks.length) {
-      html += `<div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);text-transform:uppercase;margin:10px 0 4px">Negative Streaks</div>`;
+      html += `<div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);margin:10px 0 4px">Negative Streaks</div>`;
       for (const s of negStreaks.slice(0, 4)) {
         const score = s.impactScore;
         const scoreCls = score == null ? 'low'
@@ -8237,7 +8244,7 @@ function renderStrainCoach() {
   if (workouts.length) {
     activityHtml = workouts.map(w => `<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);">
       <span style="color:var(--text-2)">${w.type || 'Workout'}</span>
-      <span style="color:var(--text-3);font-family:'DM Mono',monospace">${w.cal ? w.cal + ' cal' : ''} ${w.duration ? '· ' + Math.round(w.duration) + 'min' : ''}</span>
+      <span style="color:var(--text-3);">${w.cal ? w.cal + ' cal' : ''} ${w.duration ? '· ' + Math.round(w.duration) + 'min' : ''}</span>
     </div>`).join('');
   }
 
@@ -8250,7 +8257,7 @@ function renderStrainCoach() {
     <div class="strain-bar-bg">
       <div class="strain-bar-fill" style="width:${usedPct}%;background:${statusColor}"></div>
     </div>
-    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-4);margin-top:4px;font-family:'DM Mono',monospace;">
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-4);margin-top:4px;">
       <span>${activeCal} cal · ${strain}/21 strain</span>
       <span>${usedPct}% of capacity</span>
     </div>
@@ -8258,7 +8265,7 @@ function renderStrainCoach() {
     <div class="strain-msg">${advice}</div>
     <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:11px;">
       <span style="color:var(--text-4)">Training load (ACR)</span>
-      <span style="color:${tl.acr >= 0.8 && tl.acr <= 1.3 ? 'var(--energy)' : tl.acr > 1.5 ? 'var(--danger)' : 'var(--warn)'}; font-weight:700; font-family:'DM Mono',monospace;">${tl.acr}x ${tl.acr >= 0.8 && tl.acr <= 1.3 ? 'optimal' : tl.acr > 1.5 ? 'spike!' : tl.acr < 0.8 ? 'low' : 'high'}</span>
+      <span style="color:${tl.acr >= 0.8 && tl.acr <= 1.3 ? 'var(--energy)' : tl.acr > 1.5 ? 'var(--danger)' : 'var(--warn)'}; font-weight:700; ">${tl.acr}x ${tl.acr >= 0.8 && tl.acr <= 1.3 ? 'optimal' : tl.acr > 1.5 ? 'spike!' : tl.acr < 0.8 ? 'low' : 'high'}</span>
     </div>`;
 }
 
@@ -8340,7 +8347,7 @@ function renderStrainTarget() {
         <div class="st-bar-fill" style="width:${barPct}%;background:${strainColor}"></div>
         <div class="st-bar-zone" style="left:${zoneLPct}%;width:${zoneHPct - zoneLPct}%"></div>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-4);font-family:'DM Mono',monospace;">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-4);">
         <span>0</span>
         <span>7</span>
         <span>14</span>
@@ -8562,7 +8569,7 @@ function renderSleepNeedBanner() {
     <div class="sleep-need-card">
       <div class="sn-top">
         <div class="sn-label">Sleep Need Tonight</div>
-        ${sl.totalH > 0 ? `<div style="font-size:11px;font-family:'DM Mono',monospace;color:${lastColor}">Last: ${sl.totalH.toFixed(1)}h (${lastNightPct}%)</div>` : ''}
+        ${sl.totalH > 0 ? `<div style="font-size:11px;color:${lastColor}">Last: ${sl.totalH.toFixed(1)}h (${lastNightPct}%)</div>` : ''}
       </div>
       <div class="sn-main">
         <div class="sn-val">${fmtH(sleepNeeded)}</div>
@@ -9970,15 +9977,15 @@ function renderCoachToday() {
       </div>
       <div style="display:flex;gap:12px;margin-bottom:12px;">
         <div style="text-align:center;flex:1;">
-          <div style="font-size:20px;font-weight:800;color:${zoneColor};font-family:'DM Mono',monospace;">${recovery}%</div>
+          <div style="font-size:20px;font-weight:800;color:${zoneColor};">${recovery}%</div>
           <div style="font-size:8px;color:var(--text-4);font-weight:700;letter-spacing:1px;">RECOVERY</div>
         </div>
         <div style="text-align:center;flex:1;">
-          <div style="font-size:20px;font-weight:800;color:var(--text-2);font-family:'DM Mono',monospace;">${strain}</div>
+          <div style="font-size:20px;font-weight:800;color:var(--text-2);">${strain}</div>
           <div style="font-size:8px;color:var(--text-4);font-weight:700;letter-spacing:1px;">STRAIN</div>
         </div>
         <div style="text-align:center;flex:1;">
-          <div style="font-size:20px;font-weight:800;color:${acrColor};font-family:'DM Mono',monospace;">${tl.acr}x</div>
+          <div style="font-size:20px;font-weight:800;color:${acrColor};">${tl.acr}x</div>
           <div style="font-size:8px;color:var(--text-4);font-weight:700;letter-spacing:1px;">ACR</div>
         </div>
       </div>
@@ -9995,7 +10002,7 @@ function renderCoachToday() {
               </div>
             </div>`).join('')}
         </div>`).join('') : '<div style="text-align:center;padding:12px;color:var(--energy);font-size:13px;font-weight:600;">All done. Nice work.</div>'}
-      <div style="text-align:right;font-size:10px;color:var(--text-4);margin-top:4px;font-family:'DM Mono',monospace;">${doneCount}/${totalCount} complete</div>
+      <div style="text-align:right;font-size:10px;color:var(--text-4);margin-top:4px;">${doneCount}/${totalCount} complete</div>
     </div>`;
 }
 
@@ -10086,15 +10093,15 @@ function renderCoachTraining() {
       </div>
       <div style="display:flex;gap:16px;margin-bottom:14px;">
         <div style="text-align:center;flex:1;">
-          <div style="font-size:24px;font-weight:800;color:${zoneColor};font-family:'DM Mono',monospace;">${recovery}%</div>
+          <div style="font-size:24px;font-weight:800;color:${zoneColor};">${recovery}%</div>
           <div style="font-size:9px;color:var(--text-4);font-weight:700;letter-spacing:1px;">RECOVERY</div>
         </div>
         <div style="text-align:center;flex:1;">
-          <div style="font-size:24px;font-weight:800;color:var(--text-2);font-family:'DM Mono',monospace;">${strain}</div>
+          <div style="font-size:24px;font-weight:800;color:var(--text-2);">${strain}</div>
           <div style="font-size:9px;color:var(--text-4);font-weight:700;letter-spacing:1px;">STRAIN</div>
         </div>
         <div style="text-align:center;flex:1;">
-          <div style="font-size:24px;font-weight:800;color:${acrColor};font-family:'DM Mono',monospace;">${tl.acr}x</div>
+          <div style="font-size:24px;font-weight:800;color:${acrColor};">${tl.acr}x</div>
           <div style="font-size:9px;color:var(--text-4);font-weight:700;letter-spacing:1px;">ACR</div>
         </div>
       </div>
@@ -10185,7 +10192,7 @@ function renderHeroRecentBlock() {
   return `
     <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);text-transform:uppercase;">RECENT TRAINING (HERO)</div>
+        <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);">RECENT TRAINING (HERO)</div>
         <div style="font-size:10px;color:var(--text-3);">${workouts.length} sessions · ${restNote}</div>
       </div>
       ${avgRpe ? `<div style="font-size:10px;color:var(--text-3);margin-bottom:8px;">Avg RPE: <span style="color:${avgRpe >= 8 ? 'var(--danger)' : avgRpe >= 6 ? 'var(--warn)' : 'var(--energy)'};font-weight:700;">${avgRpe}/10</span></div>` : ''}
@@ -10193,7 +10200,7 @@ function renderHeroRecentBlock() {
         const exList = w.exercises.slice(0, 3).join(', ') + (w.exercises.length > 3 ? ' +' + (w.exercises.length - 3) : '');
         const rpeColor = w.rpe >= 8 ? 'var(--danger)' : w.rpe >= 6 ? 'var(--warn)' : 'var(--energy)';
         return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.03);">
-          <div style="font-size:11px;color:var(--text-4);font-family:'DM Mono',monospace;width:44px;flex-shrink:0;">${w.date.slice(5)}</div>
+          <div style="font-size:11px;color:var(--text-4);width:44px;flex-shrink:0;">${w.date.slice(5)}</div>
           <div style="flex:1;min-width:0;">
             <div style="font-size:11px;color:var(--text-2);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${w.tag}${w.notes ? ' · ' + w.notes.slice(0, 30) : ''}</div>
             <div style="font-size:10px;color:var(--text-4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${exList || w.totalCompleted + ' sets'}</div>
@@ -10415,13 +10422,13 @@ function renderCoachWeekGrade() {
     <div class="coach-section">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
         <div class="coach-section-label" style="margin-bottom:0;">WEEKLY GRADE</div>
-        <div style="font-size:28px;font-weight:900;color:${gradeColor};font-family:'DM Mono',monospace;">${grade}</div>
+        <div style="font-size:28px;font-weight:900;color:${gradeColor};">${grade}</div>
       </div>
       <div style="margin-bottom:10px;">
         <div style="height:6px;background:var(--card-border);border-radius:3px;overflow:hidden;">
           <div style="height:100%;width:${weighted}%;background:${gradeColor};border-radius:3px;transition:width 0.5s;"></div>
         </div>
-        <div style="text-align:right;font-size:11px;color:var(--text-3);margin-top:3px;font-family:'DM Mono',monospace;">${weighted}/100</div>
+        <div style="text-align:right;font-size:11px;color:var(--text-3);margin-top:3px;">${weighted}/100</div>
       </div>
       ${metrics.map(m => `
         <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
@@ -10429,7 +10436,7 @@ function renderCoachWeekGrade() {
           <div style="flex:1;height:4px;background:var(--card-border);border-radius:2px;overflow:hidden;">
             <div style="height:100%;width:${m.score}%;background:${m.score >= 70 ? 'var(--energy)' : m.score >= 40 ? 'var(--warn)' : 'var(--danger)'};border-radius:2px;"></div>
           </div>
-          <div style="font-size:11px;color:var(--text-2);font-family:'DM Mono',monospace;width:65px;text-align:right;">${m.val}</div>
+          <div style="font-size:11px;color:var(--text-2);width:65px;text-align:right;">${m.val}</div>
         </div>`).join('')}
     </div>`;
 }
@@ -10471,7 +10478,7 @@ function renderCoachPotential() {
       <div style="display:flex;gap:12px;">
         ${items.map(i => `
           <div style="flex:1;text-align:center;padding:10px 4px;background:rgba(255,255,255,0.02);border-radius:10px;">
-            <div style="font-size:22px;font-weight:800;color:${i.color};font-family:'DM Mono',monospace;">${i.val}</div>
+            <div style="font-size:22px;font-weight:800;color:${i.color};">${i.val}</div>
             <div style="font-size:9px;color:var(--text-4);margin-top:2px;">${i.unit}</div>
             <div style="font-size:10px;color:var(--text-3);margin-top:4px;font-weight:600;">${i.label}</div>
             <div style="height:3px;background:var(--card-border);border-radius:2px;margin-top:6px;overflow:hidden;">
@@ -11649,7 +11656,7 @@ function runBreathingCycle() {
       <div style="padding:20px 0;text-align:center;">
         <div style="font-size:36px;margin-bottom:8px;">✓</div>
         <div style="font-size:16px;font-weight:800;color:var(--energy);letter-spacing:1px;margin-bottom:4px;">SESSION COMPLETE</div>
-        <div style="font-size:12px;color:var(--text-3);font-family:'DM Mono',monospace;margin-bottom:16px;">${p.label} · ${breathingRound} rounds · ${durMin} min</div>
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:16px;">${p.label} · ${breathingRound} rounds · ${durMin} min</div>
         <div style="font-size:13px;color:var(--text-2);line-height:1.5;max-width:280px;margin:0 auto 16px;">${benefits[breathingPattern] || ''}</div>
         <button class="breathing-btn start" onclick="renderCoachBreathwork()" style="font-size:12px;padding:10px 24px;">Done</button>
       </div>`;
@@ -12313,7 +12320,7 @@ function renderJournalStreak() {
     else break;
   }
   if (streak > 0) {
-    el.innerHTML = `<span style="font-size:12px;">🔥</span><span style="font-size:12px;font-weight:700;color:var(--energy);font-family:'DM Mono',monospace;">${streak}d</span>`;
+    el.innerHTML = `<span style="font-size:12px;">🔥</span><span style="font-size:12px;font-weight:700;color:var(--energy);">${streak}d</span>`;
   } else {
     el.innerHTML = '';
   }
@@ -12459,7 +12466,7 @@ function renderCorrelations() {
     return;
   }
 
-  el.innerHTML = `<div style="display:flex;justify-content:space-between;padding:0 2px 8px;font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);text-transform:uppercase;">
+  el.innerHTML = `<div style="display:flex;justify-content:space-between;padding:0 2px 8px;font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);">
     <span>WHAT HELPS / HURTS</span><span>RECOVERY IMPACT</span>
   </div>` + corrs.map(c => {
     const hrvTag = c.hrvDiff != null
@@ -12490,7 +12497,7 @@ function renderJournalHistory() {
   }
   const todayStr = new Date().toISOString().slice(0,10);
   el.innerHTML = `
-    <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text-3);text-transform:uppercase;margin-bottom:12px;">History</div>
+    <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text-3);margin-bottom:12px;">History</div>
     <div style="position:relative;padding-left:28px;">
       <div style="position:absolute;left:9px;top:6px;bottom:6px;width:2px;background:rgba(255,255,255,0.06);border-radius:2px;"></div>
       ${entries.map(j => {
@@ -12513,10 +12520,10 @@ function renderJournalHistory() {
           <div style="background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:12px 14px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
               <span style="font-size:13px;font-weight:700;">${dateStr}</span>
-              <span style="font-size:14px;font-weight:800;color:${interp.color};font-family:'DM Mono',monospace;">${j.readiness != null ? Math.round(j.readiness) + '%' : ''}</span>
+              <span style="font-size:14px;font-weight:800;color:${interp.color};">${j.readiness != null ? Math.round(j.readiness) + '%' : ''}</span>
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:${ctxParts.length ? '6' : '0'}px;">${tags}${extra}</div>
-            ${ctxParts.length ? `<div style="font-size:10px;color:var(--text-4);font-family:'DM Mono',monospace;">${ctxParts.join(' · ')}</div>` : ''}
+            ${ctxParts.length ? `<div style="font-size:10px;color:var(--text-4);">${ctxParts.join(' · ')}</div>` : ''}
           </div>
         </div>`;
       }).join('')}
@@ -13214,9 +13221,9 @@ function changeDay(dir) {
     drawCurve('curveSvg', false);
     updateCurveFoot('curveFoot');
     renderWinddown();
+    renderTonightCard();
     renderMetrics();
     renderSleepBreakdown();
-    renderOutlook();
     renderLiveActivities();
     renderSuggestions();
   }
@@ -13276,7 +13283,7 @@ function loadHistoricalDay(dateStr) {
         <div class="st-bar-wrap">
           <div class="st-bar-fill" style="width:${barPct}%;background:${strainColor}"></div>
         </div>
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-4);font-family:'DM Mono',monospace;padding:0 2px;margin-top:4px;">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-4);padding:0 2px;margin-top:4px;">
           <span>0</span><span>7</span><span>14</span><span>21</span>
         </div>
       </div>`;
