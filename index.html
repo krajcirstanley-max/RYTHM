@@ -3447,7 +3447,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v131';
+const APP_VERSION = 'v132';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -4942,7 +4942,8 @@ function buildStrainDetail() {
   const today = new Date().toISOString().slice(0,10);
   const allWorkouts = ST._workouts || [];
   const todayWorkouts = allWorkouts.filter(w => w.date === today);
-  const totalCal = todayWorkouts.reduce((s,w) => s+(w.cal||0), 0) || (ST.health && ST.health.activeEnergy ? ST.health.activeEnergy : 0);
+  const aeToday = (ST.health?._activeEnergyDate === today) ? (ST.health.activeEnergy || 0) : 0;
+  const totalCal = todayWorkouts.reduce((s,w) => s+(w.cal||0), 0) || aeToday;
   const totalDur = todayWorkouts.reduce((s,w) => s+(w.durMin||0), 0);
 
   // 7-day strain from workouts
@@ -6386,8 +6387,8 @@ function computeStrain() {
   // Use synced active calories (broader: steps + workouts + NEAT)
   const syncedCal = (ST.activeCal && ST.activeCal.today) || 0;
   if (syncedCal > todayCal) todayCal = syncedCal;
-  // Also check health.activeEnergy
-  if (ST.health && ST.health.activeEnergy && ST.health.activeEnergy > todayCal) {
+  // Also check health.activeEnergy (only if it was synced today)
+  if (ST.health && ST.health.activeEnergy && ST.health._activeEnergyDate === today && ST.health.activeEnergy > todayCal) {
     todayCal = ST.health.activeEnergy;
   }
 
@@ -8197,10 +8198,11 @@ function renderStrainCoach() {
   const recovery = computeReadiness();
   const today = new Date().toISOString().slice(0,10);
   const workouts = (ST._workouts || []).filter(w => w.date === today);
-  // Use the best available active calorie source
+  // Use the best available active calorie source (date-safe)
+  const aeVal = (ST.health?._activeEnergyDate === today) ? (ST.health?.activeEnergy || 0) : 0;
   const activeCal = Math.max(
     (ST.activeCal && ST.activeCal.today) || 0,
-    ST.health?.activeEnergy || 0,
+    aeVal,
     workouts.reduce((s, w) => s + (w.cal || 0), 0)
   );
   const steps = ST.health?.steps?.today || 0;
@@ -14724,9 +14726,10 @@ async function fetchHealthData() {
     // Auto-add today's synced workouts to My Day
     addWorkoutsToMyDay();
 
-    // Store active energy for strain calc
+    // Store active energy for strain calc (date-stamped so it doesn't persist across days)
     if (data.activeEnergy) {
       ST.health.activeEnergy = Number(data.activeEnergy.value || data.activeEnergy);
+      ST.health._activeEnergyDate = new Date().toISOString().slice(0, 10);
     }
 
     // Rebuild week scores from real data
