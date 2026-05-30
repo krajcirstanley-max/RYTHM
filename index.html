@@ -3434,7 +3434,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v134';
+const APP_VERSION = 'v135';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -13411,6 +13411,9 @@ document.querySelectorAll('[data-view]').forEach(el => {
 });
 
 // PWA back button: close overlays on system back gesture / hardware back
+// Seed initial history state so swipe-back doesn't exit the PWA
+history.replaceState({ root: true }, '');
+
 window.addEventListener('popstate', function(e) {
   // Close whichever overlay is open (check in order of likely stacking)
   if (document.getElementById('trendFullPage')?.classList.contains('open')) { closeTrendDetail(true); return; }
@@ -13421,6 +13424,10 @@ window.addEventListener('popstate', function(e) {
   if (document.getElementById('energyFullPage')?.classList.contains('open')) { closeEnergyFullPage(true); return; }
   // Modal (quick log)
   if (document.getElementById('logModal')?.classList.contains('open')) { closeLog(true); return; }
+  // If nothing was open but we got a popstate, re-push root so we never exit
+  if (!e.state || !e.state.root) {
+    history.pushState({ root: true }, '');
+  }
 });
 
 // iOS PWA back-button fix: prevent rubber-band overscroll from swallowing touches
