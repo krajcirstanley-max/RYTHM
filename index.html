@@ -3434,7 +3434,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v133';
+const APP_VERSION = 'v134';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -6149,7 +6149,8 @@ function initPullToRefresh() {
   if (!main) return;
 
   main.addEventListener('touchstart', (e) => {
-    if (window.scrollY <= 1 && !document.querySelector('.fullpage.open') && !document.querySelector('.detail-overlay.open')) {
+    const scrollTop = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+    if (scrollTop <= 5 && !document.querySelector('.fullpage.open') && !document.querySelector('.detail-overlay.open') && !document.querySelector('.modal-overlay.open')) {
       ptrState.startY = e.touches[0].clientY;
       ptrState.pulling = true;
       ptrState.triggered = false;
@@ -6160,7 +6161,8 @@ function initPullToRefresh() {
   main.addEventListener('touchmove', (e) => {
     if (!ptrState.pulling) return;
     const dy = e.touches[0].clientY - ptrState.startY;
-    if (dy > 0 && window.scrollY <= 1) {
+    const scrollNow = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+    if (dy > 0 && scrollNow <= 5) {
       e.preventDefault(); // block native pull-to-refresh / bounce
       const indicator = document.getElementById('ptrIndicator');
       // Smooth visual pull
@@ -6214,6 +6216,7 @@ async function manualRefresh() {
     renderMetrics();
     renderSleepBreakdown();
     renderEnergy();
+    renderTonightCard();
     renderLiveActivities();
     renderSuggestions();
     markSynced();
