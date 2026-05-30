@@ -644,7 +644,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
 }
 .ha-row:last-child { border-bottom: none; }
-.ha-emoji { font-size: 14px; width: 20px; text-align: center; flex-shrink: 0; }
+.ha-emoji { display: none; }
 .ha-name { font-size: 12px; font-weight: 600; color: var(--text-2); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ha-bar-wrap {
   width: 60px; height: 5px; background: rgba(255,255,255,0.06);
@@ -696,7 +696,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
 }
 .hi-ba-row:last-child { border-bottom: none; }
-.hi-ba-icon { font-size: 16px; width: 24px; text-align: center; flex-shrink: 0; }
+.hi-ba-icon { display: none; }
 .hi-ba-info { flex: 1; min-width: 0; }
 .hi-ba-name {
   font-size: 13px; font-weight: 700; color: var(--text);
@@ -758,7 +758,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
 }
 .hi-streak-row:last-child { border-bottom: none; }
-.hi-streak-icon { font-size: 15px; width: 22px; text-align: center; flex-shrink: 0; }
+.hi-streak-icon { display: none; }
 .hi-streak-info { flex: 1; min-width: 0; }
 .hi-streak-name {
   font-size: 12px; font-weight: 600; color: var(--text-2);
@@ -938,7 +938,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .ndi-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .ndi-row:last-child { border-bottom: none; }
-.ndi-icon { font-size: 18px; flex-shrink: 0; }
+.ndi-icon { display: none; }
 .ndi-info { flex: 1; }
 .ndi-text { font-size: 12px; color: var(--text-2); line-height: 1.4; }
 .ndi-delta { font-size: 13px; font-weight: 700; text-align: right; min-width: 50px; }
@@ -1005,7 +1005,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   color: #000;
   font-weight: 700;
 }
-.journal-item .ji-icon { font-size: 16px; line-height: 1; flex-shrink: 0; }
+.journal-item .ji-icon { display: none; }
 .journal-item .ji-label { font-size: 13px; font-weight: 500; color: var(--text-2); }
 .journal-item.active .ji-label { color: var(--text); font-weight: 600; }
 .journal-save {
@@ -1453,7 +1453,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   border-bottom: 1px solid rgba(255,255,255,0.04);
 }
 .fp-system-card:last-child { border-bottom: none; }
-.fp-system-icon { font-size: 20px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.04); border-radius: 10px; flex-shrink: 0; }
+.fp-system-icon { display: none; }
 .fp-system-info { flex: 1; }
 .fp-system-name { font-size: 13px; font-weight: 700; color: var(--text-1); margin-bottom: 2px; }
 .fp-system-status { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
@@ -1943,7 +1943,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   background: rgba(0,236,127,0.1);
 }
 .checkin-opt:active { transform: scale(0.95); }
-.checkin-icon { font-size: 18px; display: block; margin-bottom: 4px; }
+.checkin-icon { display: none; }
 .checkin-saved {
   font-size: 11px; color: var(--energy); opacity: 0;
   transition: opacity 0.3s; margin-top: 8px; text-align: center;
@@ -1961,7 +1961,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
   display: flex; align-items: flex-start; gap: 10px;
   padding: 8px 0; font-size: 13px; color: var(--text-2);
 }
-.checkin-rec-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.checkin-rec-icon { display: none; }
 .checkin-rec b { color: #fff; font-weight: 600; }
 
 /* Body Map SVG Silhouette */
@@ -2160,9 +2160,8 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .suggestion:active { background: rgba(255,255,255,0.06); }
 .sug-icon {
-  width: 38px; height: 38px; border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; font-size: 17px; margin-top: 1px;
+  width: 10px; height: 10px; border-radius: 5px;
+  flex-shrink: 0; margin-top: 5px; font-size: 0; overflow: hidden;
 }
 .sug-body { flex: 1; min-width: 0; }
 .sug-title { font-size: 13px; font-weight: 600; color: #fff; }
@@ -3426,7 +3425,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v136';
+const APP_VERSION = 'v137';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -5245,54 +5244,54 @@ function buildSleepCoaching(sl, stg, debtH, pct) {
 
   // 1. Duration coaching
   if (sl.totalH < 7) {
-    tips.push({ icon: '⏰', title: 'Increase Sleep Duration', priority: 1,
+    tips.push({ icon: '', title: 'Increase Sleep Duration', priority: 1,
       text: `${fmtH(sl.totalH)} is below the 7-9h recommended for athletes. Research shows <7h sleep reduces sprint performance by 3% and increases injury risk 1.7x (Milewski 2014).`,
       action: 'Set bedtime 30 min earlier this week' });
   } else if (sl.totalH < target) {
-    tips.push({ icon: '⏰', title: 'Slight Duration Gap', priority: 3,
+    tips.push({ icon: '', title: 'Slight Duration Gap', priority: 3,
       text: `${fmtH(sl.totalH)} vs ${fmtH(target)} target. Good base  - closing this gap optimizes HGH release in late-night deep sleep cycles.`,
       action: `Aim for lights off ${Math.round((target - sl.totalH) * 60 + 15)} min earlier` });
   }
 
   // 2. Deep sleep coaching (critical for athletes  - HGH release, tissue repair)
   if (deepPct < 15) {
-    tips.push({ icon: '🔷', title: 'Deep Sleep Below Optimal', priority: 1,
+    tips.push({ icon: '', title: 'Deep Sleep Below Optimal', priority: 1,
       text: `${deepPct}% deep sleep (typical: 15-25%). Deep sleep drives 70-80% of daily HGH secretion (Van Cauter 2000)  - essential for muscle repair and tendon adaptation.`,
       action: 'Avoid alcohol, keep room 18°C, consider magnesium glycinate 400mg' });
   } else if (deepPct >= 25) {
-    tips.push({ icon: '🔷', title: 'Excellent Deep Sleep', priority: 4,
+    tips.push({ icon: '', title: 'Excellent Deep Sleep', priority: 4,
       text: `${deepPct}% deep sleep  - above typical range. Tissue repair and hormonal restoration are well supported.`,
       action: 'Maintain current evening routine' });
   }
 
   // 3. REM coaching (motor memory consolidation for technique work)
   if (remPct < 20) {
-    tips.push({ icon: '💜', title: 'Low REM Sleep', priority: 2,
+    tips.push({ icon: '', title: 'Low REM Sleep', priority: 2,
       text: `${remPct}% REM (typical: 20-30%). REM consolidates motor patterns  - critical after technique sessions. Low REM impairs skill retention.`,
       action: 'Avoid late caffeine (cuts REM 20%), keep consistent wake time' });
   }
 
   // 4. Sleep efficiency
   if (sl.efficiency > 0 && sl.efficiency < 85) {
-    tips.push({ icon: '📊', title: 'Sleep Efficiency Low', priority: 2,
+    tips.push({ icon: '', title: 'Sleep Efficiency Low', priority: 2,
       text: `${sl.efficiency}% efficiency means ${Math.round((100 - sl.efficiency) / 100 * sl.totalH * 60)} minutes spent awake in bed. Target: 85%+.`,
       action: 'If awake >15 min, get up briefly. Avoid screens in bed.' });
   }
 
   // 5. Sleep debt coaching
   if (debtH > 3) {
-    tips.push({ icon: '📉', title: 'High Sleep Debt', priority: 1,
+    tips.push({ icon: '', title: 'High Sleep Debt', priority: 1,
       text: `${fmtH(debtH)} accumulated debt reduces reaction time by ~15% and power output by ~10%. Takes 3-4 nights of extra sleep to recover.`,
       action: 'Add 60-90 min sleep per night for the next 3 days' });
   } else if (debtH > 1) {
-    tips.push({ icon: '📉', title: 'Moderate Sleep Debt', priority: 3,
+    tips.push({ icon: '', title: 'Moderate Sleep Debt', priority: 3,
       text: `${fmtH(debtH)} debt. Manageable but accumulating  - performance impact starts above 2h.`,
       action: 'Add 30 min extra tonight to prevent further accumulation' });
   }
 
   // 6. Consistency coaching
   if (sl.consistency > 0 && sl.consistency < 70) {
-    tips.push({ icon: '🔄', title: 'Inconsistent Sleep Schedule', priority: 2,
+    tips.push({ icon: '', title: 'Inconsistent Sleep Schedule', priority: 2,
       text: `${sl.consistency}% consistency. Irregular bedtimes shift circadian rhythm, reducing deep sleep. Elite athletes average 85%+ consistency.`,
       action: 'Set a fixed bedtime alarm  - even on weekends' });
   }
@@ -5300,21 +5299,21 @@ function buildSleepCoaching(sl, stg, debtH, pct) {
   // 7. Behavior-based coaching (check recent journal entries)
   const recentShisha = recent7.filter(j => (j.behaviors || []).some(b => b === 'shisha' || b === 'shisha_late')).length;
   if (recentShisha >= 3) {
-    tips.push({ icon: '💨', title: 'Frequent Shisha Impact', priority: 2,
+    tips.push({ icon: '', title: 'Frequent Shisha Impact', priority: 2,
       text: `Shisha ${recentShisha}x this week. Carbon monoxide from shisha reduces blood oxygen for 4-6h, directly cutting deep sleep and HRV by 10-15%.`,
       action: 'Limit to 2x/week max, never within 3h of bed' });
   }
 
   const recentAlcohol = recent7.filter(j => (j.behaviors || []).includes('alcohol')).length;
   if (recentAlcohol >= 2) {
-    tips.push({ icon: '🍺', title: 'Alcohol Disrupting Sleep', priority: 2,
+    tips.push({ icon: '', title: 'Alcohol Disrupting Sleep', priority: 2,
       text: `Alcohol ${recentAlcohol}x this week. Even moderate alcohol cuts REM by 20-40% and suppresses melatonin for 3h.`,
       action: 'Avoid alcohol 4h before bed, limit to 1-2x/week' });
   }
 
   const lateScreens = recent7.filter(j => (j.behaviors || []).includes('screen_late')).length;
   if (lateScreens >= 3) {
-    tips.push({ icon: '📱', title: 'Late Screen Exposure', priority: 3,
+    tips.push({ icon: '', title: 'Late Screen Exposure', priority: 3,
       text: `Late screens ${lateScreens}/7 nights. Blue light suppresses melatonin onset by 30-90 min, delaying sleep phase.`,
       action: 'Night Shift mode after sunset, no screens 30 min before bed' });
   }
@@ -5331,8 +5330,7 @@ function buildSleepCoaching(sl, stg, debtH, pct) {
     const urgColor = tip.priority <= 1 ? 'var(--danger)' : tip.priority <= 2 ? 'var(--warn)' : 'var(--energy)';
     return `<div style="padding:12px 0;border-bottom:1px solid var(--border);">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-        <span style="font-size:16px">${tip.icon}</span>
-        <span style="font-size:12px;font-weight:700;color:#fff;letter-spacing:0.3px;">${tip.title}</span>
+        <span style="font-size:12px;font-weight:700;color:var(--text);letter-spacing:0.3px;">${tip.title}</span>
         <span style="margin-left:auto;width:6px;height:6px;border-radius:50%;background:${urgColor};flex-shrink:0;"></span>
       </div>
       <div style="font-size:11px;color:var(--text-3);line-height:1.5;margin-bottom:8px;">${tip.text}</div>
@@ -5995,18 +5993,18 @@ function buildStressFullPage() {
   // De-stress strategies
   const strategies = [];
   if (overallStress > 30) {
-    strategies.push({ icon: '🫁', name: '4-7-8 Breathing', detail: 'Extended exhale activates vagus nerve. Do 4 cycles now to shift toward parasympathetic.' });
-    strategies.push({ icon: '🧊', name: 'Cold Exposure', detail: '2-3 min cold shower activates the dive reflex, boosting vagal tone and lowering RHR.' });
+    strategies.push({ icon: '', name: '4-7-8 Breathing', detail: 'Extended exhale activates vagus nerve. Do 4 cycles now to shift toward parasympathetic.' });
+    strategies.push({ icon: '', name: 'Cold Exposure', detail: '2-3 min cold shower activates the dive reflex, boosting vagal tone and lowering RHR.' });
   }
   if (overallStress > 50) {
-    strategies.push({ icon: '🚶', name: 'Zone 1 Walk', detail: '20-30 min easy walk outdoors. Movement + nature + sunlight reduces cortisol by ~25%.' });
-    strategies.push({ icon: '🧘', name: 'Body Scan / Yoga Nidra', detail: '10-20 min progressive relaxation. Proven to lower cortisol and boost parasympathetic tone.' });
+    strategies.push({ icon: '', name: 'Zone 1 Walk', detail: '20-30 min easy walk outdoors. Movement + nature + sunlight reduces cortisol by ~25%.' });
+    strategies.push({ icon: '', name: 'Body Scan / Yoga Nidra', detail: '10-20 min progressive relaxation. Proven to lower cortisol and boost parasympathetic tone.' });
   }
   if (sl.totalH < 7) {
-    strategies.push({ icon: '😴', name: 'Nap 20-30 min', detail: 'Short nap between 13:00-15:00 can reduce sleep debt without disrupting tonight.' });
+    strategies.push({ icon: '', name: 'Nap 20-30 min', detail: 'Short nap between 13:00-15:00 can reduce sleep debt without disrupting tonight.' });
   }
   if (strategies.length === 0) {
-    strategies.push({ icon: '✅', name: 'Stay the Course', detail: 'Stress is low. Keep doing what you are doing - sleep, hydration, and recovery are on point.' });
+    strategies.push({ icon: '', name: 'Stay the Course', detail: 'Stress is low. Keep doing what you are doing - sleep, hydration, and recovery are on point.' });
   }
 
   // HRV trend (from history if available)
@@ -6869,10 +6867,10 @@ function renderTasks() {
 
   // 1. Wake up (from sleep data)
   if (ST.sleep && ST.sleep.sleepEnd && ST.sleep._syncDate === today) {
-    events.push({ time: ST.sleep.sleepEnd, title: 'Woke up', sub: `${ST.sleep.totalH}h sleep`, icon: '☀️', dot: 'active', type: 'auto' });
+    events.push({ time: ST.sleep.sleepEnd, title: 'Woke up', sub: `${ST.sleep.totalH}h sleep`, icon: '', dot: 'active', type: 'auto' });
   } else {
     const wakeTime = minToTime(WAKE * 60);
-    events.push({ time: wakeTime, title: 'Wake up', sub: '', icon: '☀️', dot: 'past', type: 'auto' });
+    events.push({ time: wakeTime, title: 'Wake up', sub: '', icon: '', dot: 'past', type: 'auto' });
   }
 
   // 2. Workouts from health sync
@@ -6898,14 +6896,14 @@ function renderTasks() {
     const sub = [durStr, calStr].filter(Boolean).join(' · ');
     // Store original index in ST._workouts for removal
     const origIdx = (ST._workouts || []).indexOf(w);
-    events.push({ time: time || minToTime((WAKE + 3) * 60 % 1440), title: wName, sub, icon: '🏋️', dot: 'strain', type: 'workout', workoutIdx: origIdx });
+    events.push({ time: time || minToTime((WAKE + 3) * 60 % 1440), title: wName, sub, icon: '', dot: 'strain', type: 'workout', workoutIdx: origIdx });
   }
 
   // 3. Logged activities - only show significant activities, not journal habits
   // Journal behaviors (breathwork, skincare, creatine, etc.) belong in Journal tab
   const significantTags = new Set(['workout', 'sauna', 'cold_shower', 'nap', 'walk', 'deep_work']);
   const todayLogs = (ST.logs || []).filter(l => l.date === today);
-  const tagIcons = { shisha: '💨', shisha_late: '🌙', workout: '🏋️', sauna: '🧖', alcohol: '🍷', stress: '😤', nap: '😴', meditation: '🧘', sunlight: '☀️', screen: '📱', cold_shower: '🧊', sugar: '🍬', deep_work: '📊', walk: '🚶', sun_exposure: '☀️', energy_caps: '⚡', creatine: '🧪', foam_roll: '🧱', powerdot: '⚡', jetboots: '🦶', massage_gun: '🔫', infrapanel: '🔴' };
+  const tagIcons = {};
   const tagDots = { shisha: 'shisha', shisha_late: 'shisha', workout: 'strain', sauna: 'warn', alcohol: 'warn', stress: 'warn', nap: 'sleep', meditation: 'active', sunlight: 'active', cold_shower: 'active', deep_work: 'active', walk: 'active', sun_exposure: 'active', foam_roll: 'active', powerdot: 'active', jetboots: 'active', massage_gun: 'active', infrapanel: 'active' };
   for (let li = 0; li < todayLogs.length; li++) {
     const log = todayLogs[li];
@@ -6948,7 +6946,7 @@ function renderTasks() {
   const windDownH = WAKE + 14; // ~14h after wake
   const windTime = minToTime((windDownH * 60) % 1440);
   const windDownNextDay = windDownH >= 24; // wraps past midnight
-  events.push({ time: windTime, title: 'Wind down', sub: 'Dim lights, no screens', icon: '🌙', dot: 'sleep', type: 'auto', nextDay: windDownNextDay });
+  events.push({ time: windTime, title: 'Wind down', sub: 'Dim lights, no screens', icon: '', dot: 'sleep', type: 'auto', nextDay: windDownNextDay });
 
   // Sort by time, but events that wrap past midnight (nextDay) go last
   events.sort((a, b) => {
@@ -7313,8 +7311,8 @@ function renderStreaks() {
   // Also include the legacy wake/sleep/winddown streaks
   const s = ST.streaks;
   const legacyStreaks = [];
-  if (s.wake > 0) legacyStreaks.push({ id: '_wake', streak: s.wake, icon: '☀️', label: 'Wake Time', active: s.lastWakeDate === new Date().toISOString().slice(0,10) });
-  if (s.sleep > 0) legacyStreaks.push({ id: '_sleep', streak: s.sleep, icon: '🌙', label: 'Sleep Goal', active: s.lastSleepDate === new Date().toISOString().slice(0,10) });
+  if (s.wake > 0) legacyStreaks.push({ id: '_wake', streak: s.wake, icon: '', label: 'Wake Time', active: s.lastWakeDate === new Date().toISOString().slice(0,10) });
+  if (s.sleep > 0) legacyStreaks.push({ id: '_sleep', streak: s.sleep, icon: '', label: 'Sleep Goal', active: s.lastSleepDate === new Date().toISOString().slice(0,10) });
   if ((s.winddown || 0) > 0) legacyStreaks.push({ id: '_winddown', streak: s.winddown, icon: '📴', label: 'Wind-down', active: s.lastWinddownDate === new Date().toISOString().slice(0,10) });
 
   // Merge and sort all by streak
@@ -8958,22 +8956,22 @@ function renderDailyCoach() {
     const elapsed = Math.round((Date.now() - activeSession.startedAt) / 60000);
     const meta = LIVE_ACTIVITY_META[activeSession.type] || {};
     if (activeSession.type === 'workout') {
-      directiveIcon = '🏋️';
+      directiveIcon = '';
       if (elapsed > 90) directive = `${elapsed}min in. Consider wrapping up - CNS fatigue increases injury risk past 90min.`;
       else if (recovery >= 67) directive = `${elapsed}min in. Recovery is ${recovery}% - push intensity, you can handle it.`;
       else directive = `${elapsed}min in. Keep intensity moderate, recovery is only ${recovery}%.`;
     } else if (activeSession.type === 'sauna') {
-      directiveIcon = '🧖';
+      directiveIcon = '';
       directive = `${elapsed}min in sauna. ${elapsed >= 15 ? 'Target reached. Exit when ready, hydrate immediately.' : 'Stay 15-20min for full heat shock protein activation.'}`;
     } else {
-      directiveIcon = meta.icon || '⏱️';
+      directiveIcon = '';
       directive = `${meta.label || activeSession.type} active - ${elapsed}min.`;
     }
   } else if (currentPhase.name === 'SLEEP') {
-    directiveIcon = '😴';
+    directiveIcon = '';
     directive = 'Sleep. Phone down. Every minute of screen time delays melatonin.';
   } else if (currentPhase.name === 'INERTIA') {
-    directiveIcon = '☀️';
+    directiveIcon = '';
     if (hadHeavyYesterday && recovery < 50) {
       const ydDesc = ydSessions >= 2 ? `${ydSessions} sessions (${ydMin}min)` : `${ydMin}min session`;
       directive = `Heavy day yesterday (${ydDesc}). Expect fatigue. Sunlight + hydration + easy movement. No intensity today.`;
@@ -8982,7 +8980,7 @@ function renderDailyCoach() {
     else if (!hadSunlight) directive = 'Get outside for 10min sunlight. Hydrate 500ml. No caffeine for 90min after waking.';
     else directive = 'Sunlight done. Let cortisol rise naturally. Light movement, no big decisions yet.';
   } else if (currentPhase.name === 'PEAK 1') {
-    directiveIcon = '⚡';
+    directiveIcon = '';
     if (trainedToday) directive = `Already trained ${totalTrainMin}min. Fuel recovery - protein + carbs within 2h post-training.`;
     else if (plannedIntensity === 'rest') directive = 'Rest day. Use this peak for focused mental work instead.';
     else if (plannedIntensity === 'easy') directive = 'Easy day. Light mobility or a walk. Save intensity for another day.';
@@ -8994,32 +8992,32 @@ function renderDailyCoach() {
     else if (recovery >= 67) directive = 'Peak zone but moderate recovery. Technique work, sub-max drills.';
     else directive = 'Peak zone but body needs rest. Light mobility or film review only.';
   } else if (currentPhase.name === 'DIP') {
-    directiveIcon = '💤';
+    directiveIcon = '';
     if (plannedIntensity === 'rest') directive = 'Rest day. Afternoon dip is a perfect window for a 20min nap to pay off sleep debt.';
     else if (plannedIntensity === 'easy') directive = 'Easy day. Dip phase. Light walk or nap 20min. No decisions, no intensity.';
     else if (!trainedToday && recovery >= 67) directive = 'Dip zone. If you missed training this morning, do a light session now before Peak 2.';
     else directive = 'Afternoon dip - executive function drops. Power nap 20min or walk. No big decisions.';
   } else if (currentPhase.name === 'RECOVERY') {
-    directiveIcon = '🔄';
+    directiveIcon = '';
     if (plannedIntensity === 'rest') directive = 'Rest day. Foam roll, stretching, or mobility work. Prep your body for tomorrow.';
     else if (plannedIntensity === 'easy') directive = 'Easy day. Light movement if you haven\'t yet. Energy rising toward evening.';
     else directive = trainedToday ? 'Recovery phase. Foam roll, massage gun, or light stretching. Prep for evening peak.' : 'Transition phase. Energy rising toward your second peak.';
   } else if (currentPhase.name === 'PEAK 2') {
-    directiveIcon = '🔥';
+    directiveIcon = '';
     if (plannedIntensity === 'rest') {
-      directiveIcon = '🧠';
+      directiveIcon = '';
       directive = 'Rest day. Use this peak for deep work, creative projects, or business strategy instead.';
     } else if (plannedIntensity === 'easy') {
-      directiveIcon = '🚶';
+      directiveIcon = '';
       directive = 'Easy day. If you haven\'t moved yet, a 30min walk now. Otherwise, deep work or planning.';
     } else if (trainedToday) directive = `Trained ${totalTrainMin}min today. Use Peak 2 for deep work, creative tasks, or business strategy.`;
     else if (recovery >= 67) directive = 'Strongest window of the day. Train now if you haven\'t - or do your hardest deep work.';
     else directive = 'Second peak. Best used for focused work. Training not recommended at this recovery level.';
   } else if (currentPhase.name === 'WIND-DOWN') {
-    directiveIcon = '🌙';
+    directiveIcon = '';
     directive = 'Dim all lights. No screens, no caffeine, no heavy food. Core temp must drop for deep sleep.';
   } else if (currentPhase.name === 'NIGHT') {
-    directiveIcon = '🛏️';
+    directiveIcon = '';
     const sleepTarget = ST.health?.sleepTarget || 8;
     const wakeMin = ST.profile.wakeMin;
     const needMin = Math.round(sleepTarget * 60) + 15;
@@ -9027,7 +9025,7 @@ function renderDailyCoach() {
     const bedTime = minToTime(bedMin);
     directive = `Get to bed by ${bedTime}. Dark room, cool temp, no phone. Every hour before midnight counts double.`;
   } else {
-    directiveIcon = '🧠';
+    directiveIcon = '';
     directive = 'Stay consistent. Small daily wins compound into extraordinary results.';
   }
 
@@ -9040,34 +9038,34 @@ function renderDailyCoach() {
 
   let priority, priorityIcon;
   if (hadHeavyYesterday && recovery < 50) {
-    priorityIcon = '🛌'; priority = `Recovery day. ${ydSessions} session${ydSessions > 1 ? 's' : ''} yesterday took a toll. Hydrate, move easy, sleep early.`;
+    priorityIcon = ''; priority = `Recovery day. ${ydSessions} session${ydSessions > 1 ? 's' : ''} yesterday took a toll. Hydrate, move easy, sleep early.`;
   } else if (debtH > 3) {
-    priorityIcon = '😴'; priority = `Sleep debt: ${debtH.toFixed(1)}h. Add 30-60min tonight.`;
+    priorityIcon = ''; priority = `Sleep debt: ${debtH.toFixed(1)}h. Add 30-60min tonight.`;
   } else if (hrvPctBelow >= 15 && !hadHeavyYesterday) {
-    priorityIcon = '💓'; priority = `HRV ${hrvPctBelow}% below baseline. Prioritize recovery modalities.`;
+    priorityIcon = ''; priority = `HRV ${hrvPctBelow}% below baseline. Prioritize recovery modalities.`;
   } else if (hrvPctBelow >= 15 && hadHeavyYesterday) {
-    priorityIcon = '💓'; priority = `HRV suppressed from yesterday's training. Expected. Easy movement + protein.`;
+    priorityIcon = ''; priority = `HRV suppressed from yesterday's training. Expected. Easy movement + protein.`;
   } else if (strain > 18 && recovery < 60) {
-    priorityIcon = '⚠️'; priority = `High strain (${strain}) on low recovery (${recovery}%). Cut volume.`;
+    priorityIcon = ''; priority = `High strain (${strain}) on low recovery (${recovery}%). Cut volume.`;
   } else if (trainedToday && !hadCold && recovery < 70 && !['WIND-DOWN','NIGHT','SLEEP'].includes(currentPhase.name)) {
-    priorityIcon = '🧊'; priority = 'Post-training recovery. Cold immersion or breathing session.';
+    priorityIcon = '';
   } else if (!trainedToday && recovery >= 67 && ['PEAK 1','PEAK 2'].includes(currentPhase.name) && !plannedIntensity?.match(/rest|easy/)) {
-    priorityIcon = '🏋️'; priority = 'You haven\'t trained yet. Recovery supports intensity.';
+    priorityIcon = '';
   } else if (plannedIntensity === 'rest') {
-    priorityIcon = '🛌'; priority = 'Rest day. Recovery is the work. Hydrate, move easy, sleep well.';
+    priorityIcon = '';
   } else if (plannedIntensity === 'easy') {
-    priorityIcon = '🚶'; priority = 'Easy day. Light movement + nutrition. Save energy for what\'s ahead.';
+    priorityIcon = '';
   } else {
-    priorityIcon = '✅'; priority = 'On track. Stay consistent with your routine.';
+    priorityIcon = '';
   }
 
   // Override priority if pain areas flagged
   const painCheck = Object.entries(dayPlan?.soreness || {}).filter(([,v]) => v === 'pain');
   if (painCheck.length >= 2) {
-    priorityIcon = '🛑'; priority = `Multiple pain areas flagged. Consider modifying or skipping training. Address ${painCheck.map(([k])=>(BODY_PARTS.find(b=>b.id===k)?.label||k)).join(', ')} first.`;
+    priorityIcon = ''; priority = `Multiple pain areas flagged. Consider modifying or skipping training. Address ${painCheck.map(([k])=>(BODY_PARTS.find(b=>b.id===k)?.label||k)).join(', ')} first.`;
   } else if (painCheck.length === 1) {
     const painLabel = BODY_PARTS.find(b=>b.id===painCheck[0][0])?.label || painCheck[0][0];
-    priorityIcon = '⚠️'; priority = `${painLabel} pain flagged. Warm up carefully, avoid loading that area, and listen to your body.`;
+    priorityIcon = ''; priority = `${painLabel} pain flagged. Warm up carefully, avoid loading that area, and listen to your body.`;
   }
 
   // Next up line
@@ -9080,9 +9078,9 @@ function renderDailyCoach() {
       <div class="dc-label">${currentPhase.name.replace(/_/g, ' ')} <span style="font-weight:400;opacity:0.5;font-size:9px;letter-spacing:0.5px">${nextUp ? '// ' + nextUp : ''}</span></div>
       <div class="dc-badge" style="background:${badgeBg};color:${badgeColor}">${recovery}%</div>
     </div>
-    <div class="dc-guidance"><span style="margin-right:6px">${directiveIcon}</span>${directive}</div>
+    <div class="dc-guidance">${directive}</div>
     <div class="dc-priority">
-      <div class="dc-priority-label">${priorityIcon} #1 Priority</div>
+      <div class="dc-priority-label">#1 Priority</div>
       <div class="dc-priority-text">${priority}</div>
     </div>`;
 }
@@ -9095,14 +9093,14 @@ const BODY_PARTS = [
   { id: 'quads', label: 'Quads', icon: '🦵' },
   { id: 'hamstrings', label: 'Hamstrings', icon: '🦵' },
   { id: 'glutes', label: 'Glutes', icon: '🍑' },
-  { id: 'calves', label: 'Calves / Achilles', icon: '🦶' },
+  { id: 'calves', label: 'Calves / Achilles', icon: '' },
   { id: 'knees', label: 'Knees', icon: '🦿' },
-  { id: 'ankles', label: 'Ankles', icon: '🦶' },
+  { id: 'ankles', label: 'Ankles', icon: '' },
   { id: 'hipFlexors', label: 'Hip Flexors', icon: '🦴' },
   { id: 'lowerBack', label: 'Lower Back', icon: '🔙' },
   { id: 'shoulders', label: 'Shoulders', icon: '💪' },
   { id: 'shins', label: 'Shins', icon: '🦵' },
-  { id: 'feet', label: 'Feet / Plantar', icon: '🦶' },
+  { id: 'feet', label: 'Feet / Plantar', icon: '' },
   { id: 'general', label: 'General Fatigue', icon: '😮‍💨' },
 ];
 
@@ -9114,19 +9112,19 @@ const SESSION_TYPES = [
     nutrition: 'High-carb pre-fuel + creatine. Post: protein + carbs within 30min for tendon collagen synthesis.',
     avoid: 'No cold immersion within 4h (blunts tendon adaptation). Skip heavy leg work tomorrow.',
     warmup: 'Extended ankle + hip mobility, glute activation, progressive approach runs before full jumps.' },
-  { id: 'maxvelocity', label: 'MAX VELOCITY', icon: '💨',
+  { id: 'maxvelocity', label: 'MAX VELOCITY', icon: '',
     areas: { hamstrings: 'high', glutes: 'high', hipFlexors: 'high', calves: 'moderate', quads: 'moderate', lowerBack: 'moderate' },
     recovery: 'Hamstrings at extreme risk during top-speed deceleration. CNS heavily taxed. 48-72h recovery needed.',
     nutrition: 'Extra protein tonight (1.8g/kg). Glycogen demands are high, replenish carbs immediately post.',
     avoid: 'No hamstring-dominant lifts for 48h. No max velocity again within 72h. Monitor hamstring tightness closely.',
     warmup: 'Extensive hamstring lengthening, A/B-skips progression, 3-4 sub-max build-ups before flying sprints.' },
-  { id: 'plyometrics', label: 'PLYOMETRICS', icon: '⚡',
+  { id: 'plyometrics', label: 'PLYOMETRICS', icon: '',
     areas: { calves: 'high', ankles: 'high', knees: 'high', quads: 'moderate', shins: 'moderate', feet: 'moderate', hipFlexors: 'moderate' },
     recovery: 'Tendons absorb 6-8x bodyweight on depth jumps. Achilles and patellar tendons need 48h+ for collagen remodeling.',
     nutrition: 'Vitamin C + gelatin 30min pre-session (collagen synthesis). Extra protein post.',
     avoid: 'No plyometrics again within 48h. Avoid long jump session next day. Eccentric heel drops tonight for tendon health.',
     warmup: 'Ankle stiffness drills, pogo hops building from low to high, joint-specific warm-up.' },
-  { id: 'strength', label: 'STRENGTH', icon: '🏋️',
+  { id: 'strength', label: 'STRENGTH', icon: '',
     areas: { quads: 'high', glutes: 'high', hamstrings: 'moderate', lowerBack: 'moderate', shoulders: 'moderate', core: 'moderate' },
     recovery: 'Muscle protein synthesis peaks 24-48h post. Sleep 9h+ for growth hormone release. Foam roll loaded areas.',
     nutrition: 'Protein bolus 40g within 1h. Leucine threshold matters, hit 3g+ per meal. Total protein 1.8g/kg today.',
@@ -9221,10 +9219,10 @@ function renderMorningCheckin() {
   const recovery = computeReadiness();
 
   const options = [
-    { id: 'rest', icon: '🛌', label: 'REST' },
-    { id: 'easy', icon: '🚶', label: 'EASY' },
+    { id: 'rest', icon: '', label: 'REST' },
+    { id: 'easy', icon: '', label: 'EASY' },
     { id: 'moderate', icon: '🏃', label: 'MODERATE' },
-    { id: 'hard', icon: '🔥', label: 'HARD' }
+    { id: 'hard', icon: '', label: 'HARD' }
   ];
 
   function renderOpts(name, selected) {
@@ -9534,21 +9532,21 @@ function getDayPlanRecs(todayPlan, tomorrowPlan, recovery, soreness, sessionType
 
   // --- ONE status line about the day ---
   if (todayPlan === 'rest') {
-    recs.push({ icon: '💤', text: '<b>Rest day.</b> Recovery modalities only.' });
+    recs.push({ icon: '', text: '<b>Rest day.</b> Recovery modalities only.' });
   } else if (todayPlan === 'easy') {
-    recs.push({ icon: '🚶', text: '<b>Easy day.</b> Light movement, stay under zone 2.' });
+    recs.push({ icon: '', text: '<b>Easy day.</b> Light movement, stay under zone 2.' });
   } else if (todayPlan === 'hard') {
-    if (recovery >= 67) recs.push({ icon: '🔥', text: `<b>Green light.</b> Recovery ${recovery}%, push it.` });
-    else if (recovery >= 50) recs.push({ icon: '⚠️', text: `<b>Recovery only ${recovery}%.</b> Watch for warning signs, reduce volume if needed.` });
-    else recs.push({ icon: '🛑', text: `<b>Recovery ${recovery}%.</b> Hard session not recommended. Consider moderate or rest.` });
+    if (recovery >= 67) recs.push({ icon: '', text: `<b>Green light.</b> Recovery ${recovery}%, push it.` });
+    else if (recovery >= 50) recs.push({ icon: '', text: `<b>Recovery only ${recovery}%.</b> Watch for warning signs, reduce volume if needed.` });
+    else recs.push({ icon: '', text: `<b>Recovery ${recovery}%.</b> Hard session not recommended. Consider moderate or rest.` });
   } else if (todayPlan === 'moderate') {
-    if (recovery >= 67) recs.push({ icon: '⚡', text: `<b>Recovery ${recovery}%.</b> Good for moderate load, quality reps.` });
-    else recs.push({ icon: '⚠️', text: `<b>Recovery ${recovery}%.</b> Monitor fatigue, cut short if it builds.` });
+    if (recovery >= 67) recs.push({ icon: '', text: `<b>Recovery ${recovery}%.</b> Good for moderate load, quality reps.` });
+    else recs.push({ icon: '', text: `<b>Recovery ${recovery}%.</b> Monitor fatigue, cut short if it builds.` });
   }
 
   // Sleep debt only if significant
   if (debtH > 1.5) {
-    recs.push({ icon: '😴', text: `<b>${debtH.toFixed(1)}h sleep debt.</b> Nap 20-30min or early bed tonight.` });
+    recs.push({ icon: '', text: `<b>${debtH.toFixed(1)}h sleep debt.</b> Nap 20-30min or early bed tonight.` });
   }
 
   // Session type: just warm-up + conflicts (skip nutrition/avoid/recovery prose)
@@ -9560,22 +9558,22 @@ function getDayPlanRecs(todayPlan, tomorrowPlan, recovery, soreness, sessionType
     const conflictPain = painAreas.filter(a => stHighAreas.includes(a));
     if (conflictPain.length > 0) {
       const labels = conflictPain.map(a => BODY_PARTS.find(b => b.id === a)?.label || a);
-      recs.push({ icon: '🛑', text: `<b>Pain conflict.</b> ${st.label} heavily loads ${labels.join(', ')}. Consider switching session type or resting.` });
+      recs.push({ icon: '', text: `<b>Pain conflict.</b> ${st.label} heavily loads ${labels.join(', ')}. Consider switching session type or resting.` });
     }
     const conflictSore = soreAreas.filter(a => stHighAreas.includes(a));
     if (conflictSore.length > 0 && !conflictPain.length) {
       const labels = conflictSore.map(a => BODY_PARTS.find(b => b.id === a)?.label || a);
-      recs.push({ icon: '⚠️', text: `<b>Sore overlap.</b> ${labels.join(', ')} will be heavily loaded. Extra warm-up, reduce volume.` });
+      recs.push({ icon: '', text: `<b>Sore overlap.</b> ${labels.join(', ')} will be heavily loaded. Extra warm-up, reduce volume.` });
     }
   }
 
   // Tomorrow context - one line
   if (tomorrowPlan === 'hard') {
-    recs.push({ icon: '📋', text: todayPlan === 'rest'
+    recs.push({ icon: '', text: todayPlan === 'rest'
       ? '<b>Hard session tomorrow.</b> Extra carbs tonight, early bed.'
       : '<b>Hard session tomorrow.</b> Finish early, prioritize sleep.' });
   } else if (tomorrowPlan === 'rest' && (todayPlan === 'moderate' || todayPlan === 'hard')) {
-    recs.push({ icon: '📋', text: '<b>Rest tomorrow.</b> You can push more today.' });
+    recs.push({ icon: '', text: '<b>Rest tomorrow.</b> You can push more today.' });
   }
 
   // --- Pain areas: short, avoid-focused ---
@@ -9595,7 +9593,7 @@ function getDayPlanRecs(todayPlan, tomorrowPlan, recovery, soreness, sessionType
   };
   for (const a of painAreas) {
     const label = BODY_PARTS.find(b => b.id === a)?.label || a;
-    recs.push({ icon: '🛑', text: `<b>${label} pain.</b> ${painAdvice[a] || 'Avoid loading this area.'}` });
+    recs.push({ icon: '', text: `<b>${label} pain.</b> ${painAdvice[a] || 'Avoid loading this area.'}` });
   }
 
   // --- Sore areas: short, what-to-do ---
@@ -9615,7 +9613,7 @@ function getDayPlanRecs(todayPlan, tomorrowPlan, recovery, soreness, sessionType
   };
   for (const a of soreAreas) {
     const label = BODY_PARTS.find(b => b.id === a)?.label || a;
-    recs.push({ icon: '🧱', text: `<b>${label} sore.</b> ${soreAdvice[a] || 'Light mobility work.'}` });
+    recs.push({ icon: '', text: `<b>${label} sore.</b> ${soreAdvice[a] || 'Light mobility work.'}` });
   }
 
   // Cross-chain patterns (only show if relevant)
@@ -9633,7 +9631,7 @@ function getDayPlanRecs(todayPlan, tomorrowPlan, recovery, soreness, sessionType
   if (hasPain && (todayPlan === 'moderate' || todayPlan === 'hard')) {
     const lowerPain = painAreas.filter(a => ['quads','hamstrings','glutes','calves','knees','ankles','hipFlexors','shins','feet'].includes(a));
     if (lowerPain.length >= 2) {
-      recs.push({ icon: '🔄', text: `<b>${lowerPain.length} lower-body pain areas.</b> Consider upper body only or pool session.` });
+      recs.push({ icon: '', text: `<b>${lowerPain.length} lower-body pain areas.</b> Consider upper body only or pool session.` });
     }
   }
 
@@ -9827,12 +9825,12 @@ function renderCoachToday() {
   // Morning block
   if (hour < 14) {
     if (sleepH < 7) {
-      steps.push({ time: 'MORNING', icon: '☀️', action: 'Get 15min sunlight within 30min of waking', why: `You got ${sleepH.toFixed(1)}h sleep. Morning light resets your clock and helps you fall asleep earlier tonight.`, done: todayTags.includes('sunlight') });
+      steps.push({ time: 'MORNING', icon: '', action: 'Get 15min sunlight within 30min of waking', why: `You got ${sleepH.toFixed(1)}h sleep. Morning light resets your clock and helps you fall asleep earlier tonight.`, done: todayTags.includes('sunlight') });
     } else {
-      steps.push({ time: 'MORNING', icon: '☀️', action: 'Sunlight exposure (10-15 min)', why: 'Cortisol pulse + serotonin for circadian anchor.', done: todayTags.includes('sunlight') });
+      steps.push({ time: 'MORNING', icon: '', action: 'Sunlight exposure (10-15 min)', why: 'Cortisol pulse + serotonin for circadian anchor.', done: todayTags.includes('sunlight') });
     }
     if (!todayTags.includes('hydration')) {
-      steps.push({ time: 'MORNING', icon: '💧', action: 'Hydrate 500ml + electrolytes', why: 'You lose ~1L overnight. Rehydrate before caffeine.', done: false });
+      steps.push({ time: 'MORNING', icon: '', action: 'Hydrate 500ml + electrolytes', why: 'You lose ~1L overnight. Rehydrate before caffeine.', done: false });
     }
   }
 
@@ -9849,7 +9847,7 @@ function renderCoachToday() {
   }
   if (soreList.length > 0 && hour < 14 && !todayTags.includes('foam_roll')) {
     const soreLabels = soreList.map(id => BODY_PARTS.find(b => b.id === id)?.label || id);
-    steps.push({ time: 'MORNING', icon: '🧱', action: `Pre-session foam roll: ${soreLabels.slice(0,3).join(', ')} (8min)`, why: 'Sore areas benefit from pre-training foam rolling to restore ROM and reduce stiffness before loading.', done: false });
+    steps.push({ time: 'MORNING', icon: '', action: `Pre-session foam roll: ${soreLabels.slice(0,3).join(', ')} (8min)`, why: 'Sore areas benefit from pre-training foam rolling to restore ROM and reduce stiffness before loading.', done: false });
   }
 
   // Post-training block: exercise-specific recovery (merged with soreness)
@@ -9864,7 +9862,7 @@ function renderCoachToday() {
 
     if (!todayTags.includes('foam_roll')) {
       const hasSorenessInput = soreLabelsLc.length > 0;
-      steps.push({ time: 'POST-TRAINING', icon: '🧱', action: `Foam roll: ${foamTargets} (10min)`, why: tLoad.hasData && hasSorenessInput
+      steps.push({ time: 'POST-TRAINING', icon: '', action: `Foam roll: ${foamTargets} (10min)`, why: tLoad.hasData && hasSorenessInput
         ? `Loaded today + sore areas from check-in. Prioritize these to maintain ROM and flush metabolites.`
         : tLoad.hasData
         ? `Loaded today: ${topMuscles.map(m => m.label + ' (' + m.level + ')').join(', ')}. Target these areas to maintain ROM.`
@@ -9874,7 +9872,7 @@ function renderCoachToday() {
     if (!todayTags.includes('massage_gun')) {
       const gunTargets = allTargets.length >= 2 ? allTargets.slice(0, 2).join(' + ') : (tLoad.hasData && muscleNames.length ? muscleNames.slice(0, 2).join(' + ') : 'calves + quads');
       if (strain > 10 || (tLoad.hasData && tLoad.muscles.some(m => m.level === 'high')) || painList.length > 0) {
-        steps.push({ time: 'POST-TRAINING', icon: '🔫', action: `Massage gun: ${gunTargets} (5min)`, why: painList.length > 0
+        steps.push({ time: 'POST-TRAINING', icon: '', action: `Massage gun: ${gunTargets} (5min)`, why: painList.length > 0
           ? `Pain areas flagged. Percussive therapy at low intensity around (not directly on) pain sites to increase blood flow.`
           : tLoad.hasData
           ? `High load on ${topMuscles[0]?.label || 'legs'}. Percussive therapy clears metabolites and reduces DOMS.`
@@ -9886,10 +9884,10 @@ function renderCoachToday() {
     if (tLoad.tendonStress !== 'low' && tLoad.tendonAreas.length > 0) {
       const tendonList = tLoad.tendonAreas.join(' + ');
       if (!todayTags.includes('infrapanel')) {
-        steps.push({ time: 'POST-TRAINING', icon: '🔴', action: `Infrapanel: ${tendonList} (15min)`, why: `${tLoad.tendonStress === 'high' ? 'High' : 'Moderate'} tendon stress from today's session. NIR penetrates 2-3cm to accelerate collagen synthesis and repair.`, done: false });
+        steps.push({ time: 'POST-TRAINING', icon: '', action: `Infrapanel: ${tendonList} (15min)`, why: `${tLoad.tendonStress === 'high' ? 'High' : 'Moderate'} tendon stress from today's session. NIR penetrates 2-3cm to accelerate collagen synthesis and repair.`, done: false });
       }
     } else if (recovery < 60 && !todayTags.includes('infrapanel')) {
-      steps.push({ time: 'POST-TRAINING', icon: '🔴', action: 'Infrapanel: patellar + achilles (15min)', why: `Recovery at ${recovery}%. NIR therapy supports tendon health on low-recovery days.`, done: false });
+      steps.push({ time: 'POST-TRAINING', icon: '', action: 'Infrapanel: patellar + achilles (15min)', why: `Recovery at ${recovery}%. NIR therapy supports tendon health on low-recovery days.`, done: false });
     }
 
     // CNS recovery
@@ -9900,7 +9898,7 @@ function renderCoachToday() {
     // EMS based on what was trained
     if (!todayTags.includes('powerdot') && tLoad.muscles.length > 0) {
       const emsTarget = muscleNames[0] || 'quads';
-      steps.push({ time: 'POST-TRAINING', icon: '⚡', action: `PowerDot EMS: ${emsTarget} recovery mode (20min)`, why: `Active recovery on your most loaded muscle group. Increases blood flow without additional mechanical stress.`, done: false });
+      steps.push({ time: 'POST-TRAINING', icon: '', action: `PowerDot EMS: ${emsTarget} recovery mode (20min)`, why: `Active recovery on your most loaded muscle group. Increases blood flow without additional mechanical stress.`, done: false });
     }
   }
 
@@ -9917,7 +9915,7 @@ function renderCoachToday() {
     if (!todayTags.includes('cold_shower')) {
       if (coldTooLate) {
         // Too late for cold today
-        steps.push({ time: 'SKIP TODAY', icon: '🧊', action: 'Cold immersion: too late today', why: `Bed at ${Math.floor(bedHour)}:${String(Math.round((bedHour % 1) * 60)).padStart(2, '0')}. Cold raises core temp and needs 2h+ to normalize. Do it earlier tomorrow.`, done: true });
+        steps.push({ time: 'SKIP TODAY', icon: '', action: 'Cold immersion: too late today', why: `Bed at ${Math.floor(bedHour)}:${String(Math.round((bedHour % 1) * 60)).padStart(2, '0')}. Cold raises core temp and needs 2h+ to normalize. Do it earlier tomorrow.`, done: true });
       } else if (trainedToday) {
         // Find last workout end time
         const lastW = todayWorkouts[todayWorkouts.length - 1];
@@ -9928,18 +9926,18 @@ function renderCoachToday() {
         }
         const earliestCold = wEndHour ? Math.ceil(wEndHour + 4) : hour + 2;
         if (earliestCold >= coldCutoff) {
-          steps.push({ time: 'SKIP TODAY', icon: '🧊', action: 'Cold immersion: window closed', why: `Trained too late. Need 4h post-training + 2h before bed. Tomorrow, train earlier or cold on rest day.`, done: true });
+          steps.push({ time: 'SKIP TODAY', icon: '', action: 'Cold immersion: window closed', why: `Trained too late. Need 4h post-training + 2h before bed. Tomorrow, train earlier or cold on rest day.`, done: true });
         } else {
           const coldHr = earliestCold % 24;
           const coldTime = String(Math.floor(coldHr)).padStart(2, '0') + ':' + String(Math.round((coldHr % 1) * 60)).padStart(2, '0');
           const cutHr = coldCutoff % 24;
           const cutTime = String(Math.floor(cutHr)).padStart(2, '0') + ':' + String(Math.round((cutHr % 1) * 60)).padStart(2, '0');
-          steps.push({ time: 'EVENING', icon: '🧊', action: `Cold immersion 2-3min (${coldTime} - ${cutTime} window)`, why: `4h post-training gap protects strength adaptation. Finish 2h before bed so core temp normalizes.`, done: false });
+          steps.push({ time: 'EVENING', icon: '', action: `Cold immersion 2-3min (${coldTime} - ${cutTime} window)`, why: `4h post-training gap protects strength adaptation. Finish 2h before bed so core temp normalizes.`, done: false });
         }
       } else if (recovery < 60) {
         const cutH2 = coldCutoff % 24;
         const cutT2 = String(Math.floor(cutH2)).padStart(2, '0') + ':' + String(Math.round((cutH2 % 1) * 60)).padStart(2, '0');
-        steps.push({ time: hour >= 16 ? 'EVENING' : 'AFTERNOON', icon: '🧊', action: `Cold immersion 2-3min (before ${cutT2})`, why: `Recovery ${recovery}%. Rest day so no mTOR concern. Norepinephrine spike reduces inflammation. Finish 2h before bed.`, done: false });
+        steps.push({ time: hour >= 16 ? 'EVENING' : 'AFTERNOON', icon: '', action: `Cold immersion 2-3min (before ${cutT2})`, why: `Recovery ${recovery}%. Rest day so no mTOR concern. Norepinephrine spike reduces inflammation. Finish 2h before bed.`, done: false });
       }
     }
 
@@ -9948,7 +9946,7 @@ function renderCoachToday() {
       const legReason = legLoad.length > 0
         ? `Loaded ${legLoad.map(m => m.label.toLowerCase()).join(', ')} today. Pneumatic compression flushes metabolites from lower body.`
         : 'Pneumatic compression clears metabolites and activates parasympathetic system.';
-      steps.push({ time: hour >= 16 ? 'EVENING' : 'AFTERNOON', icon: '🦶', action: 'Jetboots Pro+ (20-30min)', why: legReason, done: false });
+      steps.push({ time: hour >= 16 ? 'EVENING' : 'AFTERNOON', icon: '', action: 'Jetboots Pro+ (20-30min)', why: legReason, done: false });
     }
   }
 
@@ -9956,22 +9954,22 @@ function renderCoachToday() {
   const breathDone = todayTags.includes('breathwork');
   if (!breathDone) {
     if (hour >= 20) {
-      steps.push({ time: 'WIND-DOWN', icon: '🫁', action: 'Breathing: 4-7-8 Sleep Prep (5 rounds)', why: 'Extended exhale activates vagal brake. Ideal 30min before bed.', done: false });
+      steps.push({ time: 'WIND-DOWN', icon: '', action: 'Breathing: 4-7-8 Sleep Prep (5 rounds)', why: 'Extended exhale activates vagal brake. Ideal 30min before bed.', done: false });
     } else if (hrvPct < -10) {
-      steps.push({ time: hour >= 16 ? 'EVENING' : 'AFTERNOON', icon: '🫁', action: 'Breathing: Recovery 6bpm (10min)', why: `HRV is ${hrvPct}% below baseline. Resonance breathing at 6/min is the fastest vagal tone reset.`, done: false });
+      steps.push({ time: hour >= 16 ? 'EVENING' : 'AFTERNOON', icon: '', action: 'Breathing: Recovery 6bpm (10min)', why: `HRV is ${hrvPct}% below baseline. Resonance breathing at 6/min is the fastest vagal tone reset.`, done: false });
     } else if (trainedToday && hour >= 14) {
-      steps.push({ time: 'POST-TRAINING', icon: '🫁', action: 'Breathing: Cyclic Sigh (5min)', why: 'Stanford 2023: strongest acute anxiety reduction + faster HRV rebound post-exertion.', done: false });
+      steps.push({ time: 'POST-TRAINING', icon: '', action: 'Breathing: Cyclic Sigh (5min)', why: 'Stanford 2023: strongest acute anxiety reduction + faster HRV rebound post-exertion.', done: false });
     }
   }
 
   // Sleep block
   if (hour >= 18) {
     if (sleepDebt > 5) {
-      steps.push({ time: 'TONIGHT', icon: '🛌', action: `Aim for ${Math.min(9.5, 8.5 + sleepDebt * 0.1).toFixed(1)}h sleep`, why: `You have ${sleepDebt.toFixed(0)}h sleep debt. Add 30-60min to your normal bedtime tonight.`, done: false });
+      steps.push({ time: 'TONIGHT', icon: '', action: `Aim for ${Math.min(9.5, 8.5 + sleepDebt * 0.1).toFixed(1)}h sleep`, why: `You have ${sleepDebt.toFixed(0)}h sleep debt. Add 30-60min to your normal bedtime tonight.`, done: false });
     }
     const shishaToday = todayTags.includes('shisha') || todayTags.includes('shisha_late');
     if (shishaToday) {
-      steps.push({ time: 'TONIGHT', icon: '💨', action: 'Allow 3h+ after last shisha before sleep', why: 'CO half-life is 4-5h. Late exposure suppresses deep sleep and drops HRV.', done: false });
+      steps.push({ time: 'TONIGHT', icon: '', action: 'Allow 3h+ after last shisha before sleep', why: 'CO half-life is 4-5h. Late exposure suppresses deep sleep and drops HRV.', done: false });
     }
   }
 
@@ -10069,14 +10067,14 @@ function renderCoachTraining() {
       const highAreas = Object.entries(st.areas).filter(([,v]) => v === 'high').map(([k]) => BODY_PARTS.find(b => b.id === k)?.label || k);
       protocols = [
         { icon: st.icon, name: `${st.label} - Full Intensity`, detail: st.warmup },
-        { icon: '🎯', name: 'Key Areas', detail: `High demand on: ${highAreas.join(', ')}. Extra warm-up for these.` },
-        { icon: '⚡', name: 'Recovery After', detail: st.avoid },
+        { icon: '', name: 'Key Areas', detail: `High demand on: ${highAreas.join(', ')}. Extra warm-up for these.` },
+        { icon: '', name: 'Recovery After', detail: st.avoid },
       ];
     } else {
       protocols = [
         { icon: '🏃', name: 'Max Effort Sprints', detail: 'Full approach runs, competition-pace takeoffs. CNS is primed.' },
         { icon: '💪', name: 'Heavy Plyometrics', detail: 'Depth jumps, bounding, reactive drills. Full ground contact forces.' },
-        { icon: '🏋️', name: 'Strength (85%+ 1RM)', detail: 'Squats, cleans, RDLs. High load, low rep. Chase PRs today.' },
+        { icon: '', name: 'Strength (85%+ 1RM)', detail: 'Squats, cleans, RDLs. High load, low rep. Chase PRs today.' },
       ];
     }
   } else if (recovery >= 67) {
@@ -10086,14 +10084,14 @@ function renderCoachTraining() {
     if (st) {
       protocols = [
         { icon: st.icon, name: `${st.label} - Moderate`, detail: 'Scale to 70-80% intensity. Focus on technique over output.' },
-        { icon: '🔄', name: 'Volume Adjustment', detail: `Recovery is yellow. Reduce sets or reps by 20%. Quality over quantity.` },
-        { icon: '🤸', name: 'Extended Warm-up', detail: st.warmup },
+        { icon: '', name: 'Volume Adjustment', detail: `Recovery is yellow. Reduce sets or reps by 20%. Quality over quantity.` },
+        { icon: '', name: 'Extended Warm-up', detail: st.warmup },
       ];
     } else {
       protocols = [
-        { icon: '🎯', name: 'Technique Drills', detail: 'Short approach jumps at 70-80%. Focus on board accuracy and flight positions.' },
-        { icon: '🏋️', name: 'Moderate Strength (65-80%)', detail: 'Volume work, tempo sets. Build without draining.' },
-        { icon: '🤸', name: 'Mobility + Activation', detail: 'Hip flexor openers, ankle ROM, glute activation circuits.' },
+        { icon: '', name: 'Technique Drills', detail: 'Short approach jumps at 70-80%. Focus on board accuracy and flight positions.' },
+        { icon: '', name: 'Moderate Strength (65-80%)', detail: 'Volume work, tempo sets. Build without draining.' },
+        { icon: '', name: 'Mobility + Activation', detail: 'Hip flexor openers, ankle ROM, glute activation circuits.' },
       ];
     }
   } else if (recovery >= 50) {
@@ -10101,17 +10099,17 @@ function renderCoachTraining() {
     zoneColor = '#ff8c42';
     zoneBg = 'rgba(255,140,66,0.1)';
     protocols = [
-      { icon: '🧘‍♂️', name: 'Mobility Only', detail: 'Dynamic stretching, foam roll, joint circles. No load.' },
+      { icon: '', name: 'Mobility Only', detail: 'Dynamic stretching, foam roll, joint circles. No load.' },
       { icon: '📹', name: 'Film Review', detail: 'Analyze recent jumps. Cognitive work without physical stress.' },
-      { icon: '🚶', name: 'Zone 1 Walk', detail: '20-30 min easy walk. Parasympathetic activation, blood flow.' },
+      { icon: '', name: 'Zone 1 Walk', detail: '20-30 min easy walk. Parasympathetic activation, blood flow.' },
     ];
   } else {
     zone = 'RED';
     zoneColor = 'var(--danger)';
     zoneBg = 'rgba(255,84,112,0.1)';
     protocols = [
-      { icon: '🛌', name: 'Full Rest Day', detail: 'Sleep is your training today. Aim for 9+ hours tonight.' },
-      { icon: '🧊', name: 'Gentle Recovery', detail: 'Light walk, infrapanel on joints, massage gun on calves/quads.' },
+      { icon: '', name: 'Full Rest Day', detail: 'Sleep is your training today. Aim for 9+ hours tonight.' },
+      { icon: '', name: 'Gentle Recovery', detail: 'Light walk, infrapanel on joints, massage gun on calves/quads.' },
       { icon: '🍽️', name: 'Nutrition Focus', detail: 'Hit protein targets (107g+), hydrate 3L+, anti-inflammatory foods.' },
     ];
   }
@@ -10272,9 +10270,9 @@ function renderCoachSelfCare() {
   const skPmStatus = skPm ? 'done' : hwake > 14 ? 'overdue' : hwake > 12 ? 'due' : 'done';
 
   const items = [
-    { icon: '💈', name: 'Barber', sub: barberText, status: barberStatus, statusLabel: barberStatus === 'overdue' ? 'OVERDUE' : barberStatus === 'due' ? 'SOON' : barberDays + 'd', onclick: `logBehavior('barber')` },
-    { icon: '🧴', name: 'Morning Skincare', sub: 'SPF + moisturizer', status: skAmStatus, statusLabel: skAm ? 'DONE' : 'TODO', onclick: `logBehavior('skincare_am')` },
-    { icon: '✨', name: 'Evening Skincare', sub: 'Cleanse + moisturize', status: skPmStatus, statusLabel: skPm ? 'DONE' : hwake > 12 ? 'TODO' : '--', onclick: `logBehavior('skincare_pm')` },
+    { icon: '', name: 'Barber', sub: barberText, status: barberStatus, statusLabel: barberStatus === 'overdue' ? 'OVERDUE' : barberStatus === 'due' ? 'SOON' : barberDays + 'd', onclick: `logBehavior('barber')` },
+    { icon: '', name: 'Morning Skincare', sub: 'SPF + moisturizer', status: skAmStatus, statusLabel: skAm ? 'DONE' : 'TODO', onclick: `logBehavior('skincare_am')` },
+    { icon: '', name: 'Evening Skincare', sub: 'Cleanse + moisturize', status: skPmStatus, statusLabel: skPm ? 'DONE' : hwake > 12 ? 'TODO' : '--', onclick: `logBehavior('skincare_pm')` },
   ];
 
   el.innerHTML = `
@@ -10317,7 +10315,7 @@ function renderCoachInsights() {
     if (pct >= 70) {
       insights.push({ icon: '🟢', text: `Sleep consistency ${pct}% this week (${consistency}/${last7sleep.length} nights ≥${(target - 0.5).toFixed(1)}h). This is driving your recovery.`, type: 'good' });
     } else {
-      insights.push({ icon: '🔴', text: `Sleep consistency only ${pct}% this week. Inconsistent sleep is your #1 limiter. Even one short night drops next-day HRV.`, type: 'bad' });
+      insights.push({ icon: '', text: `Sleep consistency only ${pct}% this week. Inconsistent sleep is your #1 limiter. Even one short night drops next-day HRV.`, type: 'bad' });
     }
   }
 
@@ -10332,7 +10330,7 @@ function renderCoachInsights() {
     if (delta > 3) {
       insights.push({ icon: '📈', text: `HRV trending up +${delta}ms this week. Your training load and recovery are well balanced.`, type: 'good' });
     } else if (delta < -3) {
-      insights.push({ icon: '📉', text: `HRV trending down ${delta}ms. You may be accumulating fatigue. Consider a deload or extra sleep.`, type: 'warn' });
+      insights.push({ icon: '', text: `HRV trending down ${delta}ms. You may be accumulating fatigue. Consider a deload or extra sleep.`, type: 'warn' });
     }
   }
 
@@ -10343,11 +10341,11 @@ function renderCoachInsights() {
   const weekWorkouts = (ST._workouts || []).filter(w => w.date >= weekStartStr && w.date <= today);
   const dayOfWeek = (now.getDay() + 6) % 7 + 1; // Mon=1
   if (weekWorkouts.length >= 4 && dayOfWeek <= 5) {
-    insights.push({ icon: '⚡', text: `${weekWorkouts.length} sessions in ${dayOfWeek} days. Training volume is high. Watch for accumulated strain.`, type: 'warn' });
+    insights.push({ icon: '', text: `${weekWorkouts.length} sessions in ${dayOfWeek} days. Training volume is high. Watch for accumulated strain.`, type: 'warn' });
   } else if (weekWorkouts.length === 0 && dayOfWeek >= 3) {
-    insights.push({ icon: '⚠️', text: `No training logged this week yet. Detraining risk increases after 72h without stimulus.`, type: 'bad' });
+    insights.push({ icon: '', text: `No training logged this week yet. Detraining risk increases after 72h without stimulus.`, type: 'bad' });
   } else if (weekWorkouts.length >= 2) {
-    insights.push({ icon: '✅', text: `${weekWorkouts.length} sessions this week. Training consistency is solid.`, type: 'good' });
+    insights.push({ icon: '', text: `${weekWorkouts.length} sessions this week. Training consistency is solid.`, type: 'good' });
   }
 
   // 4. Shisha/substance impact
@@ -10357,9 +10355,9 @@ function renderCoachInsights() {
   });
   const shishaDays = new Set(recentLogs.filter(l => (l.tags || []).includes('shisha') || l.tag === 'shisha').map(l => l.date)).size;
   if (shishaDays >= 3) {
-    insights.push({ icon: '💨', text: `Shisha ${shishaDays}x this week. CO exposure blunts HRV recovery for 4-5 hours after each session.`, type: 'bad' });
+    insights.push({ icon: '', text: `Shisha ${shishaDays}x this week. CO exposure blunts HRV recovery for 4-5 hours after each session.`, type: 'bad' });
   } else if (shishaDays >= 1) {
-    insights.push({ icon: '💨', text: `Shisha ${shishaDays}x this week. Keep sessions before the caffeine cutoff for minimal sleep impact.`, type: 'warn' });
+    insights.push({ icon: '', text: `Shisha ${shishaDays}x this week. Keep sessions before the caffeine cutoff for minimal sleep impact.`, type: 'warn' });
   }
 
   // 5. Recovery score context
@@ -10370,7 +10368,7 @@ function renderCoachInsights() {
   }
 
   if (!insights.length) {
-    insights.push({ icon: '📊', text: 'Keep syncing data. Insights get sharper with 7+ days of history.', type: 'neutral' });
+    insights.push({ icon: '', text: 'Keep syncing data. Insights get sharper with 7+ days of history.', type: 'neutral' });
   }
 
   el.innerHTML = `
@@ -12176,42 +12174,42 @@ function buildDetailContent(type) {
 //  JOURNAL
 // ========================================
 const JOURNAL_BEHAVIORS = [
-  { id: 'shisha', icon: '💨', label: 'Shisha' },
-  { id: 'shisha_late', icon: '🌙', label: 'Shisha Late', sub: 'after 23:00' },
-  { id: 'energy_caps', icon: '⚡', label: 'Energy Caps', sub: '200mg caffeine + choline + ALCAR' },
+  { id: 'shisha', icon: '', label: 'Shisha' },
+  { id: 'shisha_late', icon: '', label: 'Shisha Late', sub: 'after 23:00' },
+  { id: 'energy_caps', icon: '', label: 'Energy Caps', sub: '200mg caffeine + choline + ALCAR' },
   { id: 'alcohol', icon: '🍷', label: 'Alcohol' },
-  { id: 'workout', icon: '🏋️', label: 'Workout' },
-  { id: 'meditation', icon: '🧘', label: 'Meditate' },
-  { id: 'screen_late', icon: '📱', label: 'Late Screen' },
-  { id: 'sunlight', icon: '☀️', label: 'Sunlight' },
+  { id: 'workout', icon: '', label: 'Workout' },
+  { id: 'meditation', icon: '', label: 'Meditate' },
+  { id: 'screen_late', icon: '', label: 'Late Screen' },
+  { id: 'sunlight', icon: '', label: 'Sunlight' },
   { id: 'stress', icon: '😤', label: 'High Stress' },
-  { id: 'creatine', icon: '🧪', label: 'Creatine' },
-  { id: 'cold_shower', icon: '🧊', label: 'Cold Shower' },
-  { id: 'nap', icon: '😴', label: 'Nap' },
-  { id: 'stretching', icon: '🧘‍♂️', label: 'Stretching' },
-  { id: 'hydration', icon: '💧', label: 'Hydration' },
+  { id: 'creatine', icon: '', label: 'Creatine' },
+  { id: 'cold_shower', icon: '', label: 'Cold Shower' },
+  { id: 'nap', icon: '', label: 'Nap' },
+  { id: 'stretching', icon: '', label: 'Stretching' },
+  { id: 'hydration', icon: '', label: 'Hydration' },
   { id: 'sugar', icon: '🍬', label: 'Sugar/Junk' },
-  { id: 'magnesium', icon: '💊', label: 'Magnesium' },
-  { id: 'wake_before_930', icon: '⏰', label: 'Wake < 9:30' },
-  { id: 'mobility', icon: '🤸', label: 'Mobility Work' },
-  { id: 'jetboots', icon: '🦶', label: 'Jetboots Pro+', sub: 'pneumatic compression' },
-  { id: 'foam_roll', icon: '🧱', label: 'Foam Roll' },
-  { id: 'powerdot', icon: '⚡', label: 'PowerDot EMS' },
-  { id: 'massage_gun', icon: '🔫', label: 'Massage Gun', sub: 'heat + cold' },
-  { id: 'infrapanel', icon: '🔴', label: 'Infrapanel', sub: 'knees, ankles, tendons' },
+  { id: 'magnesium', icon: '', label: 'Magnesium' },
+  { id: 'wake_before_930', icon: '', label: 'Wake < 9:30' },
+  { id: 'mobility', icon: '', label: 'Mobility Work' },
+  { id: 'jetboots', icon: '', label: 'Jetboots Pro+', sub: 'pneumatic compression' },
+  { id: 'foam_roll', icon: '', label: 'Foam Roll' },
+  { id: 'powerdot', icon: '', label: 'PowerDot EMS' },
+  { id: 'massage_gun', icon: '', label: 'Massage Gun', sub: 'heat + cold' },
+  { id: 'infrapanel', icon: '', label: 'Infrapanel', sub: 'knees, ankles, tendons' },
   { id: 'linkedin_30', icon: '💼', label: '30m LinkedIn', sub: 'weekdays' },
-  { id: 'sleep_8h30', icon: '🛌', label: 'Sleep 8.30+h' },
+  { id: 'sleep_8h30', icon: '', label: 'Sleep 8.30+h' },
   { id: 'sleep_before_2', icon: '🌜', label: 'Sleep < 2 AM' },
   { id: 'sex', icon: '❤️‍🔥', label: 'Sex' },
-  { id: 'deep_work', icon: '🎯', label: 'Deep Work 1.5h+' },
-  { id: 'no_phone_morning', icon: '🚫', label: 'No Phone 30m', sub: 'first 30 min' },
-  { id: 'supplements', icon: '💊', label: 'Supplements' },
+  { id: 'deep_work', icon: '', label: 'Deep Work 1.5h+' },
+  { id: 'no_phone_morning', icon: '', label: 'No Phone 30m', sub: 'first 30 min' },
+  { id: 'supplements', icon: '', label: 'Supplements' },
   { id: 'blue_light_glasses', icon: '👓', label: 'Blue Light Glasses' },
-  { id: 'make_bed', icon: '🛏️', label: 'Make the Bed' },
-  { id: 'skincare_am', icon: '🧴', label: 'Morning Skincare' },
-  { id: 'skincare_pm', icon: '✨', label: 'Evening Skincare' },
-  { id: 'barber', icon: '💈', label: 'Barber', sub: 'every 23 days' },
-  { id: 'sauna', icon: '🧖', label: 'Sauna' },
+  { id: 'make_bed', icon: '', label: 'Make the Bed' },
+  { id: 'skincare_am', icon: '', label: 'Morning Skincare' },
+  { id: 'skincare_pm', icon: '', label: 'Evening Skincare' },
+  { id: 'barber', icon: '', label: 'Barber', sub: 'every 23 days' },
+  { id: 'sauna', icon: '', label: 'Sauna' },
   { id: 'massage', icon: '💆', label: 'Massage' },
   { id: 'late_meal', icon: '🍽️', label: 'Late Meal', sub: 'after 22:00' },
 ];
@@ -12354,7 +12352,7 @@ function renderJournalStreak() {
     else break;
   }
   if (streak > 0) {
-    el.innerHTML = `<span style="font-size:12px;">🔥</span><span style="font-size:12px;font-weight:700;color:var(--energy);">${streak}d</span>`;
+    el.innerHTML = `<span style="font-size:12px;font-weight:700;color:var(--energy);">${streak}d</span>`;
   } else {
     el.innerHTML = '';
   }
@@ -13032,18 +13030,18 @@ const MOODS = [
 ];
 
 const TAGS = [
-  { id: 'shisha', icon: '💨', label: 'Shisha' },
-  { id: 'workout', icon: '🏋️', label: 'Workout' },
-  { id: 'deep_work', icon: '🎯', label: 'Deep Work' },
-  { id: 'sauna', icon: '🧖', label: 'Sauna' },
-  { id: 'alcohol', icon: '🍺', label: 'Alcohol' },
+  { id: 'shisha', icon: '', label: 'Shisha' },
+  { id: 'workout', icon: '', label: 'Workout' },
+  { id: 'deep_work', icon: '', label: 'Deep Work' },
+  { id: 'sauna', icon: '', label: 'Sauna' },
+  { id: 'alcohol', icon: '', label: 'Alcohol' },
   { id: 'stress', icon: '😤', label: 'Stress' },
-  { id: 'nap', icon: '😴', label: 'Nap' },
-  { id: 'meditation', icon: '🧘', label: 'Meditate' },
-  { id: 'walk', icon: '🚶', label: 'Walk' },
-  { id: 'sunlight', icon: '☀️', label: 'Sunlight' },
-  { id: 'screen', icon: '📱', label: 'Screen' },
-  { id: 'cold_shower', icon: '🧊', label: 'Cold' },
+  { id: 'nap', icon: '', label: 'Nap' },
+  { id: 'meditation', icon: '', label: 'Meditate' },
+  { id: 'walk', icon: '', label: 'Walk' },
+  { id: 'sunlight', icon: '', label: 'Sunlight' },
+  { id: 'screen', icon: '', label: 'Screen' },
+  { id: 'cold_shower', icon: '', label: 'Cold' },
   { id: 'sugar', icon: '🍬', label: 'Sugar' },
 ];
 
@@ -13329,7 +13327,7 @@ function loadHistoricalDay(dateStr) {
     const dayLogs = (ST.logs || []).filter(l => l.date === dateStr);
     const dayEntry = (ST.journalEntries || []).find(e => e.date === dateStr);
     if (dayLogs.length || dayEntry) {
-      const tagIcons = { shisha: '💨', workout: '🏋️', sauna: '🧖', alcohol: '🍷', stress: '😤', nap: '😴', meditation: '🧘', sunlight: '☀️', screen: '📱', cold_shower: '🧊', sugar: '🍬', deep_work: '📊', walk: '🚶', shisha_late: '🌙', energy_caps: '⚡', creatine: '🧪' };
+      const tagIcons = {};
       let html = '<div class="timeline">';
       for (const log of dayLogs) {
         const d = new Date(log.ts);
@@ -13515,26 +13513,26 @@ document.querySelectorAll('.fullpage').forEach(overlay => {
 //  LIVE ACTIVITIES (timer-based tracking)
 // ========================================
 const LIVE_ACTIVITY_META = {
-  shisha:       { icon: '💨', label: 'Shisha', warnAtMin: null, targetMin: null },
-  shisha_late:  { icon: '🌙', label: 'Shisha Late', warnAtMin: null, targetMin: null },
-  energy_caps:  { icon: '⚡', label: 'Energy Caps', warnAtMin: null, targetMin: null },
-  sauna:        { icon: '🧖', label: 'Sauna', warnAtMin: 30, targetMin: 15 },
-  workout:      { icon: '🏋️', label: 'Workout', warnAtMin: 90, targetMin: 60 },
-  meditation:   { icon: '🧘', label: 'Meditation', warnAtMin: null, targetMin: 13 },
+  shisha:       { icon: '', label: 'Shisha', warnAtMin: null, targetMin: null },
+  shisha_late:  { icon: '', label: 'Shisha Late', warnAtMin: null, targetMin: null },
+  energy_caps:  { icon: '', label: 'Energy Caps', warnAtMin: null, targetMin: null },
+  sauna:        { icon: '', label: 'Sauna', warnAtMin: 30, targetMin: 15 },
+  workout:      { icon: '', label: 'Workout', warnAtMin: 90, targetMin: 60 },
+  meditation:   { icon: '', label: 'Meditation', warnAtMin: null, targetMin: 13 },
   alcohol:      { icon: '🍷', label: 'Alcohol', warnAtMin: null, targetMin: null },
-  sun_exposure: { icon: '☀️', label: 'Sunlight', targetMin: 10 },
-  walk:         { icon: '🚶', label: 'Walk', targetMin: 30 },
-  deep_work:    { icon: '🎯', label: 'Deep Work', targetMin: 90 },
-  stretching:   { icon: '🧘‍♂️', label: 'Stretching', targetMin: 15 },
-  mobility:     { icon: '🤸', label: 'Mobility', targetMin: 15 },
-  cold_shower:  { icon: '🧊', label: 'Cold Shower', targetMin: 3 },
-  jetboots:     { icon: '🦶', label: 'Jetboots', targetMin: 20 },
-  nap:          { icon: '😴', label: 'Nap', targetMin: 20, warnAtMin: 30 },
+  sun_exposure: { icon: '', label: 'Sunlight', targetMin: 10 },
+  walk:         { icon: '', label: 'Walk', targetMin: 30 },
+  deep_work:    { icon: '', label: 'Deep Work', targetMin: 90 },
+  stretching:   { icon: '', label: 'Stretching', targetMin: 15 },
+  mobility:     { icon: '', label: 'Mobility', targetMin: 15 },
+  cold_shower:  { icon: '', label: 'Cold Shower', targetMin: 3 },
+  jetboots:     { icon: '', label: 'Jetboots', targetMin: 20 },
+  nap:          { icon: '', label: 'Nap', targetMin: 20, warnAtMin: 30 },
   massage:      { icon: '💆', label: 'Massage', targetMin: 30 },
-  foam_roll:    { icon: '🧱', label: 'Foam Roll', targetMin: 15 },
-  powerdot:     { icon: '⚡', label: 'PowerDot EMS', targetMin: 25 },
-  massage_gun:  { icon: '🔫', label: 'Massage Gun', targetMin: 10 },
-  infrapanel:   { icon: '🔴', label: 'Infrapanel', targetMin: 15 },
+  foam_roll:    { icon: '', label: 'Foam Roll', targetMin: 15 },
+  powerdot:     { icon: '', label: 'PowerDot EMS', targetMin: 25 },
+  massage_gun:  { icon: '', label: 'Massage Gun', targetMin: 10 },
+  infrapanel:   { icon: '', label: 'Infrapanel', targetMin: 15 },
 };
 
 function logBehavior(tag) {
@@ -14194,7 +14192,7 @@ function renderSuggestions() {
   // Active shisha - warn about cutoff
   if (activeSessions.includes('shisha') || activeSessions.includes('shisha_late')) {
     const warn = getShishaCutoffWarning();
-    if (warn) sugs.push({ icon: '💨', title: 'Consider wrapping up shisha', sub: warn, action: 'Stop', cls: 'green', bg: 'rgba(255,107,107,0.1)', onclick: `stopLiveActivity('${active.find(a=>a.type.includes('shisha'))?.id}')`, pri: 0 });
+    if (warn) sugs.push({ icon: '', title: 'Consider wrapping up shisha', sub: warn, action: 'Stop', cls: 'green', bg: 'rgba(255,107,107,0.1)', onclick: `stopLiveActivity('${active.find(a=>a.type.includes('shisha'))?.id}')`, pri: 0 });
   }
 
   // === PRIORITY 2: Time-critical ===
@@ -14202,45 +14200,45 @@ function renderSuggestions() {
   // Morning: sunlight (weather-aware)
   if (hwake < 1.5 && !patterns.todayBehaviors.includes('sunlight')) {
     const sa = sunlightAdvice(weatherCache);
-    sugs.push({ icon: '☀️', title: `Get ${sa.duration} morning sunlight`, sub: HABIT_SCIENCE.sunlight, action: 'Now', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('sun_exposure')`, pri: 1 });
+    sugs.push({ icon: '', title: `Get ${sa.duration} morning sunlight`, sub: HABIT_SCIENCE.sunlight, action: 'Now', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('sun_exposure')`, pri: 1 });
   }
 
   // Energy Caps cutoff approaching
   const coffeeCutH = (WAKE + 6.5) % 24;
   if (nowH >= coffeeCutH - 0.5 && nowH < coffeeCutH + 0.5) {
-    sugs.push({ icon: '⚡', title: 'Last call for Energy Caps', sub: `Cut-off at ${minToTime(Math.round(coffeeCutH * 60))}  - caffeine half-life is 5-6h, quarter-life 10-12h`, action: 'Note', cls: 'blue', bg: 'rgba(255,181,71,0.1)', onclick: `logBehavior('energy_caps')`, pri: 1 });
+    sugs.push({ icon: '', title: 'Last call for Energy Caps', sub: `Cut-off at ${minToTime(Math.round(coffeeCutH * 60))}  - caffeine half-life is 5-6h, quarter-life 10-12h`, action: 'Note', cls: 'blue', bg: 'rgba(255,181,71,0.1)', onclick: `logBehavior('energy_caps')`, pri: 1 });
   }
 
   // Wind-down suggestion
   const winddownH = (WAKE + 12.5) % 24;
   if (nowH >= winddownH - 0.5 && nowH < winddownH + 1) {
-    sugs.push({ icon: '🌙', title: 'Start wind-down routine', sub: 'Core temp must drop ~1°C for deep sleep  - dim lights, stop screens, no food', action: 'Start', cls: 'purple', bg: 'rgba(139,156,199,0.1)', onclick: `openWindDown()`, pri: 1 });
+    sugs.push({ icon: '', title: 'Start wind-down routine', sub: 'Core temp must drop ~1°C for deep sleep  - dim lights, stop screens, no food', action: 'Start', cls: 'purple', bg: 'rgba(139,156,199,0.1)', onclick: `openWindDown()`, pri: 1 });
   }
 
   // === PRIORITY 3: Recovery-based ===
 
   // Poor sleep  - urgent
   if (sl.totalH > 0 && sl.totalH < 6.5) {
-    sugs.push({ icon: '😴', title: 'Prioritize sleep tonight', sub: `Only ${fmtH(sl.totalH)} last night. ${HABIT_SCIENCE.sleep_8h30}`, action: 'Plan', cls: 'purple', bg: 'rgba(139,156,199,0.1)', onclick: `openSleepFullPage()`, pri: 2 });
+    sugs.push({ icon: '', title: 'Prioritize sleep tonight', sub: `Only ${fmtH(sl.totalH)} last night. ${HABIT_SCIENCE.sleep_8h30}`, action: 'Plan', cls: 'purple', bg: 'rgba(139,156,199,0.1)', onclick: `openSleepFullPage()`, pri: 2 });
   }
 
   // Low recovery  - nap suggestion
   if (recovery < 50 && hwake > 3 && hwake < 8 && !activeSessions.includes('nap')) {
-    sugs.push({ icon: '💤', title: 'Take a 20-min power nap', sub: HABIT_SCIENCE.nap, action: 'Nap', cls: 'purple', bg: 'rgba(139,156,199,0.1)', onclick: `startLiveActivity('nap')`, pri: 2 });
+    sugs.push({ icon: '', title: 'Take a 20-min power nap', sub: HABIT_SCIENCE.nap, action: 'Nap', cls: 'purple', bg: 'rgba(139,156,199,0.1)', onclick: `startLiveActivity('nap')`, pri: 2 });
   }
 
   // HRV below baseline  - breathwork
   const hrvBase = m.hrvBaseline || 42;
   if (m.hrv < hrvBase * 0.8 && !activeSessions.includes('meditation')) {
-    sugs.push({ icon: '🧘', title: 'Breathing session recommended', sub: `HRV ${m.hrv}ms  - ${Math.round((1 - m.hrv/hrvBase)*100)}% below your baseline. Slow breathing (6/min) activates vagal tone in 5-10min`, action: 'Breathe', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `showView('coach');setTimeout(()=>document.getElementById('breathingCard')?.scrollIntoView({behavior:'smooth'}),300)`, pri: 2 });
+    sugs.push({ icon: '', title: 'Breathing session recommended', sub: `HRV ${m.hrv}ms  - ${Math.round((1 - m.hrv/hrvBase)*100)}% below your baseline. Slow breathing (6/min) activates vagal tone in 5-10min`, action: 'Breathe', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `showView('coach');setTimeout(()=>document.getElementById('breathingCard')?.scrollIntoView({behavior:'smooth'}),300)`, pri: 2 });
   }
 
   // Strain + recovery mismatch (no training suggestions at night)
   const noWorkoutPhases = ['WIND-DOWN', 'NIGHT', 'SLEEP', 'INERTIA'];
   if (recovery >= 67 && strain < 8 && hwake > 2 && !noWorkoutPhases.includes(currentPhase.name) && !activeSessions.includes('workout') && sugPlannedIntensity !== 'rest') {
-    sugs.push({ icon: '🏋️', title: 'Your body can handle intensity', sub: `Recovery ${recovery}%, strain only ${strain}. Unused capacity = missed adaptation. Push today.`, action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('workout')`, pri: 3 });
+    sugs.push({ icon: '', title: 'Your body can handle intensity', sub: `Recovery ${recovery}%, strain only ${strain}. Unused capacity = missed adaptation. Push today.`, action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('workout')`, pri: 3 });
   } else if (recovery < 34 && strain > 12) {
-    sugs.push({ icon: '⚠️', title: 'Recovery deficit  - active rest only', sub: `Recovery ${recovery}% with strain ${strain}. High acute:chronic workload spikes increase injury risk significantly (Gabbett, BJSM, 2016)`, action: 'Note', cls: 'purple', bg: 'rgba(255,84,112,0.1)', pri: 3 });
+    sugs.push({ icon: '', title: 'Recovery deficit  - active rest only', sub: `Recovery ${recovery}% with strain ${strain}. High acute:chronic workload spikes increase injury risk significantly (Gabbett, BJSM, 2016)`, action: 'Note', cls: 'purple', bg: 'rgba(255,84,112,0.1)', pri: 3 });
   }
 
   // === PRIORITY 3.5: Soreness-driven ===
@@ -14249,12 +14247,12 @@ function renderSuggestions() {
   const sugSoreParts = Object.entries(sugSoreness).filter(([,v]) => v === 'sore').map(([k]) => k);
 
   if (sugPainParts.length >= 2 && (sugPlannedIntensity === 'hard' || sugPlannedIntensity === 'moderate')) {
-    sugs.push({ icon: '🛑', title: 'Consider downgrading session', sub: `${sugPainParts.length} pain areas flagged. Training through multiple pain points increases injury risk. Switch to mobility or upper body.`, action: 'Note', cls: 'purple', bg: 'rgba(255,84,112,0.1)', pri: 3 });
+    sugs.push({ icon: '', title: 'Consider downgrading session', sub: `${sugPainParts.length} pain areas flagged. Training through multiple pain points increases injury risk. Switch to mobility or upper body.`, action: 'Note', cls: 'purple', bg: 'rgba(255,84,112,0.1)', pri: 3 });
   }
 
   if ((sugSoreParts.length > 0 || sugPainParts.length > 0) && !patterns.todayBehaviors.includes('foam_roll') && hwake > 0.5) {
     const targetLabels = [...sugPainParts, ...sugSoreParts].slice(0, 3).map(id => BODY_PARTS.find(b=>b.id===id)?.label || id);
-    sugs.push({ icon: '🧱', title: `Foam roll: ${targetLabels.join(', ')}`, sub: 'Target your flagged sore/pain areas. 2min per area, moderate pressure, avoid directly rolling over joints.', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('foam_roll')`, pri: 3 });
+    sugs.push({ icon: '', title: `Foam roll: ${targetLabels.join(', ')}`, sub: 'Target your flagged sore/pain areas. 2min per area, moderate pressure, avoid directly rolling over joints.', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('foam_roll')`, pri: 3 });
   }
 
   // === PRIORITY 4: Circadian-aware ===
@@ -14262,49 +14260,49 @@ function renderSuggestions() {
   // Deep work in peak zones
   const peakPhases = ['PEAK 1', 'PEAK 2'];
   if (peakPhases.includes(currentPhase.name) && !activeSessions.includes('deep_work') && !activeSessions.includes('workout')) {
-    sugs.push({ icon: '🎯', title: 'Peak zone  - optimal focus window', sub: HABIT_SCIENCE.deep_work, action: 'Focus', cls: 'blue', bg: 'rgba(91,154,255,0.1)', onclick: `startLiveActivity('deep_work')`, pri: 4 });
+    sugs.push({ icon: '', title: 'Peak zone  - optimal focus window', sub: HABIT_SCIENCE.deep_work, action: 'Focus', cls: 'blue', bg: 'rgba(91,154,255,0.1)', onclick: `startLiveActivity('deep_work')`, pri: 4 });
   }
 
   // Business-owner coaching: decision fatigue + meeting timing
   if (currentPhase.name === 'DIP' && !activeSessions.includes('nap')) {
-    sugs.push({ icon: '📋', title: 'Decision fatigue zone', sub: 'Cortisol dip reduces executive function. Postpone big decisions, contracts, or strategy calls  - do admin/email instead.', action: 'Note', cls: 'purple', bg: 'rgba(139,156,199,0.08)', pri: 5 });
+    sugs.push({ icon: '', title: 'Decision fatigue zone', sub: 'Cortisol dip reduces executive function. Postpone big decisions, contracts, or strategy calls  - do admin/email instead.', action: 'Note', cls: 'purple', bg: 'rgba(139,156,199,0.08)', pri: 5 });
   }
 
   // Creative work window (late afternoon second peak)
   if (currentPhase.name === 'PEAK 2' && !activeSessions.includes('deep_work')) {
-    sugs.push({ icon: '💡', title: 'Creative window open', sub: 'Prefrontal cortex loosens in the 2nd peak  - ideal for brainstorming, pitch decks, content creation. Analytical + creative overlap.', action: 'Focus', cls: 'blue', bg: 'rgba(91,154,255,0.1)', onclick: `startLiveActivity('deep_work')`, pri: 5 });
+    sugs.push({ icon: '', title: 'Creative window open', sub: 'Prefrontal cortex loosens in the 2nd peak  - ideal for brainstorming, pitch decks, content creation. Analytical + creative overlap.', action: 'Focus', cls: 'blue', bg: 'rgba(91,154,255,0.1)', onclick: `startLiveActivity('deep_work')`, pri: 5 });
   }
 
   // High recovery + low strain = optimal day for both training AND business (daytime only)
   if (recovery >= 80 && strain < 5 && hwake > 1 && hwake < 6 && !noWorkoutPhases.includes(currentPhase.name) && sugPlannedIntensity !== 'rest') {
-    sugs.push({ icon: '🔥', title: 'High-leverage day', sub: `Recovery ${recovery}%  - your body and mind are primed. Stack your hardest training session AND your most important business task today.`, action: 'Plan', cls: 'green', bg: 'rgba(48,217,138,0.08)', pri: 4 });
+    sugs.push({ icon: '', title: 'High-leverage day', sub: `Recovery ${recovery}%  - your body and mind are primed. Stack your hardest training session AND your most important business task today.`, action: 'Plan', cls: 'green', bg: 'rgba(48,217,138,0.08)', pri: 4 });
   }
 
   // Low steps (afternoon+)
   if (h.steps.today < h.steps.goal * 0.5 && nowH > 14) {
-    sugs.push({ icon: '🚶', title: `${h.steps.today.toLocaleString()} steps  - go walk`, sub: `${Math.round(h.steps.today/h.steps.goal*100)}% of goal. A brisk 20-min walk improves blood flow to hippocampus and prefrontal cortex`, action: 'Track', cls: 'blue', bg: 'rgba(52,211,153,0.1)', onclick: `startLiveActivity('walk')`, pri: 4 });
+    sugs.push({ icon: '', title: `${h.steps.today.toLocaleString()} steps  - go walk`, sub: `${Math.round(h.steps.today/h.steps.goal*100)}% of goal. A brisk 20-min walk improves blood flow to hippocampus and prefrontal cortex`, action: 'Track', cls: 'blue', bg: 'rgba(52,211,153,0.1)', onclick: `startLiveActivity('walk')`, pri: 4 });
   }
 
   // === PRIORITY 5: Habit-based (personalized) ===
 
   // Missed positive habits they usually do
   const missedSugs = {
-    creatine: { icon: '🧪', title: "Don't forget creatine today", action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('creatine')` },
-    hydration: { icon: '💧', title: 'Track your hydration', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('hydration')` },
-    supplements: { icon: '💊', title: 'Take your supplements', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('supplements')` },
-    magnesium: { icon: '💊', title: 'Magnesium before bed', action: 'Log', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `logBehavior('magnesium')` },
-    stretching: { icon: '🧘‍♂️', title: 'Stretch session', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('stretching')` },
-    mobility: { icon: '🤸', title: 'Mobility work', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('mobility')` },
-    meditation: { icon: '🧘', title: '13-min meditation', action: 'Start', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `startLiveActivity('meditation')` },
-    make_bed: { icon: '🛏️', title: 'Make the bed', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('make_bed')` },
-    skincare_am: { icon: '🧴', title: 'Morning skincare', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('skincare_am')` },
-    skincare_pm: { icon: '✨', title: 'Evening skincare', action: 'Log', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `logBehavior('skincare_pm')` },
-    jetboots: { icon: '🦶', title: 'Jetboots recovery session', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('jetboots')` },
-    foam_roll: { icon: '🧱', title: 'Foam roll session', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('foam_roll')` },
-    powerdot: { icon: '⚡', title: 'PowerDot recovery', action: 'Start', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `startLiveActivity('powerdot')` },
-    massage_gun: { icon: '🔫', title: 'Massage gun session', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('massage_gun')` },
-    infrapanel: { icon: '🔴', title: 'Infrapanel for joints', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('infrapanel')` },
-    no_phone_morning: { icon: '🚫', title: 'No phone first 30 min', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('no_phone_morning')` },
+    creatine: { icon: '', title: "Don't forget creatine today", action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('creatine')` },
+    hydration: { icon: '', title: 'Track your hydration', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('hydration')` },
+    supplements: { icon: '', title: 'Take your supplements', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('supplements')` },
+    magnesium: { icon: '', title: 'Magnesium before bed', action: 'Log', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `logBehavior('magnesium')` },
+    stretching: { icon: '', title: 'Stretch session', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('stretching')` },
+    mobility: { icon: '', title: 'Mobility work', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('mobility')` },
+    meditation: { icon: '', title: '13-min meditation', action: 'Start', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `startLiveActivity('meditation')` },
+    make_bed: { icon: '', title: 'Make the bed', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('make_bed')` },
+    skincare_am: { icon: '', title: 'Morning skincare', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('skincare_am')` },
+    skincare_pm: { icon: '', title: 'Evening skincare', action: 'Log', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `logBehavior('skincare_pm')` },
+    jetboots: { icon: '', title: 'Jetboots recovery session', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('jetboots')` },
+    foam_roll: { icon: '', title: 'Foam roll session', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('foam_roll')` },
+    powerdot: { icon: '', title: 'PowerDot recovery', action: 'Start', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `startLiveActivity('powerdot')` },
+    massage_gun: { icon: '', title: 'Massage gun session', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('massage_gun')` },
+    infrapanel: { icon: '', title: 'Infrapanel for joints', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('infrapanel')` },
+    no_phone_morning: { icon: '', title: 'No phone first 30 min', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('no_phone_morning')` },
   };
 
   // Time-filter missed habits
@@ -14324,12 +14322,12 @@ function renderSuggestions() {
 
   // === PRIORITY 6: Habit discovery (things they rarely do but should) ===
   const discoverySugs = {
-    cold_shower: { icon: '🧊', title: 'Cold immersion session', action: 'Start', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `startLiveActivity('cold_shower')` },
-    sauna: { icon: '🧖', title: 'Sauna session', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('sauna')` },
-    foam_roll: { icon: '🧱', title: 'Foam roll recovery', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('foam_roll')` },
-    powerdot: { icon: '⚡', title: 'PowerDot EMS recovery', action: 'Start', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `startLiveActivity('powerdot')` },
-    massage_gun: { icon: '🔫', title: 'Massage gun recovery', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('massage_gun')` },
-    infrapanel: { icon: '🔴', title: 'Infrared therapy for joints', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('infrapanel')` },
+    cold_shower: { icon: '', title: 'Cold immersion session', action: 'Start', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `startLiveActivity('cold_shower')` },
+    sauna: { icon: '', title: 'Sauna session', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('sauna')` },
+    foam_roll: { icon: '', title: 'Foam roll recovery', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('foam_roll')` },
+    powerdot: { icon: '', title: 'PowerDot EMS recovery', action: 'Start', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `startLiveActivity('powerdot')` },
+    massage_gun: { icon: '', title: 'Massage gun recovery', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('massage_gun')` },
+    infrapanel: { icon: '', title: 'Infrared therapy for joints', action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('infrapanel')` },
   };
   // Only suggest 1 discovery item, and only if we have room + it's daytime
   const nightPhases = ['WIND-DOWN', 'NIGHT', 'SLEEP'];
@@ -14351,7 +14349,7 @@ function renderSuggestions() {
   if (daysSinceBarber >= 20) {
     const urgency = daysSinceBarber >= 23 ? 'Due today' : `${23 - daysSinceBarber}d left`;
     sugs.push({
-      icon: '💈', title: `Barber  - ${urgency}`,
+      icon: '', title: `Barber  - ${urgency}`,
       sub: daysSinceBarber >= 23
         ? `${daysSinceBarber} days since last cut. Time to book.`
         : `Last cut ${daysSinceBarber} days ago. Schedule soon.`,
@@ -14362,10 +14360,10 @@ function renderSuggestions() {
 
   // Skincare coaching - remind if not logged today
   if (hwake > 0.5 && hwake < 2 && !patterns.todayBehaviors.includes('skincare_am')) {
-    sugs.push({ icon: '🧴', title: 'Morning skincare', sub: 'SPF + moisturizer. UV protection is the #1 anti-aging intervention.', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('skincare_am')`, pri: 6 });
+    sugs.push({ icon: '', title: 'Morning skincare', sub: 'SPF + moisturizer. UV protection is the #1 anti-aging intervention.', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('skincare_am')`, pri: 6 });
   }
   if (hwake > 12 && !patterns.todayBehaviors.includes('skincare_pm')) {
-    sugs.push({ icon: '✨', title: 'Evening skincare', sub: 'Cleanse + retinol/moisturize. Skin repair peaks during sleep.', action: 'Log', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `logBehavior('skincare_pm')`, pri: 6 });
+    sugs.push({ icon: '', title: 'Evening skincare', sub: 'Cleanse + retinol/moisturize. Skin repair peaks during sleep.', action: 'Log', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `logBehavior('skincare_pm')`, pri: 6 });
   }
 
   // === PRIORITY 7: Negative pattern warnings ===
@@ -14374,7 +14372,7 @@ function renderSuggestions() {
     const beh = JOURNAL_BEHAVIORS.find(b => b.id === ov.id);
     if (!beh) continue;
     sugs.push({
-      icon: '⚠️',
+      icon: '',
       title: `${beh.label}  - ${ov.count}x this week`,
       sub: sciReason || `High frequency impacts recovery. Consider cutting back.`,
       action: 'Note', cls: 'purple', bg: 'rgba(255,84,112,0.08)',
