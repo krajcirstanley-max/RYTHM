@@ -3434,7 +3434,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v135';
+const APP_VERSION = 'v138';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -4338,12 +4338,12 @@ function computeReadiness(forDate) {
     hrvScore = r.hrv || 50; // fallback to manual input
   } else {
     // Score: 100 at 140%+ of baseline, 50 at baseline, 0 at 50% of baseline
-    // Wider range than before so HRV doesn't max out too easily
+    // Wider curve: athletes have naturally variable HRV, less harsh penalty below baseline
     const ratio = hrvNow / hrvBase;
-    if (ratio >= 1.4) hrvScore = 100;
-    else if (ratio >= 1.0) hrvScore = 50 + (ratio - 1.0) / 0.4 * 50; // 50-100 over 1.0-1.4
-    else if (ratio >= 0.5) hrvScore = (ratio - 0.5) / 0.5 * 50;  // 0-50 range (linear)
-    else hrvScore = 0;
+    if (ratio >= 1.3) hrvScore = 100;
+    else if (ratio >= 1.0) hrvScore = 60 + (ratio - 1.0) / 0.3 * 40;
+    else if (ratio >= 0.7) hrvScore = 20 + (ratio - 0.7) / 0.3 * 40;
+    else hrvScore = Math.max(0, ratio / 0.7 * 20);
   }
   hrvScore = Math.max(0, Math.min(100, hrvScore));
 
@@ -4460,10 +4460,10 @@ function computeHistoricalReadiness(dateStr) {
   let hrvScore = 50;
   if (hrvEntry && hrvEntry.value > 0) {
     const ratio = hrvEntry.value / hrvBase;
-    if (ratio >= 1.4) hrvScore = 100;
-    else if (ratio >= 1.0) hrvScore = 50 + (ratio - 1.0) / 0.4 * 50;
-    else if (ratio >= 0.5) hrvScore = (ratio - 0.5) / 0.5 * 50;
-    else hrvScore = 0;
+    if (ratio >= 1.3) hrvScore = 100;
+    else if (ratio >= 1.0) hrvScore = 60 + (ratio - 1.0) / 0.3 * 40;
+    else if (ratio >= 0.7) hrvScore = 20 + (ratio - 0.7) / 0.3 * 40;
+    else hrvScore = Math.max(0, ratio / 0.7 * 20);
   }
 
   // RHR score (15%)
