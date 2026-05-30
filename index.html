@@ -14,37 +14,37 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=DM+Mono:wght@300;400;500&display=swap');
 
 :root, html, body { color-scheme: dark !important; }
 
 :root {
   --bg: #000;
-  --bg-1: #08080b;
-  --bg-2: #101014;
-  --bg-3: #18181d;
-  --card: #131317;
-  --card-solid: #151519;
-  --card-border: rgba(255,255,255,0.055);
-  --card-glow: rgba(255,255,255,0.03);
-  --border: rgba(255,255,255,0.045);
-  --border-2: rgba(255,255,255,0.07);
-  --text: #e8e8ec;
-  --text-2: #8a8f9a;
-  --text-3: #4f545e;
-  --text-4: #2e323b;
-  --energy: #2ecf82;
-  --energy-dim: #24a86a;
-  --strain: #f04e68;
-  --sleep: #7e8fba;
-  --warn: #f0a040;
-  --danger: #f04e68;
-  --purple: #9b7ff0;
-  --radius: 14px;
+  --bg-1: #0a0a0c;
+  --bg-2: #111115;
+  --bg-3: #1a1a1f;
+  --card: #141418;
+  --card-solid: #16161c;
+  --card-border: rgba(255,255,255,0.06);
+  --card-glow: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.05);
+  --border-2: rgba(255,255,255,0.08);
+  --text: #f0f0f2;
+  --text-2: #a0a4ac;
+  --text-3: #585d68;
+  --text-4: #333842;
+  --energy: #34d68e;
+  --energy-dim: #28b872;
+  --strain: #ff5470;
+  --sleep: #8b9cc7;
+  --warn: #ffb547;
+  --danger: #ff5470;
+  --purple: #a78bfa;
+  --radius: 16px;
   --radius-sm: 10px;
-  --glass: rgba(255,255,255,0.025);
-  --glass-border: rgba(255,255,255,0.05);
-  --glass-highlight: rgba(255,255,255,0.07);
+  --glass: rgba(255,255,255,0.03);
+  --glass-border: rgba(255,255,255,0.06);
+  --glass-highlight: rgba(255,255,255,0.08);
 }
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; -webkit-user-select:none; user-select:none; }
@@ -52,7 +52,7 @@ input, textarea { -webkit-user-select:text; user-select:text; }
 
 html {
   background: #000 !important;
-  color: #e8e8ec !important;
+  color: #fff !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   overflow-x: hidden;
   overflow-y: auto;
@@ -63,7 +63,7 @@ html {
 }
 body {
   background: #000 !important;
-  color: #e8e8ec !important;
+  color: #fff !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
   min-height: 100vh;
@@ -974,40 +974,30 @@ section { padding: 0 14px; margin-bottom: 6px; }
   color: var(--text-3); 
 }
 .journal-cat {
-  font-size: 11px; font-weight: 600; letter-spacing: 0.3px;
-  color: var(--text-3); margin: 20px 0 4px;
-  padding: 0 14px;
+  font-size: 9px; font-weight: 700; letter-spacing: 1px;
+  color: var(--text-4);  margin: 14px 0 6px;
+  padding-left: 2px;
 }
-.journal-cat:first-child { margin-top: 4px; }
-.journal-grid { display: flex; flex-direction: column; gap: 1px; }
+.journal-cat:first-child { margin-top: 2px; }
+.journal-grid { display: flex; flex-wrap: wrap; gap: 6px; }
 .journal-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 13px 14px;
-  background: transparent;
-  border-radius: 0;
-  cursor: pointer; transition: all 0.12s;
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 12px 7px 8px;
+  background: var(--bg-2);
+  border: 1px solid var(--card-border);
+  border-radius: 100px;
+  cursor: pointer; transition: all 0.15s;
   -webkit-tap-highlight-color: transparent;
-  border-bottom: 1px solid rgba(255,255,255,0.035);
 }
-.journal-item:last-child { border-bottom: none; }
-.journal-item:active { background: rgba(255,255,255,0.03); }
-.journal-item.active { background: rgba(46,207,130,0.04); }
-.journal-item .ji-check {
-  width: 22px; height: 22px; border-radius: 6px;
-  border: 1.5px solid var(--text-4);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12px; color: transparent; flex-shrink: 0;
-  transition: all 0.15s;
+.journal-item:active { background: rgba(255,255,255,0.06); }
+.journal-item.active {
+  background: rgba(52,214,142,0.08);
+  border-color: rgba(52,214,142,0.25);
 }
-.journal-item.active .ji-check {
-  border-color: var(--energy);
-  background: var(--energy);
-  color: #000;
-  font-weight: 700;
-}
-.journal-item .ji-icon { font-size: 16px; line-height: 1; flex-shrink: 0; }
-.journal-item .ji-label { font-size: 13px; font-weight: 500; color: var(--text-2); }
-.journal-item.active .ji-label { color: var(--text); font-weight: 600; }
+.journal-item .ji-check { display: none; }
+.journal-item .ji-icon { font-size: 14px; line-height: 1; flex-shrink: 0; }
+.journal-item .ji-label { font-size: 12px; font-weight: 600; color: var(--text-3); white-space: nowrap; }
+.journal-item.active .ji-label { color: var(--energy); }
 .journal-save {
   width: 100%; padding: 14px; border: none; border-radius: 12px;
   background: rgba(255,255,255,0.06); color: #fff; font-weight: 700;
@@ -2927,10 +2917,6 @@ section { padding: 0 14px; margin-bottom: 6px; }
     </section>
 
     <section>
-      <div id="morningCheckin"></div>
-    </section>
-
-    <section>
       <div class="daily-coach" id="dailyCoach"></div>
     </section>
 
@@ -3137,13 +3123,10 @@ section { padding: 0 14px; margin-bottom: 6px; }
   <!-- ============ BODY ============ -->
   <div class="view" id="view-body">
     <section>
-      <div class="metric-grid" id="metricsGrid"></div>
-    </section>
-    <section>
-      <div id="bodyMapSection"></div>
-    </section>
-    <section>
       <div id="strainTarget"></div>
+    </section>
+    <section>
+      <div id="sleepNeedBanner"></div>
     </section>
     <section>
       <div class="monitor-row">
@@ -3170,6 +3153,9 @@ section { padding: 0 14px; margin-bottom: 6px; }
       </div>
     </section>
     <section>
+      <div class="metric-grid" id="metricsGrid"></div>
+    </section>
+    <section>
       <div id="performanceForecast"></div>
     </section>
     <section>
@@ -3177,22 +3163,40 @@ section { padding: 0 14px; margin-bottom: 6px; }
     </section>
   </div>
 
-  <!-- Coach tab merged into Today -->
+  <!-- ============ COACH ============ -->
+  <div class="view" id="view-coach">
+    <section>
+      <div id="morningCheckin"></div>
+    </section>
+    <section>
+      <div id="coachToday"></div>
+    </section>
+    <section>
+      <div id="coachAccountability"></div>
+    </section>
+    <section>
+      <div id="coachBreathwork"></div>
+    </section>
+  </div>
 
   <!-- ============ JOURNAL ============ -->
   <div class="view" id="view-journal">
     <section>
-      <div style="background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);overflow:hidden;">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 18px 0;">
-          <div class="journal-date" id="journalDate" style="margin-bottom:0;">Today</div>
+      <div class="journal-today-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div class="journal-date" id="journalDate" style="margin-bottom:0;">TODAY</div>
           <div id="journalStreak" style="display:flex;align-items:center;gap:6px;"></div>
         </div>
         <div id="journalGrid"></div>
-        <div style="display:flex;align-items:center;gap:8px;padding:8px 18px 14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
           <div class="journal-sel-count" id="journalSelCount" style="padding:0;font-size:11px;color:var(--text-4);"></div>
           <div id="journalAutoSaved" style="font-size:11px;color:var(--energy);opacity:0;transition:opacity 0.3s;margin-left:auto;"></div>
         </div>
       </div>
+    </section>
+
+    <section>
+      <div class="mood-trend" id="moodTrend"></div>
     </section>
 
     <section>
@@ -3399,16 +3403,20 @@ section { padding: 0 14px; margin-bottom: 6px; }
 <nav class="bottom-nav" id="bottomNav" style="display:none;">
   <button class="nav-btn active" data-view="today">
     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <span class="nav-label">Today</span>
+    <span class="nav-label">Now</span>
   </button>
   <button class="nav-btn" data-view="body">
-    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     <span class="nav-label">Body</span>
   </button>
   <div class="nav-center" onclick="openLog()">+</div>
+  <button class="nav-btn" data-view="coach">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    <span class="nav-label">Coach</span>
+  </button>
   <button class="nav-btn" data-view="journal">
-    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-    <span class="nav-label">Log</span>
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span class="nav-label">Journal</span>
   </button>
 </nav>
 
@@ -3426,7 +3434,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v136';
+const APP_VERSION = 'v135';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -4332,10 +4340,10 @@ function computeReadiness(forDate) {
     // Score: 100 at 140%+ of baseline, 50 at baseline, 0 at 50% of baseline
     // Wider range than before so HRV doesn't max out too easily
     const ratio = hrvNow / hrvBase;
-    if (ratio >= 1.3) hrvScore = 100;
-    else if (ratio >= 1.0) hrvScore = 60 + (ratio - 1.0) / 0.3 * 40;
-    else if (ratio >= 0.7) hrvScore = 20 + (ratio - 0.7) / 0.3 * 40;
-    else hrvScore = Math.max(0, ratio / 0.7 * 20);
+    if (ratio >= 1.4) hrvScore = 100;
+    else if (ratio >= 1.0) hrvScore = 50 + (ratio - 1.0) / 0.4 * 50; // 50-100 over 1.0-1.4
+    else if (ratio >= 0.5) hrvScore = (ratio - 0.5) / 0.5 * 50;  // 0-50 range (linear)
+    else hrvScore = 0;
   }
   hrvScore = Math.max(0, Math.min(100, hrvScore));
 
@@ -4452,10 +4460,10 @@ function computeHistoricalReadiness(dateStr) {
   let hrvScore = 50;
   if (hrvEntry && hrvEntry.value > 0) {
     const ratio = hrvEntry.value / hrvBase;
-    if (ratio >= 1.3) hrvScore = 100;
-    else if (ratio >= 1.0) hrvScore = 60 + (ratio - 1.0) / 0.3 * 40;
-    else if (ratio >= 0.7) hrvScore = 20 + (ratio - 0.7) / 0.3 * 40;
-    else hrvScore = Math.max(0, ratio / 0.7 * 20);
+    if (ratio >= 1.4) hrvScore = 100;
+    else if (ratio >= 1.0) hrvScore = 50 + (ratio - 1.0) / 0.4 * 50;
+    else if (ratio >= 0.5) hrvScore = (ratio - 0.5) / 0.5 * 50;
+    else hrvScore = 0;
   }
 
   // RHR score (15%)
@@ -9648,45 +9656,6 @@ function renderCoachView() {
   renderCoachToday();
   renderCoachInsights();
   renderCoachBreathwork();
-  renderBodyMapSection();
-}
-
-function renderBodyMapSection() {
-  const el = document.getElementById('bodyMapSection');
-  if (!el) return;
-  const today = localDateStr();
-  const dayPlan = ST._dayPlan?.date === today ? ST._dayPlan : null;
-  const soreness = dayPlan?.soreness || {};
-  const soreEntries = Object.entries(soreness);
-  const painParts = soreEntries.filter(([,v]) => v === 'pain');
-  const soreParts = soreEntries.filter(([,v]) => v === 'sore');
-
-  if (!soreEntries.length) {
-    el.innerHTML = `<div style="background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:16px 18px;">
-      <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px;">Soreness</div>
-      <div style="font-size:12px;color:var(--text-3);">No soreness flagged today. Use the morning check-in on the Today tab to log.</div>
-    </div>`;
-    return;
-  }
-
-  const items = soreEntries.map(([id, level]) => {
-    const part = BODY_PARTS.find(b => b.id === id);
-    const color = level === 'pain' ? 'var(--danger)' : 'var(--warn)';
-    const bg = level === 'pain' ? 'rgba(240,78,104,0.08)' : 'rgba(240,160,64,0.08)';
-    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
-      <div style="width:8px;height:8px;border-radius:4px;background:${color};flex-shrink:0;"></div>
-      <span style="font-size:13px;font-weight:500;color:var(--text);flex:1;">${part?.label || id}</span>
-      <span style="font-size:11px;font-weight:600;color:${color};">${level}</span>
-    </div>`;
-  }).join('');
-
-  el.innerHTML = `<div style="background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:16px 18px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <span style="font-size:12px;font-weight:600;color:var(--text-2);">Soreness</span>
-      <span style="font-size:11px;color:var(--text-3);">${painParts.length} pain, ${soreParts.length} sore</span>
-    </div>
-    ${items}
-  </div>`;
 }
 
 // Exercise -> body system mapping for targeted recovery
