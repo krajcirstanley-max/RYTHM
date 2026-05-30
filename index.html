@@ -3167,9 +3167,6 @@ section { padding: 0 14px; margin-bottom: 6px; }
   <!-- ============ COACH ============ -->
   <div class="view" id="view-coach">
     <section>
-      <div id="morningCheckin"></div>
-    </section>
-    <section>
       <div id="coachToday"></div>
     </section>
     <section>
@@ -3435,7 +3432,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v139';
+const APP_VERSION = 'v140';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -9653,7 +9650,6 @@ function getDayPlanRecs(todayPlan, tomorrowPlan, recovery, soreness, sessionType
 //  COACH VIEW (Coach tab)
 // ========================================
 function renderCoachView() {
-  renderMorningCheckin();
   renderCoachToday();
   renderCoachInsights();
   renderCoachBreathwork();
