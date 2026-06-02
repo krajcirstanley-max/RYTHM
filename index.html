@@ -3467,7 +3467,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v154';
+const APP_VERSION = 'v155';
 
 // ========================================
 //  ICON SYSTEM (Lucide-style line icons, replaces emoji)
@@ -4470,9 +4470,18 @@ function computeReadiness(forDate) {
   const m = ST.metrics;
 
   // === HRV Component (30%)  - most important recovery indicator ===
-  // Score HRV relative to personal baseline (from Apple Health calibration)
-  const hrvBase = m.hrvBaseline || 42;
-  const hrvNow = m.hrv || 0;
+  // Use OVERNIGHT HRV (sleepHrv), not the live daytime value. Overnight HRV is
+  // set once per night so recovery stays stable through the day instead of
+  // bouncing every time a daytime reading syncs. Baseline is overnight too so
+  // the ratio is apples-to-apples.
+  const hrvNow = m.sleepHrv || m.hrv || 0;
+  // Baseline must be the SAME scale as hrvNow. If we have overnight HRV but not
+  // yet an overnight baseline (needs 3+ nights), use hrvNow itself so the ratio
+  // is neutral (~1.0) rather than comparing overnight HRV to a daytime baseline.
+  let hrvBase;
+  if (m.sleepHrvBaseline) hrvBase = m.sleepHrvBaseline;
+  else if (m.sleepHrv) hrvBase = m.sleepHrv;
+  else hrvBase = m.hrvBaseline || 42;
   let hrvScore;
   if (hrvNow <= 0) {
     hrvScore = r.hrv || 50; // fallback to manual input
@@ -14905,21 +14914,32 @@ async function fetchHealthData() {
         ST._recoveryLockedScore = null;
       }
 
+      let newSleepHrv = null;
       if (data.sleep_hrv) {
-        const sleepHrvVal = +Number(data.sleep_hrv.value).toFixed(1);
-        ST.metrics.sleepHrv = sleepHrvVal;
+        newSleepHrv = +Number(data.sleep_hrv.value).toFixed(1);
+        ST.metrics.sleepHrv = newSleepHrv;
         if (data.sleep_hrv.details) {
           ST.metrics.sleepHrvCount = data.sleep_hrv.details.count || 0;
           ST.metrics.sleepHrvMin = data.sleep_hrv.details.min || 0;
           ST.metrics.sleepHrvMax = data.sleep_hrv.details.max || 0;
         }
-        const hrvBase = ST.metrics.hrvBaseline || 42;
-        const hrvRatio = sleepHrvVal / hrvBase;
-        ST.readiness.hrv = Math.min(100, Math.max(0, Math.round(70 + (hrvRatio - 1) * 150)));
       } else if (data.hrv && hasSleepToday) {
-        ST.metrics.sleepHrv = ST.metrics.hrv;
-        const hrvBase = ST.metrics.hrvBaseline || 42;
-        const hrvRatio = ST.metrics.hrv / hrvBase;
+        newSleepHrv = ST.metrics.hrv;
+        ST.metrics.sleepHrv = newSleepHrv;
+      }
+      if (newSleepHrv != null) {
+        // Track one overnight HRV per day -> rolling 14-day median = stable baseline
+        if (!ST._sleepHrvHistory) ST._sleepHrvHistory = [];
+        const ex = ST._sleepHrvHistory.findIndex(h => h.d === todayKey);
+        if (ex >= 0) ST._sleepHrvHistory[ex].v = newSleepHrv;
+        else ST._sleepHrvHistory.push({ v: newSleepHrv, d: todayKey });
+        if (ST._sleepHrvHistory.length > 14) ST._sleepHrvHistory = ST._sleepHrvHistory.slice(-14);
+        if (ST._sleepHrvHistory.length >= 3) {
+          const sorted = ST._sleepHrvHistory.map(h => h.v).sort((a,b) => a-b);
+          ST.metrics.sleepHrvBaseline = +sorted[Math.floor(sorted.length / 2)].toFixed(1);
+        }
+        const hrvBase = ST.metrics.sleepHrvBaseline || ST.metrics.hrvBaseline || 42;
+        const hrvRatio = newSleepHrv / hrvBase;
         ST.readiness.hrv = Math.min(100, Math.max(0, Math.round(70 + (hrvRatio - 1) * 150)));
       }
       // Lock recovery when we have sleep + HRV + RHR (all components ready)
