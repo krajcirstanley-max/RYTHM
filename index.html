@@ -3433,7 +3433,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v142';
+const APP_VERSION = 'v143';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -10795,9 +10795,19 @@ function renderSleepBreakdown() {
   const total = stg.deep + stg.rem + stg.core + stg.awake || 1;
 
   // Sleep debt from today
-  const today = new Date().toISOString().slice(0,10);
+  const today = localDateStr();
   const todayDebt = (ST.sleepDebt || []).find(d => d.date === today);
   const debtH = todayDebt ? todayDebt.debtH : 0;
+
+  // Honest night label - how stale is this sleep data
+  let nightLabel = 'Last Night';
+  if (sl._nightDate) {
+    const nd = new Date(sl._nightDate + 'T12:00:00');
+    const daysAgo = Math.round((new Date(today + 'T12:00:00') - nd) / 86400000);
+    if (daysAgo <= 1) nightLabel = 'Last Night';
+    else if (daysAgo === 2) nightLabel = '2 nights ago';
+    else if (daysAgo > 2) nightLabel = daysAgo + ' nights ago';
+  }
 
   // Tonight recommendation - uses manual target for realistic bedtime
   const manualTgt = (ST.health && ST.health.sleepTarget) || 8;
@@ -10811,13 +10821,14 @@ function renderSleepBreakdown() {
   const sColor = v => v >= 75 ? 'var(--energy)' : v >= 50 ? 'var(--warn)' : 'var(--danger)';
   // Derived target badge
   const need = ST._derivedSleepNeed || {};
+  const target = ss.personalTarget || manualTgt;
   const targetLabel = need.source === 'hrv-derived' ? `${target}h (HRV-derived)` : `${target}h`;
 
   el.innerHTML = `
     <div class="sleep-bk-header">
       <div>
         <div class="sleep-bk-score" style="color:${perfColor}">${fmtH(sl.totalH)}</div>
-        <div class="sleep-bk-label">Last Night · ${fmtTime(sl.sleepStart)} → ${fmtTime(sl.sleepEnd)}</div>
+        <div class="sleep-bk-label">${nightLabel} · ${fmtTime(sl.sleepStart)} → ${fmtTime(sl.sleepEnd)}</div>
       </div>
       <div class="sleep-bk-perf" style="background:${perfTagBg};color:${perfColor}">${perfTag} ${pct}%</div>
     </div>
@@ -14496,7 +14507,7 @@ async function fetchHealthData() {
     // Sleep data
     if (data.sleep && data.sleep.details) {
       if (!ST.sleep) ST.sleep = JSON.parse(JSON.stringify(DEFAULT_STATE.sleep));
-      ST.sleep._syncDate = new Date().toISOString().slice(0, 10);
+      ST.sleep._syncDate = localDateStr();
       ST.sleep._nightDate = data.sleep.date || null; // which night this data is for
       const sd = data.sleep.details;
       if (data.sleep.value != null) ST.sleep.totalH = +Number(data.sleep.value).toFixed(1);
@@ -14523,7 +14534,7 @@ async function fetchHealthData() {
       ST._sleepScoreBreakdown = sleepSS;
       // Store sleep history for trend-based estimation (watch died)
       if (!ST._sleepHistory) ST._sleepHistory = [];
-      const todaySH = new Date().toISOString().slice(0, 10);
+      const todaySH = localDateStr();
       const existIdx = ST._sleepHistory.findIndex(h => h.date === todaySH);
       const histEntry = { date: todaySH, totalH: ST.sleep.totalH, stages: { ...ST.sleep.stages } };
       if (existIdx >= 0) ST._sleepHistory[existIdx] = histEntry;
