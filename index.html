@@ -3467,7 +3467,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v153';
+const APP_VERSION = 'v154';
 
 // ========================================
 //  ICON SYSTEM (Lucide-style line icons, replaces emoji)
@@ -10188,7 +10188,12 @@ function renderCoachToday() {
 
   const acrColor = tl.acr >= 0.8 && tl.acr <= 1.3 ? 'var(--energy)' : tl.acr > 1.5 ? 'var(--danger)' : 'var(--warn)';
 
-  el.innerHTML = buildTrainingVerdict() + `
+  // Always render the verdict first so it never disappears if the plan section below throws
+  let verdictHtml = '';
+  try { verdictHtml = buildTrainingVerdict(); } catch (e) { console.warn('[RYTHM] verdict failed', e); }
+  el.innerHTML = verdictHtml;
+  try {
+  el.innerHTML = verdictHtml + `
     <div class="coach-section">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
         <div class="coach-section-label" style="margin-bottom:0;">RECOVERY PLAN</div>
@@ -10223,6 +10228,9 @@ function renderCoachToday() {
         </div>`).join('') : '<div style="text-align:center;padding:12px;color:var(--energy);font-size:13px;font-weight:600;">All done. Nice work.</div>'}
       <div style="text-align:right;font-size:10px;color:var(--text-4);margin-top:4px;">${doneCount}/${totalCount} complete</div>
     </div>`;
+  } catch (e) {
+    console.warn('[RYTHM] coach plan section failed, verdict still shown', e);
+  }
 }
 
 function renderCoachTraining() {
