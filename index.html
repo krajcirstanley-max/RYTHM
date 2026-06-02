@@ -2151,6 +2151,37 @@ section { padding: 0 14px; margin-bottom: 6px; }
   cursor: pointer; transition: all 0.15s;
 }
 .suggestion:active { background: rgba(255,255,255,0.06); }
+
+/* For You carousel */
+.sug-carousel {
+  display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  padding: 2px 0; margin: 0 -14px; padding-left: 14px; padding-right: 14px;
+}
+.sug-carousel::-webkit-scrollbar { display: none; }
+.sug-slide {
+  flex: 0 0 84%; scroll-snap-align: center;
+  background: var(--card); border: 1px solid var(--card-border);
+  border-radius: var(--radius); padding: 16px 18px;
+  display: flex; flex-direction: column; min-height: 132px;
+  cursor: pointer; transition: border-color 0.15s;
+}
+.sug-slide:active { border-color: var(--border-2); }
+.sug-slide-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.sug-slide-dot { width: 8px; height: 8px; border-radius: 4px; flex-shrink: 0; }
+.sug-slide-tag { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-3); }
+.sug-slide-title { font-size: 15px; font-weight: 700; color: var(--text); line-height: 1.25; margin-bottom: 6px; }
+.sug-slide-sub { font-size: 11px; color: var(--text-3); line-height: 1.45; flex: 1; }
+.sug-slide-action {
+  align-self: flex-start; margin-top: 12px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.4px;
+  padding: 7px 16px; border-radius: 100px; border: none;
+  cursor: pointer; font-family: inherit; transition: transform 0.15s;
+}
+.sug-slide-action:active { transform: scale(0.95); }
+.sug-dots { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
+.sug-dot { width: 6px; height: 6px; border-radius: 3px; background: var(--text-4); transition: all 0.2s; }
+.sug-dot.active { background: var(--text-2); width: 16px; }
 .sug-icon {
   width: 38px; height: 38px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
@@ -3433,7 +3464,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v143';
+const APP_VERSION = 'v144';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -14178,9 +14209,16 @@ function renderSuggestions() {
   const sugs = [];
 
   // Day plan from morning check-in
-  const todayDate = now.toISOString().slice(0, 10);
+  const todayDate = localDateStr();
   const sugDayPlan = ST._dayPlan?.date === todayDate ? ST._dayPlan : null;
   const sugPlannedIntensity = sugDayPlan?.today || null;
+
+  // === CONTEXT: what has actually happened today ===
+  const todayWorkouts = (ST._workouts || []).filter(w => w.date === todayDate);
+  const trainedToday = todayWorkouts.length > 0;
+  const trainMin = todayWorkouts.reduce((s, w) => s + (w.durMin || 0), 0);
+  const isRestDay = sugPlannedIntensity === 'rest';
+  const isEasyDay = sugPlannedIntensity === 'easy';
 
   // === PRIORITY 1: Active warnings ===
 
@@ -14230,10 +14268,13 @@ function renderSuggestions() {
 
   // Strain + recovery mismatch (no training suggestions at night)
   const noWorkoutPhases = ['WIND-DOWN', 'NIGHT', 'SLEEP', 'INERTIA'];
-  if (recovery >= 67 && strain < 8 && hwake > 2 && !noWorkoutPhases.includes(currentPhase.name) && !activeSessions.includes('workout') && sugPlannedIntensity !== 'rest') {
-    sugs.push({ icon: '🏋️', title: 'Your body can handle intensity', sub: `Recovery ${recovery}%, strain only ${strain}. Unused capacity = missed adaptation. Push today.`, action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('workout')`, pri: 3 });
+  if (trainedToday && recovery < 70 && !noWorkoutPhases.includes(currentPhase.name)) {
+    // Already trained - shift to recovery, not more training
+    sugs.push({ icon: '🧊', tag: 'Post-session', title: 'Kick-start recovery', sub: `${trainMin}min logged today at ${recovery}% recovery. Prioritize protein, hydration, and a recovery modality (jetboots, foam roll) over more load.`, action: 'Plan', cls: 'purple', bg: 'rgba(167,139,250,0.1)', pri: 3 });
+  } else if (!trainedToday && recovery >= 67 && strain < 8 && hwake > 2 && !noWorkoutPhases.includes(currentPhase.name) && !activeSessions.includes('workout') && !isRestDay) {
+    sugs.push({ icon: '🏋️', tag: 'Primed', title: 'Green light for a hard session', sub: `Recovery ${recovery}%, strain only ${strain}. CNS is fresh - this is your window for max-effort jumps or heavy lifting.`, action: 'Start', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `startLiveActivity('workout')`, pri: 3 });
   } else if (recovery < 34 && strain > 12) {
-    sugs.push({ icon: '⚠️', title: 'Recovery deficit  - active rest only', sub: `Recovery ${recovery}% with strain ${strain}. High acute:chronic workload spikes increase injury risk significantly (Gabbett, BJSM, 2016)`, action: 'Note', cls: 'purple', bg: 'rgba(255,84,112,0.1)', pri: 3 });
+    sugs.push({ icon: '⚠️', tag: 'Caution', title: 'Recovery deficit - active rest only', sub: `Recovery ${recovery}% with strain ${strain}. High acute:chronic spikes raise injury risk (Gabbett, BJSM, 2016).`, action: 'Note', cls: 'purple', bg: 'rgba(255,84,112,0.1)', pri: 3 });
   }
 
   // === PRIORITY 3.5: Soreness-driven ===
@@ -14268,14 +14309,15 @@ function renderSuggestions() {
     sugs.push({ icon: '💡', title: 'Creative window open', sub: 'Prefrontal cortex loosens in the 2nd peak  - ideal for brainstorming, pitch decks, content creation. Analytical + creative overlap.', action: 'Focus', cls: 'blue', bg: 'rgba(91,154,255,0.1)', onclick: `startLiveActivity('deep_work')`, pri: 5 });
   }
 
-  // High recovery + low strain = optimal day for both training AND business (daytime only)
-  if (recovery >= 80 && strain < 5 && hwake > 1 && hwake < 6 && !noWorkoutPhases.includes(currentPhase.name) && sugPlannedIntensity !== 'rest') {
-    sugs.push({ icon: '🔥', title: 'High-leverage day', sub: `Recovery ${recovery}%  - your body and mind are primed. Stack your hardest training session AND your most important business task today.`, action: 'Plan', cls: 'green', bg: 'rgba(48,217,138,0.08)', pri: 4 });
+  // High recovery + low strain = optimal day (daytime, not yet trained)
+  if (!trainedToday && recovery >= 80 && strain < 5 && hwake > 1 && hwake < 6 && !noWorkoutPhases.includes(currentPhase.name) && !isRestDay) {
+    sugs.push({ icon: '🔥', tag: 'Peak day', title: 'High-leverage day', sub: `Recovery ${recovery}% - body and mind primed. Put your hardest training session and most important work on today.`, action: 'Plan', cls: 'green', bg: 'rgba(48,217,138,0.08)', pri: 4 });
   }
 
-  // Low steps (afternoon+)
-  if (h.steps.today < h.steps.goal * 0.5 && nowH > 14) {
-    sugs.push({ icon: '🚶', title: `${h.steps.today.toLocaleString()} steps  - go walk`, sub: `${Math.round(h.steps.today/h.steps.goal*100)}% of goal. A brisk 20-min walk improves blood flow to hippocampus and prefrontal cortex`, action: 'Track', cls: 'blue', bg: 'rgba(52,211,153,0.1)', onclick: `startLiveActivity('walk')`, pri: 4 });
+  // Low movement on a REST day only (athlete already moves plenty on training days)
+  // Frame as active recovery, not a fitness walk
+  if (!trainedToday && isRestDay && h.steps.today < 3000 && nowH > 14 && nowH < 20) {
+    sugs.push({ icon: '🚶', tag: 'Active recovery', title: 'Light movement to flush legs', sub: `Rest day with low movement so far. 15-20min easy walk boosts circulation and metabolite clearance without adding training load.`, action: 'Log', cls: 'blue', bg: 'rgba(52,211,153,0.1)', onclick: `startLiveActivity('walk')`, pri: 5 });
   }
 
   // === PRIORITY 5: Habit-based (personalized) ===
@@ -14381,16 +14423,41 @@ function renderSuggestions() {
   if (!top.length) { el.innerHTML = ''; el.closest('section').style.display = 'none'; return; }
   el.closest('section').style.display = '';
 
-  el.innerHTML = `<div class="section-head"><div class="section-title">For You</div></div>` +
-    top.map(s => `
-    <div class="suggestion" ${s.onclick ? 'onclick="' + s.onclick + '"' : ''}>
-      <div class="sug-icon" style="background:${s.bg || 'rgba(255,255,255,0.04)'}">${s.icon}</div>
-      <div class="sug-body">
-        <div class="sug-title">${s.title}</div>
-        <div class="sug-sub">${s.sub}</div>
+  const clsColor = { green: 'var(--energy)', blue: 'var(--info)', purple: 'var(--purple)' };
+  const clsBg = { green: 'rgba(52,214,142,0.12)', blue: 'rgba(77,169,255,0.12)', purple: 'rgba(167,139,250,0.12)' };
+
+  const slides = top.map((s, i) => {
+    const dot = clsColor[s.cls] || 'var(--text-3)';
+    const actBg = clsBg[s.cls] || 'rgba(255,255,255,0.06)';
+    const actCol = clsColor[s.cls] || 'var(--text-2)';
+    const tag = s.tag || (s.cls === 'green' ? 'Do now' : s.cls === 'purple' ? 'Recovery' : 'Suggested');
+    return `<div class="sug-slide" ${s.onclick ? 'onclick="' + s.onclick + '"' : ''}>
+      <div class="sug-slide-top">
+        <span class="sug-slide-dot" style="background:${dot}"></span>
+        <span class="sug-slide-tag">${tag}</span>
       </div>
-      ${s.action ? `<button class="sug-action ${s.cls}">${s.action}</button>` : ''}
-    </div>`).join('');
+      <div class="sug-slide-title">${s.title}</div>
+      <div class="sug-slide-sub">${s.sub}</div>
+      ${s.action ? `<button class="sug-slide-action" style="background:${actBg};color:${actCol}">${s.action}</button>` : ''}
+    </div>`;
+  }).join('');
+
+  const dots = top.length > 1 ? `<div class="sug-dots" id="sugDots">${top.map((_, i) => `<span class="sug-dot ${i === 0 ? 'active' : ''}"></span>`).join('')}</div>` : '';
+
+  el.innerHTML = `<div class="section-head"><div class="section-title">For You</div></div>
+    <div class="sug-carousel" id="sugCarousel">${slides}</div>${dots}`;
+
+  // Wire up dot pagination on scroll
+  const carousel = document.getElementById('sugCarousel');
+  if (carousel && top.length > 1) {
+    carousel.onscroll = () => {
+      const dotsEl = document.getElementById('sugDots');
+      if (!dotsEl) return;
+      const slideW = carousel.scrollWidth / top.length;
+      const idx = Math.round(carousel.scrollLeft / slideW);
+      dotsEl.querySelectorAll('.sug-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+    };
+  }
 }
 
 // Out of bed feature removed (v115)
