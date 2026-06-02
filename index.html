@@ -3467,7 +3467,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v149';
+const APP_VERSION = 'v150';
 
 // ========================================
 //  ICON SYSTEM (Lucide-style line icons, replaces emoji)
@@ -6552,9 +6552,9 @@ function computeStrain() {
   }
 
   // Also check live activities  - if a workout is running or recently ended
-  const liveWorkout = (ST.liveActivities || []).find(a => a.type === 'workout');
+  const liveWorkout = (ST.liveActivities || []).find(a => a.type === 'workout' && !a.endedAt);
   if (liveWorkout) {
-    const elapsedMin = (Date.now() - liveWorkout.startedAt) / 60000;
+    const elapsedMin = Math.max(0, getActiveElapsed(liveWorkout) / 60000);
     const liveCal = Math.round(elapsedMin * 9);
     if (liveCal > todayCal) todayCal = liveCal;
   }
@@ -9118,7 +9118,7 @@ function renderDailyCoach() {
 
   if (activeSession) {
     // Active workout/sauna/etc - give live guidance
-    const elapsed = Math.round((Date.now() - activeSession.startedAt) / 60000);
+    const elapsed = Math.max(0, Math.round(getActiveElapsed(activeSession) / 60000));
     const meta = LIVE_ACTIVITY_META[activeSession.type] || {};
     if (activeSession.type === 'workout') {
       directiveIcon = '🏋️';
