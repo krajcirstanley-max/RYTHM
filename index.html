@@ -3464,7 +3464,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v145';
+const APP_VERSION = 'v146';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -9836,6 +9836,61 @@ function analyzeTrainingLoad() {
   };
 }
 
+// Clear training verdict for an athlete: what session to do today
+function buildTrainingVerdict() {
+  const recovery = computeReadiness();
+  const strain = computeStrain();
+  const tl = computeTrainingLoad();
+  const today = localDateStr();
+  const trainedToday = (ST._workouts || []).filter(w => w.date === today).length > 0;
+  const trainMin = (ST._workouts || []).filter(w => w.date === today).reduce((s, w) => s + (w.durMin || 0), 0);
+  const dayPlan = ST._dayPlan?.date === today ? ST._dayPlan : null;
+  const soreness = dayPlan?.soreness || {};
+  const painParts = Object.entries(soreness).filter(([,v]) => v === 'pain').map(([k]) => BODY_PARTS.find(b=>b.id===k)?.label || k);
+  const acrHigh = tl.acr > 1.5;
+
+  let headline, detail, color, tag;
+
+  if (trainedToday) {
+    color = 'var(--info)'; tag = 'Session logged';
+    headline = `${trainMin}min done - recover now`;
+    detail = 'Training stimulus is in. Protect the adaptation: protein within 2h, hydrate, and use a recovery modality. No second hard session today.';
+  } else if (painParts.length >= 2) {
+    color = 'var(--danger)'; tag = 'Modify';
+    headline = 'Downgrade or skip loading';
+    detail = `Pain flagged in ${painParts.slice(0,3).join(', ')}. Train through one area, not several. Switch to mobility, upper body, or technique with no eccentric load.`;
+  } else if (acrHigh) {
+    color = 'var(--danger)'; tag = 'Load spike';
+    headline = 'Ease off - workload spiking';
+    detail = `Acute:chronic ratio ${tl.acr}x (sweet spot 0.8-1.3). You are ramping fast. Keep today sub-maximal to avoid the injury-risk zone (Gabbett 2016).`;
+  } else if (recovery >= 80) {
+    color = 'var(--energy)'; tag = 'Green light';
+    headline = 'Full send - max effort';
+    detail = 'CNS is fresh. Best window for full approach jumps, competition-pace takeoffs, heavy plyometrics, and 85%+ strength. Chase PRs.';
+  } else if (recovery >= 67) {
+    color = 'var(--warn)'; tag = 'Train smart';
+    headline = 'Quality over quantity';
+    detail = 'Solid but not peak. Technique work, sub-max approach runs, controlled plyos, moderate strength (70-80%). Cap volume, keep crispness.';
+  } else if (recovery >= 50) {
+    color = '#ff8c42'; tag = 'Light';
+    headline = 'Technique & drills only';
+    detail = 'Recovery is down. Short approach drills, skips, mobility, easy tempo. No max effort, no heavy eccentrics. Bank the gains, do not dig the hole.';
+  } else {
+    color = 'var(--danger)'; tag = 'Rest';
+    headline = 'Recovery day';
+    detail = 'Body needs it. Full rest or active recovery: walk, mobility, jetboots, breathwork. Training hard now deepens the deficit and raises injury risk.';
+  }
+
+  return `<div style="background:var(--card);border:1px solid var(--card-border);border-left:3px solid ${color};border-radius:var(--radius);padding:16px 18px;margin-bottom:8px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <span style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);">Today's Training</span>
+      <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;background:${color}18;color:${color};">${tag}</span>
+    </div>
+    <div style="font-size:19px;font-weight:800;color:${color};letter-spacing:-0.3px;margin-bottom:6px;">${headline}</div>
+    <div style="font-size:12px;color:var(--text-2);line-height:1.5;">${detail}</div>
+  </div>`;
+}
+
 function renderCoachToday() {
   const el = document.getElementById('coachToday');
   if (!el) return;
@@ -10038,10 +10093,10 @@ function renderCoachToday() {
 
   const acrColor = tl.acr >= 0.8 && tl.acr <= 1.3 ? 'var(--energy)' : tl.acr > 1.5 ? 'var(--danger)' : 'var(--warn)';
 
-  el.innerHTML = `
+  el.innerHTML = buildTrainingVerdict() + `
     <div class="coach-section">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div class="coach-section-label" style="margin-bottom:0;">TODAY</div>
+        <div class="coach-section-label" style="margin-bottom:0;">RECOVERY PLAN</div>
         <div class="coach-training-badge" style="background:${zoneColor}18;color:${zoneColor}">${zone}</div>
       </div>
       <div style="display:flex;gap:12px;margin-bottom:12px;">
