@@ -3467,7 +3467,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v155';
+const APP_VERSION = 'v156';
 
 // ========================================
 //  ICON SYSTEM (Lucide-style line icons, replaces emoji)
@@ -14928,17 +14928,19 @@ async function fetchHealthData() {
         ST.metrics.sleepHrv = newSleepHrv;
       }
       if (newSleepHrv != null) {
-        // Track one overnight HRV per day -> rolling 14-day median = stable baseline
+        // Baseline = AVERAGE of your overnight (sleep) HRV over the last 14 nights -
+        // i.e. what you're normally used to in your sleep, not daytime HRV.
         if (!ST._sleepHrvHistory) ST._sleepHrvHistory = [];
         const ex = ST._sleepHrvHistory.findIndex(h => h.d === todayKey);
         if (ex >= 0) ST._sleepHrvHistory[ex].v = newSleepHrv;
         else ST._sleepHrvHistory.push({ v: newSleepHrv, d: todayKey });
         if (ST._sleepHrvHistory.length > 14) ST._sleepHrvHistory = ST._sleepHrvHistory.slice(-14);
-        if (ST._sleepHrvHistory.length >= 3) {
-          const sorted = ST._sleepHrvHistory.map(h => h.v).sort((a,b) => a-b);
-          ST.metrics.sleepHrvBaseline = +sorted[Math.floor(sorted.length / 2)].toFixed(1);
+        // Average of available nights (needs 2+ so a single night isn't "your normal")
+        if (ST._sleepHrvHistory.length >= 2) {
+          const vals = ST._sleepHrvHistory.map(h => h.v);
+          ST.metrics.sleepHrvBaseline = +(vals.reduce((a,b) => a+b, 0) / vals.length).toFixed(1);
         }
-        const hrvBase = ST.metrics.sleepHrvBaseline || ST.metrics.hrvBaseline || 42;
+        const hrvBase = ST.metrics.sleepHrvBaseline || newSleepHrv;
         const hrvRatio = newSleepHrv / hrvBase;
         ST.readiness.hrv = Math.min(100, Math.max(0, Math.round(70 + (hrvRatio - 1) * 150)));
       }
