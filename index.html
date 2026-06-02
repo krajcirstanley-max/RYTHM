@@ -3464,7 +3464,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v146';
+const APP_VERSION = 'v147';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -3653,6 +3653,7 @@ function fullRerender() {
   renderStreaks();
   renderLiveActivities();
   renderSuggestions();
+  if (typeof renderCoachView === 'function') renderCoachView();
   updateNotifToggleUI();
 }
 
@@ -3798,7 +3799,7 @@ function fmtTime(t) {
 
 function profileWakeHour() {
   // Use today's actual wake time from health sync or manual input, fall back to profile default
-  const today = new Date().toISOString().slice(0, 10);
+  const today = activeDayStr();
 
   // 1. Check manual "I woke up at X" button
   if (ST._actualWakeTimes && ST._actualWakeTimes[today]) {
@@ -3816,7 +3817,7 @@ function profileWakeHour() {
 }
 function profileSleepHour() {
   // Use today's actual sleep start from health sync, fall back to profile default
-  const today = new Date().toISOString().slice(0, 10);
+  const today = activeDayStr();
 
   if (ST.sleep && ST.sleep.sleepStart && ST.sleep._syncDate === today) {
     const m = parseTimeToMin(ST.sleep.sleepStart);
@@ -4987,7 +4988,7 @@ function buildStrainDetail() {
   const remaining = Math.max(0, targetStrain - strain);
 
   // Today's workouts from health sync
-  const today = new Date().toISOString().slice(0,10);
+  const today = activeDayStr();
   const allWorkouts = ST._workouts || [];
   const todayWorkouts = allWorkouts.filter(w => w.date === today);
   const aeToday = (ST.health?._activeEnergyDate === today) ? (ST.health.activeEnergy || 0) : 0;
@@ -6433,8 +6434,18 @@ function localDateStr(d) {
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 
+// "Active day" for activity tracking (strain, workouts, plan). Does NOT roll at
+// midnight - rolls at 4 AM so a night owl's evening training still counts after
+// midnight until they're actually asleep.
+const DAY_ROLL_HOUR = 4;
+function activeDayStr(d) {
+  d = d ? new Date(d) : new Date();
+  if (d.getHours() < DAY_ROLL_HOUR) d = new Date(d.getTime() - 86400000);
+  return localDateStr(d);
+}
+
 function computeStrain() {
-  const today = localDateStr();
+  const today = activeDayStr();
   const workouts = ST._workouts || [];
   let todayCal = 0;
   for (const w of workouts) {
@@ -8971,7 +8982,7 @@ function renderDailyCoach() {
   const nowH = now.getHours() + now.getMinutes() / 60;
   const WAKE = profileWakeHour();
   const hwake = (nowH - WAKE + 24) % 24;
-  const today = now.toISOString().slice(0, 10);
+  const today = activeDayStr();
 
   // Current phase + time until next phase
   const currentPhase = phaseAt(nowH);
@@ -9841,7 +9852,7 @@ function buildTrainingVerdict() {
   const recovery = computeReadiness();
   const strain = computeStrain();
   const tl = computeTrainingLoad();
-  const today = localDateStr();
+  const today = activeDayStr();
   const trainedToday = (ST._workouts || []).filter(w => w.date === today).length > 0;
   const trainMin = (ST._workouts || []).filter(w => w.date === today).reduce((s, w) => s + (w.durMin || 0), 0);
   const dayPlan = ST._dayPlan?.date === today ? ST._dayPlan : null;
@@ -9901,7 +9912,7 @@ function renderCoachToday() {
   const sl = ST.sleep || {};
   const now = new Date();
   const hour = now.getHours();
-  const today = now.toISOString().slice(0, 10);
+  const today = activeDayStr();
   const todayLogs = (ST.logs || []).filter(l => l.date === today);
   const todayTags = todayLogs.map(l => l.tag);
   const todayWorkouts = (ST._workouts || []).filter(w => w.date === today);
@@ -14133,14 +14144,25 @@ function releaseWakeLock() {
   }
 }
 
-// Re-acquire wake lock when app becomes visible again (iOS kills it on tab switch)
+// Re-acquire wake lock + full refresh when app becomes visible again
+let _lastActiveDay = activeDayStr();
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
     const active = (ST.liveActivities || []).filter(a => !a.endedAt);
     if (active.length) requestWakeLock();
-    // Refresh health + workout data when app comes back to foreground
-    fetchHealthData();
-    fetchHeroWorkouts();
+
+    // Day rolled while app was backgrounded (e.g. opened next morning) -
+    // snap back to today and rebuild everything so nothing is stale
+    const nowDay = activeDayStr();
+    if (nowDay !== _lastActiveDay) {
+      _lastActiveDay = nowDay;
+      if (typeof viewDayOffset !== 'undefined' && viewDayOffset !== 0) changeDay(0);
+    }
+
+    // Refresh health + workout data, then re-render the live UI
+    Promise.all([fetchHealthData(), fetchHeroWorkouts()]).then(() => {
+      if (typeof fullRerender === 'function') fullRerender();
+    }).catch(() => {});
   }
 });
 
@@ -14286,7 +14308,7 @@ function renderSuggestions() {
   const sugs = [];
 
   // Day plan from morning check-in
-  const todayDate = localDateStr();
+  const todayDate = activeDayStr();
   const sugDayPlan = ST._dayPlan?.date === todayDate ? ST._dayPlan : null;
   const sugPlannedIntensity = sugDayPlan?.today || null;
 
