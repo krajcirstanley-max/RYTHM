@@ -3464,7 +3464,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v144';
+const APP_VERSION = 'v145';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -3746,6 +3746,23 @@ function rebuildWeekScores() {
 //  HELPERS
 // ========================================
 // Parse Apple Health style date: "2026-05-26 13:16:45 +0000" -> Date
+// Map Apple Watch / HealthKit workout type names to clean RYTHM labels
+function normalizeWorkoutType(raw) {
+  if (!raw) return 'Workout';
+  const t = String(raw).toLowerCase();
+  if (/(flexibility|cooldown|cool down|mind and body|yoga|pilates|stretch|barre|tai chi)/.test(t)) return 'Mobility';
+  if (/(strength|weight|lifting|functional)/.test(t)) return 'Strength';
+  if (/(run|sprint|track)/.test(t)) return 'Running';
+  if (/(hiit|interval|cross train|functional training)/.test(t)) return 'HIIT';
+  if (/(jump|plyo|explosive)/.test(t)) return 'Plyometrics';
+  if (/(walk|hik)/.test(t)) return 'Walk';
+  if (/(cycl|bike|spin)/.test(t)) return 'Cycling';
+  if (/(swim)/.test(t)) return 'Swim';
+  if (/(core|abs)/.test(t)) return 'Core';
+  // Title-case unknown types
+  return String(raw).replace(/\b\w/g, c => c.toUpperCase()).replace(/\s+/g, ' ').trim() || 'Workout';
+}
+
 function parseHealthDate(str) {
   if (!str) return null;
   try {
@@ -6454,12 +6471,17 @@ function computeStrain() {
     if (liveCal > todayCal) todayCal = liveCal;
   }
 
-  // Estimate from workout duration when cal data seems too low
+  // Estimate from workout duration when cal data seems too low.
+  // Weight cal/min by workout type so mobility/light work doesn't inflate strain.
   const todayW = (ST._workouts || []).filter(w => w.date === today);
-  const totalWorkMin = todayW.reduce((s, w) => s + (w.durMin || 0), 0);
-  if (totalWorkMin > 0 && todayCal < totalWorkMin * 5) {
-    const estCal = Math.round(totalWorkMin * 9); // ~9 cal/min for strength/power athlete
-    if (estCal > todayCal) todayCal = estCal;
+  const calPerMin = { Mobility: 3, Walk: 4, Core: 6, Cycling: 8, Swim: 9, Running: 11, HIIT: 11, Plyometrics: 10, Strength: 8 };
+  let estFromDuration = 0;
+  for (const w of todayW) {
+    const rate = calPerMin[w.type] || 8;
+    estFromDuration += (w.durMin || 0) * rate;
+  }
+  if (estFromDuration > 0 && estFromDuration > todayCal) {
+    todayCal = Math.round(estFromDuration);
   }
 
   // HR zone TRIMP removed - zones in DEFAULT_STATE are static/never synced,
@@ -14799,8 +14821,15 @@ async function fetchHealthData() {
     // Also handles legacy data.workout (single) format
     if (!ST._workouts) ST._workouts = [];
     function addWorkoutFromData(wd, fallbackDate) {
-      const wDate = (wd.date || fallbackDate).slice(0, 10);
       const det = wd.details || wd;
+      const startDateStr = det.startDate || null;
+      // Derive the day from startDate in LOCAL time so post-midnight UTC offsets
+      // don't push a workout onto the wrong day
+      let wDate;
+      const sd = startDateStr ? parseHealthDate(startDateStr) : null;
+      if (sd && !isNaN(sd.getTime())) wDate = localDateStr(sd);
+      else wDate = (wd.date || fallbackDate).slice(0, 10);
+
       let durMin = det.durMin || det.duration || wd.value || 0;
       if (durMin === 0 && det.startDate && det.endDate) {
         const s = parseHealthDate(det.startDate) || new Date(det.startDate);
@@ -14810,14 +14839,15 @@ async function fetchHealthData() {
           if (calc > 0 && calc < 1440) durMin = Math.round(calc);
         }
       }
-      const wType = det.type || det.workoutType || 'Workout';
+      const rawType = det.type || det.workoutType || 'Workout';
+      const wType = normalizeWorkoutType(rawType);
       const wCal = det.cal || det.calories || det.activeCalories || 0;
-      const startDateStr = det.startDate || null;
       const exists = startDateStr
         ? ST._workouts.find(x => x.startDate === startDateStr)
         : ST._workouts.find(x => x.date === wDate && x.type === wType && Math.abs((x.durMin || 0) - durMin) < 5);
+      // Mobility/flexibility sessions are short & low-cal but still count - accept any with duration
       if (!exists && (durMin > 0 || wCal > 10)) {
-        ST._workouts.push({ date: wDate, type: wType, durMin, cal: wCal, startDate: startDateStr });
+        ST._workouts.push({ date: wDate, type: wType, durMin, cal: wCal, startDate: startDateStr, rawType });
       }
     }
     if (data.workouts && Array.isArray(data.workouts)) {
