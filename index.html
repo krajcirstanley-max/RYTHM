@@ -40,6 +40,7 @@
   --warn: #ffb547;
   --danger: #ff5470;
   --purple: #a78bfa;
+  --info: #4da9ff;
   --radius: 16px;
   --radius-sm: 10px;
   --glass: rgba(255,255,255,0.03);
@@ -343,7 +344,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .phase-dip { color: var(--warn); }
 .phase-wind { color: var(--sleep); }
 .phase-inertia { color: var(--text-3); }
-.phase-recovery { color: var(--strain); }
+.phase-recovery { color: var(--info); }
 .phase-night { color: var(--purple); }
 
 /* SECTION HEAD */
@@ -3432,7 +3433,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v141';
+const APP_VERSION = 'v142';
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -4137,6 +4138,21 @@ function buildPhases() {
 
 // Keep backward-compatible PHASES for any code that reads it
 const PHASES = PHASE_PCTS;
+
+// Single source of truth for phase colors (CSS var values)
+function phaseColorFor(name) {
+  const map = {
+    'INERTIA': 'var(--text-3)',
+    'PEAK 1': 'var(--energy)',
+    'DIP': 'var(--warn)',
+    'RECOVERY': 'var(--info)',
+    'PEAK 2': 'var(--energy)',
+    'WIND-DOWN': 'var(--sleep)',
+    'NIGHT': 'var(--purple)',
+    'SLEEP': 'var(--sleep)',
+  };
+  return map[name] || 'var(--text-2)';
+}
 
 function phaseAt(h) {
   const WAKE = profileWakeHour();
@@ -5375,7 +5391,7 @@ function buildSleepFullPage() {
   const pct = ss.total;
   const perfColor = pct >= 75 ? 'var(--energy)' : pct >= 50 ? 'var(--warn)' : 'var(--danger)';
 
-  const today = new Date().toISOString().slice(0,10);
+  const today = localDateStr();
   const todayDebt = (ST.sleepDebt || []).find(d => d.date === today);
   const debtH = todayDebt ? todayDebt.debtH : Math.max(0, +(target - sl.totalH).toFixed(1));
 
@@ -5489,7 +5505,7 @@ function buildSleepFullPage() {
           <span style="font-size:9px;font-weight:700;letter-spacing:0.8px;color:${perfColor};opacity:0.8;">SLEEP</span>
         </div>
         <div style="background:${restorColor}18;border:1px solid ${restorColor}40;border-radius:100px;padding:6px 14px;display:flex;align-items:center;gap:6px;">
-          <span style="font-size:15px;font-weight:800;color:${restorColor}">${restorScore}%</span>
+          <span style="font-size:15px;font-weight:800;color:${restorColor}">${fmtH(stg.deep + stg.rem)}</span>
           <span style="font-size:9px;font-weight:700;letter-spacing:0.8px;color:${restorColor};opacity:0.8;">RESTORATIVE</span>
         </div>
       </div>
@@ -6667,7 +6683,7 @@ function buildEnergyFullPage() {
   return `
     <div class="efp-summary">
       <div class="efp-summary-card">
-        <div class="efp-summary-val" style="color:${currentPhase.cls === 'phase-peak' ? 'var(--energy)' : currentPhase.cls === 'phase-dip' ? 'var(--warn)' : '#fff'}">${currentEnergy}%</div>
+        <div class="efp-summary-val" style="color:${phaseColorFor(currentPhase.name)}">${currentEnergy}%</div>
         <div class="efp-summary-label">Current</div>
       </div>
       <div class="efp-summary-card">
@@ -12735,7 +12751,7 @@ function renderTrends() {
     const tooltip = wrap?.querySelector('.curve-scrub-tooltip');
     if (tooltip) {
       const timeStr = minToTime(hour * 60);
-      const phaseColor = phase.cls === 'phase-peak' ? 'var(--energy)' : phase.cls === 'phase-dip' ? 'var(--warn)' : phase.cls === 'phase-wind' ? 'var(--sleep)' : 'var(--text-2)';
+      const phaseColor = phaseColorFor(phase.name);
       tooltip.innerHTML = `<span class="scrub-time">${timeStr}</span> <span style="color:${phaseColor}">${energy}%</span> <span style="font-size:9px;color:var(--text-3)">${phase.name}</span>`;
       tooltip.style.display = '';
     }
