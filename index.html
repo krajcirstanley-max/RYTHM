@@ -3467,7 +3467,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v151';
+const APP_VERSION = 'v152';
 
 // ========================================
 //  ICON SYSTEM (Lucide-style line icons, replaces emoji)
@@ -4660,8 +4660,8 @@ function computeHistoricalStrain(dateStr) {
 }
 
 function readinessInterpretation(score) {
-  // Aligned with Whoop: Green ≥67%, Yellow 34-66%, Red <34%
-  if (score >= 67) return { text: 'Good Recovery', color: 'var(--energy)' };
+  // Green ≥50% (recovered enough to train), Yellow 34-49%, Red <34%
+  if (score >= 50) return { text: 'Good Recovery', color: 'var(--energy)' };
   if (score >= 34) return { text: 'Moderate Recovery', color: 'var(--warn)' };
   return { text: 'Low Recovery', color: 'var(--danger)' };
 }
@@ -4861,7 +4861,7 @@ function renderThreeRings() {
 
   // Recovery ring colors by score (matches the big readiness ring), not a fixed green
   const recVal = Math.max(0, Math.min(100, computeReadiness()));
-  const recColor = recVal >= 67 ? '#34d68e' : recVal >= 34 ? '#ffb547' : '#ff5470';
+  const recColor = recVal >= 50 ? '#34d68e' : recVal >= 34 ? '#ffb547' : '#ff5470';
 
   const rings = [
     { key: 'sleep', val: Math.max(0, Math.min(100, sleepPerf)), label: 'SLEEP', color: '#93a1c4', unit: '%' },
@@ -9114,8 +9114,8 @@ function renderDailyCoach() {
   let accentCls = 'green';
   if (recovery < 50) accentCls = 'red';
   else if (recovery < 67) accentCls = 'amber';
-  const badgeColor = recovery >= 67 ? 'var(--energy)' : recovery >= 50 ? 'var(--warn)' : 'var(--danger)';
-  const badgeBg = recovery >= 67 ? 'rgba(48,217,138,0.12)' : recovery >= 50 ? 'rgba(255,181,71,0.12)' : 'rgba(255,84,112,0.12)';
+  const badgeColor = recovery >= 50 ? 'var(--energy)' : recovery >= 34 ? 'var(--warn)' : 'var(--danger)';
+  const badgeBg = recovery >= 50 ? 'rgba(48,217,138,0.12)' : recovery >= 34 ? 'rgba(255,181,71,0.12)' : 'rgba(255,84,112,0.12)';
 
   // === RIGHT NOW directive - one clear action ===
   let directive, directiveIcon;
@@ -11544,7 +11544,7 @@ function renderWeekMetricCards() {
   const strain = computeStrain();
 
   // 3 core metrics matching WHOOP week header
-  const recColor = recovery >= 67 ? 'var(--energy)' : recovery >= 34 ? 'var(--warn)' : 'var(--danger)';
+  const recColor = recovery >= 50 ? 'var(--energy)' : recovery >= 34 ? 'var(--warn)' : 'var(--danger)';
   const cards = [
     { val: recovery, label: 'Recovery', color: recColor, unit: '%' },
     { val: strain, label: 'Strain', color: '#4da9ff', unit: '' },
