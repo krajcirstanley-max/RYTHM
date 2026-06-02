@@ -2698,6 +2698,8 @@ section { padding: 0 14px; margin-bottom: 6px; }
 @keyframes la-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 
 /* Action buttons */
+.la-controls { display: flex; gap: 8px; margin-top: 12px; }
+.la-controls > button { flex: 1; padding: 9px 0; }
 .la-stop {
   padding: 7px 16px; border: none; border-radius: 100px;
   background: rgba(255,84,112,0.1); color: rgba(255,84,112,0.8);
@@ -3465,7 +3467,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v148';
+const APP_VERSION = 'v149';
 
 // ========================================
 //  ICON SYSTEM (Lucide-style line icons, replaces emoji)
@@ -13997,6 +13999,8 @@ function renderLiveActivities() {
     const pauseBtn = `<button class="la-pause" onclick="event.stopPropagation();${isPaused ? 'resumeLiveActivity' : 'pauseLiveActivity'}('${a.id}')">${isPaused ? 'Resume' : 'Pause'}</button>`;
     const stopBtn = `<button class="la-stop" onclick="event.stopPropagation();stopLiveActivity('${a.id}')">Stop</button>`;
     const discardBtn = `<button class="la-discard" onclick="event.stopPropagation();discardLiveActivity('${a.id}')">Discard</button>`;
+    // Controls on their own full-width row so the card never overflows
+    const controlsRow = `<div class="la-controls">${pauseBtn}${stopBtn}${discardBtn}</div>`;
     const statusLabel = isPaused ? '<span class="la-paused-badge">PAUSED</span>' : '<span class="la-live-dot"></span> ACTIVE';
     const timerStyle = isPaused ? 'opacity:0.4;' : '';
 
@@ -14039,12 +14043,10 @@ function renderLiveActivities() {
               <div class="la-meter-val">${remainStr}</div>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <div class="la-timer" style="font-size:22px;letter-spacing:-1px;${timerStyle}">${dur}</div>
-            ${pauseBtn}${stopBtn}${discardBtn}
-          </div>
+          <div class="la-timer" style="font-size:22px;letter-spacing:-1px;${timerStyle}">${dur}</div>
         </div>
-        ${pastCutoff ? `<div class="la-warn" style="margin-top:6px;padding:5px 10px;border-radius:8px;background:rgba(255,107,107,0.08);font-size:10px;font-weight:600;color:#ff6b6b;">⚠️ CO half-life is 4-5h  - allow 3h+ minimum before sleep</div>` : '<div class="la-warn" style="display:none;"></div>'}
+        ${pastCutoff ? `<div class="la-warn" style="margin-top:6px;padding:5px 10px;border-radius:8px;background:rgba(255,107,107,0.08);font-size:10px;font-weight:600;color:#ff6b6b;display:flex;align-items:center;gap:5px;">${svgIcon('warning',{size:12})} CO half-life is 4-5h - allow 3h+ before sleep</div>` : '<div class="la-warn" style="display:none;"></div>'}
+        ${controlsRow}
       </div>`;
     }
 
@@ -14060,16 +14062,14 @@ function renderLiveActivities() {
               <div class="la-live">${statusLabel}</div>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <div class="la-timer" style="${timerStyle}">${dur}</div>
-            ${pauseBtn}${stopBtn}${discardBtn}
-          </div>
+          <div class="la-timer" style="${timerStyle}">${dur}</div>
         </div>
         <div class="la-progress"><div class="la-progress-fill" style="width:${pct}%"></div></div>
         <div style="display:flex;justify-content:space-between;margin-top:6px;">
           <span class="la-meta-text"><span class="la-elapsed-min">${elapsedMin}</span>/${meta.targetMin} min</span>
           <span class="la-meta-text" style="color:var(--la-accent);font-weight:700;">${pct}%</span>
         </div>
+        ${controlsRow}
       </div>`;
     }
 
@@ -14104,12 +14104,9 @@ function renderLiveActivities() {
               <div class="la-live">${dwStatusLabel}</div>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <div style="text-align:right;">
-              <div class="la-timer" style="font-size:24px;letter-spacing:-1px;${timerStyle}">${dur}</div>
-              <div style="font-size:9px;color:rgba(255,255,255,0.3);font-weight:600;margin-top:1px;"><span class="la-pomo-count">${pomoCount}</span> pomodoros</div>
-            </div>
-            ${pauseBtn}${stopBtn}${discardBtn}
+          <div style="text-align:right;">
+            <div class="la-timer" style="font-size:24px;letter-spacing:-1px;${timerStyle}">${dur}</div>
+            <div style="font-size:9px;color:rgba(255,255,255,0.3);font-weight:600;margin-top:1px;"><span class="la-pomo-count">${pomoCount}</span> pomodoros</div>
           </div>
         </div>
         <div class="la-arc-wrap">
@@ -14124,6 +14121,7 @@ function renderLiveActivities() {
           </svg>
         </div>
         <div class="la-arc-labels"><span>0m</span><span style="color:var(--la-accent);font-weight:700;">optimal ${target}m</span><span>${maxDisplay}m</span></div>
+        ${controlsRow}
       </div>`;
     }
 
@@ -14141,16 +14139,14 @@ function renderLiveActivities() {
               <div class="la-live">${saunaStatus}</div>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <div class="la-timer" style="${timerStyle}">${dur}</div>
-            ${pauseBtn}${stopBtn}${discardBtn}
-          </div>
+          <div class="la-timer" style="${timerStyle}">${dur}</div>
         </div>
         <div class="la-progress"><div class="la-progress-fill" style="width:${pct}%"></div></div>
         <div style="display:flex;justify-content:space-between;margin-top:5px;">
           <span class="la-meta-text">${elapsedMin}/${meta.targetMin} min</span>
           <span class="la-meta-text" style="color:var(--la-accent)">${pct}%</span>
         </div>
+        ${controlsRow}
       </div>`;
     }
 
@@ -14167,12 +14163,10 @@ function renderLiveActivities() {
               <div class="la-live">${medStatus}</div>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <div class="la-timer" style="${timerStyle}">${dur}</div>
-            ${pauseBtn}${stopBtn}${discardBtn}
-          </div>
+          <div class="la-timer" style="${timerStyle}">${dur}</div>
         </div>
         <div class="la-progress"><div class="la-progress-fill" style="width:${pct}%"></div></div>
+        ${controlsRow}
       </div>`;
     }
 
@@ -14187,12 +14181,10 @@ function renderLiveActivities() {
             <div class="la-live">${statusLabel}</div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div class="la-timer" style="${timerStyle}">${dur}</div>
-          ${pauseBtn}${stopBtn}${discardBtn}
-        </div>
+        <div class="la-timer" style="${timerStyle}">${dur}</div>
       </div>
       ${meta.targetMin ? `<div class="la-progress"><div class="la-progress-fill" style="width:${pct}%"></div></div>` : ''}
+      ${controlsRow}
     </div>`;
   }).join('');
 }
