@@ -996,7 +996,8 @@ section { padding: 0 14px; margin-bottom: 6px; }
   border-color: rgba(52,214,142,0.25);
 }
 .journal-item .ji-check { display: none; }
-.journal-item .ji-icon { font-size: 14px; line-height: 1; flex-shrink: 0; }
+.journal-item .ji-icon { display: flex; align-items: center; flex-shrink: 0; color: var(--text-3); }
+.journal-item.active .ji-icon { color: var(--energy); }
 .journal-item .ji-label { font-size: 12px; font-weight: 600; color: var(--text-3); white-space: nowrap; }
 .journal-item.active .ji-label { color: var(--energy); }
 .journal-save {
@@ -3464,7 +3465,81 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v147';
+const APP_VERSION = 'v148';
+
+// ========================================
+//  ICON SYSTEM (Lucide-style line icons, replaces emoji)
+// ========================================
+const ICON_PATHS = {
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon: '<path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/>',
+  bed: '<path d="M2 8v12M2 14h18a2 2 0 012 2v4M2 14v-4h12a4 4 0 014 4"/>',
+  zap: '<path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/>',
+  droplet: '<path d="M12 2.7s6 5.5 6 10.3a6 6 0 01-12 0c0-4.8 6-10.3 6-10.3z"/>',
+  flame: '<path d="M12 2c1 3-2 4-2 7a4 4 0 008 0c0-3-2-4-2-6 3 2 5 5 5 9a7 7 0 01-14 0c0-4 4-6 5-10z"/>',
+  snow: '<path d="M12 2v20M4 5l16 14M20 5L4 19M2 12h20"/>',
+  wind: '<path d="M3 8h10a2.5 2.5 0 10-2.5-2.5M3 16h14a2.5 2.5 0 11-2.5 2.5M3 12h18"/>',
+  dumbbell: '<path d="M6.5 6.5v11M3.5 9v6M17.5 6.5v11M20.5 9v6M6.5 12h11"/>',
+  run: '<circle cx="13" cy="4" r="2"/><path d="M6 18l3-4 4 2 1-5-4-2-3 3M14 11l3 1 2 4M9 22l1-4"/>',
+  walk: '<circle cx="13" cy="4" r="2"/><path d="M11 8l-2 4 3 2 1 6M12 14l3 3M11 8l-3 2-2 5"/>',
+  activity: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+  target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
+  brain: '<path d="M9 4a3 3 0 00-3 3 3 3 0 00-1 5 3 3 0 002 5 3 3 0 005 .5 3 3 0 005-.5 3 3 0 002-5 3 3 0 00-1-5 3 3 0 00-3-3 3 3 0 00-6 0z"/><path d="M12 4v16"/>',
+  pill: '<path d="M10.5 20.5l10-10a4.95 4.95 0 00-7-7l-10 10a4.95 4.95 0 007 7z"/><path d="M8.5 8.5l7 7"/>',
+  flask: '<path d="M9 2h6M10 2v6l-5 9a2 2 0 002 3h10a2 2 0 002-3l-5-9V2"/><path d="M7 14h10"/>',
+  lungs: '<path d="M12 4v8M8 12c0 4-1 7-4 7-1.5 0-2-1-2-3 0-4 2-8 4-8 1 0 2 1 2 4M16 12c0 4 1 7 4 7 1.5 0 2-1 2-3 0-4-2-8-4-8-1 0-2 1-2 4"/>',
+  foamroll: '<rect x="3" y="8" width="18" height="8" rx="4"/><path d="M7 8v8M17 8v8"/>',
+  massage: '<path d="M6 12V7a2 2 0 014 0M10 11V5a2 2 0 014 0v6M14 11V7a2 2 0 014 0v6a6 6 0 01-6 6h-1a6 6 0 01-5-3l-2-3.5a1.5 1.5 0 012.6-1.5L8 13"/>',
+  sauna: '<path d="M3 20h18M5 20v-8a7 7 0 0114 0v8M9 8c0-1 1-1.5 1-2.5M13 8c0-1 1-1.5 1-2.5"/>',
+  scissors: '<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8 8l12 8M8 16L20 8"/>',
+  smartphone: '<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/>',
+  clipboard: '<rect x="8" y="4" width="8" height="3" rx="1"/><path d="M9 4H6a2 2 0 00-2 2v13a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-3"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  warning: '<path d="M10.3 3.8L2 18a2 2 0 001.7 3h16.6a2 2 0 001.7-3L13.7 3.8a2 2 0 00-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+  stop: '<path d="M8 3h8l5 5v8l-5 5H8l-5-5V8z"/><path d="M12 8v4M12 16h.01"/>',
+  check: '<path d="M20 6L9 17l-5-5"/>',
+  ban: '<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>',
+  trendDown: '<path d="M22 17l-8.5-8.5-5 5L2 7"/><path d="M16 17h6v-6"/>',
+  barChart: '<path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6"/><rect x="12" y="7" width="3" height="10"/><rect x="17" y="13" width="3" height="4"/>',
+  refresh: '<path d="M3 12a9 9 0 0115-6.7L21 8M21 3v5h-5M21 12a9 9 0 01-15 6.7L3 16M3 21v-5h5"/>',
+  sparkles: '<path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8z"/><path d="M19 14l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9z"/>',
+  utensils: '<path d="M4 3v7a2 2 0 002 2h0a2 2 0 002-2V3M6 12v9M16 3c-1.5 0-3 1.5-3 5s1.5 4 3 4v9"/>',
+  wine: '<path d="M8 22h8M12 16v6M6 3h12l-1 6a5 5 0 01-10 0z"/>',
+  candy: '<circle cx="12" cy="12" r="4"/><path d="M16 8l3-3 1 3 3 1-3 3M8 16l-3 3-1-3-3-1 3-3"/>',
+  battery: '<rect x="2" y="8" width="18" height="8" rx="2"/><path d="M22 11v2"/>',
+  bone: '<path d="M17 10c1-1 3-1 3 1.5S18 14 17 13l-4 4c1 1 .5 3-1.5 3S9 18 10 17l-4-4c-1 1-3 .5-3-1.5S5 9 6 10l4-4c-1-1-.5-3 1.5-3S15 5 14 6z"/>',
+  circle: '<circle cx="12" cy="12" r="7"/>',
+  map: '<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/>',
+  hexagon: '<path d="M12 2l8.5 5v10L12 22l-8.5-5V7z"/>',
+  video: '<rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/>',
+  shield: '<path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5z"/>',
+  glasses: '<circle cx="6" cy="15" r="3"/><circle cx="18" cy="15" r="3"/><path d="M9 15a3 3 0 016 0M2 12l2-5h2M22 12l-2-5h-2"/>',
+  heart: '<path d="M12 21C5 16 2 12 2 8a4.5 4.5 0 018-2.8A4.5 4.5 0 0122 8c0 4-3 8-10 13z"/>',
+};
+const EMOJI_ICON = {
+  '⚡':'zap','🧊':'snow','💨':'wind','☀️':'sun','🧱':'foamroll','🏋️':'dumbbell','🏋':'dumbbell',
+  '🦶':'activity','🚶':'walk','🔴':'target','🧘':'activity','🧘‍♂️':'activity','😴':'moon','🎯':'target',
+  '⚠️':'warning','🤸':'activity','🔫':'massage','🌙':'moon','🫁':'lungs','🧴':'droplet','🧖':'sauna',
+  '🛑':'stop','🛌':'bed','🛏️':'bed','💊':'pill','✨':'sparkles','🦵':'activity','🔥':'flame','🔗':'activity',
+  '🔄':'refresh','📱':'smartphone','📋':'clipboard','📉':'trendDown','💧':'droplet','💈':'scissors',
+  '🏃':'run','⏰':'clock','🧪':'flask','🚫':'ban','😤':'wind','🔷':'hexagon','📊':'barChart','💪':'dumbbell',
+  '💤':'moon','💆':'massage','🍽️':'utensils','🍺':'wine','🍷':'wine','🍬':'candy','✅':'check',
+  '🪫':'battery','🔋':'battery','🔌':'battery','🧠':'brain','🦿':'activity','🦴':'bone','🟢':'circle',
+  '😮‍💨':'wind','🗺️':'map','🔙':'activity','📹':'video','🛡️':'shield','💼':'clipboard','❤️‍🔥':'flame',
+  '🦷':'sparkles','🧥':'activity','🥶':'snow','🌡️':'flame','🍗':'utensils','🥗':'utensils','🩹':'activity',
+  '🌜':'moon','👓':'glasses',
+};
+// Render an inline SVG icon from an emoji or icon name. Returns '' if unknown.
+function svgIcon(key, opts) {
+  opts = opts || {};
+  const size = opts.size || 18;
+  const sw = opts.sw || 1.8;
+  const name = ICON_PATHS[key] ? key : EMOJI_ICON[key];
+  const inner = name ? ICON_PATHS[name] : null;
+  if (!inner) return '';
+  const col = opts.color || 'currentColor';
+  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;display:inline-block;vertical-align:middle;">${inner}</svg>`;
+}
 
 // State sync key — FIXED, same across ALL devices/browsers so data converges
 function getUserSyncKey() { return 'rythm-main'; }
@@ -5402,7 +5477,7 @@ function buildSleepCoaching(sl, stg, debtH, pct) {
     const urgColor = tip.priority <= 1 ? 'var(--danger)' : tip.priority <= 2 ? 'var(--warn)' : 'var(--energy)';
     return `<div style="padding:12px 0;border-bottom:1px solid var(--border);">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-        <span style="font-size:16px">${tip.icon}</span>
+        <span style="color:var(--text-2);display:flex;">${svgIcon(tip.icon, {size:15})}</span>
         <span style="font-size:12px;font-weight:700;color:#fff;letter-spacing:0.3px;">${tip.title}</span>
         <span style="margin-left:auto;width:6px;height:6px;border-radius:50%;background:${urgColor};flex-shrink:0;"></span>
       </div>
@@ -6181,7 +6256,7 @@ function buildStressFullPage() {
       <div class="fp-section-title">DE-STRESS STRATEGIES</div>
       ${strategies.map(s => `
         <div class="fp-system-card">
-          <div class="fp-system-icon">${s.icon}</div>
+          <div class="fp-system-icon">${svgIcon(s.icon,{size:18})}</div>
           <div class="fp-system-info">
             <div class="fp-system-name">${s.name}</div>
             <div class="fp-system-detail">${s.detail}</div>
@@ -6613,7 +6688,7 @@ function renderEnergy() {
     if (mods.length) {
       const tagLabels = { sauna: 'Sauna', shisha: 'Shisha', shisha_late: 'Shisha', workout: 'Workout', meditation: 'Meditation', alcohol: 'Alcohol', cold_shower: 'Cold', nap: 'Nap', energy_caps: 'Caffeine', sugar: 'Sugar', stress: 'Stress', deep_work: 'Focus', walk: 'Walk', stretching: 'Stretch', foam_roll: 'Foam Roll', powerdot: 'PowerDot', jetboots: 'JetBoots', mobility: 'Mobility', massage: 'Massage', massage_gun: 'Massage Gun', infrapanel: 'Infrapanel' };
       modsEl.innerHTML = mods.map(m =>
-        `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;font-size:11px;background:${m.val >= 0 ? 'rgba(0,236,127,0.12)' : 'rgba(255,80,80,0.12)'};color:${m.val >= 0 ? 'var(--energy)' : 'var(--danger)'}">${m.icon} ${tagLabels[m.tag] || m.tag} ${m.val >= 0 ? '+' : ''}${m.val}%</span>`
+        `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:11px;background:${m.val >= 0 ? 'rgba(0,236,127,0.12)' : 'rgba(255,80,80,0.12)'};color:${m.val >= 0 ? 'var(--energy)' : 'var(--danger)'}">${svgIcon(m.icon,{size:12})} ${tagLabels[m.tag] || m.tag} ${m.val >= 0 ? '+' : ''}${m.val}%</span>`
       ).join('');
     } else {
       modsEl.innerHTML = '';
@@ -7078,7 +7153,7 @@ function renderTasks() {
       <div class="tl-dot ${dotCls}"></div>
       ${taskCheck}${removeBtn}
       <div class="tl-time">${ev.time || ''}</div>
-      <div class="tl-title">${ev.icon} ${ev.title}</div>
+      <div class="tl-title" style="display:flex;align-items:center;gap:6px;">${svgIcon(ev.icon,{size:14})}${ev.title}</div>
       ${ev.sub ? `<div class="tl-sub">${ev.sub}</div>` : ''}
     </div>`;
   }).join('')}</div>`;
@@ -7414,7 +7489,7 @@ function renderStreaks() {
   el.innerHTML = all.map(d => {
     const onFire = d.streak >= 3;
     return `<div class="streak-cell ${onFire ? 'on-fire' : ''}">
-      <div class="s-icon">${d.icon}</div>
+      <div class="s-icon">${svgIcon(d.icon,{size:16})}</div>
       <div class="s-val">${d.streak}</div>
       <div class="s-label">${d.label}</div>
       ${onFire ? '<div class="s-fire">🔥</div>' : ''}
@@ -7627,7 +7702,7 @@ function renderHabitAccountability() {
       : (rate7 >= 80 ? 'var(--energy)' : rate7 >= 50 ? 'var(--warn)' : 'var(--danger)');
 
     return `<div class="ha-row">
-      <span class="ha-emoji">${beh.icon}</span>
+      <span class="ha-emoji">${svgIcon(beh.icon,{size:15})}</span>
       <span class="ha-name">${beh.label}</span>
       <div class="ha-dots">${dots}</div>
       <div class="ha-bar-wrap"><div class="ha-bar-fill" style="width:${displayRate}%;background:${barColor}"></div></div>
@@ -8010,7 +8085,7 @@ function renderHabitImpact() {
       }
 
       html += `<div class="hi-ba-row">
-        <span class="hi-ba-icon">${item.icon}</span>
+        <span class="hi-ba-icon">${svgIcon(item.icon,{size:15})}</span>
         <div class="hi-ba-info">
           <div class="hi-ba-name">${item.label}</div>
           <div class="hi-ba-since">${item.totalDays} days logged${item.isNeg ? ' - negative habit' : ''}</div>
@@ -8099,7 +8174,7 @@ function renderHabitImpact() {
         }
 
         html += `<div class="hi-streak-row">
-          <span class="hi-streak-icon">${s.icon}</span>
+          <span class="hi-streak-icon">${svgIcon(s.icon,{size:15})}</span>
           <div class="hi-streak-info">
             <div class="hi-streak-name">${s.label}</div>
             <div class="hi-streak-days">${s.streak} day streak${s.active ? ' - active today' : ''}</div>
@@ -8125,7 +8200,7 @@ function renderHabitImpact() {
           : (score >= 0 ? '+' : '') + score;
 
         html += `<div class="hi-streak-row">
-          <span class="hi-streak-icon">${s.icon}</span>
+          <span class="hi-streak-icon">${svgIcon(s.icon,{size:15})}</span>
           <div class="hi-streak-info">
             <div class="hi-streak-name">${s.label}</div>
             <div class="hi-streak-days">${s.streak} day streak</div>
@@ -8955,7 +9030,7 @@ function renderNextDayImpact() {
       const color = isGood ? 'var(--energy)' : 'var(--danger)';
       const sign = c.hrvPct > 0 ? '+' : '';
       return `<div class="ndi-row">
-        <div class="ndi-icon">${c.icon}</div>
+        <div class="ndi-icon">${svgIcon(c.icon,{size:17})}</div>
         <div class="ndi-info">
           <div class="ndi-text"><b style="color:var(--text)">${c.label}</b> ${isGood ? 'boosts' : 'drops'} next-morning HRV${c.sleepMin ? (c.sleepMin > 0 ? ', adds ' + c.sleepMin + 'min sleep' : ', cuts ' + Math.abs(c.sleepMin) + 'min sleep') : ''}</div>
           <div style="font-size:10px;color:var(--text-4)">${c.samples} days tracked</div>
@@ -9166,9 +9241,9 @@ function renderDailyCoach() {
       <div class="dc-label">${currentPhase.name.replace(/_/g, ' ')} <span style="font-weight:400;opacity:0.5;font-size:9px;letter-spacing:0.5px">${nextUp ? '// ' + nextUp : ''}</span></div>
       <div class="dc-badge" style="background:${badgeBg};color:${badgeColor}">${recovery}%</div>
     </div>
-    <div class="dc-guidance"><span style="margin-right:6px">${directiveIcon}</span>${directive}</div>
+    <div class="dc-guidance">${directive}</div>
     <div class="dc-priority">
-      <div class="dc-priority-label">${priorityIcon} #1 Priority</div>
+      <div class="dc-priority-label" style="display:flex;align-items:center;gap:5px;">${svgIcon(priorityIcon,{size:12})} #1 Priority</div>
       <div class="dc-priority-text">${priority}</div>
     </div>`;
 }
@@ -9316,7 +9391,7 @@ function renderMorningCheckin() {
   function renderOpts(name, selected) {
     return options.map(o =>
       `<div class="checkin-opt ${selected === o.id ? 'active' : ''}" onclick="setDayPlan('${name}','${o.id}')">
-        <span class="checkin-icon">${o.icon}</span>${o.label}
+        <span class="checkin-icon">${svgIcon(o.icon,{size:18})}</span>${o.label}
       </div>`
     ).join('');
   }
@@ -9328,7 +9403,7 @@ function renderMorningCheckin() {
       <div class="session-type-opts">
         ${SESSION_TYPES.map(st =>
           `<div class="session-type-opt ${sessionType === st.id ? 'active' : ''}" onclick="setDayPlan('sessionType','${st.id}')">
-            ${st.icon} ${st.label}
+            ${svgIcon(st.icon,{size:14})} ${st.label}
           </div>`
         ).join('')}
       </div>`;
@@ -9510,7 +9585,7 @@ function renderMorningCheckin() {
     if (recs.length) {
       recsHTML = `<div class="checkin-recs">
         <div class="checkin-rec-title">Your personalized plan</div>
-        ${recs.map(r => `<div class="checkin-rec"><span class="checkin-rec-icon">${r.icon}</span><div>${r.text}</div></div>`).join('')}
+        ${recs.map(r => `<div class="checkin-rec"><span class="checkin-rec-icon">${svgIcon(r.icon,{size:15})}</span><div>${r.text}</div></div>`).join('')}
       </div>`;
     }
   }
@@ -10130,7 +10205,7 @@ function renderCoachToday() {
           <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--text-4);margin-bottom:6px;margin-top:4px;">${time}</div>
           ${items.map(s => `
             <div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.03);${s.done ? 'opacity:0.4;' : ''}">
-              <div style="font-size:15px;width:22px;text-align:center;flex-shrink:0;padding-top:1px;">${s.done ? '✓' : s.icon}</div>
+              <div style="width:22px;text-align:center;flex-shrink:0;padding-top:1px;color:${s.done ? 'var(--energy)' : 'var(--text-2)'};">${s.done ? svgIcon('check', {size:16}) : (svgIcon(s.icon, {size:16}) || svgIcon('circle', {size:8}))}</div>
               <div style="flex:1;min-width:0;">
                 <div style="font-size:12px;font-weight:600;color:${s.done ? 'var(--text-3)' : '#fff'};${s.done ? 'text-decoration:line-through;' : ''}">${s.action}</div>
                 <div style="font-size:10px;color:var(--text-4);margin-top:1px;line-height:1.3;">${s.why}</div>
@@ -10245,7 +10320,7 @@ function renderCoachTraining() {
       </div>
       ${protocols.map(p => `
         <div class="coach-protocol-item">
-          <div class="coach-protocol-icon">${p.icon}</div>
+          <div class="coach-protocol-icon">${svgIcon(p.icon,{size:17})}</div>
           <div>
             <div class="coach-protocol-name">${p.name}</div>
             <div class="coach-protocol-text">${p.detail}</div>
@@ -10383,7 +10458,7 @@ function renderCoachSelfCare() {
       <div class="coach-section-label">SELF-CARE</div>
       ${items.map(i => `
         <div class="coach-selfcare-row" onclick="${i.onclick}">
-          <div class="coach-selfcare-icon">${i.icon}</div>
+          <div class="coach-selfcare-icon">${svgIcon(i.icon,{size:17})}</div>
           <div class="coach-selfcare-info">
             <div class="coach-selfcare-name">${i.name}</div>
             <div class="coach-selfcare-sub">${i.sub}</div>
@@ -10481,7 +10556,7 @@ function renderCoachInsights() {
         const bgMap = { good: 'rgba(48,217,138,0.06)', bad: 'rgba(255,84,112,0.06)', warn: 'rgba(255,181,71,0.06)', neutral: 'rgba(255,255,255,0.03)' };
         const borderMap = { good: 'rgba(48,217,138,0.12)', bad: 'rgba(255,84,112,0.12)', warn: 'rgba(255,181,71,0.12)', neutral: 'rgba(255,255,255,0.06)' };
         return `<div style="display:flex;gap:10px;padding:12px;border-radius:10px;margin-bottom:6px;background:${bgMap[i.type]};border:1px solid ${borderMap[i.type]};">
-          <div style="font-size:16px;flex-shrink:0;line-height:1.4;">${i.icon}</div>
+          <div style="flex-shrink:0;color:var(--text-2);display:flex;padding-top:1px;">${svgIcon(i.icon,{size:16})}</div>
           <div style="font-size:12px;color:var(--text-2);line-height:1.5;">${i.text}</div>
         </div>`;
       }).join('')}
@@ -12430,7 +12505,7 @@ function initJournal() {
         const b = behaviorMap[id];
         return `<div class="journal-item ${selectedBehaviors.has(b.id) ? 'active' : ''}" data-id="${b.id}" onclick="toggleBehavior('${b.id}', this)">
           <div class="ji-check">${selectedBehaviors.has(b.id) ? '✓' : ''}</div>
-          <div class="ji-icon">${b.icon}</div>
+          <div class="ji-icon">${svgIcon(b.icon, {size:17}) || ''}</div>
           <div class="ji-label">${b.label}</div>
         </div>`;
       }).join('');
@@ -12625,7 +12700,7 @@ function renderCorrelations() {
       ? `<span style="font-size:10px;opacity:0.6;color:${c.nextDayDiff >= 0 ? 'var(--energy)' : 'var(--danger)'}">Next day ${c.nextDayDiff >= 0 ? '+' : ''}${c.nextDayDiff}%</span>`
       : '';
     return `<div class="corr-row">
-      <span class="corr-name">${c.icon} ${c.name} <span style="font-size:10px;color:var(--text-4)">(${c.count}x)</span></span>
+      <span class="corr-name">${svgIcon(c.icon,{size:14})} ${c.name} <span style="font-size:10px;color:var(--text-4)">(${c.count}x)</span></span>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;">
         <span class="corr-val ${c.diff >= 0 ? 'good' : 'bad'}">${c.diff >= 0 ? '+' : ''}${c.diff}%</span>
         <div style="display:flex;gap:6px;">${hrvTag}${sleepTag}${nextTag}</div>
@@ -12654,7 +12729,7 @@ function renderJournalHistory() {
         const behaviors = (j.behaviors || []);
         const tags = behaviors.slice(0, 6).map(b => {
           const beh = JOURNAL_BEHAVIORS.find(x => x.id === b);
-          return beh ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:3px 8px;border-radius:6px;background:rgba(255,255,255,0.04);color:var(--text-2);font-weight:600;">${beh.icon} ${beh.label}</span>` : '';
+          return beh ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:3px 8px;border-radius:6px;background:rgba(255,255,255,0.04);color:var(--text-2);font-weight:600;display:inline-flex;align-items:center;gap:4px;">${svgIcon(beh.icon,{size:12})}${beh.label}</span>` : '';
         }).join('');
         const extra = behaviors.length > 6 ? `<span style="font-size:11px;color:var(--text-4);font-weight:600;">+${behaviors.length - 6}</span>` : '';
         const ctxParts = [];
@@ -13171,7 +13246,7 @@ function initLogModal() {
   `).join('');
 
   document.getElementById('tagRow').innerHTML = TAGS.map(t => `
-    <div class="tag-chip" data-tag="${t.id}" onclick="toggleTag('${t.id}', this)">${t.icon} ${t.label}</div>
+    <div class="tag-chip" data-tag="${t.id}" onclick="toggleTag('${t.id}', this)">${svgIcon(t.icon,{size:14})} ${t.label}</div>
   `).join('');
 }
 
@@ -13979,7 +14054,7 @@ function renderLiveActivities() {
       return `<div class="live-card" data-live-id="${a.id}" data-type="workout">
         <div class="la-header">
           <div class="la-badge">
-            <div class="la-icon">${meta.icon}</div>
+            <div class="la-icon">${svgIcon(meta.icon,{size:18})}</div>
             <div>
               <div class="la-title">Workout</div>
               <div class="la-live">${statusLabel}</div>
@@ -14023,7 +14098,7 @@ function renderLiveActivities() {
       return `<div class="live-card" data-live-id="${a.id}" data-type="deep_work">
         <div class="la-header">
           <div class="la-badge">
-            <div class="la-icon">${meta.icon}</div>
+            <div class="la-icon">${svgIcon(meta.icon,{size:18})}</div>
             <div>
               <div class="la-title">Deep Work</div>
               <div class="la-live">${dwStatusLabel}</div>
@@ -14060,7 +14135,7 @@ function renderLiveActivities() {
       return `<div class="live-card" data-live-id="${a.id}" data-type="sauna">
         <div class="la-header">
           <div class="la-badge">
-            <div class="la-icon">${meta.icon}</div>
+            <div class="la-icon">${svgIcon(meta.icon,{size:18})}</div>
             <div>
               <div class="la-title">Sauna</div>
               <div class="la-live">${saunaStatus}</div>
@@ -14086,7 +14161,7 @@ function renderLiveActivities() {
       return `<div class="live-card" data-live-id="${a.id}" data-type="meditation">
         <div class="la-header">
           <div class="la-badge">
-            <div class="la-icon">${meta.icon}</div>
+            <div class="la-icon">${svgIcon(meta.icon,{size:18})}</div>
             <div>
               <div class="la-title">Meditation</div>
               <div class="la-live">${medStatus}</div>
@@ -14106,7 +14181,7 @@ function renderLiveActivities() {
     return `<div class="live-card" data-live-id="${a.id}" data-type="${a.type}">
       <div class="la-header">
         <div class="la-badge">
-          <div class="la-icon">${meta.icon}</div>
+          <div class="la-icon">${svgIcon(meta.icon,{size:18})}</div>
           <div>
             <div class="la-title">${meta.label}</div>
             <div class="la-live">${statusLabel}</div>
