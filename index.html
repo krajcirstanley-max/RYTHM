@@ -3467,7 +3467,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v150';
+const APP_VERSION = 'v151';
 
 // ========================================
 //  ICON SYSTEM (Lucide-style line icons, replaces emoji)
@@ -4859,9 +4859,13 @@ function renderThreeRings() {
     sleepPerf = ss.total;
   }
 
+  // Recovery ring colors by score (matches the big readiness ring), not a fixed green
+  const recVal = Math.max(0, Math.min(100, computeReadiness()));
+  const recColor = recVal >= 67 ? '#34d68e' : recVal >= 34 ? '#ffb547' : '#ff5470';
+
   const rings = [
     { key: 'sleep', val: Math.max(0, Math.min(100, sleepPerf)), label: 'SLEEP', color: '#93a1c4', unit: '%' },
-    { key: 'recovery', val: Math.max(0, Math.min(100, computeReadiness())), label: 'RECOVERY', color: '#00ec7f', unit: '%' },
+    { key: 'recovery', val: recVal, label: 'RECOVERY', color: recColor, unit: '%' },
     { key: 'strain', val: Math.max(0, Math.min(100, strainPct)), label: 'STRAIN', color: '#4da9ff', unit: strainPct > 0 ? '%' : '', display: strainPct > 0 ? undefined : '<span style="font-size:14px;letter-spacing:1px;font-weight:700;opacity:0.5">REST</span>' },
   ];
 
