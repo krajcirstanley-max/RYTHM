@@ -3467,7 +3467,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v157';
+const APP_VERSION = 'v158';
 
 // ========================================
 //  ICON SYSTEM (Lucide-style line icons, replaces emoji)
@@ -4503,12 +4503,14 @@ function computeReadiness(forDate) {
   if (rhrNow <= 0) {
     rhrScore = r.rhr || 50;
   } else {
-    // Score: 100 when RHR is 10%+ below baseline, 50 at baseline, 0 when 20%+ above
+    // 50 at baseline. Small dead-zone for day-to-day noise (+/-5% ~= +/-3bpm is
+    // normal, not a recovery hit). Gentle penalty above that.
     const ratio = rhrNow / rhrBase;
-    if (ratio <= 0.9) rhrScore = 100;
-    else if (ratio <= 1.0) rhrScore = 50 + (1.0 - ratio) * 500; // 50-100
-    else if (ratio <= 1.2) rhrScore = Math.max(0, 50 - (ratio - 1.0) * 250); // 0-50
-    else rhrScore = 0;
+    if (ratio <= 0.90) rhrScore = 100;
+    else if (ratio <= 1.0) rhrScore = 50 + (1.0 - ratio) * 500;  // 50->100 over 0 to -10%
+    else if (ratio <= 1.05) rhrScore = 50;                       // noise band - neutral
+    else if (ratio <= 1.20) rhrScore = 50 - (ratio - 1.05) * 233; // 50->15 over +5 to +20%
+    else rhrScore = Math.max(0, 15 - (ratio - 1.20) * 150);      // illness territory
   }
   rhrScore = Math.max(0, Math.min(100, rhrScore));
 
@@ -9170,14 +9172,15 @@ function renderDailyCoach() {
       const ydDesc = ydSessions >= 2 ? `${ydSessions} sessions` : 'heavy session';
       directive = `${ydDesc} yesterday. Active recovery only: walk, mobility, foam roll. Save intensity for tomorrow.`;
     }
-    else if (recovery >= 80) directive = 'Peak energy zone. This is your window for max-effort jumps and heavy plyometrics.';
-    else if (recovery >= 67) directive = 'Peak zone but moderate recovery. Technique work, sub-max drills.';
+    else if (recovery >= 70) directive = 'Peak energy zone. Your window for max-effort jumps and heavy plyometrics.';
+    else if (recovery >= 50) directive = 'Peak zone, recovery is solid. Full session - approach work, plyos, strength. Back off if speed drops.';
+    else if (recovery >= 34) directive = 'Peak zone but recovery is moderate. Technique work and sub-max drills.';
     else directive = 'Peak zone but body needs rest. Light mobility or film review only.';
   } else if (currentPhase.name === 'DIP') {
     directiveIcon = '💤';
     if (plannedIntensity === 'rest') directive = 'Rest day. Afternoon dip is a perfect window for a 20min nap to pay off sleep debt.';
     else if (plannedIntensity === 'easy') directive = 'Easy day. Dip phase. Light walk or nap 20min. No decisions, no intensity.';
-    else if (!trainedToday && recovery >= 67) directive = 'Dip zone. If you missed training this morning, do a light session now before Peak 2.';
+    else if (!trainedToday && recovery >= 50) directive = 'Dip zone. If you missed training this morning, get a session in before Peak 2.';
     else directive = 'Afternoon dip - executive function drops. Power nap 20min or walk. No big decisions.';
   } else if (currentPhase.name === 'RECOVERY') {
     directiveIcon = '🔄';
@@ -9193,7 +9196,7 @@ function renderDailyCoach() {
       directiveIcon = '🚶';
       directive = 'Easy day. If you haven\'t moved yet, a 30min walk now. Otherwise, deep work or planning.';
     } else if (trainedToday) directive = `Trained ${totalTrainMin}min today. Use Peak 2 for deep work, creative tasks, or business strategy.`;
-    else if (recovery >= 67) directive = 'Strongest window of the day. Train now if you haven\'t - or do your hardest deep work.';
+    else if (recovery >= 50) directive = 'Strongest window of the day. Train now if you haven\'t - or do your hardest deep work.';
     else directive = 'Second peak. Best used for focused work. Training not recommended at this recovery level.';
   } else if (currentPhase.name === 'WIND-DOWN') {
     directiveIcon = '🌙';
@@ -9231,8 +9234,8 @@ function renderDailyCoach() {
     priorityIcon = '⚠️'; priority = `High strain (${strain}) on low recovery (${recovery}%). Cut volume.`;
   } else if (trainedToday && !hadCold && recovery < 70 && !['WIND-DOWN','NIGHT','SLEEP'].includes(currentPhase.name)) {
     priorityIcon = '🧊'; priority = 'Post-training recovery. Cold immersion or breathing session.';
-  } else if (!trainedToday && recovery >= 67 && ['PEAK 1','PEAK 2'].includes(currentPhase.name) && !plannedIntensity?.match(/rest|easy/)) {
-    priorityIcon = '🏋️'; priority = 'You haven\'t trained yet. Recovery supports intensity.';
+  } else if (!trainedToday && recovery >= 50 && ['PEAK 1','PEAK 2'].includes(currentPhase.name) && !plannedIntensity?.match(/rest|easy/)) {
+    priorityIcon = '🏋️'; priority = 'You haven\'t trained yet. Recovery supports a solid session.';
   } else if (plannedIntensity === 'rest') {
     priorityIcon = '🛌'; priority = 'Rest day. Recovery is the work. Hydrate, move easy, sleep well.';
   } else if (plannedIntensity === 'easy') {
