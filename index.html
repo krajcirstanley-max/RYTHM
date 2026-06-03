@@ -3467,7 +3467,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v156';
+const APP_VERSION = 'v157';
 
 // ========================================
 //  ICON SYSTEM (Lucide-style line icons, replaces emoji)
@@ -5518,7 +5518,8 @@ function closeSleepFullPage(fromPopstate) {
   if (!el.classList.contains('open')) return;
   el.classList.remove('open');
   document.body.style.overflow = '';
-  if (!fromPopstate) history.back();
+  // Sync history if we pushed a state, but the close above is unconditional
+  if (!fromPopstate) { try { if (history.state && history.state.overlay) history.back(); } catch(_){} }
 }
 
 function buildSleepFullPage() {
@@ -5812,7 +5813,8 @@ function closeRecoveryFullPage(fromPopstate) {
   if (!el.classList.contains('open')) return;
   el.classList.remove('open');
   document.body.style.overflow = '';
-  if (!fromPopstate) history.back();
+  // Sync history if we pushed a state, but the close above is unconditional
+  if (!fromPopstate) { try { if (history.state && history.state.overlay) history.back(); } catch(_){} }
 }
 
 function buildRecoveryFullPage() {
@@ -6072,7 +6074,8 @@ function closeStressFullPage(fromPopstate) {
   if (!el.classList.contains('open')) return;
   el.classList.remove('open');
   document.body.style.overflow = '';
-  if (!fromPopstate) history.back();
+  // Sync history if we pushed a state, but the close above is unconditional
+  if (!fromPopstate) { try { if (history.state && history.state.overlay) history.back(); } catch(_){} }
 }
 
 function buildStressFullPage() {
@@ -6733,7 +6736,8 @@ function closeEnergyFullPage(fromPopstate) {
   if (!el.classList.contains('open')) return;
   el.classList.remove('open');
   document.body.style.overflow = '';
-  if (!fromPopstate) history.back();
+  // Sync history if we pushed a state, but the close above is unconditional
+  if (!fromPopstate) { try { if (history.state && history.state.overlay) history.back(); } catch(_){} }
 }
 
 function buildEnergyFullPage() {
@@ -12007,7 +12011,8 @@ function closeDetail(fromPopstate) {
   if (!el.classList.contains('open')) return;
   el.classList.remove('open');
   document.body.style.overflow = '';
-  if (!fromPopstate) history.back();
+  // Sync history if we pushed a state, but the close above is unconditional
+  if (!fromPopstate) { try { if (history.state && history.state.overlay) history.back(); } catch(_){} }
 }
 
 function buildDetailContent(type) {
@@ -13668,10 +13673,7 @@ window.addEventListener('popstate', function(e) {
   if (document.getElementById('energyFullPage')?.classList.contains('open')) { closeEnergyFullPage(true); return; }
   // Modal (quick log)
   if (document.getElementById('logModal')?.classList.contains('open')) { closeLog(true); return; }
-  // If nothing was open but we got a popstate, re-push root so we never exit
-  if (!e.state || !e.state.root) {
-    history.pushState({ root: true }, '');
-  }
+  // Nothing open - let back proceed normally (removed re-push-root; it caused loops)
 });
 
 // iOS PWA back-button fix: prevent rubber-band overscroll from swallowing touches
@@ -15593,7 +15595,8 @@ function closeTrendDetail(fromPopstate) {
   if (!el.classList.contains('open')) return;
   el.classList.remove('open');
   document.body.style.overflow = '';
-  if (!fromPopstate) history.back();
+  // Sync history if we pushed a state, but the close above is unconditional
+  if (!fromPopstate) { try { if (history.state && history.state.overlay) history.back(); } catch(_){} }
 }
 
 function buildTrendFullPage(key) {
@@ -15748,8 +15751,9 @@ function bootApp() {
   // Start live activity timer (updates every second)
   startLiveActivityTimer();
 
-  // Fetch real health data from Supabase
-  fetchHealthData();
+  // Fetch real health data from Supabase, then force a full re-render so the
+  // freshest sleep/recovery is shown (don't leave stale cached values on screen)
+  fetchHealthData().then(() => { try { fullRerender(); } catch(_){} }).catch(()=>{});
   // Fetch historical health data for trends
   fetchHistoryData();
   // Fetch Hero workout data (read-only, on app open only)
