@@ -3467,7 +3467,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v162';
+const APP_VERSION = 'v163';
 
 // ========================================
 //  ICON SYSTEM (Lucide-style line icons, replaces emoji)
@@ -5093,15 +5093,15 @@ function buildRecoveryDetail() {
     <div class="rd-row" style="padding-left:12px;"><span class="rd-row-label" style="font-size:11px;color:var(--text-4)">ACR (7d/21d)</span><span class="rd-row-val" style="font-size:11px;color:var(--text-4);">${tl.acr}x (${tl.avg7}/${tl.avg21} cal)</span></div>
     <div class="rd-row" style="margin-top:6px;padding-top:8px;border-top:1px solid var(--card-border)"><span class="rd-row-label">HRV</span><span class="rd-row-val">${ST.metrics.hrv}ms <span style="color:${ST.metrics.hrvDelta >= 0 ? 'var(--energy)' : 'var(--warn)'};">(${ST.metrics.hrvDelta >= 0 ? '+' : ''}${ST.metrics.hrvDelta})</span></span></div>
     <div class="rd-row"><span class="rd-row-label">Resting HR</span><span class="rd-row-val">${ST.metrics.rhr}bpm <span style="color:${ST.metrics.rhrDelta <= 0 ? 'var(--energy)' : 'var(--warn)'};">(${ST.metrics.rhrDelta > 0 ? '+' : ''}${ST.metrics.rhrDelta})</span></span></div>
-    <div class="rd-row"><span class="rd-row-label">Baseline HRV</span><span class="rd-row-val" style="color:var(--text-3)">${ST.metrics.hrvBaseline || 42}ms <span style="font-size:10px;color:var(--text-4)">(50th %ile: 42ms)</span></span></div>
-    <div class="rd-row"><span class="rd-row-label">Baseline RHR</span><span class="rd-row-val" style="color:var(--text-3)">${ST.metrics.rhrBaseline || 63}bpm <span style="font-size:10px;color:var(--text-4)">(pop avg: 72)</span></span></div>
+    <div class="rd-row"><span class="rd-row-label">Baseline HRV</span><span class="rd-row-val" style="color:var(--text-3)">${ST.metrics.hrvBaseline ? ST.metrics.hrvBaseline + 'ms' : 'calibrating'}</span></div>
+    <div class="rd-row"><span class="rd-row-label">Baseline RHR</span><span class="rd-row-val" style="color:var(--text-3)">${ST.metrics.rhrBaseline ? ST.metrics.rhrBaseline + 'bpm' : 'calibrating'}</span></div>
     ${hadLateShisha ? '<div class="rd-row"><span class="rd-row-label" style="color:var(--warn)">Late Shisha Impact</span><span class="rd-row-val" style="color:var(--warn)">-5% recovery</span></div>' : ''}
     ${hadShisha ? '<div class="rd-row"><span class="rd-row-label" style="color:var(--text-3)">Daily Shisha</span><span class="rd-row-val" style="color:var(--text-3)">CO clears in ~4h</span></div>' : ''}
     <div class="rd-msg" style="font-size:12px;line-height:1.6">${msg}</div>
     <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--card-border);">
       <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-4);margin-bottom:6px;">What drives recovery</div>
       <div style="font-size:11px;color:var(--text-3);line-height:1.5;">
-        <b style="color:var(--text-2)">HRV</b> (35%) = parasympathetic tone. Higher = more recovered. Your baseline: ${ST.metrics.hrvBaseline || 42}ms.<br>
+        <b style="color:var(--text-2)">HRV</b> (35%) = parasympathetic tone. Higher = more recovered.<br>
         <b style="color:var(--text-2)">Sleep</b> (30%) = quality + duration. Deep sleep releases HGH for tissue repair.<br>
         <b style="color:var(--text-2)">RHR</b> (15%) = cardiovascular recovery. Lower than baseline = good sign.<br>
         <b style="color:var(--text-2)">Training</b> (10%) = Acute:Chronic ratio (3d vs 7d). Sweet spot: 0.8-1.3x.<br>
@@ -5592,7 +5592,7 @@ function buildSleepFullPage() {
   let idealBedMin = ST.profile.wakeMin - Math.round(bedtimeNeed * 60) - 15;
   if (idealBedMin < 0) idealBedMin += 1440;
 
-  const efficiency = sl.efficiency || 89;
+  const efficiency = sl.efficiency || 0;
   const deepH = stg.deep;
   const deepOk = deepPct >= 15, remOk = remPct >= 20;
 
@@ -6022,7 +6022,7 @@ function buildRecoveryFullPage() {
         <div class="fp-system-info">
           <div class="fp-system-name">Autonomic Balance</div>
           <div class="fp-system-status" style="color:${autoColor}">${autoLabel}</div>
-          <div class="fp-system-detail">HRV: ${m.hrv}ms (baseline ${m.hrvBaseline || 42}ms, ${m.hrvDelta >= 0 ? '+' : ''}${m.hrvDelta}ms). RHR: ${m.rhr}bpm (baseline ${m.rhrBaseline || 57}bpm). ${hrvRatio >= 1.05 ? 'Parasympathetic tone is strong - great for recovery and explosive performance.' : hrvRatio >= 0.85 ? 'Balanced state - adequate for moderate training.' : 'Sympathetic dominance - stress/fatigue is suppressing recovery.'}</div>
+          <div class="fp-system-detail">HRV: ${m.hrv != null ? m.hrv + 'ms' : '--'}${m.hrvBaseline ? ' (baseline ' + m.hrvBaseline + 'ms)' : ''}. RHR: ${m.rhr != null ? m.rhr + 'bpm' : '--'}${m.rhrBaseline ? ' (baseline ' + m.rhrBaseline + 'bpm)' : ''}. ${hrvRatio >= 1.05 ? 'Parasympathetic tone is strong - great for recovery and explosive performance.' : hrvRatio >= 0.85 ? 'Balanced state - adequate for moderate training.' : 'Sympathetic dominance - stress/fatigue is suppressing recovery.'}</div>
         </div>
       </div>
     </div>
@@ -6031,12 +6031,12 @@ function buildRecoveryFullPage() {
       <div class="fp-section-title">RAW METRICS</div>
       <div class="fp-row"><span class="fp-row-label">HRV</span><span class="fp-row-val">${m.hrv}ms <span style="color:${m.hrvDelta >= 0 ? 'var(--energy)' : 'var(--warn)'};">(${m.hrvDelta >= 0 ? '+' : ''}${m.hrvDelta})</span></span></div>
       <div class="fp-row"><span class="fp-row-label">Resting HR</span><span class="fp-row-val">${m.rhr}bpm <span style="color:${m.rhrDelta <= 0 ? 'var(--energy)' : 'var(--warn)'};">(${m.rhrDelta > 0 ? '+' : ''}${m.rhrDelta})</span></span></div>
-      <div class="fp-row"><span class="fp-row-label">HRV Baseline</span><span class="fp-row-val" style="color:var(--text-3)">${m.hrvBaseline || 42}ms</span></div>
-      <div class="fp-row"><span class="fp-row-label">RHR Baseline</span><span class="fp-row-val" style="color:var(--text-3)">${m.rhrBaseline || 57}bpm</span></div>
+      <div class="fp-row"><span class="fp-row-label">HRV Baseline</span><span class="fp-row-val" style="color:var(--text-3)">${m.hrvBaseline ? m.hrvBaseline + 'ms' : 'calibrating'}</span></div>
+      <div class="fp-row"><span class="fp-row-label">RHR Baseline</span><span class="fp-row-val" style="color:var(--text-3)">${m.rhrBaseline ? m.rhrBaseline + 'bpm' : 'calibrating'}</span></div>
       <div class="fp-row"><span class="fp-row-label">Today's Strain</span><span class="fp-row-val">${strain}/21</span></div>
-      <div class="fp-row"><span class="fp-row-label">Sleep</span><span class="fp-row-val">${fmtH(sl.totalH)} (${sl.efficiency || 89}%)</span></div>
-      <div class="fp-row"><span class="fp-row-label">SpO2</span><span class="fp-row-val">${(ST.health || {}).spo2 || 97}%</span></div>
-      <div class="fp-row"><span class="fp-row-label">Respiratory Rate</span><span class="fp-row-val">${m.respiratory || 14.2} br/min</span></div>
+      <div class="fp-row"><span class="fp-row-label">Sleep</span><span class="fp-row-val">${fmtH(sl.totalH)}${sl.efficiency ? ' (' + sl.efficiency + '%)' : ''}</span></div>
+      <div class="fp-row"><span class="fp-row-label">SpO2</span><span class="fp-row-val">${(ST.health || {}).spo2 ? (ST.health||{}).spo2 + '%' : '--'}</span></div>
+      <div class="fp-row"><span class="fp-row-label">Respiratory Rate</span><span class="fp-row-val">${m.respiratory ? m.respiratory + ' br/min' : '--'}</span></div>
       ${hadLateShisha ? '<div class="fp-row"><span class="fp-row-label" style="color:var(--warn)">⚠ Late Shisha</span><span class="fp-row-val" style="color:var(--warn)">-5% recovery</span></div>' : ''}
       ${hadAlcohol ? '<div class="fp-row"><span class="fp-row-label" style="color:var(--warn)">⚠ Alcohol</span><span class="fp-row-val" style="color:var(--warn)">REM disrupted</span></div>' : ''}
     </div>
@@ -6291,7 +6291,7 @@ function buildStressFullPage() {
       <div class="fp-row"><span class="fp-row-label">HRV / Baseline</span><span class="fp-row-val">${m.hrv}ms / ${hrvBase}ms <span style="color:${m.hrvDelta >= 0 ? 'var(--energy)' : 'var(--warn)'};">(${m.hrvDelta >= 0 ? '+' : ''}${m.hrvDelta})</span></span></div>
       <div class="fp-row"><span class="fp-row-label">RHR / Baseline</span><span class="fp-row-val">${m.rhr}bpm / ${rhrBase}bpm <span style="color:${m.rhrDelta <= 0 ? 'var(--energy)' : 'var(--warn)'};">(${m.rhrDelta > 0 ? '+' : ''}${m.rhrDelta})</span></span></div>
       <div class="fp-row"><span class="fp-row-label">HRV Ratio</span><span class="fp-row-val" style="color:${hrvRatio >= 0.95 ? 'var(--energy)' : hrvRatio >= 0.80 ? 'var(--warn)' : 'var(--danger)'};">${(hrvRatio * 100).toFixed(0)}%</span></div>
-      <div class="fp-row"><span class="fp-row-label">Respiratory Rate</span><span class="fp-row-val">${m.respiratory || 14.2} br/min</span></div>
+      <div class="fp-row"><span class="fp-row-label">Respiratory Rate</span><span class="fp-row-val">${m.respiratory ? m.respiratory + ' br/min' : '--'}</span></div>
     </div>
 
     ${contributors.length > 0 ? `
@@ -15133,7 +15133,7 @@ function computeSleepConsistency() {
   // Sleep Regularity Index: how consistent are sleep/wake times over last 7 days
   // Uses historical sleep data (sleepStart/sleepEnd from details)
   const hist = ST._history && ST._history.sleep ? ST._history.sleep : [];
-  if (hist.length < 3) return { score: ST.sleep?.consistency || 72, hasData: false };
+  if (hist.length < 3) return { score: 50, hasData: false }; // neutral until enough nights
 
   const recent = hist.slice(-7);
   const starts = [], ends = [], durations = [];
@@ -15145,7 +15145,7 @@ function computeSleepConsistency() {
     // Better: just measure duration consistency
   }
 
-  if (durations.length < 3) return { score: 72, hasData: false };
+  if (durations.length < 3) return { score: 50, hasData: false }; // neutral until enough nights
 
   // Duration consistency: std dev of sleep durations
   const avgDur = durations.reduce((a,b) => a+b, 0) / durations.length;
