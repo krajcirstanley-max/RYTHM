@@ -2694,41 +2694,44 @@ section { padding: 0 14px; margin-bottom: 6px; }
 /* ── Live Activity Cards (Dynamic Island inspired) ── */
 .live-card {
   position: relative; overflow: hidden;
-  border-radius: 24px; padding: 16px 18px;
+  border-radius: 26px; padding: 18px;
   margin-bottom: 8px;
   animation: liveSlideUp 0.4s cubic-bezier(.2,.7,.2,1);
   pointer-events: auto; cursor: pointer;
-  background: rgba(20,20,24,0.96);
-  backdrop-filter: blur(60px) saturate(1.8) brightness(1.05);
-  -webkit-backdrop-filter: blur(60px) saturate(1.8) brightness(1.05);
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 2px 6px rgba(0,0,0,0.3),
-              inset 0 1px 0 rgba(255,255,255,0.1);
-}
-.live-card::before {
-  content: ''; position: absolute; inset: 0; border-radius: 24px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 40%);
-  pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 50% -10%, color-mix(in srgb, var(--la-accent, #2ecf82) 16%, transparent), transparent 60%),
+    #121216;
+  border: 1px solid color-mix(in srgb, var(--la-accent, #2ecf82) 22%, var(--card-border));
+  box-shadow: 0 16px 40px -14px color-mix(in srgb, var(--la-accent, #2ecf82) 45%, transparent), 0 2px 6px rgba(0,0,0,0.4);
 }
 .live-card::after {
-  content: ''; position: absolute; top: -50%; right: -25%; width: 70%; height: 90%;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--la-glow, rgba(255,255,255,0.03)) 0%, transparent 70%);
-  pointer-events: none; filter: blur(25px);
+  content: ''; position: absolute; top: -40%; left: 50%; transform: translateX(-50%);
+  width: 70%; height: 70%; border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--la-accent, #2ecf82) 30%, transparent) 0%, transparent 70%);
+  pointer-events: none; filter: blur(30px); opacity: 0.7;
 }
 @keyframes liveSlideUp { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+/* Big progress ring */
+.la-ring-wrap { position: relative; width: 150px; height: 150px; margin: 8px auto 16px; }
+.la-ring { width: 100%; height: 100%; }
+.la-ring-fill { transition: stroke-dashoffset 0.9s cubic-bezier(.3,.7,.3,1); filter: drop-shadow(0 0 6px color-mix(in srgb, var(--la-accent, #2ecf82) 60%, transparent)); }
+.la-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.la-ring-center .la-timer { font-size: 34px; font-weight: 800; letter-spacing: -1.5px; color: #fff; line-height: 1; }
+.la-target-label { font-size: 10px; font-weight: 600; letter-spacing: 0.5px; color: var(--text-3); text-transform: uppercase; margin-top: 5px; }
+.la-pct { font-size: 22px; font-weight: 800; color: var(--la-accent, #2ecf82); letter-spacing: -1px; }
 
 /* Header */
 .la-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .la-badge { display: flex; align-items: center; gap: 10px; }
 .la-icon {
-  width: 36px; height: 36px; border-radius: 12px;
+  width: 40px; height: 40px; border-radius: 13px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 17px; position: relative;
-  background: linear-gradient(135deg, var(--la-glow, rgba(255,255,255,0.06)), rgba(255,255,255,0.02));
-  border: 1px solid rgba(255,255,255,0.06);
+  position: relative; color: var(--la-accent, #2ecf82);
+  background: color-mix(in srgb, var(--la-accent, #2ecf82) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--la-accent, #2ecf82) 25%, transparent);
 }
-.la-title { font-size: 14px; font-weight: 800; color: #fff; letter-spacing: -0.3px; }
+.la-title { font-size: 15px; font-weight: 800; color: #fff; letter-spacing: -0.3px; }
 .la-live {
   display: flex; align-items: center; gap: 5px;
   font-size: 9px; font-weight: 700; color: var(--la-accent, #00ec7f);
@@ -3511,7 +3514,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v169';
+const APP_VERSION = 'v170';
 
 // ========================================
 //  ICON SYSTEM (Lucide-style line icons, replaces emoji)
@@ -14225,13 +14228,13 @@ function renderLiveActivities() {
       const meta = LIVE_ACTIVITY_META[a.type] || {};
       if (meta.targetMin) {
         const pct = Math.min(100, Math.round((elapsed / 60000) / meta.targetMin * 100));
-        const bar = card.querySelector('.la-progress-fill');
-        if (bar) bar.style.width = pct + '%';
         const ringFill = card.querySelector('.la-ring-fill');
         if (ringFill) {
-          const circumf = 2 * Math.PI * 22;
+          const circumf = 2 * Math.PI * 52;
           ringFill.setAttribute('stroke-dashoffset', String(circumf * (1 - pct / 100)));
         }
+        const pctEl = card.querySelector('.la-pct');
+        if (pctEl) pctEl.innerHTML = pct + '<span style="font-size:11px;">%</span>';
       }
       // Deep work arc update
       if (a.type === 'deep_work') {
@@ -14280,204 +14283,53 @@ function renderLiveActivities() {
     return;
   }
 
-  // Full rebuild  - unique layout per activity type
+  // Unified beautiful card: big progress ring + timer, colored by activity type
+  const LA_COLORS = {
+    workout:'#2ecf82', sauna:'#ff8c42', meditation:'#9b7ff0', deep_work:'#4da9ff',
+    cold_shower:'#4dd6ff', nap:'#9b7ff0', walk:'#4da9ff', sun_exposure:'#ffb547',
+    shisha:'#ff7a6b', shisha_late:'#ff7a6b', alcohol:'#ff7a6b', energy_caps:'#ffb547',
+    stretching:'#2ecf82', mobility:'#2ecf82', jetboots:'#22d3b8', foam_roll:'#22d3b8',
+    massage:'#22d3b8', massage_gun:'#22d3b8', infrapanel:'#ff5470', powerdot:'#4da9ff'
+  };
+  const LA_STATUS = { meditation:'CALM', sauna:'HEAT', deep_work:'FOCUS', cold_shower:'COLD', nap:'RESTING', walk:'MOVING' };
   el.innerHTML = active.map(a => {
-    const meta = LIVE_ACTIVITY_META[a.type] || { icon: '⏱️', label: a.type };
+    const meta = LIVE_ACTIVITY_META[a.type] || { icon:'', label:a.type };
     const elapsed = getActiveElapsed(a);
     const isPaused = !!a.pausedAt;
     const dur = formatDuration(elapsed);
-    const startTime = new Date(a.startedAt);
-    const startStr = String(startTime.getHours()).padStart(2,'0') + ':' + String(startTime.getMinutes()).padStart(2,'0');
     const elapsedMin = Math.floor(elapsed / 60000);
-
+    const accent = LA_COLORS[a.type] || '#2ecf82';
+    const target = meta.targetMin || 0;
+    const pct = target ? Math.min(100, Math.round(elapsedMin / target * 100)) : 0;
+    const R = 52, CIRC = 2 * Math.PI * R;
+    const offset = target ? CIRC * (1 - pct / 100) : 0;
+    const word = LA_STATUS[a.type] || 'ACTIVE';
+    const status = isPaused ? '<span class="la-paused-badge">PAUSED</span>' : `<span class="la-live-dot"></span> ${word}`;
     const pauseBtn = `<button class="la-pause" onclick="event.stopPropagation();${isPaused ? 'resumeLiveActivity' : 'pauseLiveActivity'}('${a.id}')">${isPaused ? 'Resume' : 'Pause'}</button>`;
     const stopBtn = `<button class="la-stop" onclick="event.stopPropagation();stopLiveActivity('${a.id}')">Stop</button>`;
     const discardBtn = `<button class="la-discard" onclick="event.stopPropagation();discardLiveActivity('${a.id}')">Discard</button>`;
-    // Controls on their own full-width row so the card never overflows
     const controlsRow = `<div class="la-controls">${pauseBtn}${stopBtn}${discardBtn}</div>`;
-    const statusLabel = isPaused ? '<span class="la-paused-badge">PAUSED</span>' : '<span class="la-live-dot"></span> ACTIVE';
-    const timerStyle = isPaused ? 'opacity:0.4;' : '';
-
-    // ── Shisha: parking meter style  - ring + time remaining to cutoff ──
-    if (a.type === 'shisha' || a.type === 'shisha_late') {
-      const w = getShishaCutoffWarning();
-      // Compute time remaining to cutoff
-      const sleepMin = ST.profile.sleepMin >= 1440 ? ST.profile.sleepMin - 1440 : ST.profile.sleepMin;
-      let cutoffMin = sleepMin - 180;
-      if (cutoffMin < 0) cutoffMin += 1440;
-      const nowDate = new Date();
-      const nowMin = nowDate.getHours() * 60 + nowDate.getMinutes();
-      let untilCutoff = cutoffMin - nowMin;
-      if (untilCutoff < 0) untilCutoff += 1440;
-      if (untilCutoff > 960) untilCutoff = 960; // cap for display
-      const pastCutoff = untilCutoff <= 0 || (w && w.includes('Past cutoff'));
-      // Ring: 3h window (180min), show how much time is left
-      const totalWindow = 180; // 3h before cutoff is the "safe zone"
-      const ringPct = pastCutoff ? 0 : Math.min(100, (untilCutoff / totalWindow) * 100);
-      const circumf = 2 * Math.PI * 14;
-      const ringOffset = circumf * (1 - ringPct / 100);
-      const cutoffTimeStr = minToTime(cutoffMin);
-      const remainH = Math.floor(untilCutoff / 60);
-      const remainM = untilCutoff % 60;
-      const remainStr = pastCutoff ? '0:00' : (remainH > 0 ? remainH + ':' + String(remainM).padStart(2,'0') : remainM + 'm');
-      const meterColor = pastCutoff ? '#ff6b6b' : untilCutoff < 30 ? '#ffb547' : 'var(--la-accent)';
-
-      return `<div class="live-card" data-live-id="${a.id}" data-type="${a.type}">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div class="la-meter-ring">
-              <svg viewBox="0 0 36 36">
-                <circle class="la-meter-bg" cx="18" cy="18" r="14"/>
-                <circle class="la-meter-fill" cx="18" cy="18" r="14" stroke="${meterColor}"
-                  stroke-dasharray="${circumf.toFixed(1)}" stroke-dashoffset="${ringOffset.toFixed(1)}"/>
-              </svg>
-            </div>
-            <div>
-              <div style="font-size:11px;color:rgba(255,255,255,0.4);font-weight:500;">${pastCutoff ? 'Past Cutoff' : 'Meter Remaining'}${isPaused ? ' · <span style="color:#fbbf24">PAUSED</span>' : ''}</div>
-              <div class="la-meter-val">${remainStr}</div>
-            </div>
-          </div>
-          <div class="la-timer" style="font-size:22px;letter-spacing:-1px;${timerStyle}">${dur}</div>
-        </div>
-        ${pastCutoff ? `<div class="la-warn" style="margin-top:6px;padding:5px 10px;border-radius:8px;background:rgba(255,107,107,0.08);font-size:10px;font-weight:600;color:#ff6b6b;display:flex;align-items:center;gap:5px;">${svgIcon('warning',{size:12})} CO half-life is 4-5h - allow 3h+ before sleep</div>` : '<div class="la-warn" style="display:none;"></div>'}
-        ${controlsRow}
-      </div>`;
-    }
-
-    // ── Workout: compact with progress ──
-    if (a.type === 'workout') {
-      const pct = meta.targetMin ? Math.min(100, Math.round(elapsedMin / meta.targetMin * 100)) : 0;
-      return `<div class="live-card" data-live-id="${a.id}" data-type="workout">
-        <div class="la-header">
-          <div class="la-badge">
-            <div class="la-icon">${svgIcon(meta.icon,{size:18})}</div>
-            <div>
-              <div class="la-title">Workout</div>
-              <div class="la-live">${statusLabel}</div>
-            </div>
-          </div>
-          <div class="la-timer" style="${timerStyle}">${dur}</div>
-        </div>
-        <div class="la-progress"><div class="la-progress-fill" style="width:${pct}%"></div></div>
-        <div style="display:flex;justify-content:space-between;margin-top:6px;">
-          <span class="la-meta-text"><span class="la-elapsed-min">${elapsedMin}</span>/${meta.targetMin} min</span>
-          <span class="la-meta-text" style="color:var(--la-accent);font-weight:700;">${pct}%</span>
-        </div>
-        ${controlsRow}
-      </div>`;
-    }
-
-    // ── Deep Work: ISS-style arc showing progress to optimal session ──
-    if (a.type === 'deep_work') {
-      const target = meta.targetMin || 90;
-      const maxDisplay = target * 1.5; // arc goes to 135min
-      const pct = Math.min(100, (elapsedMin / maxDisplay) * 100);
-      // Arc math: 180° arc from left to right
-      const W = 280, H = 52, cx = W/2, cy = H + 12, r = 72;
-      const startAngle = Math.PI, endAngle = 0;
-      const arcLength = Math.PI * r;
-      const dashOffset = arcLength * (1 - pct / 100);
-      // Dot position along arc
-      const dotAngle = startAngle - (pct / 100) * Math.PI;
-      const dotX = cx + r * Math.cos(dotAngle);
-      const dotY = cy + r * Math.sin(dotAngle);
-      // Optimal marker at target position
-      const optPct = (target / maxDisplay) * 100;
-      const optAngle = startAngle - (optPct / 100) * Math.PI;
-      const optX = cx + r * Math.cos(optAngle);
-      const optY = cy + r * Math.sin(optAngle);
-      const pomoCount = Math.floor(elapsedMin / 25);
-      const dwStatusLabel = isPaused ? '<span class="la-paused-badge">PAUSED</span>' : '<span class="la-live-dot"></span> FOCUSED';
-
-      return `<div class="live-card" data-live-id="${a.id}" data-type="deep_work">
-        <div class="la-header">
-          <div class="la-badge">
-            <div class="la-icon">${svgIcon(meta.icon,{size:18})}</div>
-            <div>
-              <div class="la-title">Deep Work</div>
-              <div class="la-live">${dwStatusLabel}</div>
-            </div>
-          </div>
-          <div style="text-align:right;">
-            <div class="la-timer" style="font-size:24px;letter-spacing:-1px;${timerStyle}">${dur}</div>
-            <div style="font-size:9px;color:rgba(255,255,255,0.3);font-weight:600;margin-top:1px;"><span class="la-pomo-count">${pomoCount}</span> pomodoros</div>
-          </div>
-        </div>
-        <div class="la-arc-wrap">
-          <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
-            <path class="la-arc-bg" d="M ${cx - r},${cy} A ${r},${r} 0 0,1 ${cx + r},${cy}" />
-            <path class="la-arc-fill" d="M ${cx - r},${cy} A ${r},${r} 0 0,1 ${cx + r},${cy}"
-              stroke-dasharray="${arcLength.toFixed(1)}" stroke-dashoffset="${dashOffset.toFixed(1)}" />
-            <circle cx="${optX.toFixed(1)}" cy="${optY.toFixed(1)}" r="2" fill="rgba(255,255,255,0.2)"/>
-            <text x="${optX.toFixed(1)}" y="${optY.toFixed(1) - 6}" text-anchor="middle"
-              fill="rgba(255,255,255,0.25)" font-size="7" font-weight="600">${target}m</text>
-            <circle class="la-arc-dot" cx="${dotX.toFixed(1)}" cy="${dotY.toFixed(1)}" r="4"/>
-          </svg>
-        </div>
-        <div class="la-arc-labels"><span>0m</span><span style="color:var(--la-accent);font-weight:700;">optimal ${target}m</span><span>${maxDisplay}m</span></div>
-        ${controlsRow}
-      </div>`;
-    }
-
-    // ── Sauna: compact with ring ──
-    if (a.type === 'sauna') {
-      const pct = meta.targetMin ? Math.min(100, Math.round(elapsedMin / meta.targetMin * 100)) : 0;
-      const circumf = 2 * Math.PI * 18;
-      const saunaStatus = isPaused ? '<span class="la-paused-badge">PAUSED</span>' : '<span class="la-live-dot"></span> HEAT';
-      return `<div class="live-card" data-live-id="${a.id}" data-type="sauna">
-        <div class="la-header">
-          <div class="la-badge">
-            <div class="la-icon">${svgIcon(meta.icon,{size:18})}</div>
-            <div>
-              <div class="la-title">Sauna</div>
-              <div class="la-live">${saunaStatus}</div>
-            </div>
-          </div>
-          <div class="la-timer" style="${timerStyle}">${dur}</div>
-        </div>
-        <div class="la-progress"><div class="la-progress-fill" style="width:${pct}%"></div></div>
-        <div style="display:flex;justify-content:space-between;margin-top:5px;">
-          <span class="la-meta-text">${elapsedMin}/${meta.targetMin} min</span>
-          <span class="la-meta-text" style="color:var(--la-accent)">${pct}%</span>
-        </div>
-        ${controlsRow}
-      </div>`;
-    }
-
-    // ── Meditation: compact zen ──
-    if (a.type === 'meditation') {
-      const pct = meta.targetMin ? Math.min(100, Math.round(elapsedMin / meta.targetMin * 100)) : 0;
-      const medStatus = isPaused ? '<span class="la-paused-badge">PAUSED</span>' : '<span class="la-live-dot"></span> CALM';
-      return `<div class="live-card" data-live-id="${a.id}" data-type="meditation">
-        <div class="la-header">
-          <div class="la-badge">
-            <div class="la-icon">${svgIcon(meta.icon,{size:18})}</div>
-            <div>
-              <div class="la-title">Meditation</div>
-              <div class="la-live">${medStatus}</div>
-            </div>
-          </div>
-          <div class="la-timer" style="${timerStyle}">${dur}</div>
-        </div>
-        <div class="la-progress"><div class="la-progress-fill" style="width:${pct}%"></div></div>
-        ${controlsRow}
-      </div>`;
-    }
-
-    // ── Default: compact generic ──
-    const pct = meta.targetMin ? Math.min(100, Math.round(elapsedMin / meta.targetMin * 100)) : 0;
-    return `<div class="live-card" data-live-id="${a.id}" data-type="${a.type}">
+    return `<div class="live-card" data-live-id="${a.id}" data-type="${a.type}" style="--la-accent:${accent};">
       <div class="la-header">
         <div class="la-badge">
-          <div class="la-icon">${svgIcon(meta.icon,{size:18})}</div>
+          <div class="la-icon">${svgIcon(meta.icon, {size:18})}</div>
           <div>
             <div class="la-title">${meta.label}</div>
-            <div class="la-live">${statusLabel}</div>
+            <div class="la-live">${status}</div>
           </div>
         </div>
-        <div class="la-timer" style="${timerStyle}">${dur}</div>
+        ${target ? `<div class="la-pct">${pct}<span style="font-size:11px;">%</span></div>` : ''}
       </div>
-      ${meta.targetMin ? `<div class="la-progress"><div class="la-progress-fill" style="width:${pct}%"></div></div>` : ''}
+      <div class="la-ring-wrap">
+        <svg class="la-ring" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="${R}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="9"/>
+          <circle class="la-ring-fill" cx="60" cy="60" r="${R}" fill="none" stroke="var(--la-accent)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${CIRC.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}" transform="rotate(-90 60 60)"/>
+        </svg>
+        <div class="la-ring-center">
+          <div class="la-timer" style="${isPaused ? 'opacity:0.4;' : ''}">${dur}</div>
+          <div class="la-target-label">${target ? 'of ' + target + ' min' : 'elapsed'}</div>
+        </div>
+      </div>
       ${controlsRow}
     </div>`;
   }).join('');
