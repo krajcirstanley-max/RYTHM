@@ -968,42 +968,64 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .sleep-bar-fg { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
 
-/* JOURNAL  - redesigned */
+/* JOURNAL  - habit-tracker redesign */
 /* ========== JOURNAL ========== */
 .journal-date {
-  font-size: 11px; font-weight: 700; letter-spacing: 1px;
-  color: var(--text-3); 
+  font-size: 13px; font-weight: 700; letter-spacing: -0.2px;
+  color: var(--text);
 }
+/* Day strip */
+.jrnl-daystrip { display: flex; gap: 7px; padding: 0 2px; }
+.jrnl-day {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 9px 0; border-radius: 14px; cursor: pointer;
+  background: var(--bg-2); border: 1px solid transparent; transition: all 0.15s;
+}
+.jrnl-day .dow { font-size: 9px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-4); text-transform: uppercase; }
+.jrnl-day .dnum { font-size: 15px; font-weight: 800; color: var(--text-2); }
+.jrnl-day .ddot { width: 5px; height: 5px; border-radius: 50%; background: transparent; }
+.jrnl-day.has .ddot { background: var(--energy); }
+.jrnl-day.today { background: rgba(155,127,240,0.14); border-color: rgba(155,127,240,0.3); }
+.jrnl-day.today .dnum { color: var(--purple); }
+.jrnl-day.today .dow { color: var(--purple); }
+
 .journal-cat {
-  font-size: 10px; font-weight: 700; letter-spacing: 0.6px;
-  color: var(--text-4); margin: 18px 0 8px; padding: 0 18px;
-  text-transform: uppercase;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
+  color: var(--text-3); margin: 22px 0 10px; padding: 0 4px;
 }
-.journal-cat:first-child { margin-top: 6px; }
-.journal-grid { display: flex; flex-wrap: wrap; gap: 7px; padding: 0 18px; }
+.journal-cat:first-child { margin-top: 8px; }
+.journal-grid { display: flex; flex-direction: column; gap: 8px; }
+/* Big habit card */
 .journal-item {
-  display: flex; align-items: center; gap: 8px;
-  padding: 8px 13px 8px 9px;
-  background: var(--bg-2);
+  display: flex; align-items: center; gap: 13px;
+  padding: 12px 14px;
+  background: var(--card);
   border: 1px solid var(--card-border);
-  border-radius: 100px;
+  border-radius: 16px;
   cursor: pointer; transition: all 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
-.journal-item:active { transform: scale(0.96); }
+.journal-item:active { transform: scale(0.985); }
+.journal-item.active { background: linear-gradient(120deg, rgba(46,207,130,0.07), var(--card) 60%); border-color: rgba(46,207,130,0.25); }
+.journal-item.active.neg { background: linear-gradient(120deg, rgba(240,160,64,0.08), var(--card) 60%); border-color: rgba(240,160,64,0.25); }
+.journal-item .ji-icon {
+  width: 42px; height: 42px; border-radius: 13px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-3); color: var(--text-2);
+}
+.journal-item.active .ji-icon { background: rgba(46,207,130,0.14); color: var(--energy); }
+.journal-item.active.neg .ji-icon { background: rgba(240,160,64,0.14); color: var(--warn); }
+.journal-item .ji-body { flex: 1; min-width: 0; }
+.journal-item .ji-label { font-size: 14.5px; font-weight: 700; color: var(--text); letter-spacing: -0.2px; }
+.journal-item .ji-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; display: flex; align-items: center; gap: 5px; }
 .journal-item .ji-check {
-  width: 18px; height: 18px; border-radius: 6px; flex-shrink: 0;
-  border: 1.5px solid var(--text-4); color: transparent;
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid var(--text-4); color: transparent;
   display: flex; align-items: center; justify-content: center;
   transition: all 0.15s;
 }
 .journal-item.active .ji-check { background: var(--energy); border-color: var(--energy); color: #06140d; }
 .journal-item.active.neg .ji-check { background: var(--warn); border-color: var(--warn); color: #1a1206; }
-.journal-item .ji-icon { display: flex; align-items: center; flex-shrink: 0; color: var(--text-3); }
-.journal-item.active .ji-icon { color: var(--energy); }
-.journal-item.active.neg .ji-icon { color: var(--warn); }
-.journal-item .ji-label { font-size: 12.5px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
-.journal-item.active .ji-label { color: var(--text); }
 .journal-save {
   width: 100%; padding: 14px; border: none; border-radius: 12px;
   background: rgba(255,255,255,0.06); color: #fff; font-weight: 700;
@@ -3222,14 +3244,15 @@ section { padding: 0 14px; margin-bottom: 6px; }
       <div id="journalStreakHero"></div>
     </section>
     <section>
-      <div class="journal-today-card" style="background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);overflow:hidden;">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 18px 4px;">
-          <div class="journal-date" id="journalDate">Today</div>
-          <div id="journalAutoSaved" style="font-size:11px;color:var(--energy);opacity:0;transition:opacity 0.3s;">saved</div>
-        </div>
-        <div id="journalGrid"></div>
-        <div class="journal-sel-count" id="journalSelCount" style="display:none;"></div>
+      <div class="jrnl-daystrip" id="journalDayStrip"></div>
+    </section>
+    <section>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 4px 2px;">
+        <div class="journal-date" id="journalDate">Today</div>
+        <div id="journalAutoSaved" style="font-size:11px;color:var(--energy);opacity:0;transition:opacity 0.3s;">saved</div>
       </div>
+      <div id="journalGrid"></div>
+      <div class="journal-sel-count" id="journalSelCount" style="display:none;"></div>
     </section>
     <section>
       <div id="journalHabitStreaks"></div>
@@ -3469,7 +3492,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v166';
+const APP_VERSION = 'v167';
 
 // ========================================
 //  ICON SYSTEM (Lucide-style line icons, replaces emoji)
@@ -12715,6 +12738,10 @@ function initJournal() {
   const behaviorMap = {};
   for (const b of JOURNAL_BEHAVIORS) behaviorMap[b.id] = b;
 
+  // Per-habit streaks for the card subtitle
+  const streakMap = {};
+  for (const s of computeHabitStreaks()) streakMap[s.id] = s.streak;
+
   gridEl.innerHTML = JOURNAL_CATEGORIES.map(cat => {
     const items = cat.ids
       .filter(id => behaviorMap[id])
@@ -12722,20 +12749,49 @@ function initJournal() {
         const b = behaviorMap[id];
         const on = selectedBehaviors.has(b.id);
         const neg = NEGATIVE_BEHAVIORS.has(b.id);
+        const st = streakMap[b.id] || 0;
+        let sub;
+        if (st >= 2) sub = `<span style="display:flex;color:var(--warn)">${svgIcon('flame',{size:11})}</span> ${st} day streak`;
+        else if (b.sub) sub = b.sub;
+        else sub = on ? 'Logged today' : 'Tap to log';
         return `<div class="journal-item ${on ? 'active' : ''} ${neg ? 'neg' : ''}" data-id="${b.id}" onclick="toggleBehavior('${b.id}', this)">
-          <div class="ji-check">${svgIcon('check', {size:13})}</div>
-          <div class="ji-icon">${svgIcon(b.icon, {size:17}) || ''}</div>
-          <div class="ji-label">${b.label}</div>
+          <div class="ji-icon">${svgIcon(b.icon, {size:20}) || svgIcon('circle',{size:14})}</div>
+          <div class="ji-body">
+            <div class="ji-label">${b.label}</div>
+            <div class="ji-sub">${sub}</div>
+          </div>
+          <div class="ji-check">${svgIcon('check', {size:15})}</div>
         </div>`;
       }).join('');
     return `<div class="journal-cat">${cat.label}</div><div class="journal-grid">${items}</div>`;
   }).join('');
 
+  renderJournalDayStrip();
   updateJournalSelCount();
   renderJournalStreakHero();
   renderJournalHabitStreaks();
   renderCorrelations();
   renderJournalHistory();
+}
+
+function renderJournalDayStrip() {
+  const el = document.getElementById('journalDayStrip');
+  if (!el) return;
+  const logged = new Set((ST.journal || []).map(j => j.date));
+  const today = new Date();
+  const dows = ['SU','MO','TU','WE','TH','FR','SA'];
+  let html = '';
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    const ds = localDateStr(d);
+    const isToday = i === 0;
+    html += `<div class="jrnl-day ${isToday ? 'today' : ''} ${logged.has(ds) ? 'has' : ''}">
+      <span class="dow">${dows[d.getDay()]}</span>
+      <span class="dnum">${d.getDate()}</span>
+      <span class="ddot"></span>
+    </div>`;
+  }
+  el.innerHTML = html;
 }
 
 function updateJournalSelCount() {
@@ -12779,8 +12835,15 @@ function toggleBehavior(id, el) {
       startLiveActivity(id);
     }
   }
-  // Refresh streak hero live as you log
+  // Refresh streak hero + day strip live as you log
   renderJournalStreakHero();
+  renderJournalDayStrip();
+  // Update this card's subtitle
+  const sub = el.querySelector('.ji-sub');
+  if (sub && !el.querySelector('.ji-sub span')) {
+    const b = (JOURNAL_BEHAVIORS.find(x => x.id === id) || {});
+    sub.textContent = selectedBehaviors.has(id) ? 'Logged today' : (b.sub || 'Tap to log');
+  }
   updateJournalSelCount();
   // Auto-save after a short debounce (lets user toggle multiple items quickly)
   clearTimeout(_journalSaveTimer);
