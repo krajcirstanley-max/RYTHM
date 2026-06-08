@@ -3467,7 +3467,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v163';
+const APP_VERSION = 'v164';
 
 // ========================================
 //  ICON SYSTEM (Lucide-style line icons, replaces emoji)
@@ -4328,7 +4328,7 @@ function derivePersonalSleepNeed() {
   // Needs 14+ days of paired (sleep, next-morning HRV) data
   const hrvHist = (ST._history && ST._history.hrv) || [];
   const sleepHist = (ST._history && ST._history.sleep) || [];
-  const hrvBase = ST.metrics?.hrvBaseline || 42;
+  const hrvBase = (ST.metrics?.hrvBaseline || ST.metrics?.sleepHrv || ST.metrics?.hrv || 50);
   const fallback = (ST.health && ST.health.sleepTarget) || 8;
 
   if (hrvHist.length < 14 || sleepHist.length < 14) {
@@ -4642,8 +4642,8 @@ function computeHistoricalReadiness(dateStr) {
   const rhrEntry = (hist.rhr || []).find(d => d.date === dateStr);
   const sleepEntry = (hist.sleep || []).find(d => d.date === dateStr);
 
-  const hrvBase = ST.metrics?.hrvBaseline || 42;
-  const rhrBase = ST.metrics?.rhrBaseline || 57;
+  const hrvBase = (ST.metrics?.hrvBaseline || ST.metrics?.sleepHrv || ST.metrics?.hrv || 50);
+  const rhrBase = (ST.metrics?.rhrBaseline || ST.metrics?.rhr || 60);
 
   // HRV score (30%)
   let hrvScore = 50;
@@ -5217,7 +5217,7 @@ function buildSleepHRCurve(stg, totalH) {
   if (remLeft > 5) segments.push({ type: 'rem', min: Math.round(remLeft) });
 
   const totalSegMin = segments.reduce((s,x) => s+x.min, 0) || 1;
-  const rhr = ST.metrics.rhr || 57;
+  const rhr = ST.metrics.rhr || 55; // modeled HR curve baseline (disclosed as estimated)
 
   // Generate HR data points with noise
   const points = [];
@@ -5903,7 +5903,7 @@ function buildRecoveryFullPage() {
   const tendonColor = tendonScore >= 70 ? 'var(--energy)' : tendonScore >= 45 ? 'var(--warn)' : 'var(--danger)';
 
   // Autonomic balance - HRV ratio + RHR delta
-  const hrvRatio = m.hrv / (m.hrvBaseline || 42);
+  const hrvRatio = m.hrv / ((m.hrvBaseline || m.sleepHrv || m.hrv || 50));
   const autoScore = Math.min(100, Math.max(0, Math.round(70 + (hrvRatio - 1) * 200)));
   const autoColor = autoScore >= 65 ? 'var(--energy)' : autoScore >= 40 ? 'var(--warn)' : 'var(--danger)';
   const autoLabel = autoScore >= 65 ? 'Parasympathetic dominant (recovery)' : autoScore >= 40 ? 'Mixed - shifting toward recovery' : 'Sympathetic dominant (stress/fatigue)';
@@ -6120,8 +6120,8 @@ function closeStressFullPage(fromPopstate) {
 
 function buildStressFullPage() {
   const m = ST.metrics;
-  const hrvBase = m.hrvBaseline || 42;
-  const rhrBase = m.rhrBaseline || 57;
+  const hrvBase = (m.hrvBaseline || m.sleepHrv || m.hrv || 50);
+  const rhrBase = (m.rhrBaseline || m.rhr || 60);
   const hrvRatio = m.hrv / hrvBase;
   const sl = ST.sleep || DEFAULT_STATE.sleep;
   const stg = sl.stages || { deep: 0, rem: 0, core: 0, awake: 0 };
@@ -6971,7 +6971,7 @@ function renderMetrics() {
   // Stress monitor - derived from HRV vs baseline
   const stressEl = document.getElementById('stressMonitorSummary');
   if (stressEl) {
-    const hrvRatio = m.hrv / (m.hrvBaseline || 42);
+    const hrvRatio = m.hrv / ((m.hrvBaseline || m.sleepHrv || m.hrv || 50));
     let stressLevel, stressDot, stressColor;
     if (hrvRatio >= 0.95) { stressLevel = 'LOW'; stressDot = 'green'; stressColor = 'var(--energy)'; }
     else if (hrvRatio >= 0.85) { stressLevel = 'MEDIUM'; stressDot = 'yellow'; stressColor = 'var(--warn)'; }
@@ -8357,7 +8357,7 @@ function renderWeekInsights() {
 
   if (hrvArr.length >= 3) {
     const avgHrv7 = +(hrvArr.reduce((s,d) => s+d.value, 0) / hrvArr.length).toFixed(1);
-    const baseline = ST.metrics.hrvBaseline || 42;
+    const baseline = (ST.metrics.hrvBaseline || ST.metrics.sleepHrv || ST.metrics.hrv || 50);
     const pctVsBase = Math.round((avgHrv7 / baseline - 1) * 100);
     const cls = pctVsBase >= 5 ? 'good' : pctVsBase <= -10 ? 'warn' : 'info';
     insights.push({ cls, label: '7-Day HRV Trend', text: `Avg <b>${avgHrv7}ms</b> vs baseline ${baseline}ms (<b>${pctVsBase >= 0 ? '+' : ''}${pctVsBase}%</b>). ${pctVsBase >= 5 ? 'Trending up, your body is adapting well.' : pctVsBase <= -10 ? 'Below baseline. Consider reducing training volume.' : 'Holding steady.'}` });
@@ -8365,7 +8365,7 @@ function renderWeekInsights() {
 
   if (rhrArr.length >= 3) {
     const avgRhr7 = Math.round(rhrArr.reduce((s,d) => s+d.value, 0) / rhrArr.length);
-    const baseline = ST.metrics.rhrBaseline || 63;
+    const baseline = (ST.metrics.rhrBaseline || ST.metrics.rhr || 60);
     const diff = avgRhr7 - baseline;
     const cls = diff <= -2 ? 'good' : diff >= 3 ? 'warn' : 'info';
     insights.push({ cls, label: '7-Day RHR', text: `Avg <b>${avgRhr7}bpm</b> (baseline ${baseline}). ${diff <= -2 ? 'Lower than usual, good cardiovascular fitness signal.' : diff >= 3 ? 'Elevated. Watch for overtraining or stress.' : 'Normal range.'}` });
@@ -8815,7 +8815,7 @@ function renderPerformanceForecast() {
   const recovery = computeReadiness();
   const strain = computeStrain();
   const m = ST.metrics || {};
-  const hrvBase = m.hrvBaseline || 42;
+  const hrvBase = (m.hrvBaseline || m.sleepHrv || m.hrv || 50);
   const sl = ST.sleep || {};
   const tl = computeTrainingLoad();
 
@@ -8956,8 +8956,8 @@ function renderRecoveryBaselines() {
     return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="opacity:0.7">${baseLine}<polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   }
 
-  const hrvBaseline = m.hrvBaseline || 42;
-  const rhrBaseline = m.rhrBaseline || 57;
+  const hrvBaseline = (m.hrvBaseline || m.sleepHrv || m.hrv || 50);
+  const rhrBaseline = (m.rhrBaseline || m.rhr || 60);
   const sleepBaseline = ST.health?.sleepTarget || 8;
   const rows = [
     { name: 'HRV', val: m.hrv || 0, unit: 'ms', baseline: hrvBaseline, spark: miniSparkline(hist.hrv, '#00ec7f', false, hrvBaseline), trend: hrvTrend },
@@ -10301,7 +10301,7 @@ function renderCoachTraining() {
   const tl = computeTrainingLoad();
   const m = ST.metrics || {};
   const sl = ST.sleep || {};
-  const hrvBase = m.hrvBaseline || 42;
+  const hrvBase = (m.hrvBaseline || m.sleepHrv || m.hrv || 50);
   const hrvPct = m.hrv ? Math.round(((m.hrv / hrvBase) - 1) * 100) : 0;
 
   // Check if session type is selected from check-in
@@ -10745,7 +10745,7 @@ function renderCoachPotential() {
 
   // Recovery efficiency: how fast HRV bounces back after strain
   const hrvArr = (history.hrv || []).slice(-14);
-  const avgHrv = hrvArr.length ? hrvArr.reduce((s,h) => s + h.value, 0) / hrvArr.length : m.hrv || 42;
+  const avgHrv = hrvArr.length ? hrvArr.reduce((s,h) => s + h.value, 0) / hrvArr.length : (m.sleepHrv || m.hrv || 0);
   const recoveryEff = avgHrv > 0 ? Math.min(100, Math.round((avgHrv / 60) * 100)) : 50;
 
   // Training capacity: based on weekly volume tolerance
@@ -10976,7 +10976,7 @@ function renderGeneticPotential() {
   // Look at days with high strain followed by HRV measurements
   const hrvByDate = {};
   for (const hv of hrvHist) hrvByDate[hv.date] = hv.value;
-  const hrvBase = m.hrvBaseline || 42;
+  const hrvBase = (m.hrvBaseline || m.sleepHrv || m.hrv || 50);
   let bounceScores = [];
   // Find strain days and check next-day HRV recovery
   const activeCals = history.active_cal || [];
@@ -12164,7 +12164,7 @@ function buildDetailContent(type) {
       <div class="detail-section">
         <div class="detail-section-title">YOUR DATA</div>
         <div class="detail-row"><span class="detail-row-label">Current</span><span class="detail-row-val" style="color:var(--energy)">${m.hrv} ms</span></div>
-        <div class="detail-row"><span class="detail-row-label">7-day baseline</span><span class="detail-row-val">${m.hrvBaseline || 42} ms</span></div>
+        <div class="detail-row"><span class="detail-row-label">7-day baseline</span><span class="detail-row-val">${m.hrvBaseline ? m.hrvBaseline + ' ms' : 'calibrating'}</span></div>
         <div class="detail-row"><span class="detail-row-label">vs baseline</span><span class="detail-row-val" style="color:${m.hrvDelta >= 0 ? 'var(--energy)' : 'var(--warn)'}">${m.hrvDelta > 0 ? '+' : ''}${m.hrvDelta} ms</span></div>
         <div class="detail-row"><span class="detail-row-label">Elite target</span><span class="detail-row-val">&ge;65 ms 🟢</span></div>
       </div>
@@ -12189,7 +12189,7 @@ function buildDetailContent(type) {
       <div class="detail-section">
         <div class="detail-section-title">YOUR DATA</div>
         <div class="detail-row"><span class="detail-row-label">Current</span><span class="detail-row-val">${m.rhr} bpm</span></div>
-        <div class="detail-row"><span class="detail-row-label">14-day baseline</span><span class="detail-row-val">${m.rhrBaseline || 57} bpm</span></div>
+        <div class="detail-row"><span class="detail-row-label">14-day baseline</span><span class="detail-row-val">${m.rhrBaseline ? m.rhrBaseline + ' bpm' : 'calibrating'}</span></div>
         <div class="detail-row"><span class="detail-row-label">vs baseline</span><span class="detail-row-val" style="color:${m.rhrDelta <= 0 ? 'var(--energy)' : 'var(--warn)'}">${m.rhrDelta > 0 ? '+' : ''}${m.rhrDelta} bpm</span></div>
         <div class="detail-row"><span class="detail-row-label">Power athlete range</span><span class="detail-row-val">50-60 bpm 🟠</span></div>
       </div>
@@ -14934,13 +14934,13 @@ async function fetchHealthData() {
     const recoveryLockedToday = ST._recoveryLockedDate === todayKey;
 
     if (data.hrv) {
-      const hrvBase = ST.metrics.hrvBaseline || 42;
+      const hrvBase = (ST.metrics.hrvBaseline || ST.metrics.sleepHrv || ST.metrics.hrv || 50);
       ST.metrics.hrvDelta = +(ST.metrics.hrv - hrvBase).toFixed(1);
     }
 
     // Update RHR readiness FIRST (before locking)
     if (data.rhr) {
-      const rhrBase = ST.metrics.rhrBaseline || 57;
+      const rhrBase = (ST.metrics.rhrBaseline || ST.metrics.rhr || 60);
       ST.metrics.rhrDelta = Math.round(ST.metrics.rhr - rhrBase);
       if (!recoveryLockedToday) {
         const rhrDiff = rhrBase - ST.metrics.rhr;
@@ -15240,8 +15240,8 @@ function backfillDailyReadiness() {
   const hrvHist = ST._history.hrv || [];
   const rhrHist = ST._history.rhr || [];
   const sleepHist = ST._history.sleep || [];
-  const hrvBase = ST.metrics.hrvBaseline || 42;
-  const rhrBase = ST.metrics.rhrBaseline || 57;
+  const hrvBase = (ST.metrics.hrvBaseline || ST.metrics.sleepHrv || ST.metrics.hrv || 50);
+  const rhrBase = (ST.metrics.rhrBaseline || ST.metrics.rhr || 60);
   const sleepTarget = ST.health?.sleepTarget || 8;
 
   // Build lookup maps by date
@@ -16325,7 +16325,7 @@ function getNotificationSchedule() {
   else trainingMsg = 'Rest day recommended  - active recovery only';
 
   // HRV context
-  const hrvBase = m.hrvBaseline || 42;
+  const hrvBase = (m.hrvBaseline || m.sleepHrv || m.hrv || 50);
   const hrvPct = m.hrv ? Math.round(((m.hrv / hrvBase) - 1) * 100) : null;
   const hrvNote = hrvPct !== null
     ? (hrvPct >= 10 ? ', HRV ↑' + hrvPct + '%' : hrvPct <= -15 ? ', HRV ↓' + Math.abs(hrvPct) + '% ⚠️' : '')
