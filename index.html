@@ -3467,7 +3467,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v160';
+const APP_VERSION = 'v161';
 
 // ========================================
 //  ICON SYSTEM (Lucide-style line icons, replaces emoji)
@@ -3597,23 +3597,26 @@ const DEFAULT_STATE = {
   seasonal: { dayLength: null, adjustment: null },
   sleepDebt: [],
   metrics: {
-    hrv: 38.3, hrvDelta: 0,
-    rhr: 57, rhrDelta: 0,
-    sleepDebt: 0.5, sleepDebtDelta: -0.7,
-    respiratory: 14.8, respiratoryDelta: 0,
-    // Personal baselines (calibrated from 1yr Apple Health data  - 349-364 days)
-    hrvBaseline: 42,   // all-time median HRV (range 16-87ms)
-    rhrBaseline: 63,   // all-time median RHR (range 54-89bpm)
+    // No fabricated seeds. Everything below stays null/0 until real Apple
+    // Health data syncs. UI shows "--" for null, never a made-up number.
+    hrv: null, hrvDelta: 0,
+    rhr: null, rhrDelta: 0,
+    sleepDebt: 0, sleepDebtDelta: 0,
+    respiratory: null, respiratoryDelta: 0,
+    sleepHrv: null, sleepHrvBaseline: null,
+    // Baselines calibrate from real synced history (null until then)
+    hrvBaseline: null,
+    rhrBaseline: null,
   },
   readiness: {
-    hrv: 70, rhr: 60, sleep: 94, training: 60
+    hrv: 0, rhr: 0, sleep: 0, training: 0
   },
   weekScores: [],
   health: {
     vo2max: null,
     vo2maxDelta: 0,
     _vo2Synced: false,
-    spo2: 96.5,
+    spo2: null,
     spo2Delta: 0,
     skinTemp: null,
     skinTempDelta: 0,
@@ -4481,7 +4484,7 @@ function hrvStatus() {
   let base;
   if (m.sleepHrvBaseline) base = m.sleepHrvBaseline;
   else if (m.sleepHrv) base = m.sleepHrv;
-  else base = m.hrvBaseline || 42;
+  else base = m.hrvBaseline || val || 0;
   const ratio = base > 0 ? val / base : 1;
   return {
     val, base, ratio,
@@ -4511,13 +4514,15 @@ function computeReadiness(forDate) {
   // Baseline must be the SAME scale as hrvNow. If we have overnight HRV but not
   // yet an overnight baseline (needs 3+ nights), use hrvNow itself so the ratio
   // is neutral (~1.0) rather than comparing overnight HRV to a daytime baseline.
+  // No fabricated baseline: if there is no real baseline, the night is its own
+  // baseline (neutral). Never inject a made-up 42.
   let hrvBase;
   if (m.sleepHrvBaseline) hrvBase = m.sleepHrvBaseline;
   else if (m.sleepHrv) hrvBase = m.sleepHrv;
-  else hrvBase = m.hrvBaseline || 42;
+  else hrvBase = m.hrvBaseline || hrvNow || 0;
   let hrvScore;
-  if (hrvNow <= 0) {
-    hrvScore = r.hrv || 50; // fallback to manual input
+  if (hrvNow <= 0 || hrvBase <= 0) {
+    hrvScore = 50; // no real HRV data -> neutral, not fabricated
   } else {
     // Score: 100 at 140%+ of baseline, 50 at baseline, 0 at 50% of baseline
     // Wider curve: athletes have naturally variable HRV, less harsh penalty below baseline
@@ -4530,11 +4535,11 @@ function computeReadiness(forDate) {
   hrvScore = Math.max(0, Math.min(100, hrvScore));
 
   // === RHR Component (15%)  - lower is better for athletes ===
-  const rhrBase = m.rhrBaseline || 57;
+  const rhrBase = m.rhrBaseline || 0;
   const rhrNow = m.rhr || 0;
   let rhrScore;
-  if (rhrNow <= 0) {
-    rhrScore = r.rhr || 50;
+  if (rhrNow <= 0 || rhrBase <= 0) {
+    rhrScore = 50; // no real RHR/baseline -> neutral, not fabricated
   } else {
     // 50 at baseline. Small dead-zone for day-to-day noise (+/-5% ~= +/-3bpm is
     // normal, not a recovery hit). Gentle penalty above that.
@@ -6899,24 +6904,36 @@ function buildEnergyFullPage() {
 
 function renderMetrics() {
   const m = ST.metrics;
-  // Elite power athlete benchmarks (Berkoff 2007, Plews 2013)
-  // HRV: use personal 7-day baseline. Alert at -15% below baseline
-  const hrvBase = m.hrvBaseline || 42;
-  const hrvLow = Math.round(hrvBase * 0.85);
-  const hrvHigh = Math.round(hrvBase * 1.3);
-  const hrvInRange = m.hrv >= hrvLow;
-  const hrvExcellent = m.hrv >= 80;
-  // RHR: elite power athlete 50-60 bpm. Alert >+5 above baseline
-  const rhrBase = m.rhrBaseline || 57;
-  const rhrInRange = m.rhr <= rhrBase + 5;
-  // Respiratory: 12-16 normal, alert +2 above baseline
-  const respBase = 14.2;
-  const respInRange = m.respiratory >= 12 && m.respiratory <= 16;
+  const hasHrv = m.hrv != null && m.hrv > 0;
+  const hasRhr = m.rhr != null && m.rhr > 0;
+  const hasResp = m.respiratory != null && m.respiratory > 0;
+  const hrvBase = m.hrvBaseline || 0;
+  const rhrBase = m.rhrBaseline || 0;
+  // "in range" only meaningful when we have real data + baseline
+  const hrvInRange = hasHrv && hrvBase > 0 ? m.hrv >= hrvBase * 0.85 : true;
+  const hrvExcellent = hasHrv && m.hrv >= 80;
+  const rhrInRange = hasRhr && rhrBase > 0 ? m.rhr <= rhrBase + 5 : true;
+  const respInRange = hasResp ? (m.respiratory >= 12 && m.respiratory <= 16) : true;
+
+  const noData = '<span style="color:var(--text-4)">awaiting sync</span>';
+  const hrvRange = !hasHrv ? noData
+    : hrvExcellent ? '<span class="in-range">&#10003; excellent</span>'
+    : (hrvBase <= 0) ? '<span style="color:var(--text-4)">calibrating baseline</span>'
+    : hrvInRange ? '<span class="in-range">&#10003; within baseline</span>'
+    : '<span class="out-range">&#9888; ' + Math.round((1 - m.hrv/hrvBase)*100) + '% below baseline</span>';
+  const rhrRange = !hasRhr ? noData
+    : (rhrBase <= 0) ? '<span style="color:var(--text-4)">calibrating baseline</span>'
+    : rhrInRange ? '<span class="in-range">&#10003; within ' + (rhrBase - 5) + '-' + (rhrBase + 5) + ' bpm</span>'
+    : '<span class="out-range">&#9888; +' + (m.rhr - rhrBase) + ' above baseline</span>';
+  const respRange = !hasResp ? noData
+    : respInRange ? '<span class="in-range">&#10003; within 12-16 rpm</span>'
+    : '<span class="out-range">&#9888; outside 12-16 rpm</span>';
+
   const cells = [
-    { key: 'hrv', icon: '<path d="M3 12h4l2-6 4 12 2-6h6"/>', val: m.hrv, unit: 'ms', name: 'HRV', delta: m.hrvDelta > 0 ? '+' + m.hrvDelta + ' ms' : m.hrvDelta + ' ms', cls: m.hrvDelta >= 0 ? 'delta-up' : 'delta-down', range: hrvExcellent ? '<span class="in-range">&#10003; excellent</span>' : hrvInRange ? '<span class="in-range">&#10003; within baseline</span>' : '<span class="out-range">&#9888; ' + Math.round((1 - m.hrv/hrvBase)*100) + '% below baseline</span>' },
-    { key: 'rhr', icon: '<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>', val: m.rhr, unit: 'bpm', name: 'Resting HR', delta: m.rhrDelta > 0 ? '+' + m.rhrDelta : String(m.rhrDelta), cls: m.rhrDelta <= 0 ? 'delta-up' : 'delta-down', range: rhrInRange ? '<span class="in-range">&#10003; within ' + (rhrBase - 5) + '-' + (rhrBase + 5) + ' bpm</span>' : '<span class="out-range">&#9888; +' + (m.rhr - rhrBase) + ' above baseline</span>' },
-    { key: 'sleepdebt', icon: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" stroke-linecap="round"/>', val: m.sleepDebt, unit: 'h', name: 'Sleep Debt', delta: m.sleepDebtDelta + 'h', cls: m.sleepDebtDelta <= 0 ? 'delta-up' : 'delta-down', range: m.sleepDebt <= 1 ? '<span class="in-range">&#10003; low debt</span>' : '<span class="out-range">&#9888; accumulating</span>' },
-    { key: 'respiratory', icon: '<path d="M3 12c0-4.97 4.03-9 9-9 4.97 0 9 4.03 9 9 0 2.5-1 4.77-2.64 6.41"/>', val: m.respiratory, unit: 'br/m', name: 'Respiratory', delta: respInRange ? 'good' : 'elevated', cls: respInRange ? 'delta-up' : 'delta-down', range: respInRange ? '<span class="in-range">&#10003; within 12-16 rpm</span>' : '<span class="out-range">&#9888; outside 12-16 rpm</span>' },
+    { key: 'hrv', icon: '<path d="M3 12h4l2-6 4 12 2-6h6"/>', val: hasHrv ? m.hrv : '--', unit: hasHrv ? 'ms' : '', name: 'HRV', delta: hasHrv ? (m.hrvDelta > 0 ? '+' + m.hrvDelta + ' ms' : m.hrvDelta + ' ms') : '', cls: m.hrvDelta >= 0 ? 'delta-up' : 'delta-down', range: hrvRange },
+    { key: 'rhr', icon: '<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>', val: hasRhr ? m.rhr : '--', unit: hasRhr ? 'bpm' : '', name: 'Resting HR', delta: hasRhr ? (m.rhrDelta > 0 ? '+' + m.rhrDelta : String(m.rhrDelta)) : '', cls: m.rhrDelta <= 0 ? 'delta-up' : 'delta-down', range: rhrRange },
+    { key: 'sleepdebt', icon: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" stroke-linecap="round"/>', val: m.sleepDebt != null ? m.sleepDebt : '--', unit: 'h', name: 'Sleep Debt', delta: (m.sleepDebtDelta||0) + 'h', cls: (m.sleepDebtDelta||0) <= 0 ? 'delta-up' : 'delta-down', range: (m.sleepDebt||0) <= 1 ? '<span class="in-range">&#10003; low debt</span>' : '<span class="out-range">&#9888; accumulating</span>' },
+    { key: 'respiratory', icon: '<path d="M3 12c0-4.97 4.03-9 9-9 4.97 0 9 4.03 9 9 0 2.5-1 4.77-2.64 6.41"/>', val: hasResp ? m.respiratory : '--', unit: hasResp ? 'br/m' : '', name: 'Respiratory', delta: hasResp ? (respInRange ? 'good' : 'elevated') : '', cls: respInRange ? 'delta-up' : 'delta-down', range: respRange },
   ];
   document.getElementById('metricsGrid').innerHTML = cells.map(c => `
     <div class="metric-cell" style="cursor:pointer" onclick="openDetail('${c.key}')">
