@@ -14,7 +14,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=DM+Mono:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=DM+Mono:wght@300;400;500&family=Fredoka:wght@400;500;600;700&display=swap');
 
 :root, html, body { color-scheme: dark !important; }
 
@@ -968,71 +968,83 @@ section { padding: 0 14px; margin-bottom: 6px; }
 }
 .sleep-bar-fg { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
 
-/* JOURNAL  - habit-tracker redesign */
+/* JOURNAL  - playful habit tracker (Habi-style) */
 /* ========== JOURNAL ========== */
+#view-journal { font-family: 'Fredoka', 'Inter', sans-serif; letter-spacing: 0; }
+#view-journal .section-title, #view-journal .journal-date, #view-journal .journal-cat,
+#view-journal .ji-label, #view-journal .jrnl-day .dnum { font-family: 'Fredoka', sans-serif; }
 .journal-date {
-  font-size: 13px; font-weight: 700; letter-spacing: -0.2px;
-  color: var(--text);
+  font-size: 17px; font-weight: 600; color: var(--text);
 }
 /* Day strip */
 .jrnl-daystrip { display: flex; gap: 7px; padding: 0 2px; }
 .jrnl-day {
   flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
-  padding: 9px 0; border-radius: 14px; cursor: pointer;
-  background: var(--bg-2); border: 1px solid transparent; transition: all 0.15s;
+  padding: 11px 0; border-radius: 18px; cursor: pointer;
+  background: var(--bg-2); border: 1.5px solid transparent; transition: all 0.18s;
 }
-.jrnl-day .dow { font-size: 9px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-4); text-transform: uppercase; }
-.jrnl-day .dnum { font-size: 15px; font-weight: 800; color: var(--text-2); }
+.jrnl-day:active { transform: scale(0.94); }
+.jrnl-day .dow { font-size: 9px; font-weight: 600; letter-spacing: 0.5px; color: var(--text-4); text-transform: uppercase; }
+.jrnl-day .dnum { font-size: 16px; font-weight: 600; color: var(--text-2); }
 .jrnl-day .ddot { width: 5px; height: 5px; border-radius: 50%; background: transparent; }
-.jrnl-day.has .ddot { background: var(--energy); }
-.jrnl-day.today { background: rgba(155,127,240,0.14); border-color: rgba(155,127,240,0.3); }
-.jrnl-day.today .dnum { color: var(--purple); }
-.jrnl-day.today .dow { color: var(--purple); }
+.jrnl-day.has .ddot { background: var(--energy); box-shadow: 0 0 6px var(--energy); }
+.jrnl-day.today { background: linear-gradient(160deg, #9b7ff0, #7a5de0); border-color: transparent; box-shadow: 0 6px 16px rgba(155,127,240,0.35); }
+.jrnl-day.today .dnum, .jrnl-day.today .dow { color: #fff; }
+.jrnl-day.today.has .ddot { background: #fff; box-shadow: 0 0 6px rgba(255,255,255,0.8); }
 
 .journal-cat {
-  font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
-  color: var(--text-3); margin: 22px 0 10px; padding: 0 4px;
+  font-size: 13px; font-weight: 600; letter-spacing: 0;
+  color: var(--text-2); margin: 24px 0 12px; padding: 0 4px;
 }
-.journal-cat:first-child { margin-top: 8px; }
-.journal-grid { display: flex; flex-direction: column; gap: 8px; }
-/* Big habit card */
+.journal-cat:first-child { margin-top: 10px; }
+.journal-grid { display: flex; flex-direction: column; gap: 10px; }
+/* Big playful habit card with category gradient + depth */
 .journal-item {
   display: flex; align-items: center; gap: 13px;
-  padding: 12px 14px;
+  padding: 13px 15px;
   background: var(--card);
   border: 1px solid var(--card-border);
-  border-radius: 16px;
-  cursor: pointer; transition: all 0.15s;
+  border-radius: 20px;
+  cursor: pointer; transition: transform 0.16s, box-shadow 0.2s, border-color 0.2s;
   -webkit-tap-highlight-color: transparent;
+  position: relative; overflow: hidden;
 }
-.journal-item:active { transform: scale(0.985); }
-.journal-item.active { background: linear-gradient(120deg, rgba(46,207,130,0.07), var(--card) 60%); border-color: rgba(46,207,130,0.25); }
-.journal-item.active.neg { background: linear-gradient(120deg, rgba(240,160,64,0.08), var(--card) 60%); border-color: rgba(240,160,64,0.25); }
+.journal-item::before {
+  content: ''; position: absolute; inset: 0; border-radius: 20px; pointer-events: none;
+  background: var(--hb-grad, none); opacity: 0.5;
+}
+.journal-item > * { position: relative; z-index: 1; }
+.journal-item:active { transform: scale(0.97); }
+.journal-item.active {
+  border-color: var(--hb-color, var(--energy));
+  box-shadow: 0 8px 22px -8px var(--hb-shadow, rgba(46,207,130,0.4));
+}
+.journal-item.active::before { opacity: 1; }
 .journal-item .ji-icon {
-  width: 42px; height: 42px; border-radius: 13px; flex-shrink: 0;
+  width: 46px; height: 46px; border-radius: 15px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  background: var(--bg-3); color: var(--text-2);
+  background: var(--hb-icon-bg, var(--bg-3)); color: var(--hb-color, var(--text-2));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
 }
-.journal-item.active .ji-icon { background: rgba(46,207,130,0.14); color: var(--energy); }
-.journal-item.active.neg .ji-icon { background: rgba(240,160,64,0.14); color: var(--warn); }
 .journal-item .ji-body { flex: 1; min-width: 0; }
-.journal-item .ji-label { font-size: 14.5px; font-weight: 700; color: var(--text); letter-spacing: -0.2px; }
-.journal-item .ji-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; display: flex; align-items: center; gap: 5px; }
+.journal-item .ji-label { font-size: 16px; font-weight: 600; color: var(--text); letter-spacing: 0; }
+.journal-item .ji-sub { font-size: 11.5px; color: var(--text-3); margin-top: 1px; display: flex; align-items: center; gap: 5px; }
 .journal-item .ji-streak {
   display: flex; align-items: center; gap: 3px; flex-shrink: 0;
-  padding: 4px 9px; border-radius: 100px;
-  background: rgba(240,160,64,0.12); color: var(--warn);
-  font-size: 12px; font-weight: 800;
+  padding: 5px 11px; border-radius: 100px;
+  background: linear-gradient(135deg, #ffb84d, #ff7a45); color: #2a1400;
+  font-size: 13px; font-weight: 700; box-shadow: 0 3px 8px -2px rgba(255,140,66,0.5);
 }
-.journal-item .ji-streak.on { background: rgba(240,160,64,0.2); }
 .journal-item .ji-check {
-  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
-  border: 2px solid var(--text-4); color: transparent;
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  border: 2.5px solid var(--text-4); color: transparent;
   display: flex; align-items: center; justify-content: center;
-  transition: all 0.15s;
+  transition: all 0.18s;
 }
-.journal-item.active .ji-check { background: var(--energy); border-color: var(--energy); color: #06140d; }
-.journal-item.active.neg .ji-check { background: var(--warn); border-color: var(--warn); color: #1a1206; }
+.journal-item.active .ji-check {
+  background: var(--hb-color, var(--energy)); border-color: var(--hb-color, var(--energy));
+  color: #fff; box-shadow: 0 3px 10px -2px var(--hb-shadow, rgba(46,207,130,0.5));
+}
 .journal-save {
   width: 100%; padding: 14px; border: none; border-radius: 12px;
   background: rgba(255,255,255,0.06); color: #fff; font-weight: 700;
@@ -3499,7 +3511,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v168';
+const APP_VERSION = 'v169';
 
 // ========================================
 //  ICON SYSTEM (Lucide-style line icons, replaces emoji)
@@ -12663,9 +12675,9 @@ function renderJournalStreakHero() {
     byDate[j.date] = (j.behaviors || []).filter(b => !NEGATIVE_BEHAVIORS.has(b)).length;
   }
 
-  // Compact, single-row last-14-days completion strip (reads well even with little data)
+  // Single-row last-14-days completion strip
   const today = new Date();
-  const lvlColor = ['rgba(255,255,255,0.05)', 'rgba(46,207,130,0.35)', 'rgba(46,207,130,0.62)', 'var(--energy)'];
+  const lvlColor = ['rgba(255,255,255,0.06)', 'rgba(255,255,255,0.22)', 'rgba(255,255,255,0.45)', '#fff'];
   let strip = '';
   for (let i = 13; i >= 0; i--) {
     const d = new Date(today); d.setDate(d.getDate() - i);
@@ -12673,25 +12685,33 @@ function renderJournalStreakHero() {
     const c = byDate[ds];
     const lvl = c == null ? 0 : c >= 5 ? 3 : c >= 3 ? 2 : c >= 1 ? 1 : 0;
     const isToday = i === 0;
-    strip += `<div style="flex:1;height:30px;border-radius:7px;background:${lvlColor[lvl]};${isToday ? 'box-shadow:0 0 0 1.5px var(--energy);' : ''}"></div>`;
+    strip += `<div style="flex:1;height:28px;border-radius:7px;background:${lvlColor[lvl]};${isToday ? 'box-shadow:0 0 0 2px rgba(255,255,255,0.6);' : ''}"></div>`;
   }
 
+  // Gradient-filled glowing flame (playful "mascot")
+  const flame = `<svg viewBox="0 0 24 24" width="40" height="40" style="filter:drop-shadow(0 2px 8px rgba(255,120,40,0.6));">
+    <defs><linearGradient id="jflame" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#ff5470"/><stop offset="55%" stop-color="#ff8c42"/><stop offset="100%" stop-color="#ffd24d"/>
+    </linearGradient></defs>
+    <path d="M12 2c1 3-2 4-2 7a4 4 0 008 0c0-3-2-4-2-6 3 2 5 5 5 9a7 7 0 01-14 0c0-4 4-6 5-10z" fill="url(#jflame)"/>
+    <circle cx="10.3" cy="15" r="1" fill="rgba(0,0,0,0.55)"/><circle cx="13.7" cy="15" r="1" fill="rgba(0,0,0,0.55)"/>
+  </svg>`;
+
   el.innerHTML = `
-    <div style="background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:18px;">
-      <div style="display:flex;align-items:center;gap:14px;">
-        <div style="width:56px;height:56px;border-radius:18px;background:linear-gradient(140deg, rgba(240,160,64,0.22), rgba(240,78,104,0.12));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          ${svgIcon('flame', {size:30, color: streak > 0 ? 'var(--warn)' : 'var(--text-4)'})}
-        </div>
+    <div style="border-radius:24px;padding:20px;background:linear-gradient(145deg, #ff7a45 0%, #f0567a 48%, #9b5de0 100%);box-shadow:0 14px 34px -12px rgba(240,90,122,0.55);position:relative;overflow:hidden;">
+      <div style="position:absolute;top:-30%;right:-10%;width:60%;height:80%;background:radial-gradient(circle, rgba(255,255,255,0.18), transparent 70%);pointer-events:none;"></div>
+      <div style="display:flex;align-items:center;gap:15px;position:relative;">
+        <div style="width:60px;height:60px;border-radius:20px;background:rgba(255,255,255,0.18);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;flex-shrink:0;">${streak > 0 ? flame : svgIcon('flame',{size:34,color:'rgba(255,255,255,0.6)'})}</div>
         <div style="flex:1;">
-          <div style="display:flex;align-items:baseline;gap:6px;">
-            <span style="font-size:38px;font-weight:900;letter-spacing:-2px;color:var(--text);line-height:1;">${streak}</span>
-            <span style="font-size:15px;font-weight:700;color:var(--text-2);">day${streak === 1 ? '' : 's'} streak</span>
+          <div style="display:flex;align-items:baseline;gap:7px;">
+            <span style="font-family:'Fredoka',sans-serif;font-size:42px;font-weight:700;color:#fff;line-height:1;">${streak}</span>
+            <span style="font-family:'Fredoka',sans-serif;font-size:17px;font-weight:600;color:rgba(255,255,255,0.92);">day${streak === 1 ? '' : 's'} streak!</span>
           </div>
-          <div style="font-size:12px;color:var(--text-3);margin-top:4px;">${streak > 0 ? 'Keep it going' : 'Log today to start'} · Best ${best} · ${totalDays} logged</div>
+          <div style="font-size:12.5px;color:rgba(255,255,255,0.8);margin-top:5px;font-family:'Fredoka',sans-serif;">${streak > 0 ? 'Keep going - you got this!' : 'Log today to start your streak'}</div>
         </div>
       </div>
-      <div style="display:flex;gap:4px;margin-top:16px;">${strip}</div>
-      <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-4);margin-top:5px;padding:0 1px;"><span>2 weeks ago</span><span>Today</span></div>
+      <div style="display:flex;gap:4px;margin-top:18px;position:relative;">${strip}</div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.65);margin-top:6px;padding:0 1px;font-family:'Fredoka',sans-serif;"><span>Best ${best} days</span><span>${totalDays} logged</span></div>
     </div>`;
 }
 
@@ -12720,7 +12740,7 @@ function initJournal() {
   if (existing) selectedBehaviors = new Set(existing.behaviors);
   else selectedBehaviors = new Set();
 
-  document.getElementById('journalDate').textContent = new Date().toLocaleDateString('en', { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase();
+  document.getElementById('journalDate').textContent = new Date().toLocaleDateString('en', { weekday: 'long', month: 'short', day: 'numeric' });
 
   // Render categorized list with checkboxes
   const gridEl = document.getElementById('journalGrid');
@@ -12731,7 +12751,18 @@ function initJournal() {
   const streakMap = {};
   for (const s of computeHabitStreaks()) streakMap[s.id] = s.streak;
 
+  // Playful per-category color themes (Habi-style)
+  const CAT_THEME = {
+    'Substances': { c: '#ff7a6b', g: 'rgba(255,122,107,0.13)', ib: 'rgba(255,122,107,0.16)', s: 'rgba(255,122,107,0.45)' },
+    'Training':   { c: '#2ecf82', g: 'rgba(46,207,130,0.13)',  ib: 'rgba(46,207,130,0.16)',  s: 'rgba(46,207,130,0.45)' },
+    'Recovery':   { c: '#4da9ff', g: 'rgba(77,169,255,0.13)',  ib: 'rgba(77,169,255,0.16)',  s: 'rgba(77,169,255,0.45)' },
+    'Habits':     { c: '#22d3b8', g: 'rgba(34,211,184,0.13)',  ib: 'rgba(34,211,184,0.16)',  s: 'rgba(34,211,184,0.45)' },
+    'Sleep':      { c: '#9b7ff0', g: 'rgba(155,127,240,0.14)', ib: 'rgba(155,127,240,0.18)', s: 'rgba(155,127,240,0.5)' },
+    'Routine':    { c: '#f0a040', g: 'rgba(240,160,64,0.13)',  ib: 'rgba(240,160,64,0.16)',  s: 'rgba(240,160,64,0.45)' },
+  };
+
   gridEl.innerHTML = JOURNAL_CATEGORIES.map(cat => {
+    const t = CAT_THEME[cat.label] || CAT_THEME['Habits'];
     const items = cat.ids
       .filter(id => behaviorMap[id])
       .map(id => {
@@ -12739,19 +12770,19 @@ function initJournal() {
         const on = selectedBehaviors.has(b.id);
         const neg = NEGATIVE_BEHAVIORS.has(b.id);
         const st = streakMap[b.id] || 0;
-        const sub = b.sub || (on ? 'Logged today' : 'Tap to log');
-        // Prominent per-habit streak badge
+        const sub = b.sub || (on ? 'Done today' : 'Tap to log');
         const badge = st >= 1
-          ? `<div class="ji-streak ${on ? 'on' : ''}" data-streak-for="${b.id}">${svgIcon('flame',{size:13})}<span>${st}</span></div>`
+          ? `<div class="ji-streak" data-streak-for="${b.id}">${svgIcon('flame',{size:13})}<span>${st}</span></div>`
           : '';
-        return `<div class="journal-item ${on ? 'active' : ''} ${neg ? 'neg' : ''}" data-id="${b.id}" onclick="toggleBehavior('${b.id}', this)">
-          <div class="ji-icon">${svgIcon(b.icon, {size:20}) || svgIcon('circle',{size:14})}</div>
+        const themeVars = `--hb-color:${t.c};--hb-grad:linear-gradient(135deg, ${t.g}, transparent 65%);--hb-icon-bg:${t.ib};--hb-shadow:${t.s};`;
+        return `<div class="journal-item ${on ? 'active' : ''} ${neg ? 'neg' : ''}" data-id="${b.id}" style="${themeVars}" onclick="toggleBehavior('${b.id}', this)">
+          <div class="ji-icon">${svgIcon(b.icon, {size:22}) || svgIcon('circle',{size:14})}</div>
           <div class="ji-body">
             <div class="ji-label">${b.label}</div>
             <div class="ji-sub">${sub}</div>
           </div>
           ${badge}
-          <div class="ji-check">${svgIcon('check', {size:15})}</div>
+          <div class="ji-check">${svgIcon('check', {size:16})}</div>
         </div>`;
       }).join('');
     return `<div class="journal-cat">${cat.label}</div><div class="journal-grid">${items}</div>`;
