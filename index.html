@@ -3467,7 +3467,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v164';
+const APP_VERSION = 'v165';
 
 // ========================================
 //  ICON SYSTEM (Lucide-style line icons, replaces emoji)
@@ -8849,9 +8849,10 @@ function renderPerformanceForecast() {
     if (i === 0) {
       predicted = recovery;
     } else {
-      // Recovery naturally trends toward personal baseline (mean reversion)
-      // Modified by: sleep quality, strain decay, HRV trend
-      const baseline = m.recoveryBaseline || (hrvBase >= 50 ? 72 : 65);
+      // Recovery trends toward YOUR recent average (mean reversion). Use real
+      // daily-readiness history; if none, no reversion (baseline = today).
+      const dr = Object.values(ST._dailyReadiness || {}).filter(v => v != null);
+      const baseline = dr.length >= 3 ? Math.round(dr.slice(-14).reduce((a, b) => a + b, 0) / Math.min(dr.length, 14)) : recovery;
       const strainPenalty = Math.max(0, (strain - 10) * 2) * Math.pow(0.6, i - 1); // decays each day
       const sleepBoost = (sleepQuality - 0.85) * 20 * Math.min(i, 2); // sleep effect caps at day 2
       const hrvTrend = hrvSlope * 1.5 * Math.min(i, 3); // HRV trend, capped at 3 days
@@ -8862,14 +8863,15 @@ function renderPerformanceForecast() {
       )));
     }
 
-    // Determine training recommendation
+    // Determine training recommendation (aligned to WHOOP recovery scale)
     let label;
     if (predicted >= 80) label = 'MAX';
-    else if (predicted >= 65) label = 'TRAIN';
-    else if (predicted >= 50) label = 'EASY';
+    else if (predicted >= 67) label = 'TRAIN';
+    else if (predicted >= 34) label = 'EASY';
     else label = 'REST';
 
-    const color = predicted >= 75 ? 'var(--energy)' : predicted >= 55 ? 'var(--warn)' : 'var(--danger)';
+    // Same green/yellow/red bands as the recovery ring
+    const color = predicted >= 67 ? 'var(--energy)' : predicted >= 34 ? 'var(--warn)' : 'var(--danger)';
 
     days.push({ dayName, predicted, label, color });
   }
@@ -10004,9 +10006,15 @@ function buildTrainingVerdict() {
   const hrvRatio = m.hrvBaseline ? (m.hrv || 0) / m.hrvBaseline : 1;
   const hrvStrong = hrvRatio >= 1.1;
 
+  const isRestDay = dayPlan?.today === 'rest';
+
   let headline, detail, color, tag;
 
-  if (trainedToday) {
+  if (isRestDay && !trainedToday) {
+    color = 'var(--info)'; tag = 'Day off';
+    headline = 'Rest day';
+    detail = 'You marked today as a day off. Recovery is the work: sleep, mobility, jetboots, walk, breathwork. Let the adaptation from this week land.';
+  } else if (trainedToday) {
     color = 'var(--info)'; tag = 'Session logged';
     headline = `${trainMin}min done - recover now`;
     detail = 'Training stimulus is in. Protect the adaptation: protein within 2h, hydrate, and use a recovery modality. No second hard session today.';
@@ -10043,7 +10051,24 @@ function buildTrainingVerdict() {
     </div>
     <div style="font-size:19px;font-weight:800;color:${color};letter-spacing:-0.3px;margin-bottom:6px;">${headline}</div>
     <div style="font-size:12px;color:var(--text-2);line-height:1.5;">${detail}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
+      <span style="font-size:12px;color:var(--text-3);">Taking today off?</span>
+      <button onclick="toggleRestDay()" style="font-size:11px;font-weight:700;padding:6px 14px;border-radius:100px;border:1px solid ${isRestDay ? 'rgba(77,169,255,0.3)' : 'var(--card-border)'};background:${isRestDay ? 'rgba(77,169,255,0.12)' : 'transparent'};color:${isRestDay ? 'var(--info)' : 'var(--text-2)'};cursor:pointer;font-family:inherit;">${isRestDay ? '✓ Day off' : 'Mark day off'}</button>
+    </div>
   </div>`;
+}
+
+function toggleRestDay() {
+  const today = activeDayStr();
+  if (!ST._dayPlan || ST._dayPlan.date !== today) ST._dayPlan = { date: today };
+  ST._dayPlan.today = ST._dayPlan.today === 'rest' ? null : 'rest';
+  saveState();
+  // Re-render everything that reacts to the day plan
+  renderCoachView();
+  renderDailyCoach();
+  renderSuggestions();
+  renderStrainTarget();
+  renderThreeRings();
 }
 
 function renderCoachToday() {
