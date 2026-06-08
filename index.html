@@ -3467,7 +3467,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v159';
+const APP_VERSION = 'v160';
 
 // ========================================
 //  ICON SYSTEM (Lucide-style line icons, replaces emoji)
@@ -3874,33 +3874,42 @@ function fmtTime(t) {
   return t; // fallback: return as-is
 }
 
-function profileWakeHour() {
-  // Use today's actual wake time from health sync or manual input, fall back to profile default
+// Is last night's sleep recent enough to define today's schedule?
+// Uses the real sleepEnd timestamp (within ~30h) so it doesn't break on the
+// date-label mismatch (sleep is labeled by bedtime date, but you wake the next day).
+function sleepIsRecent() {
+  const sl = ST.sleep;
+  if (!sl) return false;
+  const raw = sl._rawSleepEnd;
+  if (raw) {
+    const d = parseHealthDate(raw) || new Date(raw);
+    if (d && !isNaN(d.getTime())) return (Date.now() - d.getTime()) < 30 * 3600 * 1000;
+  }
+  // Fallback: synced today or yesterday (active-day aware)
   const today = activeDayStr();
+  const yesterday = activeDayStr(new Date(Date.now() - 86400000));
+  return sl._syncDate === today || sl._syncDate === yesterday;
+}
 
-  // 1. Check manual "I woke up at X" button
+function profileWakeHour() {
+  const today = activeDayStr();
+  // 1. Manual "I woke up at X" override
   if (ST._actualWakeTimes && ST._actualWakeTimes[today]) {
     return ST._actualWakeTimes[today] / 60;
   }
-
-  // 2. Check synced sleep end time from Apple Health (= actual wake time)
-  if (ST.sleep && ST.sleep.sleepEnd && ST.sleep._syncDate === today) {
+  // 2. Actual wake = last night's sleepEnd, if recent
+  if (ST.sleep && ST.sleep.sleepEnd && sleepIsRecent()) {
     const m = parseTimeToMin(ST.sleep.sleepEnd);
     if (m != null) return m / 60;
   }
-
   // 3. Profile default
   return ST.profile.wakeMin / 60;
 }
 function profileSleepHour() {
-  // Use today's actual sleep start from health sync, fall back to profile default
-  const today = activeDayStr();
-
-  if (ST.sleep && ST.sleep.sleepStart && ST.sleep._syncDate === today) {
+  if (ST.sleep && ST.sleep.sleepStart && sleepIsRecent()) {
     const m = parseTimeToMin(ST.sleep.sleepStart);
     if (m != null) return m / 60;
   }
-
   return (ST.profile.sleepMin >= 1440 ? (ST.profile.sleepMin - 1440) / 60 : ST.profile.sleepMin / 60);
 }
 
