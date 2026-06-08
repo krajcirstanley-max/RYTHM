@@ -975,31 +975,35 @@ section { padding: 0 14px; margin-bottom: 6px; }
   color: var(--text-3); 
 }
 .journal-cat {
-  font-size: 9px; font-weight: 700; letter-spacing: 1px;
-  color: var(--text-4);  margin: 14px 0 6px;
-  padding-left: 2px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.6px;
+  color: var(--text-4); margin: 18px 0 8px; padding: 0 18px;
+  text-transform: uppercase;
 }
-.journal-cat:first-child { margin-top: 2px; }
-.journal-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.journal-cat:first-child { margin-top: 6px; }
+.journal-grid { display: flex; flex-wrap: wrap; gap: 7px; padding: 0 18px; }
 .journal-item {
-  display: flex; align-items: center; gap: 6px;
-  padding: 7px 12px 7px 8px;
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 13px 8px 9px;
   background: var(--bg-2);
   border: 1px solid var(--card-border);
   border-radius: 100px;
   cursor: pointer; transition: all 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
-.journal-item:active { background: rgba(255,255,255,0.06); }
-.journal-item.active {
-  background: rgba(52,214,142,0.08);
-  border-color: rgba(52,214,142,0.25);
+.journal-item:active { transform: scale(0.96); }
+.journal-item .ji-check {
+  width: 18px; height: 18px; border-radius: 6px; flex-shrink: 0;
+  border: 1.5px solid var(--text-4); color: transparent;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
 }
-.journal-item .ji-check { display: none; }
+.journal-item.active .ji-check { background: var(--energy); border-color: var(--energy); color: #06140d; }
+.journal-item.active.neg .ji-check { background: var(--warn); border-color: var(--warn); color: #1a1206; }
 .journal-item .ji-icon { display: flex; align-items: center; flex-shrink: 0; color: var(--text-3); }
 .journal-item.active .ji-icon { color: var(--energy); }
-.journal-item .ji-label { font-size: 12px; font-weight: 600; color: var(--text-3); white-space: nowrap; }
-.journal-item.active .ji-label { color: var(--energy); }
+.journal-item.active.neg .ji-icon { color: var(--warn); }
+.journal-item .ji-label { font-size: 12.5px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
+.journal-item.active .ji-label { color: var(--text); }
 .journal-save {
   width: 100%; padding: 14px; border: none; border-radius: 12px;
   background: rgba(255,255,255,0.06); color: #fff; font-weight: 700;
@@ -3215,30 +3219,28 @@ section { padding: 0 14px; margin-bottom: 6px; }
   <!-- ============ JOURNAL ============ -->
   <div class="view" id="view-journal">
     <section>
-      <div class="journal-today-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-          <div class="journal-date" id="journalDate" style="margin-bottom:0;">TODAY</div>
-          <div id="journalStreak" style="display:flex;align-items:center;gap:6px;"></div>
+      <div id="journalStreakHero"></div>
+    </section>
+    <section>
+      <div class="journal-today-card" style="background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);overflow:hidden;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 18px 4px;">
+          <div class="journal-date" id="journalDate">Today</div>
+          <div id="journalAutoSaved" style="font-size:11px;color:var(--energy);opacity:0;transition:opacity 0.3s;">saved</div>
         </div>
         <div id="journalGrid"></div>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
-          <div class="journal-sel-count" id="journalSelCount" style="padding:0;font-size:11px;color:var(--text-4);"></div>
-          <div id="journalAutoSaved" style="font-size:11px;color:var(--energy);opacity:0;transition:opacity 0.3s;margin-left:auto;"></div>
-        </div>
+        <div class="journal-sel-count" id="journalSelCount" style="display:none;"></div>
       </div>
     </section>
-
     <section>
-      <div class="mood-trend" id="moodTrend"></div>
+      <div id="journalHabitStreaks"></div>
     </section>
-
     <section>
       <div class="correlation-card" id="correlations"></div>
     </section>
-
     <section>
       <div class="journal-history" id="journalHistory"></div>
     </section>
+    <div id="moodTrend" style="display:none;"></div>
   </div>
 </div>
 
@@ -3467,7 +3469,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v165';
+const APP_VERSION = 'v166';
 
 // ========================================
 //  ICON SYSTEM (Lucide-style line icons, replaces emoji)
@@ -12587,6 +12589,119 @@ const JOURNAL_CATEGORIES = [
   { label: 'Routine', ids: ['wake_before_930', 'no_phone_morning', 'make_bed', 'skincare_am', 'skincare_pm', 'deep_work', 'linkedin_30', 'sex', 'barber'] },
 ];
 
+// Negative behaviors don't count toward the "consistency" heatmap intensity
+const NEGATIVE_BEHAVIORS = new Set(['shisha','shisha_late','alcohol','sugar','screen_late','late_meal','stress']);
+
+// Overall logging streak: consecutive days (ending today/yesterday) with a journal entry
+function journalLoggingStreak() {
+  const dates = new Set((ST.journal || []).map(j => j.date));
+  if (!dates.size) return 0;
+  const today = new Date();
+  const todayStr = localDateStr(today);
+  let start = dates.has(todayStr) ? 0 : 1; // allow today to be un-logged yet
+  let streak = 0;
+  for (let i = start; i < 400; i++) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    if (dates.has(localDateStr(d))) streak++; else break;
+  }
+  return streak;
+}
+
+function journalBestStreak() {
+  const dates = [...new Set((ST.journal || []).map(j => j.date))].sort();
+  if (!dates.length) return 0;
+  let best = 1, run = 1;
+  for (let i = 1; i < dates.length; i++) {
+    const prev = new Date(dates[i-1] + 'T12:00:00');
+    const cur = new Date(dates[i] + 'T12:00:00');
+    if (Math.round((cur - prev) / 86400000) === 1) { run++; best = Math.max(best, run); }
+    else run = 1;
+  }
+  return best;
+}
+
+function renderJournalStreakHero() {
+  const el = document.getElementById('journalStreakHero');
+  if (!el) return;
+  const streak = journalLoggingStreak();
+  const best = journalBestStreak();
+  const totalDays = new Set((ST.journal || []).map(j => j.date)).size;
+
+  // Per-day positive-habit count for the heatmap
+  const byDate = {};
+  for (const j of (ST.journal || [])) {
+    const pos = (j.behaviors || []).filter(b => !NEGATIVE_BEHAVIORS.has(b)).length;
+    byDate[j.date] = pos;
+  }
+
+  // 13 weeks of cells, columns = weeks, aligned so last column ends today
+  const WEEKS = 13;
+  const today = new Date();
+  const todayDow = (today.getDay() + 6) % 7; // Mon=0
+  const cells = [];
+  const totalCells = WEEKS * 7;
+  for (let i = totalCells - 1; i >= 0; i--) {
+    const offset = (totalCells - 1 - i); // 0 = today going back
+    const d = new Date(today); d.setDate(d.getDate() - offset);
+    const ds = localDateStr(d);
+    const count = byDate[ds];
+    const lvl = count == null ? 0 : count >= 6 ? 4 : count >= 4 ? 3 : count >= 2 ? 2 : count >= 1 ? 1 : 0;
+    cells.push({ ds, lvl, isToday: ds === localDateStr(today), future: d > today });
+  }
+  // Build column-major grid (7 rows x WEEKS cols)
+  const lvlColor = ['rgba(255,255,255,0.05)', 'rgba(46,207,130,0.28)', 'rgba(46,207,130,0.5)', 'rgba(46,207,130,0.75)', 'var(--energy)'];
+  let grid = '';
+  for (let col = 0; col < WEEKS; col++) {
+    grid += '<div style="display:flex;flex-direction:column;gap:3px;">';
+    for (let row = 0; row < 7; row++) {
+      const idx = col * 7 + row;
+      const c = cells[idx];
+      if (!c || c.future) { grid += '<div style="width:11px;height:11px;border-radius:3px;background:transparent;"></div>'; continue; }
+      grid += `<div title="${c.ds}" style="width:11px;height:11px;border-radius:3px;background:${lvlColor[c.lvl]};${c.isToday ? 'box-shadow:0 0 0 1.5px var(--energy);' : ''}"></div>`;
+    }
+    grid += '</div>';
+  }
+
+  el.innerHTML = `
+    <div style="background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:18px;">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
+        <div style="width:54px;height:54px;border-radius:16px;background:rgba(240,160,64,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          ${svgIcon('flame', {size:28, color: streak > 0 ? 'var(--warn)' : 'var(--text-4)'})}
+        </div>
+        <div style="flex:1;">
+          <div style="display:flex;align-items:baseline;gap:6px;">
+            <span style="font-size:34px;font-weight:900;letter-spacing:-1.5px;color:var(--text);line-height:1;">${streak}</span>
+            <span style="font-size:14px;font-weight:700;color:var(--text-2);">day${streak === 1 ? '' : 's'}</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-3);margin-top:3px;">${streak > 0 ? 'Keep it going' : 'Log today to start a streak'} · Best ${best} · ${totalDays} logged</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:3px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;">${grid}</div>
+      <div style="display:flex;align-items:center;justify-content:flex-end;gap:5px;margin-top:8px;font-size:9px;color:var(--text-4);">
+        Less ${lvlColor.map(c => `<span style="width:10px;height:10px;border-radius:2px;background:${c};display:inline-block;"></span>`).join('')} More
+      </div>
+    </div>`;
+}
+
+function renderJournalHabitStreaks() {
+  const el = document.getElementById('journalHabitStreaks');
+  if (!el) return;
+  const streaks = computeHabitStreaks().filter(s => s.streak >= 2).slice(0, 8);
+  if (!streaks.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div style="background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:16px 18px;">
+      <div style="font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:12px;">Active streaks</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        ${streaks.map(s => `
+          <div style="display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:100px;background:${s.active ? 'rgba(240,160,64,0.10)' : 'var(--bg-2)'};border:1px solid ${s.active ? 'rgba(240,160,64,0.22)' : 'var(--card-border)'};">
+            <span style="display:flex;color:${s.active ? 'var(--warn)' : 'var(--text-3)'};">${svgIcon('flame', {size:13})}</span>
+            <span style="font-size:12px;font-weight:600;color:var(--text-2);">${s.label}</span>
+            <span style="font-size:12px;font-weight:800;color:${s.active ? 'var(--warn)' : 'var(--text-3)'};">${s.streak}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
 function initJournal() {
   const today = new Date().toISOString().slice(0,10);
   const existing = ST.journal.find(j => j.date === today);
@@ -12605,8 +12720,10 @@ function initJournal() {
       .filter(id => behaviorMap[id])
       .map(id => {
         const b = behaviorMap[id];
-        return `<div class="journal-item ${selectedBehaviors.has(b.id) ? 'active' : ''}" data-id="${b.id}" onclick="toggleBehavior('${b.id}', this)">
-          <div class="ji-check">${selectedBehaviors.has(b.id) ? '✓' : ''}</div>
+        const on = selectedBehaviors.has(b.id);
+        const neg = NEGATIVE_BEHAVIORS.has(b.id);
+        return `<div class="journal-item ${on ? 'active' : ''} ${neg ? 'neg' : ''}" data-id="${b.id}" onclick="toggleBehavior('${b.id}', this)">
+          <div class="ji-check">${svgIcon('check', {size:13})}</div>
           <div class="ji-icon">${svgIcon(b.icon, {size:17}) || ''}</div>
           <div class="ji-label">${b.label}</div>
         </div>`;
@@ -12615,12 +12732,9 @@ function initJournal() {
   }).join('');
 
   updateJournalSelCount();
-
-  // Auto-save indicator (no manual save button needed)
-
-  renderJournalStreak();
+  renderJournalStreakHero();
+  renderJournalHabitStreaks();
   renderCorrelations();
-  renderMoodTrend();
   renderJournalHistory();
 }
 
@@ -12651,21 +12765,22 @@ function renderJournalStreak() {
 
 let _journalSaveTimer = null;
 function toggleBehavior(id, el) {
-  const check = el.querySelector('.ji-check');
   if (selectedBehaviors.has(id)) {
     selectedBehaviors.delete(id);
     el.classList.remove('active');
-    if (check) check.textContent = '';
   } else {
     selectedBehaviors.add(id);
     el.classList.add('active');
-    if (check) { check.textContent = '✓'; check.style.animation = 'checkPop 0.3s ease'; }
+    const chk = el.querySelector('.ji-check');
+    if (chk) chk.style.animation = 'checkPop 0.3s ease';
     // Auto-start live activity for trackable behaviors
     const trackable = ['shisha', 'shisha_late', 'energy_caps', 'workout', 'meditation', 'alcohol', 'sauna', 'deep_work', 'walk', 'sun_exposure'];
     if (trackable.includes(id)) {
       startLiveActivity(id);
     }
   }
+  // Refresh streak hero live as you log
+  renderJournalStreakHero();
   updateJournalSelCount();
   // Auto-save after a short debounce (lets user toggle multiple items quickly)
   clearTimeout(_journalSaveTimer);
@@ -12715,14 +12830,11 @@ function saveJournal() {
     }
   }
   saveState();
-  const saveBtn = document.getElementById('journalSaveBtn');
-  saveBtn.textContent = 'Saved ✓';
-  saveBtn.classList.add('saved');
-  setTimeout(() => { saveBtn.textContent = 'Update Entry'; saveBtn.classList.remove('saved'); }, 1500);
-  renderJournalStreak();
+  renderJournalStreakHero();
+  renderJournalHabitStreaks();
   renderCorrelations();
   renderJournalHistory();
-  renderTasks(); // Update My Day with logged behaviors
+  if (typeof renderTasks === 'function') renderTasks();
 }
 
 function renderCorrelations() {
