@@ -3467,7 +3467,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v158';
+const APP_VERSION = 'v159';
 
 // ========================================
 //  ICON SYSTEM (Lucide-style line icons, replaces emoji)
@@ -4455,6 +4455,30 @@ function computeSleepScore(sleepData) {
     quality: Math.round(qualScore),
     consistency: Math.round(consScore),
     personalTarget: target
+  };
+}
+
+// ========================================
+//  CANONICAL HRV STATUS - one source of truth
+// ========================================
+// Every "HRV X% below baseline" message in the app must use this, so recovery,
+// warnings, priority, and suggestions all agree. Uses overnight HRV against the
+// overnight baseline (same pair recovery uses). If there is no overnight
+// baseline yet, the night is its own baseline -> 0% (neutral), so we never
+// compare overnight HRV against a daytime baseline and invent a fake drop.
+function hrvStatus() {
+  const m = ST.metrics || {};
+  const val = m.sleepHrv || m.hrv || 0;
+  let base;
+  if (m.sleepHrvBaseline) base = m.sleepHrvBaseline;
+  else if (m.sleepHrv) base = m.sleepHrv;
+  else base = m.hrvBaseline || 42;
+  const ratio = base > 0 ? val / base : 1;
+  return {
+    val, base, ratio,
+    pctBelow: Math.round((1 - ratio) * 100),   // positive = below your normal
+    pct: Math.round((ratio - 1) * 100),         // signed (+ above, - below)
+    hasBaseline: !!m.sleepHrvBaseline
   };
 }
 
@@ -6395,11 +6419,11 @@ function renderDayBanner() {
   const interp = readinessInterpretation(score);
 
   const m = ST.metrics;
-  const hrvPctBelow = m.hrvBaseline ? Math.round((1 - m.hrv / m.hrvBaseline) * 100) : 0;
+  const hrvPctBelow = hrvStatus().hasBaseline ? hrvStatus().pctBelow : 0;
   const debtH = m.sleepDebt || 0;
 
   let title, msg, checkColor;
-  if (score >= 67) {
+  if (score >= 50) {
     title = 'Optimal Health';
     checkColor = 'var(--energy)';
     msg = `Take advantage of your green Recovery by pushing training intensity. Your body is signaling it can take on significant exertion today.`;
@@ -6442,20 +6466,14 @@ function renderSicknessWarning() {
   // Need at least 5 days of data to have a real baseline + recent comparison
   if (hrvHist.length < 5 && rhrHist.length < 5) { section.classList.add('hidden'); return; }
 
-  // Use the stored rolling baseline (median over 14 days) instead of recomputing
-  // This is the stable baseline, not affected by today's intraday swings
-  const hrvBase = ST.metrics.hrvBaseline || 0;
   const rhrBase = ST.metrics.rhrBaseline || 0;
-
-  // Use sleep HRV if available (overnight reading, most stable)
-  // Fall back to the daily stored value only if sleep HRV isn't available
-  const todayHrv = ST.metrics.sleepHrv || ST.metrics.hrv || 0;
   const todayRhr = ST.metrics.rhr || 0;
+  if (!rhrBase) { section.classList.add('hidden'); return; }
 
-  if (!hrvBase || !rhrBase) { section.classList.add('hidden'); return; }
-
-  // Compare today's values to the rolling baseline
-  const hrvDrop = hrvBase > 0 ? ((hrvBase - todayHrv) / hrvBase) * 100 : 0;
+  // Canonical HRV status (overnight vs overnight) - same as recovery uses.
+  // Only an HRV signal if we have a real overnight baseline to compare against.
+  const hrv = hrvStatus();
+  const hrvDrop = hrv.hasBaseline ? hrv.pctBelow : 0;
   const rhrRise = rhrBase > 0 ? ((todayRhr - rhrBase) / rhrBase) * 100 : 0;
 
   // Require BOTH signals to fire illness warning (single-signal is too noisy)
@@ -9218,8 +9236,7 @@ function renderDailyCoach() {
   const sleepTarget = ST.health?.sleepTarget || 8;
   const todayDebt = (ST.sleepDebt || []).find(d => d.date === today);
   const debtH = todayDebt ? todayDebt.debtH : 0;
-  const hrvBase = m.hrvBaseline || 42;
-  const hrvPctBelow = hrvBase > 0 ? Math.round((1 - (m.hrv || 0) / hrvBase) * 100) : 0;
+  const hrvPctBelow = hrvStatus().hasBaseline ? hrvStatus().pctBelow : 0;
 
   let priority, priorityIcon;
   if (hadHeavyYesterday && recovery < 50) {
@@ -14455,10 +14472,10 @@ function renderSuggestions() {
     sugs.push({ icon: '💤', title: 'Take a 20-min power nap', sub: HABIT_SCIENCE.nap, action: 'Nap', cls: 'purple', bg: 'rgba(139,156,199,0.1)', onclick: `startLiveActivity('nap')`, pri: 2 });
   }
 
-  // HRV below baseline  - breathwork
-  const hrvBase = m.hrvBaseline || 42;
-  if (m.hrv < hrvBase * 0.8 && !activeSessions.includes('meditation')) {
-    sugs.push({ icon: '🧘', title: 'Breathing session recommended', sub: `HRV ${m.hrv}ms  - ${Math.round((1 - m.hrv/hrvBase)*100)}% below your baseline. Slow breathing (6/min) activates vagal tone in 5-10min`, action: 'Breathe', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `showView('coach');setTimeout(()=>document.getElementById('breathingCard')?.scrollIntoView({behavior:'smooth'}),300)`, pri: 2 });
+  // HRV below your normal (overnight) - breathwork
+  const hrvSt = hrvStatus();
+  if (hrvSt.hasBaseline && hrvSt.pctBelow >= 20 && !activeSessions.includes('meditation')) {
+    sugs.push({ icon: '🧘', title: 'Breathing session recommended', sub: `Sleep HRV ${hrvSt.val}ms - ${hrvSt.pctBelow}% below your normal. Slow breathing (6/min) activates vagal tone in 5-10min`, action: 'Breathe', cls: 'purple', bg: 'rgba(167,139,250,0.1)', onclick: `showView('coach');setTimeout(()=>document.getElementById('breathingCard')?.scrollIntoView({behavior:'smooth'}),300)`, pri: 2 });
   }
 
   // Strain + recovery mismatch (no training suggestions at night)
