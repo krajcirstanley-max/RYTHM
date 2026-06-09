@@ -1353,14 +1353,11 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .detail-overlay {
   position: fixed; inset: 0; z-index: 150;
   background: rgba(0,0,0,0.85);
-
-  display: flex; flex-direction: column;
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.25s;
+  display: none; flex-direction: column;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
-.detail-overlay.open { opacity: 1; pointer-events: auto; }
+.detail-overlay.open { display: flex; animation: fpFade 0.2s ease; }
 .detail-content {
   width: 100%; max-width: 440px; margin: 0 auto;
   padding: 20px 18px 40px;
@@ -1407,11 +1404,10 @@ section { padding: 0 14px; margin-bottom: 6px; }
 .fullpage {
   position: fixed; inset: 0; z-index: 200;
   background: var(--bg);
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.25s ease;
-  display: flex; flex-direction: column;
+  display: none; flex-direction: column;
 }
-.fullpage.open { opacity: 1; pointer-events: auto; }
+.fullpage.open { display: flex; animation: fpFade 0.2s ease; }
+@keyframes fpFade { from { opacity: 0; } to { opacity: 1; } }
 .fp-header-wrap {
   flex-shrink: 0; background: var(--bg); z-index: 20;
   padding-top: env(safe-area-inset-top, 47px);
@@ -2318,11 +2314,9 @@ section { padding: 0 14px; margin-bottom: 6px; }
   position: fixed; inset: 0; z-index: 100;
   background: rgba(0,0,0,0.7);
   backdrop-filter: blur(10px);
-  display: flex; align-items: flex-end; justify-content: center;
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.25s;
+  display: none; align-items: flex-end; justify-content: center;
 }
-.modal-overlay.open { opacity: 1; pointer-events: auto; }
+.modal-overlay.open { display: flex; animation: fpFade 0.2s ease; }
 .modal-sheet {
   width: 100%; max-width: 440px;
   background: rgba(18,19,24,0.92);
@@ -3514,7 +3508,7 @@ const heroSb = window.supabase ? window.supabase.createClient(HERO_SB_URL, HERO_
 const HERO_ATHLETE_ID = 'ath-1'; // Stanley
 
 const SYNC_KEY_STORAGE = 'rythm-sync-key';
-const APP_VERSION = 'v170';
+const APP_VERSION = 'v171';
 
 // ========================================
 //  ICON SYSTEM (Lucide-style line icons, replaces emoji)
@@ -3800,6 +3794,10 @@ async function syncFromCloud() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(ST));
         fullRerender();
         console.log('[RYTHM] Cloud sync: updated to', new Date(rt).toISOString());
+        // A remote snapshot can carry stale/zero Apple Health readings (sleep, HRV, RHR)
+        // from a moment before that day's data synced. Apple Health is authoritative and
+        // identical across devices, so re-pull it on top so cloud never blanks out today's sleep.
+        fetchHealthData().then(() => { try { fullRerender(); } catch(_){} }).catch(()=>{});
       }
     }
     markSynced();
@@ -14430,6 +14428,11 @@ function getHabitPatterns() {
   // Identify habits (done 5+ of last 14 days) and gaps (usually done but not today)
   const habits = Object.entries(freq).filter(([_,c]) => c >= 5).map(([id]) => id);
   const missedToday = habits.filter(h => !todayBehaviors.includes(h));
+  // Emerging habits: started building (logged 2-4 times in 14d) but not yet a locked habit.
+  // Surfaced at lower priority so For You reinforces habits he's actively forming.
+  const emergingMissed = Object.entries(freq)
+    .filter(([id,c]) => c >= 2 && c < 5 && !todayBehaviors.includes(id))
+    .map(([id]) => id);
 
   // Identify negative patterns (substances used 3+ times in 7 days)
   const negatives = ['shisha', 'shisha_late', 'alcohol', 'sugar', 'screen_late', 'late_meal'];
@@ -14457,7 +14460,7 @@ function getHabitPatterns() {
     if (streak >= 3) streaks[h] = streak;
   }
 
-  return { habits, missedToday, overused, underused, freq, freq7, todayBehaviors, streaks };
+  return { habits, missedToday, emergingMissed, overused, underused, freq, freq7, todayBehaviors, streaks };
 }
 
 // Science-backed reason database  - all citations verified
@@ -14669,6 +14672,48 @@ function renderSuggestions() {
     }
   }
 
+  // === PRIORITY 5.3: Emerging habits (building, not yet locked) ===
+  // Reinforce habits Stanley is actively forming so For You keeps him on track.
+  for (const em of patterns.emergingMissed) {
+    if (!missedSugs[em]) continue;
+    if (morningOnly.includes(em) && hwake > 3) continue;
+    if (eveningOnly.includes(em) && hwake < 10) continue;
+    const s = missedSugs[em];
+    const cnt = patterns.freq[em] || 0;
+    sugs.push({ ...s, tag: 'Keep it up', sub: `${(HABIT_SCIENCE[em] || '')} You've done this ${cnt}x in 2 weeks - keep building it.`, pri: 5.3 });
+  }
+
+  // === PRIORITY 5.5: Daily anchor habits (his real routine, always offered at the right time) ===
+  // These are Stanley's core daily habits. Offered even without 14-day history so For You is
+  // genuinely about HIS habits, not just generic tips. Each has a time-of-day window (hours since wake).
+  const DAILY_ANCHORS = [
+    { id: 'no_phone_morning', min: 0,  max: 1,  card: missedSugs.no_phone_morning },
+    { id: 'sunlight',         min: 0,  max: 2.5,card: { icon: '☀️', title: 'Morning sunlight', action: 'Log', cls: 'green', bg: 'rgba(48,217,138,0.1)', onclick: `logBehavior('sunlight')` } },
+    { id: 'make_bed',         min: 0,  max: 2,  card: missedSugs.make_bed },
+    { id: 'creatine',         min: 0.5,max: 12, card: missedSugs.creatine },
+    { id: 'supplements',      min: 0.5,max: 6,  card: missedSugs.supplements },
+    { id: 'hydration',        min: 1,  max: 11, card: missedSugs.hydration },
+    { id: 'mobility',         min: 2,  max: 11, card: missedSugs.mobility },
+    { id: 'meditation',       min: 1,  max: 13, card: missedSugs.meditation },
+    { id: 'deep_work',        min: 2,  max: 9,  card: { icon: '🎯', title: 'Deep work block', action: 'Log', cls: 'blue', bg: 'rgba(91,154,255,0.1)', onclick: `logBehavior('deep_work')` } },
+    { id: 'linkedin_30',      min: 2,  max: 10, card: { icon: '💼', title: '30 min LinkedIn outreach', action: 'Log', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `logBehavior('linkedin_30')` } },
+    { id: 'magnesium',        min: 12, max: 18, card: missedSugs.magnesium },
+    { id: 'skincare_pm',      min: 12, max: 18, card: missedSugs.skincare_pm },
+  ];
+  const alreadyCovered = new Set(sugs.map(s => s.onclick).filter(Boolean));
+  for (const a of DAILY_ANCHORS) {
+    if (patterns.todayBehaviors.includes(a.id)) continue;       // already done today
+    if (patterns.missedToday.includes(a.id)) continue;          // handled by missed-habit path
+    if (patterns.emergingMissed.includes(a.id)) continue;       // handled by emerging path
+    if (hwake < a.min || hwake > a.max) continue;               // wrong time of day
+    if (!a.card) continue;
+    if (alreadyCovered.has(a.card.onclick)) continue;           // dedupe
+    const streak = patterns.streaks[a.id];
+    const streakText = streak ? ` ${streak}-day streak going - don't break it.` : '';
+    sugs.push({ ...a.card, sub: (HABIT_SCIENCE[a.id] || '') + streakText, pri: 5.5 });
+    alreadyCovered.add(a.card.onclick);
+  }
+
   // === PRIORITY 6: Habit discovery (things they rarely do but should) ===
   const discoverySugs = {
     cold_shower: { icon: '🧊', title: 'Cold immersion session', action: 'Start', cls: 'blue', bg: 'rgba(77,169,255,0.1)', onclick: `startLiveActivity('cold_shower')` },
@@ -14729,9 +14774,15 @@ function renderSuggestions() {
     });
   }
 
-  // Sort by priority, take top 4
+  // Sort by priority, dedupe by action target/title, take top 4
   sugs.sort((a,b) => (a.pri || 99) - (b.pri || 99));
-  const top = sugs.slice(0, 4);
+  const seenSug = new Set();
+  const dedupedSugs = sugs.filter(s => {
+    const k = s.onclick || s.title;
+    if (seenSug.has(k)) return false;
+    seenSug.add(k); return true;
+  });
+  const top = dedupedSugs.slice(0, 4);
   if (!top.length) { el.innerHTML = ''; el.closest('section').style.display = 'none'; return; }
   el.closest('section').style.display = '';
 
@@ -14884,11 +14935,14 @@ async function fetchHealthData() {
     }
 
     // Sleep data
-    if (data.sleep && data.sleep.details) {
+    // Accept sleep whenever a duration value is present, even if stage details are
+    // missing (Apple Health often delivers total-asleep before/without stage breakdown).
+    // Gating the whole block on details meant captured sleep was silently dropped -> showed 0.
+    if (data.sleep && (data.sleep.value != null || data.sleep.details)) {
       if (!ST.sleep) ST.sleep = JSON.parse(JSON.stringify(DEFAULT_STATE.sleep));
       ST.sleep._syncDate = localDateStr();
       ST.sleep._nightDate = data.sleep.date || null; // which night this data is for
-      const sd = data.sleep.details;
+      const sd = data.sleep.details || {};
       if (data.sleep.value != null) ST.sleep.totalH = +Number(data.sleep.value).toFixed(1);
       if (sd.deep != null) ST.sleep.stages.deep = +Number(sd.deep).toFixed(1);
       if (sd.rem != null) ST.sleep.stages.rem = +Number(sd.rem).toFixed(1);
