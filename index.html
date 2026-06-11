@@ -2867,6 +2867,97 @@ section { padding: 0 14px; margin-bottom: 6px; }
   border-color: rgba(147,161,196,0.1);
 }
 
+/* ── Mascot in the ring center (cards + focus view) ── */
+.la-mascot {
+  font-size: 46px; line-height: 1;
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.5));
+  animation: mascotBob 2.6s ease-in-out infinite;
+  user-select: none;
+}
+.la-mascot.paused { animation: none; opacity: 0.55; filter: grayscale(0.4); }
+@keyframes mascotBob {
+  0%,100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-7px) rotate(2deg); }
+}
+.la-ring-center .la-timer-sm { font-size: 22px; font-weight: 800; letter-spacing: -1px; color:#fff; margin-top: 6px; line-height:1; }
+.la-ring-center .la-timer-sm.paused { opacity: 0.4; }
+
+/* Round pause button on cards */
+.la-round-pause {
+  width: 52px; height: 52px; border-radius: 50%; margin: 2px auto 0;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff; color: #111; border: none; cursor: pointer;
+  box-shadow: 0 8px 22px -6px color-mix(in srgb, var(--la-accent, #2ecf82) 70%, transparent);
+  transition: transform 0.12s ease;
+}
+.la-round-pause:active { transform: scale(0.9); }
+.la-round-pause svg { width: 20px; height: 20px; }
+
+/* ============================================================
+   FULL-SCREEN FOCUS VIEW (immersive live-activity timer)
+   ============================================================ */
+.focus-fp {
+  position: fixed; inset: 0; z-index: 260;
+  display: none; flex-direction: column;
+  padding: calc(env(safe-area-inset-top, 0px) + 14px) 20px calc(env(safe-area-inset-bottom, 0px) + 26px);
+  color: #fff; overflow: hidden;
+  background:
+    radial-gradient(120% 80% at 50% 18%, color-mix(in srgb, var(--la-accent, #2ecf82) 30%, transparent), transparent 58%),
+    radial-gradient(120% 90% at 50% 120%, color-mix(in srgb, var(--la-accent, #2ecf82) 16%, transparent), transparent 60%),
+    #08080c;
+}
+.focus-fp.open { display: flex; animation: fpFade 0.25s ease; }
+.focus-top { display: flex; align-items: center; justify-content: space-between; }
+.focus-top button {
+  width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer;
+  background: rgba(255,255,255,0.08); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(8px);
+}
+.focus-top button:active { transform: scale(0.92); }
+.focus-top .focus-stop { background: rgba(255,84,112,0.16); color: #ff7a8c; font-size: 11px; font-weight: 800; width: auto; padding: 0 16px; border-radius: 100px; letter-spacing: 0.4px; }
+.focus-head { text-align: center; margin-top: 6px; }
+.focus-cat { font-size: 11px; font-weight: 700; letter-spacing: 3px; color: var(--la-accent, #2ecf82); text-transform: uppercase; }
+.focus-title { font-size: 27px; font-weight: 800; letter-spacing: -0.6px; margin-top: 4px; font-style: italic; }
+
+.focus-stage { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+.focus-ring-wrap { position: relative; width: min(78vw, 320px); aspect-ratio: 1; display:flex; align-items:center; justify-content:center; }
+.focus-ring-wrap .seg-ring { position: absolute; inset: 0; width: 100%; height: 100%; }
+.focus-mascot-wrap { display:flex; align-items:center; justify-content:center; }
+.focus-mascot-wrap .la-mascot { font-size: 84px; }
+.focus-lead-dot { filter: drop-shadow(0 0 6px var(--la-accent, #2ecf82)); }
+
+/* Floating activity chips around the stage */
+.focus-chip {
+  position: absolute; display: flex; align-items: center; gap: 10px;
+  padding: 11px 14px; border-radius: 100px;
+  background: rgba(20,20,26,0.72); backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 12px 30px -12px rgba(0,0,0,0.7);
+  font-size: 14px; font-weight: 700; color: #fff; white-space: nowrap;
+  cursor: pointer; animation: chipFloat 5s ease-in-out infinite;
+  max-width: 64vw;
+}
+.focus-chip .fc-emoji { font-size: 17px; }
+.focus-chip .fc-min { font-size: 12px; font-weight: 700; color: var(--text-3); background: rgba(255,255,255,0.07); padding: 3px 9px; border-radius: 100px; }
+.focus-chip.is-current { border-color: color-mix(in srgb, var(--la-accent,#2ecf82) 55%, transparent); box-shadow: 0 12px 34px -10px color-mix(in srgb, var(--la-accent,#2ecf82) 60%, transparent); }
+.focus-chip:active { transform: scale(0.96); }
+@keyframes chipFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+.focus-timer { text-align: center; font-size: 60px; font-weight: 800; letter-spacing: -2px; line-height: 1; }
+.focus-timer.paused { opacity: 0.45; }
+.focus-sub { text-align: center; font-size: 12px; font-weight: 600; letter-spacing: 1px; color: var(--text-3); text-transform: uppercase; margin-top: 8px; }
+.focus-pause {
+  width: 66px; height: 66px; border-radius: 50%; margin: 22px auto 0;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff; color: #111; border: none; cursor: pointer;
+  box-shadow: 0 12px 30px -8px color-mix(in srgb, var(--la-accent, #2ecf82) 75%, transparent);
+  transition: transform 0.12s ease;
+}
+.focus-pause:active { transform: scale(0.9); }
+.focus-pause svg { width: 26px; height: 26px; }
+.focus-done { color: var(--la-accent, #2ecf82); }
+
 /* Stat chips  - compact */
 .la-stats { display: flex; gap: 6px; margin-top: 8px; }
 .la-stat {
@@ -3787,9 +3878,18 @@ async function syncFromCloud() {
       const rt = remote.updatedAt || 0;
       const lt = ST.updatedAt || 0;
       if (rt > lt) {
+        // Preserve any in-progress live activity (timer) running on THIS device so a
+        // cloud snapshot from another moment/device can't wipe it mid-session. The
+        // timer is timestamp-based, so merging it back keeps it accurate.
+        const localRunning = (ST.liveActivities || []).filter(a => !a.endedAt);
         ST = remote;
         for (const k in DEFAULT_STATE) {
           if (!(k in ST)) ST[k] = JSON.parse(JSON.stringify(DEFAULT_STATE[k]));
+        }
+        if (localRunning.length) {
+          if (!Array.isArray(ST.liveActivities)) ST.liveActivities = [];
+          const haveIds = new Set(ST.liveActivities.map(a => a.id));
+          localRunning.forEach(a => { if (!haveIds.has(a.id)) ST.liveActivities.push(a); });
         }
         localStorage.setItem(STORAGE_KEY, JSON.stringify(ST));
         fullRerender();
@@ -14036,6 +14136,7 @@ window.addEventListener('popstate', function(e) {
   // first. Each closer is called with fromPopstate=true so it does NOT call
   // history.back() again (the pop already happened).
   const closers = [
+    ['focusFullPage', closeFocusView],
     ['trendFullPage', closeTrendDetail],
     ['detailOverlay', closeDetail],
     ['sleepFullPage', closeSleepFullPage],
@@ -14117,6 +14218,169 @@ const LIVE_ACTIVITY_META = {
   infrapanel:   { icon: '🔴', label: 'Infrapanel', targetMin: 15 },
 };
 
+// ── Live-activity visual language (shared by cards + full-screen focus view) ──
+const LA_COLORS = {
+  workout:'#2ecf82', sauna:'#ff8c42', meditation:'#9b7ff0', deep_work:'#4da9ff',
+  cold_shower:'#4dd6ff', nap:'#93a1c4', walk:'#34d399', sun_exposure:'#ffb547',
+  shisha:'#ff7a6b', shisha_late:'#ff7a6b', alcohol:'#fbbf24', energy_caps:'#ffb547',
+  stretching:'#34d399', mobility:'#34d399', jetboots:'#f472b6', foam_roll:'#22d3b8',
+  massage:'#22d3b8', massage_gun:'#22d3b8', infrapanel:'#ef4444', powerdot:'#4da9ff'
+};
+const LA_STATUS = { meditation:'CALM', sauna:'HEAT', deep_work:'FOCUS', cold_shower:'COLD', nap:'RESTING', walk:'MOVING' };
+// Playful mascot per activity (the character in the ring centre)
+const LA_MASCOT = {
+  workout:'💪', sauna:'🥵', meditation:'😌', deep_work:'🤓', cold_shower:'🥶',
+  nap:'😴', walk:'🚶', sun_exposure:'😎', shisha:'😮‍💨', shisha_late:'🌙',
+  alcohol:'🍷', energy_caps:'⚡', stretching:'🤸', mobility:'🤸', jetboots:'🦿',
+  foam_roll:'🙆', massage:'💆', massage_gun:'💆', powerdot:'⚡', infrapanel:'😳'
+};
+// Small uppercase category label above the title (like "ALGEBRA" in the mock)
+const LA_CATEGORY = {
+  workout:'TRAINING', sauna:'RECOVERY', meditation:'MINDFULNESS', deep_work:'DEEP FOCUS',
+  cold_shower:'RECOVERY', nap:'REST', walk:'MOVEMENT', sun_exposure:'CIRCADIAN',
+  shisha:'TRACKING', shisha_late:'TRACKING', alcohol:'TRACKING', energy_caps:'INTAKE',
+  stretching:'MOBILITY', mobility:'MOBILITY', jetboots:'RECOVERY', foam_roll:'RECOVERY',
+  massage:'RECOVERY', massage_gun:'RECOVERY', powerdot:'RECOVERY', infrapanel:'RED LIGHT'
+};
+function laAccent(type) { return LA_COLORS[type] || '#2ecf82'; }
+function laMascot(type) { return LA_MASCOT[type] || (LIVE_ACTIVITY_META[type] && LIVE_ACTIVITY_META[type].icon) || '⏱️'; }
+function laCategory(type) { return LA_CATEGORY[type] || 'LIVE'; }
+
+// Build a segmented progress ring (ticks around the circle) like the reference mock.
+function segRingSVG(pct, accent, opts) {
+  opts = opts || {};
+  const size = opts.size || 320, ticks = opts.ticks || 60;
+  const rOuter = opts.rOuter || (size/2 - 6), rInner = opts.rInner || (rOuter - 16), sw = opts.sw || 3.5;
+  const cx = size/2, cy = size/2;
+  const frac = Math.min(1, Math.max(0, pct/100));
+  const filled = Math.round(ticks * frac);
+  let s = `<svg class="seg-ring" viewBox="0 0 ${size} ${size}">`;
+  for (let i = 0; i < ticks; i++) {
+    const ang = (i/ticks) * 2*Math.PI - Math.PI/2;
+    const ca = Math.cos(ang), sa = Math.sin(ang);
+    const on = i < filled;
+    s += `<line x1="${(cx+rInner*ca).toFixed(1)}" y1="${(cy+rInner*sa).toFixed(1)}" x2="${(cx+rOuter*ca).toFixed(1)}" y2="${(cy+rOuter*sa).toFixed(1)}" stroke="${on?accent:'rgba(255,255,255,0.09)'}" stroke-width="${sw}" stroke-linecap="round"${on?` style="filter:drop-shadow(0 0 3px ${accent})"`:''}/>`;
+  }
+  // Leading dot at the progress edge
+  if (filled > 0 && frac < 1) {
+    const la = (filled/ticks) * 2*Math.PI - Math.PI/2;
+    const rm = (rInner+rOuter)/2;
+    s += `<circle class="focus-lead-dot" cx="${(cx+rm*Math.cos(la)).toFixed(1)}" cy="${(cy+rm*Math.sin(la)).toFixed(1)}" r="4.5" fill="${accent}"/>`;
+  }
+  s += `</svg>`;
+  return s;
+}
+
+// Remaining ms toward an activity's target (null when the activity has no target).
+function activityRemainingMs(act) {
+  const meta = LIVE_ACTIVITY_META[act.type] || {};
+  if (!meta.targetMin) return null;
+  return Math.max(0, meta.targetMin * 60000 - getActiveElapsed(act));
+}
+
+const ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg>';
+const ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.87l11-6.5a1 1 0 0 0 0-1.74l-11-6.5A1 1 0 0 0 8 5.5z"/></svg>';
+const ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+
+let _focusActivityId = null;
+
+function openFocusView(id) {
+  const act = (ST.liveActivities || []).find(a => a.id === id && !a.endedAt);
+  if (!act) return;
+  _focusActivityId = id;
+  const el = document.getElementById('focusFullPage');
+  el.style.setProperty('--la-accent', laAccent(act.type)); // tint the bg to match the activity
+  el.innerHTML = buildFocusHTML(act);
+  el.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  requestWakeLock();
+  history.pushState({ overlay: 'focus' }, '');
+}
+
+function closeFocusView(fromPopstate) {
+  const el = document.getElementById('focusFullPage');
+  if (!el.classList.contains('open')) return;
+  el.classList.remove('open');
+  _focusActivityId = null;
+  document.body.style.overflow = '';
+  if (!fromPopstate && history.state && history.state.overlay) history.back();
+}
+
+function buildFocusHTML(act) {
+  const meta = LIVE_ACTIVITY_META[act.type] || { label: act.type };
+  const accent = laAccent(act.type);
+  const others = (ST.liveActivities || []).filter(a => !a.endedAt);
+  // Floating chips: every running activity (current highlighted), tap to switch
+  const positions = ['top:6%;right:2%', 'top:30%;left:-2%', 'bottom:20%;right:0%', 'top:54%;right:4%'];
+  const chips = others.slice(0, 4).map((a, i) => {
+    const m = LIVE_ACTIVITY_META[a.type] || { label: a.type };
+    const rem = activityRemainingMs(a);
+    const minTxt = m.targetMin ? Math.max(0, Math.ceil((rem != null ? rem : 0)/60000)) + ' min' : 'open';
+    return `<div class="focus-chip ${a.id === act.id ? 'is-current' : ''}" style="${positions[i] || positions[3]};--la-accent:${laAccent(a.type)}" onclick="event.stopPropagation();openFocusView('${a.id}')">
+      <span class="fc-emoji">${laMascot(a.type)}</span><span>${m.label}</span><span class="fc-min">${minTxt}</span>
+    </div>`;
+  }).join('');
+
+  return `<div style="--la-accent:${accent}">
+    <div class="focus-top">
+      <button onclick="closeFocusView()" aria-label="Close">${ICON_X}</button>
+      <button class="focus-stop" onclick="stopLiveActivity('${act.id}');closeFocusView()">FINISH</button>
+    </div>
+    <div class="focus-head">
+      <div class="focus-cat">${laCategory(act.type)}</div>
+      <div class="focus-title">${meta.label}</div>
+    </div>
+    <div class="focus-stage">
+      ${chips}
+      <div class="focus-ring-wrap" id="focusRingWrap">
+        <div id="focusRing"></div>
+        <div class="focus-mascot-wrap"><div class="la-mascot" id="focusMascot">${laMascot(act.type)}</div></div>
+      </div>
+    </div>
+    <div class="focus-timer" id="focusTimer">--:--</div>
+    <div class="focus-sub" id="focusSub"></div>
+    <button class="focus-pause" id="focusPauseBtn" onclick="toggleFocusPause()">${ICON_PAUSE}</button>
+  </div>`;
+}
+
+function toggleFocusPause() {
+  const act = (ST.liveActivities || []).find(a => a.id === _focusActivityId && !a.endedAt);
+  if (!act) return;
+  if (act.pausedAt) resumeLiveActivity(act.id); else pauseLiveActivity(act.id);
+  updateFocusView();
+}
+
+// Update only the dynamic bits each tick (no rebuild -> mascot keeps bobbing)
+function updateFocusView() {
+  const el = document.getElementById('focusFullPage');
+  if (!el || !el.classList.contains('open')) return;
+  const act = (ST.liveActivities || []).find(a => a.id === _focusActivityId && !a.endedAt);
+  if (!act) { closeFocusView(); return; }
+  const meta = LIVE_ACTIVITY_META[act.type] || {};
+  const accent = laAccent(act.type);
+  const elapsed = getActiveElapsed(act);
+  const isPaused = !!act.pausedAt;
+  const rem = activityRemainingMs(act);
+  const hasTarget = rem != null;
+  const done = hasTarget && rem <= 0;
+  const pct = hasTarget ? Math.min(100, elapsed / (meta.targetMin*60000) * 100) : ((elapsed/60000) % 60) / 60 * 100;
+
+  const ring = document.getElementById('focusRing');
+  if (ring) ring.innerHTML = segRingSVG(done ? 100 : pct, accent, { size: 300, ticks: 60 });
+  const timer = document.getElementById('focusTimer');
+  if (timer) {
+    timer.textContent = done ? 'DONE' : formatDuration(hasTarget ? rem : elapsed);
+    timer.classList.toggle('paused', isPaused && !done);
+    timer.classList.toggle('focus-done', done);
+  }
+  const sub = document.getElementById('focusSub');
+  if (sub) sub.textContent = isPaused ? 'PAUSED' : done ? 'Target reached - nice work' : hasTarget ? ('of ' + meta.targetMin + ' min · ' + formatDuration(elapsed) + ' elapsed') : 'elapsed';
+  const mascot = document.getElementById('focusMascot');
+  if (mascot) mascot.classList.toggle('paused', isPaused);
+  const pb = document.getElementById('focusPauseBtn');
+  if (pb) pb.innerHTML = isPaused ? ICON_PLAY : ICON_PAUSE;
+}
+
 function logBehavior(tag) {
   const today = new Date().toISOString().slice(0, 10);
   if (!ST.journal) ST.journal = [];
@@ -14150,17 +14414,47 @@ function openWindDown() {
   }, 300);
 }
 
+// ── Background completion push: alert when a timed activity finishes even if the
+// app is closed (iOS suspends JS timers). We register a one-off server push at the
+// activity's completion time; the rythm-push cron delivers it. Cancelled/rescheduled
+// on pause/resume/stop so it always fires at the right moment (or not at all).
+async function scheduleActivityCompletionPush(act) {
+  if (!sb || !(ST.notifications && ST.notifications.enabled)) return;
+  const meta = LIVE_ACTIVITY_META[act.type] || {};
+  if (!meta.targetMin || act.pausedAt || act.endedAt) return;
+  const remaining = (meta.targetMin * 60000) - getActiveElapsed(act);
+  if (remaining <= 0) return;
+  const fireAt = new Date(Date.now() + remaining).toISOString();
+  const tag = 'act-' + act.id;
+  try {
+    await sb.from('push_oneoffs').delete().eq('sub_key', getDeviceKey()).eq('tag', tag);
+    await sb.from('push_oneoffs').insert({
+      sub_key: getDeviceKey(), fire_at: fireAt, tag,
+      title: meta.label + ' complete',
+      body: 'Your ' + meta.label.toLowerCase() + ' timer (' + meta.targetMin + ' min) is done.'
+    });
+  } catch (e) { console.warn('[RYTHM] completion push schedule failed', e); }
+}
+async function cancelActivityCompletionPush(actId) {
+  if (!sb) return;
+  try { await sb.from('push_oneoffs').delete().eq('sub_key', getDeviceKey()).eq('tag', 'act-' + actId); }
+  catch (e) {}
+}
+
 function startLiveActivity(type) {
   if (!ST.liveActivities) ST.liveActivities = [];
   // Allow multiple concurrent activities (even same type)
-  ST.liveActivities.push({
+  const act = {
     id: Date.now().toString(36),
     type, startedAt: new Date().toISOString(), endedAt: null,
     pausedAt: null, totalPausedMs: 0
-  });
+  };
+  ST.liveActivities.push(act);
   saveState();
   renderLiveActivities();
   startLiveActivityTimer();
+  requestWakeLock();
+  scheduleActivityCompletionPush(act);
 }
 
 function pauseLiveActivity(id) {
@@ -14170,6 +14464,7 @@ function pauseLiveActivity(id) {
     act.pausedAt = new Date().toISOString();
     saveState();
     renderLiveActivities();
+    cancelActivityCompletionPush(id); // paused -> no completion alert until resumed
   }
 }
 
@@ -14183,6 +14478,7 @@ function resumeLiveActivity(id) {
     saveState();
     renderLiveActivities();
     startLiveActivityTimer();
+    scheduleActivityCompletionPush(act); // reschedule for the new completion time
   }
 }
 
@@ -14204,6 +14500,7 @@ function discardLiveActivity(id) {
     ST.liveActivities.splice(idx, 1);
     saveState();
     renderLiveActivities();
+    cancelActivityCompletionPush(id);
     const remaining = ST.liveActivities.filter(a => !a.endedAt);
     if (!remaining.length) releaseWakeLock();
   }
@@ -14224,13 +14521,15 @@ function stopLiveActivity(id) {
     const durationMin = Math.round(durationMs / 60000);
     if (!ST.logs) ST.logs = [];
     ST.logs.push({
-      date: new Date(act.startedAt).toISOString().slice(0, 10),
+      date: localDateStr(new Date(act.startedAt)),
       ts: act.startedAt,
       tags: [act.type],
       durationMin: durationMin,
       mood: null
     });
     saveState();
+    cancelActivityCompletionPush(id);
+    if (_focusActivityId === id) closeFocusView();
     renderLiveActivities();
     renderTasks(); // Re-render My Day to show the logged activity
     // Release wake lock if no more active activities
@@ -14283,150 +14582,84 @@ function getShishaCutoffWarning() {
 function renderLiveActivities() {
   const el = document.getElementById('liveIsland');
   if (!el) return;
-
   const active = (ST.liveActivities || []).filter(a => !a.endedAt);
   document.querySelector('.app')?.classList.toggle('has-live', active.length > 0);
-  if (!active.length) { el.innerHTML = ''; return; }
+  if (!active.length) { el.innerHTML = ''; updateFocusView(); return; }
 
-  const now = Date.now();
-
-  // Check if cards already exist  - update in-place (no flicker)
   const existingIds = [...el.querySelectorAll('[data-live-id]')].map(e => e.dataset.liveId);
   const activeIds = active.map(a => a.id);
   const needsRebuild = existingIds.length !== activeIds.length || !activeIds.every(id => existingIds.includes(id));
 
-  if (!needsRebuild) {
-    active.forEach(a => {
-      const card = el.querySelector(`[data-live-id="${a.id}"]`);
-      if (!card) return;
-      const elapsed = getActiveElapsed(a);
-      const isPaused = !!a.pausedAt;
-      const timerEl = card.querySelector('.la-timer');
-      if (timerEl) {
-        timerEl.textContent = formatDuration(elapsed);
-        timerEl.style.opacity = isPaused ? '0.4' : '1';
-      }
-      // Update pause/resume button state
-      const pauseBtn = card.querySelector('.la-pause');
-      if (pauseBtn) {
-        pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
-        pauseBtn.onclick = isPaused
-          ? function(e) { e.stopPropagation(); resumeLiveActivity(a.id); }
-          : function(e) { e.stopPropagation(); pauseLiveActivity(a.id); };
-      }
-      // Update status badge
-      const liveLabel = card.querySelector('.la-live');
-      if (liveLabel && isPaused) {
-        liveLabel.innerHTML = '<span class="la-paused-badge">PAUSED</span>';
-      }
-      const meta = LIVE_ACTIVITY_META[a.type] || {};
-      if (meta.targetMin) {
-        const pct = Math.min(100, Math.round((elapsed / 60000) / meta.targetMin * 100));
-        const ringFill = card.querySelector('.la-ring-fill');
-        if (ringFill) {
-          const circumf = 2 * Math.PI * 52;
-          ringFill.setAttribute('stroke-dashoffset', String(circumf * (1 - pct / 100)));
-        }
-        const pctEl = card.querySelector('.la-pct');
-        if (pctEl) pctEl.innerHTML = pct + '<span style="font-size:11px;">%</span>';
-      }
-      // Deep work arc update
-      if (a.type === 'deep_work') {
-        const mins = Math.floor(elapsed / 60000);
-        const target = meta.targetMin || 90;
-        const maxDisplay = target * 1.5;
-        const arcPct = Math.min(100, (mins / maxDisplay) * 100);
-        const r = 72, cx = 140, cy = 64;
-        const arcLength = Math.PI * r;
-        const arcFill = card.querySelector('.la-arc-fill');
-        if (arcFill) arcFill.setAttribute('stroke-dashoffset', (arcLength * (1 - arcPct / 100)).toFixed(1));
-        const arcDot = card.querySelector('.la-arc-dot');
-        if (arcDot) {
-          const dotAngle = Math.PI - (arcPct / 100) * Math.PI;
-          arcDot.setAttribute('cx', (cx + r * Math.cos(dotAngle)).toFixed(1));
-          arcDot.setAttribute('cy', (cy + r * Math.sin(dotAngle)).toFixed(1));
-        }
-        const pomoEl = card.querySelector('.la-pomo-count');
-        if (pomoEl) pomoEl.textContent = Math.floor(mins / 25);
-      }
-      // Shisha meter update
-      if (a.type === 'shisha' || a.type === 'shisha_late') {
-        const sleepMin = ST.profile.sleepMin >= 1440 ? ST.profile.sleepMin - 1440 : ST.profile.sleepMin;
-        let cutMin = sleepMin - 180; if (cutMin < 0) cutMin += 1440;
-        const nd = new Date(), nm = nd.getHours() * 60 + nd.getMinutes();
-        let untilCut = cutMin - nm; if (untilCut < 0) untilCut += 1440;
-        const pastCut = untilCut > 960 ? false : untilCut <= 0;
-        const rPct = pastCut ? 0 : Math.min(100, (untilCut / 180) * 100);
-        const circ = 2 * Math.PI * 14;
-        const meterFill = card.querySelector('.la-meter-fill');
-        if (meterFill) meterFill.setAttribute('stroke-dashoffset', (circ * (1 - rPct / 100)).toFixed(1));
-        const meterVal = card.querySelector('.la-meter-val');
-        if (meterVal) {
-          const rH = Math.floor(untilCut / 60), rM = untilCut % 60;
-          meterVal.textContent = pastCut ? '0:00' : (rH > 0 ? rH + ':' + String(rM).padStart(2,'0') : rM + 'm');
-        }
-        const warn = card.querySelector('.la-warn');
-        if (warn) { warn.style.display = pastCut ? '' : 'none'; }
-      }
-      // Workout elapsed stats
-      if (a.type === 'workout') {
-        const minEl = card.querySelector('.la-elapsed-min');
-        if (minEl) minEl.textContent = Math.floor(elapsed / 60000);
-      }
-    });
-    return;
+  if (needsRebuild) {
+    el.innerHTML = active.map(liveCardHTML).join('');
+  } else {
+    active.forEach(a => updateLiveCard(el.querySelector(`[data-live-id="${a.id}"]`), a));
   }
+  updateFocusView();
+}
 
-  // Unified beautiful card: big progress ring + timer, colored by activity type
-  const LA_COLORS = {
-    workout:'#2ecf82', sauna:'#ff8c42', meditation:'#9b7ff0', deep_work:'#4da9ff',
-    cold_shower:'#4dd6ff', nap:'#9b7ff0', walk:'#4da9ff', sun_exposure:'#ffb547',
-    shisha:'#ff7a6b', shisha_late:'#ff7a6b', alcohol:'#ff7a6b', energy_caps:'#ffb547',
-    stretching:'#2ecf82', mobility:'#2ecf82', jetboots:'#22d3b8', foam_roll:'#22d3b8',
-    massage:'#22d3b8', massage_gun:'#22d3b8', infrapanel:'#ff5470', powerdot:'#4da9ff'
-  };
-  const LA_STATUS = { meditation:'CALM', sauna:'HEAT', deep_work:'FOCUS', cold_shower:'COLD', nap:'RESTING', walk:'MOVING' };
-  el.innerHTML = active.map(a => {
-    const meta = LIVE_ACTIVITY_META[a.type] || { icon:'', label:a.type };
-    const elapsed = getActiveElapsed(a);
-    const isPaused = !!a.pausedAt;
-    const dur = formatDuration(elapsed);
-    const elapsedMin = Math.floor(elapsed / 60000);
-    const accent = LA_COLORS[a.type] || '#2ecf82';
-    const target = meta.targetMin || 0;
-    const pct = target ? Math.min(100, Math.round(elapsedMin / target * 100)) : 0;
-    const R = 52, CIRC = 2 * Math.PI * R;
-    const offset = target ? CIRC * (1 - pct / 100) : 0;
-    const word = LA_STATUS[a.type] || 'ACTIVE';
-    const status = isPaused ? '<span class="la-paused-badge">PAUSED</span>' : `<span class="la-live-dot"></span> ${word}`;
-    const pauseBtn = `<button class="la-pause" onclick="event.stopPropagation();${isPaused ? 'resumeLiveActivity' : 'pauseLiveActivity'}('${a.id}')">${isPaused ? 'Resume' : 'Pause'}</button>`;
-    const stopBtn = `<button class="la-stop" onclick="event.stopPropagation();stopLiveActivity('${a.id}')">Stop</button>`;
-    const discardBtn = `<button class="la-discard" onclick="event.stopPropagation();discardLiveActivity('${a.id}')">Discard</button>`;
-    const controlsRow = `<div class="la-controls">${pauseBtn}${stopBtn}${discardBtn}</div>`;
-    return `<div class="live-card" data-live-id="${a.id}" data-type="${a.type}" style="--la-accent:${accent};">
-      <div class="la-header">
-        <div class="la-badge">
-          <div class="la-icon">${svgIcon(meta.icon, {size:18})}</div>
-          <div>
-            <div class="la-title">${meta.label}</div>
-            <div class="la-live">${status}</div>
-          </div>
-        </div>
-        ${target ? `<div class="la-pct">${pct}<span style="font-size:11px;">%</span></div>` : ''}
-      </div>
-      <div class="la-ring-wrap">
-        <svg class="la-ring" viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r="${R}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="9"/>
-          <circle class="la-ring-fill" cx="60" cy="60" r="${R}" fill="none" stroke="var(--la-accent)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${CIRC.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}" transform="rotate(-90 60 60)"/>
-        </svg>
-        <div class="la-ring-center">
-          <div class="la-timer" style="${isPaused ? 'opacity:0.4;' : ''}">${dur}</div>
-          <div class="la-target-label">${target ? 'of ' + target + ' min' : 'elapsed'}</div>
+function liveCardHTML(a) {
+  const meta = LIVE_ACTIVITY_META[a.type] || { label: a.type };
+  const accent = laAccent(a.type);
+  const isPaused = !!a.pausedAt;
+  const elapsed = getActiveElapsed(a);
+  const rem = activityRemainingMs(a);
+  const hasTarget = rem != null;
+  const done = hasTarget && rem <= 0;
+  const pct = hasTarget ? Math.min(100, elapsed / (meta.targetMin * 60000) * 100) : 0;
+  const timeTxt = done ? 'DONE' : formatDuration(hasTarget ? rem : elapsed);
+  const word = isPaused ? 'PAUSED' : (LA_STATUS[a.type] || 'LIVE');
+  const liveHtml = isPaused ? '<span class="la-paused-badge">PAUSED</span>' : `<span class="la-live-dot"></span> ${word}`;
+  return `<div class="live-card" data-live-id="${a.id}" data-type="${a.type}" style="--la-accent:${accent}" onclick="openFocusView('${a.id}')">
+    <div class="la-header">
+      <div class="la-badge">
+        <div class="la-icon">${laMascot(a.type)}</div>
+        <div>
+          <div class="la-title">${meta.label}</div>
+          <div class="la-live">${liveHtml}</div>
         </div>
       </div>
-      ${controlsRow}
-    </div>`;
-  }).join('');
+      ${hasTarget ? `<div class="la-pct">${done ? 100 : Math.round(pct)}<span style="font-size:11px;">%</span></div>` : ''}
+    </div>
+    <div class="la-ring-wrap">
+      <div class="la-ring-seg" style="position:absolute;inset:0;">${segRingSVG(done ? 100 : pct, accent, { size: 150, ticks: 48, sw: 3 })}</div>
+      <div class="la-ring-center">
+        <div class="la-mascot${isPaused ? ' paused' : ''}">${laMascot(a.type)}</div>
+        <div class="la-timer-sm${isPaused ? ' paused' : ''}">${timeTxt}</div>
+      </div>
+    </div>
+    <div onclick="event.stopPropagation()" style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:12px;">
+      <button class="la-round-pause" onclick="${isPaused ? 'resumeLiveActivity' : 'pauseLiveActivity'}('${a.id}')" aria-label="${isPaused ? 'Resume' : 'Pause'}">${isPaused ? ICON_PLAY : ICON_PAUSE}</button>
+      <div style="display:flex;gap:8px;">
+        <button class="la-stop" onclick="stopLiveActivity('${a.id}')">Finish</button>
+        <button class="la-discard" onclick="discardLiveActivity('${a.id}')">Discard</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function updateLiveCard(card, a) {
+  if (!card) return;
+  const meta = LIVE_ACTIVITY_META[a.type] || {};
+  const accent = laAccent(a.type);
+  const isPaused = !!a.pausedAt;
+  const elapsed = getActiveElapsed(a);
+  const rem = activityRemainingMs(a);
+  const hasTarget = rem != null;
+  const done = hasTarget && rem <= 0;
+  const pct = hasTarget ? Math.min(100, elapsed / (meta.targetMin * 60000) * 100) : 0;
+  const seg = card.querySelector('.la-ring-seg');
+  if (seg) seg.innerHTML = segRingSVG(done ? 100 : pct, accent, { size: 150, ticks: 48, sw: 3 });
+  const t = card.querySelector('.la-timer-sm');
+  if (t) { t.textContent = done ? 'DONE' : formatDuration(hasTarget ? rem : elapsed); t.classList.toggle('paused', isPaused); }
+  const mascot = card.querySelector('.la-ring-center .la-mascot');
+  if (mascot) mascot.classList.toggle('paused', isPaused);
+  const pctEl = card.querySelector('.la-pct');
+  if (pctEl && hasTarget) pctEl.innerHTML = (done ? 100 : Math.round(pct)) + '<span style="font-size:11px;">%</span>';
+  const live = card.querySelector('.la-live');
+  if (live) live.innerHTML = isPaused ? '<span class="la-paused-badge">PAUSED</span>' : `<span class="la-live-dot"></span> ${LA_STATUS[a.type] || 'LIVE'}`;
+  const pb = card.querySelector('.la-round-pause');
+  if (pb) { pb.innerHTML = isPaused ? ICON_PLAY : ICON_PAUSE; pb.setAttribute('onclick', `${isPaused ? 'resumeLiveActivity' : 'pauseLiveActivity'}('${a.id}')`); }
 }
 
 let liveActivityInterval = null;
@@ -16742,6 +16975,7 @@ async function uploadPushSchedule(schedule) {
 }
 </script>
 <!-- Floating Live Activities (pinned above nav bar) -->
+<div class="focus-fp" id="focusFullPage"></div>
 <div class="live-island" id="liveIsland"></div>
 </body>
 </html>

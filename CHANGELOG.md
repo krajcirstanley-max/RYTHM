@@ -1,5 +1,21 @@
 # RYTHM Changelog
 
+## 2026-06-11 (v173) - Live activities redesign
+
+### Immersive focus view + redesigned cards
+- Tapping a running live activity opens a full-screen focus timer: category label, italic title, segmented progress ring with a glowing leading dot, a bouncing mascot in the centre, big countdown, round pause button, and the other running activities as floating chips you can tap to switch.
+- The background tints to the activity's colour (blue for deep work, orange for sauna, etc.) - colourful per the reference.
+- Compact cards above the nav redesigned to match: segmented ring, centred mascot, big countdown, round pause, Finish/Discard. Tap a card to open the focus view.
+- Each activity now has a playful mascot emoji and a category label.
+
+### Doesn't die when you leave the app
+- The timer is timestamp-based, so it stays accurate when you switch apps or lock the phone (it never silently resets).
+- syncFromCloud now preserves an in-progress timer so a cloud sync from another moment/device can't wipe it.
+- Screen wake-lock held while an activity runs / the focus view is open (foreground).
+- Background completion alert: starting a timed activity registers a one-off web-push at its completion time (delivered by the 5-min cron), so you get pinged when it finishes even with the app closed. Cancelled/rescheduled on pause/resume/stop. New `push_oneoffs` table + extended `rythm-push` function (both deployed). Requires notifications enabled on the device.
+
+---
+
 ## 2026-06-11 (v172) - Correctness pass
 
 ### Scoring algorithms

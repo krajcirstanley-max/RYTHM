@@ -40,6 +40,34 @@ Deno.serve(async (_req) => {
     const now = new Date();
     let sent = 0, failed = 0, skipped = 0;
 
+    // ── One-off notifications (live-activity timers completing while away) ──
+    const subById = new Map<string, any>();
+    for (const r of subs) subById.set(r.id, r.subscription);
+    const { data: oneoffs } = await sb
+      .from("push_oneoffs")
+      .select("*")
+      .eq("sent", false)
+      .lte("fire_at", now.toISOString());
+    for (const o of (oneoffs || [])) {
+      const sub = subById.get(o.sub_key);
+      if (sub?.endpoint && sub?.keys) {
+        try {
+          await webpush.sendNotification(sub, JSON.stringify({
+            title: o.title || "RYTHM",
+            body: o.body || "",
+            tag: o.tag || "rythm-timer",
+          }));
+          sent++;
+        } catch (e: any) {
+          if (e.statusCode === 404 || e.statusCode === 410) {
+            await sb.from("push_subscriptions").delete().eq("id", o.sub_key);
+          }
+          failed++;
+        }
+      }
+      await sb.from("push_oneoffs").update({ sent: true }).eq("id", o.id);
+    }
+
     for (const row of subs) {
       const sub = row.subscription;
       if (!sub?.endpoint || !sub?.keys) { failed++; continue; }
