@@ -1,5 +1,40 @@
 # RYTHM Changelog
 
+## 2026-06-11 (v172) - Correctness pass
+
+### Scoring algorithms
+- Recovery weights unified to a single normalized set everywhere (HRV 30% / RHR 20% / Sleep 30% / Training 20% = 100%). Previously the engine used weights summing to 0.90 and three screens stated three different splits.
+- Recovery breakdown bars now read the engine's real sub-scores (was a separate, divergent formula that disagreed with the headline number).
+- Strain (0-21) is now normalized by bodyweight (relative load), per the spec; historical strain too.
+- Sleep "needed tonight" centralized into one function (sleepNeedSurcharges) so the Today banner, Sleep full page, and detail all show the same number (was three different formulas/caps).
+- Stress score: guarded against NaN with no data (was rendering "HIGH"); now uses overnight HRV like recovery, and the personalized sleep target.
+- Circadian phases are now always contiguous (chained boundaries) - fixes the winter-mode gap that flipped the label to "NIGHT" mid-afternoon.
+- Overnight HRV baseline is now a median (was a mean), matching the daytime baselines.
+
+### Back button / navigation (the real root cause)
+- Edge-swipe-to-close now routes through the overlay's real close path so history stays in sync. The old handler removed the overlay without popping history, orphaning an entry so the NEXT OS-back exited the whole PWA. This was the bug behind every prior "bulletproof back button" attempt.
+- Removed the duplicate second swipe handler that fought the edge-swipe and desynced history nondeterministically.
+- popstate now closes the topmost overlay by z-index (correct for stacked overlays).
+- closeLog guarded against double-popping history.
+
+### Service worker
+- Removed the reload storm: a single update now reloads once (was SW tab-navigate + controllerchange + statechange = 2-3 stacked reloads).
+- Fixed the offline precache (was caching `index.html?v=...` while the browser requests the bare URL, so the cache never hit). Bumped to rythm-v172.
+- Notification-click focuses an existing tab by origin (was a fragile "rythm" substring match).
+
+### Data / dates / reliability
+- "Erase ALL data" now also deletes the Supabase row (was restoring from cloud on reload, so nothing was erased).
+- Caffeine cutoff anchored to bedtime (~9h before), not wake+6.5h; single source of truth.
+- Fixed local-vs-UTC date bugs: logging near midnight, manual wake-time override, and notification dedup were landing on the wrong day.
+- Health monitor shows "Awaiting Sync" instead of a fabricated "Within Range" when there's no data; counts only metrics that have data.
+- Guarded several NaN/divide-by-zero display paths (sleep breakdown %, recovery-impact averages).
+- Removed dead code (malformed ring-glow line, no-op peak-time condition).
+
+### Push notifications (background)
+- The send pipeline (subscribe -> upload schedule -> rythm-push edge function) is verified working. Added `supabase/push_cron.sql` - run it ONCE in the Supabase SQL editor to schedule the function every 5 min. Without this cron, background notifications never fired (the in-app timer only runs while the app is open, which iOS suspends).
+
+---
+
 ## 2026-05-22 (v3)
 
 ### Energy Full Page

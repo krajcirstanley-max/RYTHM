@@ -3961,6 +3961,17 @@ function profileSleepHour() {
   return (ST.profile.sleepMin >= 1440 ? (ST.profile.sleepMin - 1440) / 60 : ST.profile.sleepMin / 60);
 }
 
+// Caffeine cutoff, in minutes-from-midnight. Anchored to BEDTIME (~9h before),
+// not wake time: caffeine half-life is 5-6h, so the science is "stop 8-10h before
+// sleep". A late wake should not push the cutoff later if bedtime is unchanged.
+// Single source of truth so the banner, suggestions, and notifications agree.
+function caffeineCutoffMin() {
+  const sm = ST.profile.sleepMin >= 1440 ? ST.profile.sleepMin - 1440 : ST.profile.sleepMin;
+  let m = sm - 540; // 9h before bedtime
+  if (m < 0) m += 1440;
+  return m;
+}
+
 // Format decimal hours as "Xh Ymin" (e.g., 7.2 → "7h 12min")
 function fmtH(h) {
   if (h == null || isNaN(h)) return '0h 0min';
@@ -4307,16 +4318,23 @@ const PHASE_PCTS = [
   { name:'NIGHT',     cls:'phase-night',    barCls:'night',    pctStart:0.93, pctEnd:1.0  },
 ];
 
-// Build absolute phase boundaries from proportions × awake window
+// Build absolute phase boundaries from proportions × awake window.
+// Each phase's start is chained to the previous phase's end so the phases are
+// always perfectly contiguous (no gaps that would fall through to NIGHT, and no
+// overlaps) regardless of the seasonal shift.
 function buildPhases() {
   const aw = awakeWindow();
-  // Winter: extend inertia +3% (melatonin lingers with less morning light)
+  // Winter: push the morning boundaries later (melatonin lingers with less light).
+  // Only the morning phases end later; the afternoon/evening schedule is unchanged.
   const winterShift = (ST.seasonal && ST.seasonal.adjustment === 'winter') ? 0.03 : 0;
-  return PHASE_PCTS.map(p => ({
-    ...p,
-    hwStart: (p.pctStart + (p.name === 'INERTIA' ? 0 : winterShift)) * aw,
-    hwEnd:   (p.pctEnd + (p.name === 'INERTIA' ? winterShift : p.name === 'PEAK 1' ? winterShift : 0)) * aw,
-  }));
+  const endShiftFor = (name) => (name === 'INERTIA' || name === 'PEAK 1') ? winterShift : 0;
+  let prevEnd = null;
+  return PHASE_PCTS.map(p => {
+    const hwStart = prevEnd != null ? prevEnd : p.pctStart * aw;
+    const hwEnd = (p.pctEnd + endShiftFor(p.name)) * aw;
+    prevEnd = hwEnd;
+    return { ...p, hwStart, hwEnd };
+  });
 }
 
 // Keep backward-compatible PHASES for any code that reads it
@@ -4579,7 +4597,7 @@ function computeReadiness(forDate) {
   }
   hrvScore = Math.max(0, Math.min(100, hrvScore));
 
-  // === RHR Component (15%)  - lower is better for athletes ===
+  // === RHR Component (20%)  - lower is better for athletes ===
   const rhrBase = m.rhrBaseline || 0;
   const rhrNow = m.rhr || 0;
   let rhrScore;
@@ -4605,7 +4623,7 @@ function computeReadiness(forDate) {
     ST._sleepScoreBreakdown = ss;
   }
 
-  // === Training Load Component (15%) ===
+  // === Training Load Component (20%) ===
   const tl = computeTrainingLoad();
   const training = tl.readiness;
   ST.readiness.training = training;
@@ -4664,9 +4682,9 @@ function computeReadiness(forDate) {
   }
 
   // Weighted combination  - pure physiology (WHOOP-style)
-  // HRV 30% + Sleep 30% + RHR 15% + Training 15% + biometric/behavior modifiers
+  // HRV 30% + RHR 20% + Sleep 30% + Training 20% = 100% + biometric/behavior modifiers
   // No direct strain penalty -- if yesterday was hard, HRV/RHR/sleep will reflect it
-  const base = hrvScore * 0.30 + sleepScore * 0.30 + rhrScore * 0.15 + training * 0.15;
+  const base = hrvScore * 0.30 + sleepScore * 0.30 + rhrScore * 0.20 + training * 0.20;
   const modifiers = respBonus + spo2Bonus + skinTempBonus + behaviorMod;
   const final = Math.max(0, Math.min(100, Math.round(base + modifiers)));
 
@@ -4690,7 +4708,7 @@ function computeHistoricalReadiness(dateStr) {
   const hrvBase = (ST.metrics?.hrvBaseline || ST.metrics?.sleepHrv || ST.metrics?.hrv || 50);
   const rhrBase = (ST.metrics?.rhrBaseline || ST.metrics?.rhr || 60);
 
-  // HRV score (30%)
+  // HRV score (30%) - same curve as the live engine
   let hrvScore = 50;
   if (hrvEntry && hrvEntry.value > 0) {
     const ratio = hrvEntry.value / hrvBase;
@@ -4700,14 +4718,15 @@ function computeHistoricalReadiness(dateStr) {
     else hrvScore = Math.max(0, ratio / 0.65 * 15);
   }
 
-  // RHR score (15%)
+  // RHR score (20%) - same curve as the live engine (with noise band, no hard cliff)
   let rhrScore = 50;
   if (rhrEntry && rhrEntry.value > 0) {
     const ratio = rhrEntry.value / rhrBase;
-    if (ratio <= 0.9) rhrScore = 100;
+    if (ratio <= 0.90) rhrScore = 100;
     else if (ratio <= 1.0) rhrScore = 50 + (1.0 - ratio) * 500;
-    else if (ratio <= 1.2) rhrScore = Math.max(0, 50 - (ratio - 1.0) * 250);
-    else rhrScore = 0;
+    else if (ratio <= 1.05) rhrScore = 50;
+    else if (ratio <= 1.20) rhrScore = 50 - (ratio - 1.05) * 233;
+    else rhrScore = Math.max(0, 15 - (ratio - 1.20) * 150);
   }
 
   // Sleep score (30%) - use composite where possible, duration-weighted fallback
@@ -4726,7 +4745,7 @@ function computeHistoricalReadiness(dateStr) {
     sleepScore = Math.round(durScore * 0.55 + 60 * 0.25 + 60 * 0.20);
   }
 
-  // Training load score (15%) - use previous day's strain as proxy
+  // Training load score (20%) - use previous day's strain as proxy
   const prevDate = new Date(dateStr + 'T12:00:00');
   prevDate.setDate(prevDate.getDate() - 1);
   const prevStr = prevDate.toISOString().slice(0, 10);
@@ -4740,7 +4759,7 @@ function computeHistoricalReadiness(dateStr) {
     else trainScore = 25;
   }
 
-  const base = hrvScore * 0.30 + sleepScore * 0.30 + rhrScore * 0.15 + trainScore * 0.15;
+  const base = hrvScore * 0.30 + sleepScore * 0.30 + rhrScore * 0.20 + trainScore * 0.20;
   return Math.max(0, Math.min(100, Math.round(base)));
 }
 
@@ -4750,7 +4769,9 @@ function computeHistoricalStrain(dateStr) {
   const calEntry = (hist.active_cal || []).find(d => d.date === dateStr);
   const cal = calEntry ? calEntry.value : 0;
   if (cal < 20) return 0;
-  return Math.min(21, Math.round(Math.sqrt(cal) * 0.45));
+  const REF_WEIGHT = 65;
+  const bw = (ST.health && ST.health.weight) || REF_WEIGHT;
+  return Math.min(21, Math.round(Math.sqrt(cal * (REF_WEIGHT / bw)) * 0.45));
 }
 
 function readinessInterpretation(score) {
@@ -4928,8 +4949,7 @@ function renderReadiness() {
   ring.setAttribute('stroke', interp.color);
   // Set glow color CSS variable for pulse animation
   const ringEl = document.querySelector('.readiness-ring');
-  if (ringEl) ringEl.style.setProperty('--ring-glow', interp.color.replace(')', ',0.3)').replace('rgb(', 'rgba(').replace('#', ''));
-  // Simpler approach: just set it directly
+  // Set the ring glow directly from the interpretation color
   if (ringEl) {
     const c = interp.color;
     ringEl.style.setProperty('--ring-glow', c === '#00ec7f' ? 'rgba(0,236,127,0.3)' : c === '#ffb547' ? 'rgba(255,181,71,0.3)' : c === '#ff5470' ? 'rgba(255,84,112,0.3)' : 'rgba(48,217,138,0.3)');
@@ -5031,15 +5051,15 @@ function buildSleepDetail() {
   const awake = +(windowH - actualSleep).toFixed(1);
 
   // 7-day avg
-  const last7 = ST.sleepDebt.slice(-7);
+  const last7 = (ST.sleepDebt || []).slice(-7);
   const avgDebt = last7.length ? +(last7.reduce((s,d) => s+d.debtH, 0) / last7.length).toFixed(1) : 0;
   const avgSleep = +(windowH - avgDebt).toFixed(1);
 
   const sleepColor = r.sleep >= 80 ? 'var(--energy)' : r.sleep >= 60 ? 'var(--warn)' : 'var(--danger)';
 
-  // Deep sleep analysis for athletes
-  const deepPct = Math.round(deep / actualSleep * 100);
-  const remPct = Math.round(rem / actualSleep * 100);
+  // Deep sleep analysis for athletes (guard against 0 sleep -> NaN%)
+  const deepPct = actualSleep > 0 ? Math.round(deep / actualSleep * 100) : 0;
+  const remPct = actualSleep > 0 ? Math.round(rem / actualSleep * 100) : 0;
   const deepOk = deepPct >= 15;
   const remOk = remPct >= 20;
 
@@ -5087,10 +5107,14 @@ function buildRecoveryDetail() {
   const score = computeReadiness();
   const interp = readinessInterpretation(score);
 
-  const hrvScore = r.hrv;
-  const rhrScore = r.rhr;
-  const sleepScore = r.sleep;
-  const trainScore = r.training;
+  // Use the SAME sub-scores the engine just computed (cached in _readinessBreakdown
+  // by the computeReadiness() call above), not the separately-derived r.hrv/r.rhr
+  // which use a different formula and would disagree with the headline score.
+  const bd = ST._readinessBreakdown || {};
+  const hrvScore = bd.hrv != null ? bd.hrv : r.hrv;
+  const rhrScore = bd.rhr != null ? bd.rhr : r.rhr;
+  const sleepScore = bd.sleep != null ? bd.sleep : r.sleep;
+  const trainScore = bd.training != null ? bd.training : r.training;
 
   // Yesterday's shisha impact
   const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
@@ -5101,11 +5125,11 @@ function buildRecoveryDetail() {
   const hrvColor = hrvScore >= 60 ? 'var(--energy)' : hrvScore >= 40 ? 'var(--warn)' : 'var(--danger)';
   const rhrColor = rhrScore >= 60 ? 'var(--energy)' : rhrScore >= 40 ? 'var(--warn)' : 'var(--danger)';
 
-  // Weighted contribution to recovery (matches computeReadiness weights)
-  const hrvContrib = Math.round(hrvScore * 0.35);
-  const rhrContrib = Math.round(rhrScore * 0.2);
-  const sleepContrib = Math.round(sleepScore * 0.3);
-  const trainContrib = Math.round(trainScore * 0.15);
+  // Weighted contribution to recovery (matches computeReadiness weights: 30/20/30/20)
+  const hrvContrib = Math.round(hrvScore * 0.30);
+  const rhrContrib = Math.round(rhrScore * 0.20);
+  const sleepContrib = Math.round(sleepScore * 0.30);
+  const trainContrib = Math.round(trainScore * 0.20);
   const trainColor = trainScore >= 60 ? 'var(--energy)' : trainScore >= 40 ? 'var(--warn)' : 'var(--danger)';
   const tl = computeTrainingLoad();
 
@@ -5130,7 +5154,7 @@ function buildRecoveryDetail() {
       <div class="rd-title">Recovery Breakdown</div>
       <div class="rd-score" style="color:${interp.color}">${score}<span class="rd-unit">%</span></div>
     </div>
-    <div style="font-size:10px;color:var(--text-4);margin-bottom:10px;">RECOVERY = HRV (35%) + SLEEP (30%) + RHR (15%) + TRAINING (10%) ± biometrics ± behavior</div>
+    <div style="font-size:10px;color:var(--text-4);margin-bottom:10px;">RECOVERY = HRV (30%) + SLEEP (30%) + RHR (20%) + TRAINING (20%) ± biometrics ± behavior</div>
     <div class="rd-row"><span class="rd-row-label"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${hrvColor};margin-right:4px;"></span> HRV Score</span><div class="rd-bar-wrap"><div class="rd-bar-fill" style="width:${hrvScore}%;background:${hrvColor}"></div></div><span class="rd-row-val" style="color:${hrvColor}">${hrvScore}%</span></div>
     <div class="rd-row"><span class="rd-row-label"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${rhrColor};margin-right:4px;"></span> Resting HR</span><div class="rd-bar-wrap"><div class="rd-bar-fill" style="width:${rhrScore}%;background:${rhrColor}"></div></div><span class="rd-row-val" style="color:${rhrColor}">${rhrScore}%</span></div>
     <div class="rd-row"><span class="rd-row-label"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#93a1c4;margin-right:4px;"></span> Sleep Quality</span><div class="rd-bar-wrap"><div class="rd-bar-fill" style="width:${sleepScore}%;background:#93a1c4"></div></div><span class="rd-row-val">${sleepScore}%</span></div>
@@ -5146,10 +5170,10 @@ function buildRecoveryDetail() {
     <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--card-border);">
       <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-4);margin-bottom:6px;">What drives recovery</div>
       <div style="font-size:11px;color:var(--text-3);line-height:1.5;">
-        <b style="color:var(--text-2)">HRV</b> (35%) = parasympathetic tone. Higher = more recovered.<br>
+        <b style="color:var(--text-2)">HRV</b> (30%) = parasympathetic tone. Higher = more recovered.<br>
         <b style="color:var(--text-2)">Sleep</b> (30%) = quality + duration. Deep sleep releases HGH for tissue repair.<br>
-        <b style="color:var(--text-2)">RHR</b> (15%) = cardiovascular recovery. Lower than baseline = good sign.<br>
-        <b style="color:var(--text-2)">Training</b> (10%) = Acute:Chronic ratio (3d vs 7d). Sweet spot: 0.8-1.3x.<br>
+        <b style="color:var(--text-2)">RHR</b> (20%) = cardiovascular recovery. Lower than baseline = good sign.<br>
+        <b style="color:var(--text-2)">Training</b> (20%) = Acute:Chronic ratio (3d vs 7d). Sweet spot: 0.8-1.3x.<br>
         <b style="color:var(--text-2)">Modifiers</b> = Resp rate, SpO₂${ST.health._skinTempSynced ? ', skin temp' : ''}, yesterday's behaviors (shisha, alcohol, etc.).
       </div>
     </div>
@@ -5616,22 +5640,20 @@ function buildSleepFullPage() {
   const pct = ss.total;
   const perfColor = pct >= 75 ? 'var(--energy)' : pct >= 50 ? 'var(--warn)' : 'var(--danger)';
 
-  const today = localDateStr();
-  const todayDebt = (ST.sleepDebt || []).find(d => d.date === today);
-  const debtH = todayDebt ? todayDebt.debtH : Math.max(0, +(target - sl.totalH).toFixed(1));
-
   const deepPct = Math.round(stg.deep / total * 100);
   const remPct = Math.round(stg.rem / total * 100);
   const corePct = Math.round(stg.core / total * 100);
   const awakePct = Math.round(stg.awake / total * 100);
 
-  const strain = computeStrain();
-  const strainAdd = strain > 14 ? 1.0 : strain > 10 ? 0.5 : strain > 6 ? 0.25 : 0;
-  const debtAdd = Math.min(1.0, debtH > 0 ? debtH * 0.3 : 0);
-  // "Needed" for display = HRV-derived target + adjustments (aspirational)
-  const sleepNeeded = +(target + strainAdd + debtAdd).toFixed(1);
+  // "Needed" for display = HRV-derived target + surcharges (aspirational)
+  const sn = sleepNeedSurcharges(target);
+  const strain = sn.strain;
+  const strainAdd = sn.strainAdd;
+  const debtAdd = sn.debtAdd;
+  const debtH = sn.debtH;
+  const sleepNeeded = sn.total;
   const sleepPerf = pct;
-  // Bedtime uses manual target (realistic, matches your routine)
+  // Bedtime uses manual target (realistic, matches your routine) with the same surcharges
   const manualTarget = (ST.health && ST.health.sleepTarget) || 8;
   const bedtimeNeed = +(manualTarget + strainAdd + debtAdd).toFixed(1);
   let idealBedMin = ST.profile.wakeMin - Math.round(bedtimeNeed * 60) - 15;
@@ -5871,7 +5893,7 @@ function buildSleepFullPage() {
       <div class="fp-row"><span class="fp-row-label">Target duration</span><span class="fp-row-val">${fmtH(sleepNeeded)}</span></div>
       <div class="fp-row"><span class="fp-row-label">Room temp</span><span class="fp-row-val">18-19C</span></div>
       <div class="fp-row"><span class="fp-row-label">Shisha cutoff</span><span class="fp-row-val">${minToTime(idealBedMin - 180 < 0 ? idealBedMin - 180 + 1440 : idealBedMin - 180)}</span></div>
-      <div class="fp-row"><span class="fp-row-label">Caffeine cutoff</span><span class="fp-row-val">${minToTime(Math.round((ST.profile.wakeMin/60 + 6.5) % 24 * 60))}</span></div>
+      <div class="fp-row"><span class="fp-row-label">Caffeine cutoff</span><span class="fp-row-val">${minToTime(caffeineCutoffMin())}</span></div>
     </div>
 
     <!-- COACHING -->
@@ -6006,7 +6028,7 @@ function buildRecoveryFullPage() {
 
     <div class="fp-section">
       <div class="fp-section-title">RECOVERY BREAKDOWN</div>
-      <div style="font-size:10px;color:var(--text-4);margin-bottom:12px;">RECOVERY = HRV (35%) + SLEEP (30%) + RHR (15%) + TRAINING (10%) ± nighttime biometrics ± behavior</div>
+      <div style="font-size:10px;color:var(--text-4);margin-bottom:12px;">RECOVERY = HRV (30%) + SLEEP (30%) + RHR (20%) + TRAINING (20%) ± nighttime biometrics ± behavior</div>
       <div class="fp-bar-row">
         <div class="fp-bar-label" style="color:${hrvColor}">HRV</div>
         <div class="fp-bar-wrap"><div class="fp-bar-fill" style="width:${hrvScore}%;background:${hrvColor}"></div></div>
@@ -6089,10 +6111,10 @@ function buildRecoveryFullPage() {
     <div class="fp-section">
       <div class="fp-section-title">WHAT DRIVES RECOVERY - FOR ATHLETES</div>
       <div style="font-size:12px;color:var(--text-3);line-height:1.6;padding:4px 0;">
-        <p style="margin-bottom:8px"><b style="color:var(--text-1)">HRV (35%)</b> - Heart rate variability measures parasympathetic (vagal) tone. Higher = more recovered. Your autonomic nervous system controls CNS excitability - when HRV is high, you can recruit more motor units faster = more explosive takeoffs.</p>
+        <p style="margin-bottom:8px"><b style="color:var(--text-1)">HRV (30%)</b> - Heart rate variability measures parasympathetic (vagal) tone. Higher = more recovered. Your autonomic nervous system controls CNS excitability - when HRV is high, you can recruit more motor units faster = more explosive takeoffs.</p>
         <p style="margin-bottom:8px"><b style="color:var(--text-1)">Sleep (30%)</b> - Quality + duration. Deep sleep = HGH for tissue repair. REM = motor memory consolidation. An athlete who sleeps 9h recovers faster than one who sleeps 7h, even with identical training.</p>
-        <p style="margin-bottom:8px"><b style="color:var(--text-1)">RHR (15%)</b> - Resting heart rate reflects cardiovascular recovery. Lower than baseline = recovered. Elevated RHR often means inflammation, illness onset, or overtraining.</p>
-        <p><b style="color:var(--text-1)">Training Load (10%)</b> - Acute:Chronic workload ratio (3d vs 7d active calories). The ACR sweet spot is 0.8-1.3x  - progressive overload without injury risk. Above 1.5x = spike danger. Below 0.6x = detraining.</p>
+        <p style="margin-bottom:8px"><b style="color:var(--text-1)">RHR (20%)</b> - Resting heart rate reflects cardiovascular recovery. Lower than baseline = recovered. Elevated RHR often means inflammation, illness onset, or overtraining.</p>
+        <p><b style="color:var(--text-1)">Training Load (20%)</b> - Acute:Chronic workload ratio (3d vs 7d active calories). The ACR sweet spot is 0.8-1.3x  - progressive overload without injury risk. Above 1.5x = spike danger. Below 0.6x = detraining.</p>
       </div>
     </div>
   `;
@@ -6102,8 +6124,10 @@ function buildRecoveryFullPage() {
 //  SET ACTUAL WAKE TIME (low sleep)
 // ========================================
 function setActualWakeTime(wakeMin, btnEl) {
-  // User told us when they actually woke up
-  const today = new Date().toISOString().slice(0,10);
+  // User told us when they actually woke up. Key by activeDayStr() - the SAME key
+  // profileWakeHour() reads with - so the override actually applies (it used to be
+  // written under a UTC date and silently missed after local midnight).
+  const today = activeDayStr();
   if (!ST._actualWakeTimes) ST._actualWakeTimes = {};
   ST._actualWakeTimes[today] = wakeMin;
 
@@ -6165,19 +6189,33 @@ function closeStressFullPage(fromPopstate) {
 
 function buildStressFullPage() {
   const m = ST.metrics;
-  const hrvBase = (m.hrvBaseline || m.sleepHrv || m.hrv || 50);
-  const rhrBase = (m.rhrBaseline || m.rhr || 60);
-  const hrvRatio = m.hrv / hrvBase;
   const sl = ST.sleep || DEFAULT_STATE.sleep;
   const stg = sl.stages || { deep: 0, rem: 0, core: 0, awake: 0 };
   const strain = computeStrain();
 
-  // Overall stress score (0 = no stress, 100 = max stress) - inverse of recovery essentially
-  // Based on: HRV vs baseline, RHR vs baseline, sleep quality, strain load
-  const hrvStress = Math.max(0, Math.min(100, Math.round(50 + (1 - hrvRatio) * 200)));
-  const rhrRatio = m.rhr / rhrBase;
-  const rhrStress = Math.max(0, Math.min(100, Math.round(50 + (rhrRatio - 1) * 300)));
-  const sleepStress = Math.max(0, Math.min(100, Math.round(100 - (sl.totalH / 8) * 70 - (stg.deep / 1.5) * 30)));
+  // Overall stress score (0 = no stress, 100 = max stress) - inverse of recovery.
+  // Use the SAME overnight HRV the recovery engine uses so stress and recovery
+  // move together instead of contradicting each other. When a metric has no real
+  // data, its sub-score is a neutral 50 (never NaN).
+  const hrvNow = m.sleepHrv || m.hrv || 0;
+  const hrvBase = m.sleepHrvBaseline || m.hrvBaseline || hrvNow || 0;
+  // Neutral 1.0 when no data so the autonomic-state readout reads "Balanced", not NaN
+  const hrvRatio = (hrvNow > 0 && hrvBase > 0) ? hrvNow / hrvBase : 1.0;
+  const hrvStress = (hrvNow <= 0 || hrvBase <= 0)
+    ? 50
+    : Math.max(0, Math.min(100, Math.round(50 + (1 - hrvRatio) * 200)));
+
+  const rhrNow = m.rhr || 0;
+  const rhrBase = m.rhrBaseline || 0;
+  const rhrStress = (rhrNow <= 0 || rhrBase <= 0)
+    ? 50
+    : Math.max(0, Math.min(100, Math.round(50 + (rhrNow / rhrBase - 1) * 300)));
+
+  // Sleep stress uses the personalized target (not a hardcoded 8h)
+  const sleepTgt = derivePersonalSleepNeed() || 8;
+  const sleepStress = (sl.totalH > 0)
+    ? Math.max(0, Math.min(100, Math.round(100 - (sl.totalH / sleepTgt) * 70 - (stg.deep / 1.5) * 30)))
+    : 50;
   const strainStress = Math.max(0, Math.min(100, Math.round(strain / 21 * 100)));
 
   const overallStress = Math.max(0, Math.min(100, Math.round(
@@ -6595,9 +6633,9 @@ function getNextPeakTime() {
   const peak2Start = (WAKE + 10) % 24;
   const peak2End = (WAKE + 12.5) % 24;
 
-  if (nowH < peak1Start || (peak1Start > nowH)) return minToTime(peak1Start * 60);
-  if (nowH < peak2Start) return minToTime(peak2Start * 60);
-  return minToTime(peak1Start * 60); // tomorrow
+  if (nowH < peak1Start) return minToTime(peak1Start * 60);  // peak 1 still ahead today
+  if (nowH < peak2Start) return minToTime(peak2Start * 60);  // peak 2 still ahead today
+  return minToTime(peak1Start * 60); // both passed -> tomorrow's peak 1
 }
 
 // Compute strain (0-21 scale like WHOOP) from today's active energy
@@ -6670,10 +6708,16 @@ function computeStrain() {
   // HR zone TRIMP removed - zones in DEFAULT_STATE are static/never synced,
   // causing stale data to inflate strain. Use calorie + duration only.
 
-  // Calorie-based strain
+  // Calorie-based strain, normalized by bodyweight so it reflects RELATIVE load.
+  // The sqrt(cal)*0.45 curve was calibrated for a 65kg athlete; for a different
+  // mass, scale calories to the 65kg equivalent (heavier athlete burning the same
+  // absolute calories has done relatively less work -> lower strain).
   if (todayCal < 20) return 0; // no meaningful activity
-  // Scale: ~100cal=4, ~300cal=7, ~600cal=10, ~1000cal=13, ~1500cal=16, ~2000cal=19
-  return Math.min(21, Math.round(Math.sqrt(todayCal) * 0.45));
+  const REF_WEIGHT = 65;
+  const bw = (ST.health && ST.health.weight) || REF_WEIGHT;
+  const adjustedCal = todayCal * (REF_WEIGHT / bw);
+  // Scale: ~100cal=4, ~300cal=7, ~600cal=10, ~1000cal=13, ~1500cal=16, ~2000cal=19 (at 65kg)
+  return Math.min(21, Math.round(Math.sqrt(adjustedCal) * 0.45));
 }
 
 // Compute Acute:Chronic Workload Ratio (Gabbett 2016)  - 7d/21d windows
@@ -6992,39 +7036,61 @@ function renderMetrics() {
     </div>
   `).join('');
 
-  // Update monitor summary cards
-  const inRangeCount = [hrvInRange, rhrInRange, respInRange, m.sleepDebt <= 2].filter(Boolean).length;
-  const allNormal = inRangeCount >= 3;
+  // Update monitor summary cards. Only count metrics that actually have data, so
+  // a fresh install with no sync doesn't falsely report a confident "Within Range".
+  const metricStatus = [
+    (hasHrv && hrvBase > 0) ? hrvInRange : null,
+    (hasRhr && rhrBase > 0) ? rhrInRange : null,
+    hasResp ? respInRange : null,
+    m.sleepDebt != null ? (m.sleepDebt <= 2) : null,
+  ];
+  const withData = metricStatus.filter(v => v !== null);
+  const inRangeCount = withData.filter(Boolean).length;
+  const allNormal = withData.length > 0 && inRangeCount === withData.length;
   const hmEl = document.getElementById('healthMonitorSummary');
   if (hmEl) {
-    if (allNormal) {
+    if (withData.length === 0) {
+      hmEl.innerHTML = `
+        <div class="monitor-dot" style="background:var(--text-4)"></div>
+        <div class="monitor-val-text">
+          <div class="monitor-val" style="color:var(--text-4)">Awaiting Sync</div>
+          <div class="monitor-sub">No health data yet</div>
+        </div>`;
+    } else if (allNormal) {
       hmEl.innerHTML = `
         <svg class="monitor-check" viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5l3 3 6-6.5" stroke="var(--energy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <div class="monitor-val-text">
           <div class="monitor-val" style="color:var(--energy)">Within Range</div>
-          <div class="monitor-sub">${inRangeCount}/4 Metrics</div>
+          <div class="monitor-sub">${inRangeCount}/${withData.length} Metrics</div>
         </div>`;
     } else {
       hmEl.innerHTML = `
         <div class="monitor-dot yellow"></div>
         <div class="monitor-val-text">
           <div class="monitor-val" style="color:var(--warn)">Check Metrics</div>
-          <div class="monitor-sub">${inRangeCount}/4 Metrics</div>
+          <div class="monitor-sub">${inRangeCount}/${withData.length} Metrics</div>
         </div>`;
     }
   }
-  // Stress monitor - derived from HRV vs baseline
+  // Stress monitor - derived from overnight HRV vs baseline (matches recovery).
+  // No data -> neutral "--", never a fabricated "HIGH" from a NaN ratio.
   const stressEl = document.getElementById('stressMonitorSummary');
   if (stressEl) {
-    const hrvRatio = m.hrv / ((m.hrvBaseline || m.sleepHrv || m.hrv || 50));
+    const sHrv = m.sleepHrv || m.hrv || 0;
+    const sBase = m.sleepHrvBaseline || m.hrvBaseline || sHrv || 0;
     let stressLevel, stressDot, stressColor;
-    if (hrvRatio >= 0.95) { stressLevel = 'LOW'; stressDot = 'green'; stressColor = 'var(--energy)'; }
-    else if (hrvRatio >= 0.85) { stressLevel = 'MEDIUM'; stressDot = 'yellow'; stressColor = 'var(--warn)'; }
-    else { stressLevel = 'HIGH'; stressDot = 'red'; stressColor = 'var(--danger)'; }
+    if (sHrv <= 0 || sBase <= 0) {
+      stressLevel = '--'; stressDot = ''; stressColor = 'var(--text-4)';
+    } else {
+      const hrvRatio = sHrv / sBase;
+      if (hrvRatio >= 0.95) { stressLevel = 'LOW'; stressDot = 'green'; stressColor = 'var(--energy)'; }
+      else if (hrvRatio >= 0.85) { stressLevel = 'MEDIUM'; stressDot = 'yellow'; stressColor = 'var(--warn)'; }
+      else { stressLevel = 'HIGH'; stressDot = 'red'; stressColor = 'var(--danger)'; }
+    }
     const now = new Date();
-    const timeStr = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
+    const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     stressEl.innerHTML = `
-      <div class="monitor-dot ${stressDot}"></div>
+      <div class="monitor-dot ${stressDot}" ${stressDot ? '' : 'style="background:var(--text-4)"'}></div>
       <div class="monitor-val-text">
         <div class="monitor-val" style="color:${stressColor}">${stressLevel}</div>
         <div class="monitor-sub">${timeStr}</div>
@@ -7087,8 +7153,8 @@ function renderOutlook() {
   const wakeTime = minToTime(ST.profile.wakeMin);
   const sleepMin = ST.profile.sleepMin >= 1440 ? ST.profile.sleepMin - 1440 : ST.profile.sleepMin;
   const sleepTime = minToTime(sleepMin);
-  const coffeeH = (WAKE + 6.5) % 24;
-  const coffeeTime = minToTime(coffeeH * 60);
+  const coffeeH = caffeineCutoffMin() / 60;
+  const coffeeTime = minToTime(caffeineCutoffMin());
 
   const isWinter = ST.seasonal && ST.seasonal.adjustment === 'winter';
   // Shisha cutoff: 3h before sleep (CO half-life ~4h, need clearance for deep sleep)
@@ -8344,6 +8410,16 @@ function renderImpact() {
 
   // Compute real impact from journal entries
   const allReadiness = journal.filter(j => j.readiness != null);
+  // Guard: entries can exist without a readiness score yet -> avoid NaN averages
+  if (allReadiness.length === 0) {
+    document.getElementById('impactCard').innerHTML = `
+      <div style="text-align:center;padding:24px 16px;color:var(--text-3);font-size:13px;line-height:1.6;">
+        <div style="font-size:28px;margin-bottom:8px;">📊</div>
+        <div>No recovery scores logged yet. Sync your health data and check back.</div>
+      </div>
+    `;
+    return;
+  }
   const avgAll = allReadiness.reduce((s,j) => s + j.readiness, 0) / allReadiness.length;
 
   const behaviorMap = {};
@@ -8392,7 +8468,7 @@ function renderWeekInsights() {
   const insights = [];
   const hist = ST._history || {};
   const WAKE = profileWakeHour();
-  const coffeeTime = minToTime(((WAKE + 6.5) % 24) * 60);
+  const coffeeTime = minToTime(caffeineCutoffMin());
 
   // 1. Weekly Performance Assessment (data-driven from real 7-day averages)
   const hrvArr = hist.hrv ? hist.hrv.slice(-7) : [];
@@ -8799,6 +8875,26 @@ function renderStrainTimeline() {
 }
 
 // ========================================
+//  SLEEP NEED (single source of truth)
+// ========================================
+// Given a base nightly target (HRV-derived or the manual setting), returns the
+// strain surcharge, debt-payback surcharge, and the total "needed tonight".
+// Used by the Today banner, the Sleep full page, and the sleep detail so all
+// three screens always show the same number.
+function sleepNeedSurcharges(baseTarget) {
+  const strain = computeStrain();
+  // Strain surcharge: smooth, 0h at strain<=3, up to +1.5h at strain 21
+  const strainAdd = strain <= 3 ? 0 : +Math.min(1.5, ((strain - 3) / 18) * 1.5).toFixed(2);
+  // Debt-payback surcharge: a fraction of accumulated debt, capped at 1.5h
+  const today = localDateStr();
+  const todayDebt = (ST.sleepDebt || []).find(d => d.date === today);
+  const sl = ST.sleep || {};
+  const debtH = todayDebt ? todayDebt.debtH : Math.max(0, +(baseTarget - (sl.totalH || 0)).toFixed(1));
+  const debtAdd = debtH > 0 ? Math.min(1.5, +(debtH * 0.3).toFixed(2)) : 0;
+  return { strain, strainAdd, debtAdd, debtH, total: +(baseTarget + strainAdd + debtAdd).toFixed(1) };
+}
+
+// ========================================
 //  SLEEP NEED BANNER (WHOOP-style dynamic)
 // ========================================
 function renderSleepNeedBanner() {
@@ -8806,20 +8902,15 @@ function renderSleepNeedBanner() {
   if (!el) return;
 
   const sl = ST.sleep || {};
-  const strain = computeStrain();
   const target = ST.health?.sleepTarget || 8;
-  const today = new Date().toISOString().slice(0, 10);
 
-  // Strain-based sleep surcharge (peer-reviewed: Fullagar 2015, Halson 2014)
-  // Smooth curve instead of step function: 0h at strain 3, ~1.5h at strain 21
-  const strainAdd = strain <= 3 ? 0 : +Math.min(1.5, ((strain - 3) / 18) * 1.5).toFixed(2);
-
-  // Sleep debt surcharge (Banks & Dinges 2007: accumulated debt requires payback)
-  const todayDebt = (ST.sleepDebt || []).find(d => d.date === today);
-  const debtH = todayDebt ? todayDebt.debtH : Math.max(0, +(target - (sl.totalH || 0)).toFixed(1));
-  const debtAdd = Math.min(1.5, debtH > 0 ? debtH * 0.3 : 0);
-
-  const sleepNeeded = +(target + strainAdd + debtAdd).toFixed(1);
+  // Strain + debt surcharges from the single source of truth (see sleepNeedSurcharges)
+  const need = sleepNeedSurcharges(target);
+  const strain = need.strain;
+  const strainAdd = need.strainAdd;
+  const debtH = need.debtH;
+  const debtAdd = need.debtAdd;
+  const sleepNeeded = need.total;
 
   // Bedtime calculation
   const wakeMin = ST.profile.wakeMin;
@@ -11149,10 +11240,10 @@ function renderSleepBreakdown() {
     else if (daysAgo > 2) nightLabel = daysAgo + ' nights ago';
   }
 
-  // Tonight recommendation - uses manual target for realistic bedtime
+  // Tonight recommendation - uses manual target for realistic bedtime, same surcharges
   const manualTgt = (ST.health && ST.health.sleepTarget) || 8;
   const strain = computeStrain();
-  const sleepNeeded = +(manualTgt + (strain > 14 ? 1.0 : strain > 10 ? 0.5 : 0) + (debtH > 1 ? 0.5 : 0)).toFixed(1);
+  const sleepNeeded = sleepNeedSurcharges(manualTgt).total;
   let idealBedMin = ST.profile.wakeMin - Math.round(sleepNeeded * 60) - 15;
   if (idealBedMin < 0) idealBedMin += 1440;
   const idealBed = minToTime(idealBedMin);
@@ -13561,18 +13652,20 @@ function toggleTag(tag, el) {
 }
 
 function openLog() { document.getElementById('logModal').classList.add('open'); history.pushState({ overlay: 'log' }, ''); }
-function closeLog(fromPopstate) { const el = document.getElementById('logModal'); if (!el.classList.contains('open')) return; el.classList.remove('open'); if (!fromPopstate) history.back(); }
+function closeLog(fromPopstate) { const el = document.getElementById('logModal'); if (!el.classList.contains('open')) return; el.classList.remove('open'); if (!fromPopstate && history.state && history.state.overlay) history.back(); }
 
 function submitLog() {
   const timeInput = document.getElementById('logTimeInput').value;
   let ts = Date.now();
-  let logDate = new Date().toISOString().slice(0,10);
+  // Local date (not UTC) so an event logged after local midnight in a +1/+2 tz
+  // doesn't land on the previous calendar day.
+  let logDate = localDateStr(new Date());
   if (timeInput) {
     const [hh, mm] = timeInput.split(':').map(Number);
     const d = new Date();
     d.setHours(hh, mm, 0, 0);
     ts = d.getTime();
-    logDate = d.toISOString().slice(0,10);
+    logDate = localDateStr(d);
   }
   const durInput = document.getElementById('logDurationInput').value;
   const durationMin = durInput ? parseInt(durInput) : null;
@@ -13692,11 +13785,16 @@ function saveGoals() {
   if (btn) { btn.textContent = 'Saved ✓'; setTimeout(() => { btn.textContent = 'Save Goals'; }, 1200); }
 }
 
-function resetData() {
-  if (confirm('This will erase ALL your RYTHM data. Continue?')) {
-    localStorage.removeItem(STORAGE_KEY);
-    location.reload();
+async function resetData() {
+  if (!confirm('This will erase ALL your RYTHM data. Continue?')) return;
+  // Clear the cloud row FIRST, otherwise loadState() re-pulls it on reload and
+  // nothing is actually erased. Delete the Supabase record, then wipe local.
+  if (sb) {
+    try { await sb.from('rythm').delete().eq('id', getSyncKey()); }
+    catch (e) { console.warn('[RYTHM] cloud reset failed', e); }
   }
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
 }
 
 // Settings sliders  - inline setup (setupSlider was removed with onboarding)
@@ -13933,16 +14031,29 @@ document.querySelectorAll('[data-view]').forEach(el => {
 history.replaceState({ root: true }, '');
 
 window.addEventListener('popstate', function(e) {
-  // Close whichever overlay is open (check in order of likely stacking)
-  if (document.getElementById('trendFullPage')?.classList.contains('open')) { closeTrendDetail(true); return; }
-  if (document.getElementById('detailOverlay')?.classList.contains('open')) { closeDetail(true); return; }
-  if (document.getElementById('sleepFullPage')?.classList.contains('open')) { closeSleepFullPage(true); return; }
-  if (document.getElementById('recoveryFullPage')?.classList.contains('open')) { closeRecoveryFullPage(true); return; }
-  if (document.getElementById('stressFullPage')?.classList.contains('open')) { closeStressFullPage(true); return; }
-  if (document.getElementById('energyFullPage')?.classList.contains('open')) { closeEnergyFullPage(true); return; }
-  // Modal (quick log)
-  if (document.getElementById('logModal')?.classList.contains('open')) { closeLog(true); return; }
-  // Nothing open - let back proceed normally (removed re-push-root; it caused loops)
+  // Close the TOPMOST open overlay (highest z-index), so when overlays are stacked
+  // one OS-back closes exactly the visible one - not whichever happens to be checked
+  // first. Each closer is called with fromPopstate=true so it does NOT call
+  // history.back() again (the pop already happened).
+  const closers = [
+    ['trendFullPage', closeTrendDetail],
+    ['detailOverlay', closeDetail],
+    ['sleepFullPage', closeSleepFullPage],
+    ['recoveryFullPage', closeRecoveryFullPage],
+    ['stressFullPage', closeStressFullPage],
+    ['energyFullPage', closeEnergyFullPage],
+    ['logModal', closeLog],
+  ];
+  let topCloser = null, topZ = -Infinity;
+  for (const [id, closer] of closers) {
+    const el = document.getElementById(id);
+    if (el && el.classList.contains('open')) {
+      const z = parseInt(getComputedStyle(el).zIndex, 10) || 0;
+      if (z >= topZ) { topZ = z; topCloser = closer; }
+    }
+  }
+  if (topCloser) topCloser(true);
+  // else nothing open - let back proceed normally (removed re-push-root; it caused loops)
 });
 
 // iOS PWA back-button fix: prevent rubber-band overscroll from swallowing touches
@@ -13975,25 +14086,10 @@ document.getElementById('dayLabel')?.addEventListener('touchend', function(e) {
   changeDay(0);
 }, { passive: false });
 
-// Swipe-right to close fullpage panels (iOS PWA back gesture)
-document.querySelectorAll('.fullpage').forEach(overlay => {
-  let startX = 0, startY = 0;
-  const scroll = overlay.querySelector('.fullpage-scroll');
-  if (!scroll) return;
-  scroll.addEventListener('touchstart', e => {
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-  }, { passive: true });
-  scroll.addEventListener('touchend', e => {
-    const dx = e.changedTouches[0].clientX - startX;
-    const dy = Math.abs(e.changedTouches[0].clientY - startY);
-    // Horizontal swipe right > 80px, not too vertical
-    if (dx > 80 && dy < 100) {
-      const backBtn = overlay.querySelector('.fp-back');
-      if (backBtn) backBtn.click();
-    }
-  }, { passive: true });
-});
+// NOTE: swipe-to-close is handled exclusively by initFullpageSwipe() below (the
+// left-edge gesture, matching iOS native back). A second content-area swipe
+// handler used to live here; it was removed because the two recognizers fought
+// over the same touch and desynced history nondeterministically.
 
 // ========================================
 //  LIVE ACTIVITIES (timer-based tracking)
@@ -15104,17 +15200,21 @@ async function fetchHealthData() {
         ST.metrics.sleepHrv = newSleepHrv;
       }
       if (newSleepHrv != null) {
-        // Baseline = AVERAGE of your overnight (sleep) HRV over the last 14 nights -
-        // i.e. what you're normally used to in your sleep, not daytime HRV.
+        // Baseline = MEDIAN of your overnight (sleep) HRV over the last 14 nights -
+        // i.e. what you're normally used to in your sleep, not daytime HRV. Median
+        // (not mean) so one spiky night doesn't skew your baseline. Matches the
+        // daytime HRV/RHR baselines below.
         if (!ST._sleepHrvHistory) ST._sleepHrvHistory = [];
         const ex = ST._sleepHrvHistory.findIndex(h => h.d === todayKey);
         if (ex >= 0) ST._sleepHrvHistory[ex].v = newSleepHrv;
         else ST._sleepHrvHistory.push({ v: newSleepHrv, d: todayKey });
         if (ST._sleepHrvHistory.length > 14) ST._sleepHrvHistory = ST._sleepHrvHistory.slice(-14);
-        // Average of available nights (needs 2+ so a single night isn't "your normal")
+        // Median of available nights (needs 2+ so a single night isn't "your normal")
         if (ST._sleepHrvHistory.length >= 2) {
-          const vals = ST._sleepHrvHistory.map(h => h.v);
-          ST.metrics.sleepHrvBaseline = +(vals.reduce((a,b) => a+b, 0) / vals.length).toFixed(1);
+          const sorted = ST._sleepHrvHistory.map(h => h.v).sort((a,b) => a-b);
+          const mid = Math.floor(sorted.length / 2);
+          const med = sorted.length % 2 ? sorted[mid] : (sorted[mid-1] + sorted[mid]) / 2;
+          ST.metrics.sleepHrvBaseline = +med.toFixed(1);
         }
         const hrvBase = ST.metrics.sleepHrvBaseline || newSleepHrv;
         const hrvRatio = newSleepHrv / hrvBase;
@@ -15410,7 +15510,7 @@ function backfillDailyReadiness() {
     }
     const training = 60; // default mid-range for historical (no live strain data)
 
-    const score = Math.round(hrvScore * 0.35 + sleepScore * 0.3 + rhrScore * 0.2 + training * 0.15);
+    const score = Math.round(hrvScore * 0.30 + sleepScore * 0.30 + rhrScore * 0.20 + training * 0.20);
     ST._dailyReadiness[dk] = Math.max(0, Math.min(100, score));
   }
   saveState();
@@ -16053,14 +16153,21 @@ function bootApp() {
     const dx = parseFloat(page.style.transform.replace(/[^0-9.-]/g, '')) || 0;
     page.style.transition = 'transform 0.3s cubic-bezier(.2,.7,.2,1), opacity 0.3s ease';
     if (dx > THRESHOLD) {
-      // Close  - slide fully off screen
+      // Close  - slide fully off screen, then route through the overlay's real
+      // close (its Back button) so history.back() runs and the history stack stays
+      // in sync. Closing via classList alone here orphaned a history entry, which
+      // made the NEXT OS back press exit the whole PWA - the long-standing bug.
       page.style.transform = 'translateX(100%)';
       page.style.opacity = '1';
+      const closingPage = page;
       setTimeout(() => {
-        page.classList.remove('open');
-        page.style.transform = '';
-        page.style.opacity = '';
-        page.style.transition = '';
+        const backBtn = closingPage.querySelector('.fp-back');
+        if (backBtn) backBtn.click();          // -> closeXFullPage() removes .open + history.back()
+        else closingPage.classList.remove('open');
+        // Reset inline styles AFTER it's hidden (display:none) so there's no snap-back flash
+        closingPage.style.transform = '';
+        closingPage.style.opacity = '';
+        closingPage.style.transition = '';
         document.body.style.overflow = '';
       }, 300);
     } else {
@@ -16092,18 +16199,20 @@ if ('serviceWorker' in navigator) {
     setInterval(() => { if (!document.hidden) reg.update(); }, 60000);
     // If a new SW is already waiting, reload immediately
     if (reg.waiting) { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); }
-    // Listen for new SW installing
+    // New SW installing -> tell it to activate immediately. The actual page reload
+    // is handled in ONE place (controllerchange below) so a single update can't
+    // trigger 2-3 stacked reloads that interrupt the user mid-interaction.
     reg.addEventListener('updatefound', () => {
       const nw = reg.installing;
       if (!nw) return;
       nw.addEventListener('statechange', () => {
-        if (nw.state === 'activated') {
-          window.location.reload();
+        if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+          nw.postMessage({ type: 'SKIP_WAITING' });
         }
       });
     });
   }).catch(() => {});
-  // Reload when a new SW takes control (covers activate + clients.claim)
+  // Single reload path: reload once when a new SW takes control.
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing) return;
@@ -16434,7 +16543,7 @@ function getNotificationSchedule() {
   const WAKE = profileWakeHour();
   const SLEEP_H = profileSleepHour();
   const wdStart = getWinddownStartHour();
-  const coffeeH = (WAKE + 6.5) % 24;
+  const coffeeH = caffeineCutoffMin() / 60;
   const dipStart = (WAKE + 5.5) % 24;
   const peak2Start = (WAKE + 10) % 24;
   const score = computeReadiness();
@@ -16574,7 +16683,7 @@ function checkNotifications() {
 
   const now = new Date();
   const nowH = now.getHours() + now.getMinutes() / 60;
-  const today = now.toISOString().slice(0, 10);
+  const today = localDateStr(now); // local date, not UTC (avoids post-midnight off-by-one)
   if (!ST.notifications.fired) ST.notifications.fired = {};
 
   const schedule = getNotificationSchedule();
@@ -16603,7 +16712,7 @@ function checkNotifications() {
   }
 
   // Clean up old fired keys (keep only today and yesterday)
-  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const yesterday = localDateStr(new Date(Date.now() - 86400000));
   for (const k in ST.notifications.fired) {
     if (!k.endsWith(today) && !k.endsWith(yesterday)) {
       delete ST.notifications.fired[k];
