@@ -1,5 +1,12 @@
 # RYTHM Changelog
 
+## 2026-06-11 (v173b) - Recovery lock actually works
+
+- Recovery score now genuinely FREEZES for the day once your morning data (sleep + HRV + RHR) is in, WHOOP-style. Previously the lock stored a value but computeReadiness() ignored it and recomputed live, so the score drifted during the day as active calories/strain accumulated and RHR updated.
+- The locked value AND the breakdown bars are both frozen, so they stay consistent.
+- Keyed to the 4 AM day-roll: it holds from wake until the next morning, then re-locks with that day's fresh score.
+- One-time migration clears any old lock so the next sync re-locks with the corrected 30/20/30/20 score.
+
 ## 2026-06-11 (v173) - Live activities redesign
 
 ### Immersive focus view + redesigned cards

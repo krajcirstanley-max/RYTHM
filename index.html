@@ -4660,9 +4660,19 @@ function hrvStatus() {
 // ========================================
 //  READINESS (nighttime-based recovery)
 // ========================================
-function computeReadiness(forDate) {
+function computeReadiness(forDate, ignoreLock) {
   // If forDate provided, compute from historical data
   if (forDate) return computeHistoricalReadiness(forDate);
+
+  // RECOVERY LOCK (WHOOP-style): once this morning's data is in, recovery is frozen
+  // for the day and must NOT drift as strain/active-calories/RHR accumulate. Return
+  // the locked score + the morning's breakdown so the bars match the headline.
+  // The lock auto-expires when activeDayStr() rolls to the next day (re-locked at the
+  // next morning sync). Pass ignoreLock=true only when computing the value to lock.
+  if (!ignoreLock && ST._recoveryLockedScore != null && ST._recoveryLockedDate === activeDayStr()) {
+    if (ST._recoveryLockedBreakdown) ST._readinessBreakdown = ST._recoveryLockedBreakdown;
+    return ST._recoveryLockedScore;
+  }
 
   const r = ST.readiness;
   const sl = ST.sleep || DEFAULT_STATE.sleep;
@@ -15388,7 +15398,9 @@ async function fetchHealthData() {
     // RECOVERY LOCK: like WHOOP, lock recovery once per day after first sync.
     // Later syncs update the displayed HRV/RHR values but do NOT change recovery.
     const todayKey = new Date().toISOString().slice(0, 10);
-    const recoveryLockedToday = ST._recoveryLockedDate === todayKey;
+    // Lock is keyed by activeDayStr() (4 AM roll) so it holds from wake until the next
+    // morning, and must use the SAME key as computeReadiness()'s lock guard.
+    const recoveryLockedToday = ST._recoveryLockedDate === activeDayStr();
 
     if (data.hrv) {
       const hrvBase = (ST.metrics.hrvBaseline || ST.metrics.sleepHrv || ST.metrics.hrv || 50);
@@ -15453,10 +15465,13 @@ async function fetchHealthData() {
         const hrvRatio = newSleepHrv / hrvBase;
         ST.readiness.hrv = Math.min(100, Math.max(0, Math.round(70 + (hrvRatio - 1) * 150)));
       }
-      // Lock recovery when we have sleep + HRV + RHR (all components ready)
+      // Lock recovery when we have sleep + HRV + RHR (all components ready).
+      // Compute FRESH (ignoreLock) then freeze the score AND the breakdown so neither
+      // drifts for the rest of the day.
       if ((data.sleep_hrv || (data.hrv && hasSleepToday)) && data.rhr) {
-        ST._recoveryLockedDate = todayKey;
-        ST._recoveryLockedScore = computeReadiness();
+        ST._recoveryLockedScore = computeReadiness(null, true);
+        ST._recoveryLockedBreakdown = ST._readinessBreakdown ? JSON.parse(JSON.stringify(ST._readinessBreakdown)) : null;
+        ST._recoveryLockedDate = activeDayStr();
       }
     }
 
@@ -16206,12 +16221,15 @@ function bootApp() {
     saveState();
   }
 
-  // One-time migration: clear recovery lock for pure-physiology formula (v116)
-  if (ST._recoveryMigration !== 'v116') {
+  // One-time migration: clear recovery lock for pure-physiology formula (v116),
+  // and again for the 30/20/30/20 weights + working lock (v173) so the next morning
+  // sync re-locks with the corrected score.
+  if (ST._recoveryMigration !== 'v173') {
     ST._recoveryLockedDate = null;
     ST._recoveryLockedScore = null;
+    ST._recoveryLockedBreakdown = null;
     ST._readinessBreakdown = null;
-    ST._recoveryMigration = 'v116';
+    ST._recoveryMigration = 'v173';
     saveState();
   }
 
