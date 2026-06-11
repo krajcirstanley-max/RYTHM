@@ -1,5 +1,22 @@
 # RYTHM Changelog
 
+## 2026-06-11 (v174) - Make it a daily must-have
+
+### Morning ritual push
+- The wake-time push is now a one-line decision instead of a generic status: "74% · Green day, HRV ↑12%" / "Full send - max effort. Best power window 16:30-19:00. · 8.2h sleep ✓".
+- Driven by the same engine as the COACH verdict (extracted `computeTrainingVerdict()`), so the push and the in-app card always agree (previously three places used different green/yellow/red thresholds).
+- Best power window = your circadian peak-2 window, tracked to your real wake time.
+
+### Jump performance loop (the athlete moat)
+- New "Log a jump" flow (distance in m/ft, type, date, note) and a `jumps` store.
+- COACH "Jump Performance" card: personal best, latest, recent list, and the key feature - it correlates your jumps against that day's recovery/sleep/HRV and tells you what conditions produce your best jumps ("Your best jumps happen with: Recovery 80% vs 62% · Sleep 8.3h vs 7.0h · HRV 57ms vs 44ms · n=6"). Honest when data is thin or there's no clear pattern.
+
+### Personal causal insights
+- The Recovery Impact card now shows, per habit, the HRV delta and the sample size (n) alongside the recovery-point gap, computed from YOUR logged days - e.g. "Shisha Late: HRV -16.2ms · n=3 · -24%".
+- Honest framing: "correlation, not proof - habits with n under ~4 are early signals", and it says so plainly when nothing moves your recovery.
+
+---
+
 ## 2026-06-11 (v173b) - Recovery lock actually works
 
 - Recovery score now genuinely FREEZES for the day once your morning data (sleep + HRV + RHR) is in, WHOOP-style. Previously the lock stored a value but computeReadiness() ignored it and recomputed live, so the score drifted during the day as active calories/strain accumulated and RHR updated.

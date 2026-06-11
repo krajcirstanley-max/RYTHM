@@ -3446,6 +3446,33 @@ section { padding: 0 14px; margin-bottom: 6px; }
   </div>
 </div>
 
+<!-- LOG JUMP -->
+<div class="modal-overlay" id="jumpModal" onclick="if(event.target===this)closeJumpLog()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Log a jump</div>
+
+    <div class="modal-section-label">Distance</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0 10px;">
+      <input type="number" id="jumpDistInput" inputmode="decimal" step="0.01" placeholder="6.85"
+        style="width:150px;font-size:34px;font-weight:800;text-align:center;background:transparent;border:none;border-bottom:2px solid var(--card-border);color:#fff;font-family:inherit;outline:none;">
+      <span id="jumpUnitLabel" style="font-size:18px;font-weight:700;color:var(--text-3);cursor:pointer;" onclick="toggleJumpUnit()">m</span>
+    </div>
+
+    <div class="modal-section-label">Type</div>
+    <div class="tag-row" id="jumpTypeRow"></div>
+
+    <div class="modal-section-label">Date</div>
+    <input type="date" id="jumpDateInput" style="width:100%;padding:11px 14px;background:var(--bg-2);border:1px solid var(--card-border);border-radius:12px;color:#fff;font-family:inherit;font-size:14px;outline:none;margin-bottom:6px;">
+
+    <div class="modal-section-label">Note (optional)</div>
+    <input type="text" id="jumpNoteInput" maxlength="80" placeholder="e.g. headwind, comp, felt fast"
+      style="width:100%;padding:11px 14px;background:var(--bg-2);border:1px solid var(--card-border);border-radius:12px;color:#fff;font-family:inherit;font-size:14px;outline:none;">
+
+    <button class="modal-submit" onclick="submitJump()">Save jump</button>
+  </div>
+</div>
+
 <!-- SETTINGS -->
 <div class="settings-overlay" id="settingsOverlay">
   <div class="settings-top">
@@ -3773,6 +3800,7 @@ const DEFAULT_STATE = {
     efficiency: 0, consistency: 0
   },
   workouts: [],
+  jumps: [],
   activeCal: { today: 0, goal: 500, week: [] },
   liveActivities: [],
   calendarEvents: [],
@@ -8533,7 +8561,7 @@ function renderImpact() {
   const avgAll = allReadiness.reduce((s,j) => s + j.readiness, 0) / allReadiness.length;
 
   const behaviorMap = {};
-  const GOOD_BEHAVIORS = ['sunlight', 'meditation', 'workout'];
+  const avg = (arr, f) => { const v = arr.map(f).filter(x => x != null); return v.length ? v.reduce((s, x) => s + x, 0) / v.length : null; };
 
   for (const b of JOURNAL_BEHAVIORS) {
     const withB = allReadiness.filter(j => j.behaviors.includes(b.id));
@@ -8542,21 +8570,25 @@ function renderImpact() {
     const avgWith = withB.reduce((s,j) => s + j.readiness, 0) / withB.length;
     const avgWithout = withoutB.reduce((s,j) => s + j.readiness, 0) / withoutB.length;
     const delta = Math.round(avgWith - avgWithout);
-    if (delta === 0) continue;
-    behaviorMap[b.id] = { name: b.label, pct: Math.abs(delta), good: delta > 0 };
+    // HRV delta (the most direct physiological signal), only where HRV was recorded
+    const hWith = avg(withB, j => j.hrv), hWithout = avg(withoutB, j => j.hrv);
+    const hrvDelta = (hWith != null && hWithout != null) ? +(hWith - hWithout).toFixed(1) : null;
+    if (delta === 0 && (hrvDelta == null || Math.abs(hrvDelta) < 1)) continue;
+    behaviorMap[b.id] = { name: b.label, pct: Math.abs(delta), good: delta > 0, hrvDelta, n: withB.length };
   }
 
   const rows = Object.values(behaviorMap).sort((a,b) => b.pct - a.pct);
   if (!rows.length) {
     document.getElementById('impactCard').innerHTML = `
       <div style="text-align:center;padding:24px 16px;color:var(--text-3);font-size:13px;">
-        Need more variety in your logs to find patterns. Keep logging!
+        Across your ${allReadiness.length} logged days, no behavior clearly moves your recovery yet. Keep logging - or it may genuinely not be driven by these habits.
       </div>
     `;
     return;
   }
 
   document.getElementById('impactCard').innerHTML = `
+    <div style="font-size:10px;color:var(--text-4);margin-bottom:10px;line-height:1.5;">Based on YOUR ${allReadiness.length} logged days - recovery on days with vs without each habit. Higher n = more reliable.</div>
     <div class="impact-head">
       <div class="impact-h-l warn-col">HURTS</div>
       <div class="impact-h-l center">% IMPACT</div>
@@ -8564,13 +8596,14 @@ function renderImpact() {
     </div>
     ${rows.map(r => `
       <div class="impact-row">
-        <div class="impact-name">${r.name}</div>
+        <div class="impact-name">${r.name}${r.hrvDelta != null && Math.abs(r.hrvDelta) >= 1 ? `<div style="font-size:9px;color:var(--text-4);font-weight:600;">HRV ${r.hrvDelta > 0 ? '+' : ''}${r.hrvDelta}ms · n=${r.n}</div>` : `<div style="font-size:9px;color:var(--text-4);font-weight:600;">n=${r.n}</div>`}</div>
         <div class="impact-bar-wrap">
           <div class="impact-bar-fill ${r.good ? 'good' : 'bad'}" style="${r.good ? 'left:50%;' : 'right:50%;'}width:${Math.min(r.pct, 50)}%;"></div>
         </div>
         <div class="impact-pct ${r.good ? 'good' : 'bad'}">${r.good ? '+' : '-'}${r.pct}%</div>
       </div>
     `).join('')}
+    <div style="font-size:10px;color:var(--text-4);margin-top:10px;line-height:1.5;">Correlation, not proof - habits with n under ~4 are early signals. The bar is the recovery-point gap; HRV is the underlying nervous-system signal.</div>
   `;
 }
 
@@ -10119,8 +10152,141 @@ function getDayPlanRecs(todayPlan, tomorrowPlan, recovery, soreness, sessionType
 // ========================================
 function renderCoachView() {
   renderCoachToday();
+  renderCoachPerformance();
   renderCoachInsights();
   renderCoachBreathwork();
+}
+
+// ========================================
+//  JUMP PERFORMANCE LOOP
+// ========================================
+const JUMP_TYPES = [
+  { id: 'full', label: 'Full approach' },
+  { id: 'short', label: 'Short approach' },
+  { id: 'standing', label: 'Standing' },
+  { id: 'other', label: 'Other' },
+];
+let _jumpType = 'full';
+let _jumpUnit = 'm'; // display only; always stored as cm
+
+function openJumpLog() {
+  _jumpType = 'full';
+  const row = document.getElementById('jumpTypeRow');
+  if (row) row.innerHTML = JUMP_TYPES.map(t => `<div class="tag-chip${t.id === 'full' ? ' selected' : ''}" data-jt="${t.id}" onclick="selectJumpType('${t.id}', this)">${t.label}</div>`).join('');
+  const di = document.getElementById('jumpDateInput'); if (di) di.value = activeDayStr();
+  const dist = document.getElementById('jumpDistInput'); if (dist) dist.value = '';
+  const note = document.getElementById('jumpNoteInput'); if (note) note.value = '';
+  document.getElementById('jumpModal').classList.add('open');
+  history.pushState({ overlay: 'jump' }, '');
+}
+function closeJumpLog(fromPopstate) {
+  const el = document.getElementById('jumpModal');
+  if (!el || !el.classList.contains('open')) return;
+  el.classList.remove('open');
+  if (!fromPopstate && history.state && history.state.overlay) history.back();
+}
+function selectJumpType(id, btn) {
+  _jumpType = id;
+  document.querySelectorAll('#jumpTypeRow .tag-chip').forEach(b => b.classList.toggle('selected', b === btn));
+}
+function toggleJumpUnit() {
+  _jumpUnit = _jumpUnit === 'm' ? 'ft' : 'm';
+  const l = document.getElementById('jumpUnitLabel'); if (l) l.textContent = _jumpUnit;
+}
+function submitJump() {
+  const raw = parseFloat(document.getElementById('jumpDistInput').value);
+  if (!raw || raw <= 0) { alert('Enter a distance.'); return; }
+  // Always store cm. Heuristic: a plain "685" in metres mode is really cm.
+  let cm;
+  if (_jumpUnit === 'ft') cm = raw * 30.48;
+  else cm = raw > 30 ? raw : raw * 100;
+  cm = Math.round(cm);
+  const date = document.getElementById('jumpDateInput').value || activeDayStr();
+  const note = (document.getElementById('jumpNoteInput').value || '').trim();
+  if (!ST.jumps) ST.jumps = [];
+  ST.jumps.push({ date, distance: cm, type: _jumpType, note, ts: Date.now() });
+  ST.jumps.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  saveState();
+  closeJumpLog();
+  renderCoachPerformance();
+}
+
+// Pull the day's recovery/sleep/HRV for a jump date (for correlation)
+function jumpDayMetrics(date) {
+  const rec = (ST._dailyReadiness || {})[date];
+  const slEntry = (ST._sleepHistory || []).find(s => s.date === date);
+  const hrvEntry = ((ST._history && ST._history.hrv) || []).find(h => h.date === date);
+  return {
+    recovery: typeof rec === 'number' ? rec : null,
+    sleepH: slEntry ? slEntry.totalH : null,
+    hrv: hrvEntry ? hrvEntry.value : null,
+  };
+}
+
+function renderCoachPerformance() {
+  const el = document.getElementById('coachAccountability');
+  if (!el) return;
+  const jumps = (ST.jumps || []).slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  const fmtM = cm => (cm / 100).toFixed(2);
+  const card = inner => `<div style="background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:16px 18px;margin-bottom:8px;">${inner}</div>`;
+  const header = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <span style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);">Jump Performance</span>
+      <button onclick="openJumpLog()" style="font-size:11px;font-weight:700;padding:6px 12px;border-radius:100px;border:1px solid var(--card-border);background:transparent;color:var(--energy);cursor:pointer;font-family:inherit;">+ Log jump</button>
+    </div>`;
+
+  if (!jumps.length) {
+    el.innerHTML = card(header + `<div style="font-size:13px;color:var(--text-2);line-height:1.5;">Log your jumps and RYTHM finds what actually drives your best ones - recovery, sleep, HRV. Build the loop between how you feel and how far you jump.</div>`);
+    return;
+  }
+
+  const pb = jumps.reduce((m, j) => (j.distance > m.distance ? j : m), jumps[0]);
+  const recent = jumps.slice(-6).reverse();
+  const last = jumps[jumps.length - 1];
+
+  // Recent list
+  const recentHtml = recent.map(j => {
+    const isPb = j.distance === pb.distance;
+    const tlabel = (JUMP_TYPES.find(t => t.id === j.type) || {}).label || '';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-top:1px solid var(--border);">
+      <div><span style="font-size:15px;font-weight:800;color:#fff;">${fmtM(j.distance)}m</span>${isPb ? ' <span style="font-size:9px;font-weight:800;color:var(--energy);">PB</span>' : ''}
+        <div style="font-size:10px;color:var(--text-3);">${j.date}${tlabel ? ' · ' + tlabel : ''}${j.note ? ' · ' + j.note : ''}</div></div>
+      <div style="font-size:11px;color:var(--text-3);">${(() => { const m = jumpDayMetrics(j.date); return m.recovery != null ? m.recovery + '% rec' : ''; })()}</div>
+    </div>`;
+  }).join('');
+
+  // Honest correlation insight
+  const withRec = jumps.filter(j => jumpDayMetrics(j.date).recovery != null);
+  let insight;
+  if (jumps.length < 6 || withRec.length < 5) {
+    const need = Math.max(6 - jumps.length, 5 - withRec.length, 1);
+    insight = `<div style="font-size:11px;color:var(--text-3);line-height:1.5;">Log ${need} more jump${need > 1 ? 's' : ''} (on days with synced recovery data) and RYTHM will show what conditions produce your best jumps.</div>`;
+  } else {
+    const sorted = [...withRec].sort((a, b) => b.distance - a.distance);
+    const k = Math.max(1, Math.round(sorted.length / 3));
+    const best = sorted.slice(0, k), rest = sorted.slice(k);
+    const avg = (arr, f) => { const v = arr.map(j => f(jumpDayMetrics(j.date))).filter(x => x != null); return v.length ? v.reduce((s, x) => s + x, 0) / v.length : null; };
+    const rows = [];
+    const bRec = avg(best, m => m.recovery), rRec = avg(rest, m => m.recovery);
+    if (bRec != null && rRec != null && Math.abs(bRec - rRec) >= 3) rows.push(`Recovery <b style="color:var(--energy)">${Math.round(bRec)}%</b> vs ${Math.round(rRec)}%`);
+    const bSl = avg(best, m => m.sleepH), rSl = avg(rest, m => m.sleepH);
+    if (bSl != null && rSl != null && Math.abs(bSl - rSl) >= 0.3) rows.push(`Sleep <b style="color:var(--energy)">${bSl.toFixed(1)}h</b> vs ${rSl.toFixed(1)}h`);
+    const bH = avg(best, m => m.hrv), rH = avg(rest, m => m.hrv);
+    if (bH != null && rH != null && Math.abs(bH - rH) >= 2) rows.push(`HRV <b style="color:var(--energy)">${Math.round(bH)}ms</b> vs ${Math.round(rH)}ms`);
+    if (rows.length) {
+      insight = `<div style="font-size:12px;color:var(--text-2);line-height:1.6;"><b style="color:#fff;">Your best jumps (top ${k}) happen with:</b><br>${rows.join(' · ')}<div style="font-size:10px;color:var(--text-4);margin-top:4px;">vs your other ${rest.length} jumps · n=${withRec.length}</div></div>`;
+    } else {
+      insight = `<div style="font-size:11px;color:var(--text-3);line-height:1.5;">No strong pattern yet: across ${withRec.length} jumps, your best ones aren't clearly tied to recovery, sleep or HRV. Keep logging - or it may be more about technique and conditions than readiness.</div>`;
+    }
+  }
+
+  el.innerHTML = card(header +
+    `<div style="display:flex;gap:18px;align-items:baseline;margin-bottom:4px;">
+       <div><div style="font-size:30px;font-weight:800;color:#fff;letter-spacing:-1px;line-height:1;">${fmtM(pb.distance)}<span style="font-size:14px;color:var(--text-3);">m</span></div><div style="font-size:9px;font-weight:700;letter-spacing:1px;color:var(--text-4);text-transform:uppercase;margin-top:3px;">Personal best</div></div>
+       <div><div style="font-size:30px;font-weight:800;color:var(--text-2);letter-spacing:-1px;line-height:1;">${fmtM(last.distance)}<span style="font-size:14px;color:var(--text-3);">m</span></div><div style="font-size:9px;font-weight:700;letter-spacing:1px;color:var(--text-4);text-transform:uppercase;margin-top:3px;">Latest</div></div>
+     </div>
+     <div style="margin:12px 0 6px;padding:11px 13px;border-radius:12px;background:var(--bg-2);">${insight}</div>
+     <div style="font-size:9px;font-weight:700;letter-spacing:1px;color:var(--text-4);text-transform:uppercase;margin:10px 0 2px;">Recent</div>
+     ${recentHtml}`);
 }
 
 // Exercise -> body system mapping for targeted recovery
@@ -10236,7 +10402,9 @@ function analyzeTrainingLoad() {
 }
 
 // Clear training verdict for an athlete: what session to do today
-function buildTrainingVerdict() {
+// Single source of truth for the day's training call (data only). Used by the
+// COACH verdict card AND the morning push so they always agree.
+function computeTrainingVerdict() {
   const recovery = computeReadiness();
   const strain = computeStrain();
   const tl = computeTrainingLoad();
@@ -10254,42 +10422,56 @@ function buildTrainingVerdict() {
 
   const isRestDay = dayPlan?.today === 'rest';
 
-  let headline, detail, color, tag;
+  let headline, detail, color, tag, zone;
 
   if (isRestDay && !trainedToday) {
+    zone = 'rest';
     color = 'var(--info)'; tag = 'Day off';
     headline = 'Rest day';
     detail = 'You marked today as a day off. Recovery is the work: sleep, mobility, jetboots, walk, breathwork. Let the adaptation from this week land.';
   } else if (trainedToday) {
+    zone = 'done';
     color = 'var(--info)'; tag = 'Session logged';
     headline = `${trainMin}min done - recover now`;
     detail = 'Training stimulus is in. Protect the adaptation: protein within 2h, hydrate, and use a recovery modality. No second hard session today.';
   } else if (painParts.length >= 2) {
+    zone = 'red';
     color = 'var(--danger)'; tag = 'Modify';
     headline = 'Downgrade or skip loading';
     detail = `Pain flagged in ${painParts.slice(0,3).join(', ')}. Train through one area, not several. Switch to mobility, upper body, or technique with no eccentric load.`;
   } else if (acrHigh) {
+    zone = 'red';
     color = 'var(--danger)'; tag = 'Load spike';
     headline = 'Ease off - workload spiking';
     detail = `Acute:chronic ratio ${tl.acr}x (sweet spot 0.8-1.3). You are ramping fast. Keep today sub-maximal to avoid the injury-risk zone (Gabbett 2016).`;
   } else if (recovery >= 70 || (recovery >= 58 && hrvStrong)) {
+    zone = 'green';
     color = 'var(--energy)'; tag = 'Green light';
     headline = 'Full send - max effort';
     detail = `CNS is fresh${hrvStrong ? ` (HRV ${Math.round((hrvRatio-1)*100)}% above baseline)` : ''}. Best window for full approach jumps, competition-pace takeoffs, heavy plyometrics, and 85%+ strength. Chase PRs.`;
   } else if (recovery >= 50) {
+    zone = 'green';
     color = 'var(--energy)'; tag = 'Go train';
     headline = 'Good to train hard';
     detail = `Recovery is solid${hrvStrong ? ' and HRV is above baseline' : ''}. Full session on - approach work, plyos, strength all on the table. Push hard, just back off if speed or crispness drops mid-session.`;
   } else if (recovery >= 34) {
+    zone = 'yellow';
     color = 'var(--warn)'; tag = 'Train smart';
     headline = 'Quality over quantity';
     detail = 'Moderate recovery. Technique work, sub-max approach runs, controlled plyos, moderate strength (70-80%). Cap volume, keep it crisp.';
   } else {
+    zone = 'red';
     color = 'var(--danger)'; tag = 'Rest';
     headline = 'Recovery day';
     detail = 'Body needs it. Full rest or active recovery: walk, mobility, jetboots, breathwork. Training hard now deepens the deficit and raises injury risk.';
   }
 
+  return { headline, detail, color, tag, zone, recovery, strain, tl, hrvStrong, hrvRatio, isRestDay };
+}
+
+function buildTrainingVerdict() {
+  const v = computeTrainingVerdict();
+  const { headline, detail, color, tag, isRestDay } = v;
   return `<div style="background:var(--card);border:1px solid var(--card-border);border-left:3px solid ${color};border-radius:var(--radius);padding:16px 18px;margin-bottom:8px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
       <span style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);">Today's Training</span>
@@ -14154,6 +14336,7 @@ window.addEventListener('popstate', function(e) {
     ['stressFullPage', closeStressFullPage],
     ['energyFullPage', closeEnergyFullPage],
     ['logModal', closeLog],
+    ['jumpModal', closeJumpLog],
   ];
   let topCloser = null, topZ = -Infinity;
   for (const [id, closer] of closers) {
@@ -16805,12 +16988,12 @@ function getNotificationSchedule() {
   const journal = ST.journal || [];
   const todayEntry = journal.find(j => j.date === today);
 
-  // Build training guidance based on recovery
-  let trainingMsg;
-  if (score >= 80) trainingMsg = 'Green light for max jumps and heavy plyometrics';
-  else if (score >= 67) trainingMsg = 'Good for technique work and moderate intensity';
-  else if (score >= 50) trainingMsg = 'Keep it light  - drills and mobility only';
-  else trainingMsg = 'Rest day recommended  - active recovery only';
+  // Training call from the SAME engine the COACH card uses, so the push matches it.
+  const verdict = computeTrainingVerdict();
+  const zoneWord = { green: 'Green day', yellow: 'Yellow day', red: 'Red day', done: 'Trained', rest: 'Rest day' }[verdict.zone] || 'Recovery';
+  // Best power window today = circadian peak 2 (wake +10h to +12.5h)
+  const powerWindow = minToTime(((WAKE + 10) % 24) * 60) + '-' + minToTime(((WAKE + 12.5) % 24) * 60);
+  const trainingMsg = verdict.headline;
 
   // HRV context
   const hrvBase = (m.hrvBaseline || m.sleepHrv || m.hrv || 50);
@@ -16840,12 +17023,12 @@ function getNotificationSchedule() {
   const currentDebt = debtArr.length ? debtArr[debtArr.length - 1].debtH : 0;
 
   const schedule = [
-    // 1. Morning briefing  - 5min after wake
+    // 1. Morning briefing  - 5min after wake. One-line decision: recovery + call + window.
     {
       type: 'morning',
       hour: (WAKE + 5/60) % 24,
-      title: score + '% Recovery' + hrvNote,
-      body: trainingMsg + sleepNote
+      title: score + '% · ' + zoneWord + hrvNote,
+      body: trainingMsg + '. Best power window ' + powerWindow + '.' + sleepNote
     },
     // 2. Peak 2 approaching  - 10min before
     {
