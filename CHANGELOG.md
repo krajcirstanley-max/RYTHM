@@ -1,5 +1,13 @@
 # RYTHM Changelog
 
+## 2026-06-12 (v175) - Notifications switch + self-heal
+
+- Added a Notifications switch at the bottom of the Journal tab (mirrors Settings): toggle, a live status line (on / off / blocked-in-iOS), and a "Send a test notification" button to confirm it works.
+- Fixed the recurring "notifications stop after a new version" bug: the old code only (re)subscribed when notifications were OFF, so once enabled, a version bump that dropped the push subscription left it silently dead with no re-prompt. Now `ensurePushHealthy()` runs on every load - if notifications are enabled and permission is still granted, it re-subscribes and re-uploads automatically; if permission was revoked in iOS it flips the toggle off to match reality.
+- Both toggles (Journal + Settings) stay in sync.
+
+---
+
 ## 2026-06-11 (v174) - Make it a daily must-have
 
 ### Morning ritual push

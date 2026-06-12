@@ -3370,6 +3370,16 @@ section { padding: 0 14px; margin-bottom: 6px; }
     <section>
       <div class="journal-history" id="journalHistory"></div>
     </section>
+    <section>
+      <div style="background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:16px 18px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:14px;font-weight:700;color:#fff;">Notifications</span>
+          <button class="toggle-switch js-notif-toggle" id="notifToggleJournal" onclick="toggleNotifications()"></button>
+        </div>
+        <div id="notifStatusLine" style="font-size:11px;color:var(--text-4);line-height:1.5;margin-top:8px;"></div>
+        <button onclick="sendTestNotification()" style="margin-top:12px;width:100%;padding:10px;border-radius:12px;border:1px solid var(--card-border);background:transparent;color:var(--text-2);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">Send a test notification</button>
+      </div>
+    </section>
     <div id="moodTrend" style="display:none;"></div>
   </div>
 </div>
@@ -3518,7 +3528,7 @@ section { padding: 0 14px; margin-bottom: 6px; }
       <div class="settings-row">
         <span class="sr-label">Push Notifications</span>
         <div class="toggle-wrap">
-          <button class="toggle-switch" id="notifToggle" onclick="toggleNotifications()"></button>
+          <button class="toggle-switch js-notif-toggle" id="notifToggle" onclick="toggleNotifications()"></button>
         </div>
       </div>
       <div style="padding:6px 0 0;font-size:11px;color:var(--text-4);line-height:1.5;">
@@ -14310,6 +14320,7 @@ function showView(name) {
   if (name === 'journal') {
     initJournal();
     renderMoodTrend();
+    updateNotifToggleUI();
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -16505,6 +16516,9 @@ function bootApp() {
   // Auto-enable notifications if permission already granted, or prompt on first visit
   (async () => {
     if (!ST.notifications) ST.notifications = { enabled: false, fired: {} };
+    updateNotifToggleUI();
+    // Already on: re-verify the subscription survived this version (self-heal).
+    if (ST.notifications.enabled) { await ensurePushHealthy(); updateNotifToggleUI(); return; }
     if (!ST.notifications.enabled && 'Notification' in window && 'PushManager' in window) {
       if (Notification.permission === 'granted') {
         // Permission was already given - just enable silently
@@ -16967,10 +16981,49 @@ async function toggleNotifications() {
 }
 
 function updateNotifToggleUI() {
-  const btn = document.getElementById('notifToggle');
-  if (!btn) return;
-  const on = ST.notifications && ST.notifications.enabled;
-  btn.classList.toggle('on', !!on);
+  const on = !!(ST.notifications && ST.notifications.enabled);
+  document.querySelectorAll('.js-notif-toggle').forEach(btn => btn.classList.toggle('on', on));
+  const status = document.getElementById('notifStatusLine');
+  if (status) {
+    const perm = ('Notification' in window) ? Notification.permission : 'unsupported';
+    if (!('Notification' in window) || !('PushManager' in window)) {
+      status.textContent = 'This device/browser does not support push. On iPhone, add RYTHM to your Home Screen and open it from there.';
+    } else if (perm === 'denied') {
+      status.innerHTML = '⚠️ Notifications are blocked in iOS Settings. Enable them in Settings → Notifications → RYTHM, then toggle this on.';
+    } else if (on) {
+      status.textContent = '✓ On. Morning briefing, training calls, timers and cutoffs - even with the app closed.';
+    } else {
+      status.textContent = 'Off. Turn on for your morning recovery briefing and timer alerts.';
+    }
+  }
+}
+
+// Self-heal push on every load: a new app version can drop the push subscription
+// while ST.notifications.enabled stays true, which silently kills notifications.
+// If enabled + permission granted, re-subscribe and re-upload so it keeps working
+// across version bumps without the user having to re-toggle anything.
+async function ensurePushHealthy() {
+  try {
+    if (!ST.notifications || !ST.notifications.enabled) return;
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    if (Notification.permission !== 'granted') {
+      // permission was revoked in iOS settings -> reflect reality
+      ST.notifications.enabled = false; saveState(); updateNotifToggleUI(); return;
+    }
+    await subscribePush(); // idempotent: reuses or recreates the sub, re-uploads to Supabase
+    uploadPushSchedule(getNotificationSchedule());
+  } catch (e) { console.warn('[RYTHM] ensurePushHealthy failed', e); }
+}
+
+async function sendTestNotification() {
+  if (!('Notification' in window)) { alert('Notifications not supported on this device.'); return; }
+  if (Notification.permission === 'denied') { alert('Notifications are blocked. Enable them in iOS Settings → Notifications → RYTHM.'); return; }
+  if (Notification.permission !== 'granted') { await toggleNotifications(); if (Notification.permission !== 'granted') return; }
+  await subscribePush();
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification('RYTHM ✓', { body: 'Notifications are working. You will get your morning briefing and timer alerts here.', tag: 'rythm-test' });
+  } catch (e) { alert('Could not show a notification: ' + e.message); }
 }
 
 function getNotificationSchedule() {
