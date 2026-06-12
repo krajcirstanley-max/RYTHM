@@ -36,6 +36,13 @@ Deno.serve(async (_req) => {
     for (const s of (schedules || [])) {
       scheduleMap.set(s.id, s);
     }
+    // Fallback: the most recently updated schedule. A device's key can drift (e.g.
+    // localStorage cleared on an app update -> new device key), which would orphan
+    // the schedule and silently stop all notifications. If a subscription has no
+    // exact-match schedule, use the latest one so it keeps working.
+    const latestSchedule = (schedules || [])
+      .slice()
+      .sort((a: any, b: any) => String(b.updated_at).localeCompare(String(a.updated_at)))[0] || null;
 
     const now = new Date();
     let sent = 0, failed = 0, skipped = 0;
@@ -74,7 +81,7 @@ Deno.serve(async (_req) => {
 
       // Find matching schedule for this subscription
       const subKey = row.id; // e.g. "rythm-abc123"
-      const sched = scheduleMap.get(subKey);
+      const sched = scheduleMap.get(subKey) || latestSchedule;
 
       if (!sched || !sched.schedule) {
         skipped++;

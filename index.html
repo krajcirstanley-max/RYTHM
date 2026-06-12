@@ -3718,12 +3718,17 @@ function getUserSyncKey() { return 'rythm-main'; }
 // Device key — unique per device/browser, used for push subscriptions only
 function getDeviceKey() {
   let k = localStorage.getItem('rythm-device-key');
-  // Migrate: reuse old sync key as device key if it exists
+  // Survive localStorage clears (which happen on iOS PWA updates / cache resets):
+  // the key is also kept in the SYNCED state, restored from the cloud on load. This
+  // keeps the push subscription key and schedule key aligned across version bumps -
+  // otherwise the key drifts, the schedule orphans, and notifications silently die.
+  if (!k && typeof ST !== 'undefined' && ST && ST._deviceKey) k = ST._deviceKey;
   if (!k) {
     const old = localStorage.getItem(SYNC_KEY_STORAGE);
-    if (old) { k = old; } else { k = 'rythm-' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + '-' + Date.now()); }
-    localStorage.setItem('rythm-device-key', k);
+    k = old || ('rythm-' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + '-' + Date.now()));
   }
+  localStorage.setItem('rythm-device-key', k);
+  if (typeof ST !== 'undefined' && ST && ST._deviceKey !== k) ST._deviceKey = k;
   return k;
 }
 

@@ -1,5 +1,15 @@
 # RYTHM Changelog
 
+## 2026-06-12 (v176) - Fix the actual no-notifications bug (key drift)
+
+Root cause found: notifications were silently dead because the device key drifted. The push function matches a subscription to its schedule by id; when localStorage got cleared on an update, a new device key was generated, so the subscription (new key) and the schedule (old key) no longer matched and every send was skipped. Delivery itself was fine (verified a manual send: sent=1) and the 5-min cron was running on time.
+
+- Stable device key: it's now persisted in synced state and restored from the cloud, so it survives localStorage clears / version bumps and the subscription + schedule keys stay aligned.
+- Push function fallback: if a subscription has no exact-match schedule, it uses the most recently updated one - so key drift can never silently stop notifications again.
+- Repaired the live data so notifications resume immediately (pointed the current schedule at the current subscription).
+
+---
+
 ## 2026-06-12 (v175) - Notifications switch + self-heal
 
 - Added a Notifications switch at the bottom of the Journal tab (mirrors Settings): toggle, a live status line (on / off / blocked-in-iOS), and a "Send a test notification" button to confirm it works.
